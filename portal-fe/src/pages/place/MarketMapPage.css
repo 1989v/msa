@@ -34,8 +34,6 @@
 .market-map-stage .place-market-locate [role='status']:empty { display: none; }
 .market-map-stage .place-market-locate p { padding-inline: var(--ko-space-2); }
 .market-map-list { position: absolute; inset: auto 0 0; height: 30%; display: flex; flex-direction: column; overflow: hidden; background: var(--ko-surface-0); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius-asym); padding: 0 var(--ko-space-4) env(safe-area-inset-bottom); z-index: 3; }
-.market-map-page[data-snap='half'] .market-map-list { height: 55%; }
-.market-map-page[data-snap='full'] .market-map-list { height: 85%; }
 .market-map-handle { flex-shrink: 0; width: 100%; touch-action: none; border: 0 !important; background: transparent !important; cursor: ns-resize; }
 .market-list-header { flex-shrink: 0; overflow: auto; }
 .market-list-header h2 { font-size: var(--ko-text-base); margin: var(--ko-space-2) 0; }
@@ -54,6 +52,9 @@
 @media (max-width: 480px) { .market-map-top { gap: var(--ko-space-1); padding-inline: var(--ko-space-1); } .market-map-top h1 { flex-basis: 5rem; } .market-map-top label { max-width: 4rem; } }
 
 @media (max-width: 1023px) {
+  /* 시트 높이는 모바일에서만 snap 을 따른다 — 데스크톱 패널은 snap 과 무관하게 지도 높이를 꽉 채운다. */
+  .market-map-page[data-snap='half'] .market-map-list { height: 55%; }
+  .market-map-page[data-snap='full'] .market-map-list { height: 85%; }
   /* Keep native provider attribution and scale above the list in every snap. */
   .market-map-stage { bottom: 30%; }
   .market-map-page[data-snap='half'] .market-map-stage { bottom: 55%; }

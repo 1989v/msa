@@ -87,7 +87,18 @@ describe('MarketNaverMap', () => {
   it('reports authentication failure and leaves boundary and alley overlays noninteractive', async () => {
     install(); const onError = vi.fn(); render(<MarketNaverMap {...props} onError={onError} />);
     await waitFor(() => expect(maps.Polygon).toHaveBeenCalledTimes(1));
-    expect(maps.Event.addListener.mock.calls.filter(([, event]) => event === 'click')).toHaveLength(0);
+    const shapes = [...maps.Polygon.mock.results, ...maps.Polyline.mock.results].map((result) => result.value);
+    expect(maps.Event.addListener.mock.calls.filter(([target, event]) => event === 'click' && shapes.includes(target))).toHaveLength(0);
     act(() => (window as unknown as { navermap_authFailure: () => void }).navermap_authFailure()); expect(onError).toHaveBeenCalledOnce();
+  });
+  it('selects the same parcel from the SDK marker click as from the pin element, with a centred hit box', async () => {
+    // Mouse events stop at the SDK's event pane above the pins, so the SDK marker click is the only path a mouse has; touch still reaches the pin element.
+    install(); const onSelect = vi.fn(); render(<MarketNaverMap {...props} onSelect={onSelect} />);
+    await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce());
+    const [options] = maps.Marker.mock.calls[0]; const object = maps.Marker.mock.results[0].value;
+    expect(options.icon).toEqual(expect.objectContaining({ size: { width: 44, height: 44 }, anchor: { x: 22, y: 22 } }));
+    fireEvent.click(options.icon.content); expect(onSelect).toHaveBeenCalledTimes(1);
+    const click = maps.Event.addListener.mock.calls.find(([target, event]) => target === object && event === 'click')![2]; act(() => click());
+    expect(onSelect).toHaveBeenCalledTimes(2); expect(onSelect.mock.calls[1][0]).toBe(onSelect.mock.calls[0][0]);
   });
 });

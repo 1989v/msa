@@ -58,7 +58,8 @@ function MarketMapScreen() {
     <div className="market-map-top">
       <Link to={attractionPath(lang, id)} aria-label={en ? 'Back to attraction' : '관광지 상세로'}>←</Link>
       <h1>{(en ? attraction.data.title : null) || data.market.name || attraction.data.title}</h1>
-      <input type="search" aria-label={en ? 'Find a shop, goods or category' : '가게·품목·업종 찾기'} maxLength={50} value={query} onFocus={() => setSnap('half')} onChange={event => {
+      {/* 제어 입력이면 입력 직후 React 가 URL 의 옛 값을 되써서 한글 조합이 끊긴다(URL 갱신은 트랜지션). 화면은 경로마다 다시 마운트되므로 초깃값만 URL 에서 읽는다. */}
+      <input type="search" aria-label={en ? 'Find a shop, goods or category' : '가게·품목·업종 찾기'} maxLength={50} defaultValue={query} onFocus={() => setSnap('half')} onChange={event => {
         const next = new URLSearchParams(params); if (event.target.value) next.set('marketQuery', event.target.value); else next.delete('marketQuery'); setParams(next, { replace: true }); clear();
       }} />
       <label><input type="checkbox" checked={includeOutside} onChange={event => { setIncludeOutside(event.target.checked); clear(); }} />{en ? 'Include outside' : '시장 밖도 보기'}</label>

@@ -58,10 +58,14 @@ function registerAuthFailure(callback: () => void) {
   return () => { authFailures.delete(callback); };
 }
 
+/** 핀 버튼 한 변(px). 마우스는 SDK 의 이벤트 레이어가 받아 아이콘 상자로 핀을 찾으므로, 상자(size·anchor)와 버튼이 같은 자리여야 한다. */
+const PIN_BOX = 44;
+const pinHtmlIcon = (content: HTMLElement) => ({ content, size: { width: PIN_BOX, height: PIN_BOX }, anchor: { x: PIN_BOX / 2, y: PIN_BOX / 2 } });
 /** HTML uses textContent, including store names supplied by merchants. */
 function pinIcon(marker: OverlayMarker): HTMLElement {
   const button = document.createElement('button'); button.type = 'button';
   button.className = 'place-market-naver-pin'; button.setAttribute('aria-label', marker.title);
+  button.style.width = button.style.height = `${PIN_BOX}px`;
   const icon = document.createElement('span'); icon.textContent = marker.label ? '' : marker.text;
   Object.assign(icon.style, { display: 'grid', placeItems: 'center', boxSizing: 'border-box',
     width: `${marker.size}px`, height: `${marker.size}px`, borderRadius: '50%', borderStyle: 'solid',
@@ -136,10 +140,11 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
       };
       for (const shape of [model.marketPolygon].filter((shape) => shape != null)) sync(shape.key, shape, () => new sdk.Polygon({ map, paths: shape.coordinates.map(([lat, lng]) => new sdk.LatLng(lat, lng)), fillColor: token(shape.color), fillOpacity: shape.fillOpacity, strokeColor: token(shape.color), strokeWeight: shape.strokeWeight, strokeOpacity: shape.strokeOpacity }), !interactive ? () => latest.current.onActivate?.() : undefined);
       for (const line of model.alleys) sync(line.key, line, () => new sdk.Polyline({ map, path: line.coordinates.map(([lat, lng]) => new sdk.LatLng(lat, lng)), strokeColor: token(line.color), strokeWeight: line.strokeWeight, strokeOpacity: line.strokeOpacity }), !interactive ? () => latest.current.onActivate?.() : undefined);
+      // 터치는 핀 버튼에 닿지만 마우스는 SDK 이벤트 레이어에서 멈춘다 — 버튼 onclick 과 SDK marker click 둘 다 건다(한 동작은 한쪽만 받는다).
       for (const marker of model.markers) sync(marker.key, marker, () => {
         const content = pinIcon(marker); content.onclick = () => { if (!interactive) latest.current.onActivate?.(); else if (marker.selectionKey) latest.current.onSelect?.(marker.selectionKey); };
-        return new sdk.Marker({ map, position: coord(marker), title: marker.title, icon: { content, anchor: { x: 0, y: 0 } } });
-      });
+        return new sdk.Marker({ map, position: coord(marker), title: marker.title, icon: pinHtmlIcon(content) });
+      }, !interactive ? () => latest.current.onActivate?.() : marker.selectionKey ? () => latest.current.onSelect?.(marker.selectionKey!) : undefined);
       for (const label of model.labels) sync(label.key, label, () => {
         const content = document.createElement('span'); content.textContent = label.text; content.className = 'place-market-naver-label'; content.style.color = label.color;
         return new sdk.Marker({ map, position: coord(label), title: label.text, icon: { content, anchor: { x: 0, y: 0 } } });
@@ -147,7 +152,7 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
       if (model.userPosition) {
         const user = model.userPosition;
         sync('user-accuracy', user, () => new sdk.Circle({ map, center: coord(user), radius: user.accuracy, strokeColor: token(user.color), fillColor: token(user.color), fillOpacity: user.fillOpacity, strokeWeight: user.strokeWeight }));
-        sync('user', user, () => new sdk.Marker({ map, position: coord(user), title: user.text, icon: { content: pinIcon({ ...user, key: 'user', text: '', title: user.text, storeIds: [], textColor: user.strokeColor, fontSize: 'var(--ko-text-xs)', labelOffset: { x: 0, y: 0 }, highlighted: false, searchMatch: false, label: false }), anchor: { x: 0, y: 0 } } }));
+        sync('user', user, () => new sdk.Marker({ map, position: coord(user), title: user.text, icon: pinHtmlIcon(pinIcon({ ...user, key: 'user', text: '', title: user.text, storeIds: [], textColor: user.strokeColor, fontSize: 'var(--ko-text-xs)', labelOffset: { x: 0, y: 0 }, highlighted: false, searchMatch: false, label: false })) }));
       }
       for (const [key, entry] of overlays) if (!wanted.has(key)) { remove(entry); overlays.delete(key); }
       if (!interactive || !model.focus) appliedFocus.current = null;

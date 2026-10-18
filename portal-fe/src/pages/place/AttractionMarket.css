@@ -102,19 +102,17 @@
 
 .place-market-provider { margin-block-end: var(--ko-space-2, 8px); }
 /* The pin is a round icon; neither the section's button surface nor the browser's default button
- * may paint a square behind it — the dedicated map screen has no .place-market ancestor. */
+ * may paint a square behind it — the dedicated map screen has no .place-market ancestor.
+ * Size and centring come from the marker icon box (MarketNaverMap), not from here. */
 .place-market-naver-pin,
 .place-market-naver-pin:hover,
 .place-market-naver-pin:active {
   display: grid;
   place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
   padding: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
-  transform: translate(-50%, -50%);
 }
 .place-market-naver-pin:focus-visible { outline: 2px solid var(--ko-accent-text); }
 .place-market-naver-pin:hover > span { outline: 2px solid var(--ko-accent-text); }

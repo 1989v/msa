@@ -80,6 +80,17 @@ describe('dedicated market map page', () => {
     fireEvent.change(input, { target: { value: '' } }); expect(screen.getByTestId('address')).toHaveTextContent('/attractions/7/market?keep=1');
     fireEvent.click(screen.getByRole('button', { name: '이전 주소' })); await screen.findByText('Before');
   });
+  it('never writes the search box value back while typing, so Korean IME composition is not broken by a stale URL value', async () => {
+    mount(); const input = await screen.findByRole('searchbox');
+    // React restores a controlled input to its current prop right after the input event; the router updates the URL in a transition, so that prop is still the old value.
+    const own = Object.getOwnPropertyDescriptor(input, 'value') ?? Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!;
+    const writes: string[] = [];
+    Object.defineProperty(input, 'value', { configurable: true, get() { return own.get!.call(this); }, set(value) { writes.push(String(value)); own.set!.call(this, value); } });
+    fireEvent.input(input, { target: { value: 'ㄴ' } });
+    expect(screen.getByTestId('address')).toHaveTextContent('marketQuery=%E3%84%B4');
+    expect(writes).toEqual([]);
+    expect(input).toHaveValue('ㄴ');
+  });
   it('intersects viewport and shop types but searches outside the viewport, with matching heading and rows', async () => {
     mount();
     await screen.findByRole('heading', { name: '현 지도에서 2곳 · 지도 위치 없음 1곳' });
