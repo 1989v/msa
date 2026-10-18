@@ -25,6 +25,8 @@ data class MarketStore(
     val onnuriKey: String? = null,
     val sanggaKey: String? = null,
     val onnuriRaw: String? = null,
+    /** 온누리 원문의 「주소」. 원문을 읽지 않는 공개 조회가 이것만 꺼내 채운다(가게 번호의 출처). */
+    val onnuriAddress: String? = null,
     val sanggaRaw: String? = null,
     val membership: MarketMembership = MarketMembership(MarketMembershipStatus.UNKNOWN),
     val pinKind: MarketPinKind = MarketPinKind.EXACT,

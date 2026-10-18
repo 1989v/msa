@@ -3,6 +3,7 @@ package com.kgd.place.infrastructure.persistence.market.repository
 import com.kgd.place.domain.market.model.MarketMembership
 import com.kgd.place.domain.market.model.MarketStore
 import com.kgd.place.infrastructure.persistence.market.entity.QMarketStoreJpaEntity
+import com.querydsl.core.types.dsl.Expressions
 import com.querydsl.jpa.impl.JPAQueryFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Repository
@@ -14,6 +15,8 @@ class MarketStoreQueryRepository(@Qualifier("placeJpaQueryFactory") private val 
     fun findForDisplay(marketId: Long): List<MarketStore> {
         val hasOnnuri = s.onnuriRaw.isNotNull
         val hasSangga = s.sanggaRaw.isNotNull
+        // 원문은 내려받지 않고 가게 번호에 쓰는 「주소」 하나만 DB 에서 꺼낸다. 온누리 원문은 필드 4개라 작다.
+        val onnuriAddress = Expressions.stringTemplate("cast(function('json_unquote', function('json_extract', {0}, '$.\"주소\"')) as string)", s.onnuriRaw)
         return factory.select(
             s.marketId, s.name, s.source, s.sourceKey, s.zoneId,
             s.items, s.categoryMajor, s.categoryMid, s.categorySub, s.latitude,
@@ -24,7 +27,7 @@ class MarketStoreQueryRepository(@Qualifier("placeJpaQueryFactory") private val 
             s.judgedMembership, s.judgedBy, s.pathId, s.needsReview, s.goodPriceKey,
             s.goodPriceRaw, s.goodPriceMatchedBy, s.goodPriceMenuNames, s.identityKey, s.pairedStoreId,
             s.tourContentId, s.tourFirstMenu, s.tourTreatMenu, s.tourMatchedAt, hasOnnuri,
-            hasSangga,
+            hasSangga, onnuriAddress,
         // Sorted here, not in SQL: ORDER BY over this many text columns makes MySQL filesort the
         // whole row, and with the default 256 KB sort buffer that failed for one market (573 rows).
         ).from(s).where(s.marketId.eq(marketId)).fetch().map { row ->
@@ -52,6 +55,7 @@ class MarketStoreQueryRepository(@Qualifier("placeJpaQueryFactory") private val 
                 sanggaKey = row.get(s.sanggaKey),
                 onnuriRaw = MarketStore.RAW_OMITTED.takeIf { row.get(hasOnnuri) == true },
                 sanggaRaw = MarketStore.RAW_OMITTED.takeIf { row.get(hasSangga) == true },
+                onnuriAddress = row.get(onnuriAddress),
                 membership = MarketMembership(requireNotNull(row.get(s.membership))),
                 pinKind = requireNotNull(row.get(s.pinKind)),
                 referenceStoreId = row.get(s.referenceStoreId),

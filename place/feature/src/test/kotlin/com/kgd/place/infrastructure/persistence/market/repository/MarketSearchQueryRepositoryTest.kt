@@ -131,7 +131,10 @@ class MarketSearchQueryRepositoryTest : BehaviorSpec({
                     pinKind = MarketPinKind.REFERENCE, referenceStoreId = 1, relativePosition = "옆"),
                 // Presence comes from raw, including when an enrichment has no source key.
                 base.copy(name = "보강", sourceKey = "o3", onnuriKey = "o3", sanggaKey = null),
-                base.copy(name = "키만", sourceKey = "o4", onnuriKey = "o4", sanggaRaw = null))
+                base.copy(name = "키만", sourceKey = "o4", onnuriKey = "o4", sanggaRaw = null),
+                // 가게 번호는 원문 「주소」에서 — 공개 조회도 같은 값을 내야 한다.
+                base.copy(name = "번호", sourceKey = "o5", onnuriKey = "o5", sanggaRaw = null, jibunAddress = "경북경주시성건동339-2번지중앙시장5-21호",
+                    onnuriRaw = """{"주소":"경북경주시성건동339-2번지중앙시장5-21호","시장명":"중앙시장","점포명":"번호","취급품목":"떡"}"""))
             fixtures.forEach { em.persist(MarketStoreJpaEntity.fromDomain(it)) }
             em.flush(); em.clear()
             val full = writer.findStores(marketId)
@@ -139,17 +142,22 @@ class MarketSearchQueryRepositoryTest : BehaviorSpec({
             val narrow = writer.findStoresForDisplay(marketId)
             val select = statements.single { it.startsWith("select", ignoreCase = true) }
             val selectList = select.substringBefore(" from ").lowercase()
-            // Reject even a read-and-discard implementation: raw columns may only appear in IS NOT NULL.
+            // Reject even a read-and-discard implementation: raw columns may only appear in IS NOT NULL,
+            // plus the one Onnuri field extracted in SQL for the stall number.
+            val extraction = Regex("""json_extract\(\w+\.onnuri_raw,""")
+            extraction.containsMatchIn(selectList) shouldBe true
             listOf("onnuri_raw", "sangga_raw").forEach { column ->
-                Regex("\\b$column\\b(?!\\s+is\\s+not\\s+null)").containsMatchIn(selectList) shouldBe false
+                Regex("\\b$column\\b(?!\\s+is\\s+not\\s+null)").containsMatchIn(selectList.replace(extraction, "")) shouldBe false
                 selectList.contains("$column is not null") shouldBe true
             }
             narrow shouldBe full.map { it.copy(
                 onnuriRaw = MarketStore.RAW_OMITTED.takeIf { _ -> it.onnuriRaw != null },
-                sanggaRaw = MarketStore.RAW_OMITTED.takeIf { _ -> it.sanggaRaw != null }) }
+                sanggaRaw = MarketStore.RAW_OMITTED.takeIf { _ -> it.sanggaRaw != null },
+                onnuriAddress = if (it.name == "번호") "경북경주시성건동339-2번지중앙시장5-21호" else null) }
             fun response(rows: List<MarketStore>) = com.kgd.place.presentation.market.dto.MarketResponse.from(
                 QueryMarketUseCase.MarketResult(m.toDomain(), emptyList(), MarketPublicProjection.stores(rows, emptyMap())))
             response(narrow) shouldBe response(full)
+            response(narrow).stores.single { it.name == "번호" }.storeNo shouldBe "5-21호"
             MarketPublicProjection.stores(narrow, emptyMap()).map { it.sources } shouldBe
                 MarketPublicProjection.stores(full, emptyMap()).map { it.sources }
             writer.findStoresForDisplay(marketId + 1000) shouldBe emptyList()
