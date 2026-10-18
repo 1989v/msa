@@ -77,7 +77,9 @@ function infoContent(stores: MarketStore[], numbers: ReadonlyMap<number, number>
     const title = document.createElement('strong');
     const number = store.id == null ? undefined : numbers?.get(store.id);
     if (number != null) { const badge = document.createElement('span'); badge.className = 'market-list-no'; badge.textContent = String(number); title.appendChild(badge); }
-    title.appendChild(document.createTextNode(name)); row.appendChild(title);
+    title.appendChild(document.createTextNode(name));
+    if (store.storeNo) { const tag = document.createElement('span'); tag.className = 'market-store-no'; tag.textContent = store.storeNo; title.appendChild(tag); }
+    row.appendChild(title);
     const type = MARKET_STORE_TYPES.find((candidate) => candidate.key === marketStoreType(store));
     const meta = document.createElement('p'); meta.textContent = [type?.[lang], store.roadAddress || store.jibunAddress].filter(Boolean).join(' · '); row.appendChild(meta);
     if (store.id != null) { const id = store.id; const detail = document.createElement('button'); detail.type = 'button'; detail.textContent = en ? 'Details' : '상세보기'; detail.setAttribute('aria-label', `${en ? 'Details' : '상세보기'}: ${name}`); detail.onclick = () => on.open(id); row.appendChild(detail); }

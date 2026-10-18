@@ -19,6 +19,13 @@ import './AttractionMarket.css';
 import './MarketMapPage.css';
 
 const SNAPS = ['peek', 'half', 'full'] as const;
+/** 마지막 키와 결과를 기억한다 — 같은 키면 같은 값을 돌려준다. */
+function rememberLast<K, V>(make: (key: K) => V): (key: K) => V {
+  let last: { key: K; value: V } | null = null;
+  return (key) => { if (!last || last.key !== key) last = { key, value: make(key) }; return last.value; };
+}
+// 번호 Map 은 번호가 바뀔 때만 새로 만든다 — 지도는 Map 이 바뀌면 열린 정보창을 다시 그린다.
+const numbersOf = (key: string) => new Map(key ? key.split(',').flatMap((id, index) => id ? [[Number(id), index + 1] as const] : []) : []);
 type Snap = typeof SNAPS[number];
 export default function MarketMapPage() {
   const { pathname } = useLocation();
@@ -44,7 +51,8 @@ function MarketMapScreen() {
   const [detailId, setDetailId] = useState<number | null>(linkedStore);
   // 목록 페이지(「더 보기」)와 번호는 페이지가 갖는다 — 지도가 같은 번호를 핀에 쓴다. 조건이 바뀌면 50으로 돌아간다.
   const [page, setPage] = useState({ key: '', limit: 50 });
-  const numbersCache = useRef({ key: '', map: new Map<number, number>() });
+  // 아래 조건부 return 뒤에서 쓰므로 useMemo 대신 마운트마다 하나씩 둔다.
+  const [numbersFor] = useState(() => rememberLast(numbersOf));
   const pointerStart = useRef<number | null>(null);
   const dragged = useRef(false);
   const attraction = useQuery({ queryKey: ['attraction', id], queryFn: () => fetchAttraction(id), enabled: !!id, retry: false });
@@ -63,9 +71,7 @@ function MarketMapScreen() {
   const limit = page.key === resetKey ? page.limit : 50;
   // 번호는 검색 중이면 보이는 결과에, 아니면 선택한 필지(또는 포커스한 가게)에 1부터. 같은 Map 이 목록과 지도에 간다.
   const numbered = listing.searching ? listing.rows.slice(0, limit) : listing.rows.filter(store => listing.selected.has(store) || (focusStoreId != null && store.id === focusStoreId));
-  const numbersKey = numbered.map(store => store.id).join(',');
-  if (numbersCache.current.key !== numbersKey) numbersCache.current = { key: numbersKey, map: new Map(numbered.flatMap((store, index) => store.id == null ? [] : [[store.id, index + 1] as const])) };
-  const numbers = numbersCache.current.map;
+  const numbers = numbersFor(numbered.map(store => store.id ?? '').join(','));
   const detailStore = detailId == null ? null : data.stores.find(store => store.id === detailId) ?? null;
   const clear = () => { setSelectedKey(null); setFocusStoreId(null); setDetailId(null); };
   const focusStore = (id: number) => { flushSync(() => setFocusStoreId(null)); setFocusStoreId(id); };

@@ -51,7 +51,7 @@ export default function MarketList({ market, listing, limit, numbers, query, foc
           return <li key={store.id ?? `${store.name}-${index}`} data-selected={selected.has(store) || store.id === focusStore || undefined} data-found={searching || undefined} data-outside={store.membership === 'OUT' || undefined}>
             <div className="market-list-row-head">
               {number != null && <span className="market-list-no">{number}</span>}
-              {hasMarketCoordinate(store) && store.id != null ? <button type="button" aria-pressed={store.id === focusStore} aria-label={`${en ? 'Show on map' : '지도에서 보기'}: ${name}`} onClick={() => onFocusStore(store.id!)}><strong>{name}</strong></button> : <strong>{name}</strong>}
+              {hasMarketCoordinate(store) && store.id != null ? <button type="button" aria-pressed={store.id === focusStore} aria-label={`${en ? 'Show on map' : '지도에서 보기'}: ${name}`} onClick={() => onFocusStore(store.id!)}><strong>{name}</strong>{store.storeNo && <span className="market-store-no">{store.storeNo}</span>}</button> : <strong>{name}{store.storeNo && <span className="market-store-no">{store.storeNo}</span>}</strong>}
               {store.id != null && <button type="button" className="market-list-detail" aria-label={`${en ? 'Details' : '상세보기'}: ${name}`} onClick={() => onOpenStore(store.id!)}>{en ? 'Details' : '상세보기'}</button>}
             </div>
             <div className="place-market-badges">

@@ -125,15 +125,16 @@ describe('0건 — 조건 해제 버튼', () => {
     expect(relaxButtons()).toEqual(['지역 ‘서울특별시’ 해제']);
   });
 
-  it('검색어만 걸면 기본 분류·자동 행사 상태(NOT_ENDED)는 버튼이 되지 않는다', async () => {
+  it('검색어만 걸면 기본 분류·자동 행사 상태(NOT_ENDED)는 버튼이 되지 않는다 — 자동으로 걸린 시도도 검색어가 풀어 둔다', async () => {
     renderPage();
     await untilSeoul();
     submitKeyword('궁궐');
     await waitFor(() => expect(lastCall()).toMatchObject({ keyword: '궁궐', eventStatus: 'NOT_ENDED' }));
-    await waitFor(() => expect(relaxButtons()).toEqual(['검색어 빼고 보기', '지역 ‘서울특별시’ 해제', '모두 해제']));
+    expect(lastCall().sidoCode).toBeUndefined();
+    await waitFor(() => expect(relaxButtons()).toEqual(['검색어 빼고 보기']));
   });
 
-  it('조건 셋(시도·검색어·속성) → 버튼 셋 + 모두 해제, 속성 버튼은 그 속성만 푼 질의를 보낸다', async () => {
+  it('조건 둘(검색어·속성) → 버튼 둘 + 모두 해제, 속성 버튼은 그 속성만 푼 질의를 보낸다', async () => {
     renderPage();
     await untilSeoul();
     submitKeyword('궁궐');
@@ -142,12 +143,13 @@ describe('0건 — 조건 해제 버튼', () => {
     await waitFor(() => expect(lastCall()).toMatchObject({ parking: 'YES' }));
     closeFilters();
     await waitFor(() =>
-      expect(relaxButtons()).toEqual(['검색어 빼고 보기', '‘주차 가능’ 해제', '지역 ‘서울특별시’ 해제', '모두 해제']),
+      expect(relaxButtons()).toEqual(['검색어 빼고 보기', '‘주차 가능’ 해제', '모두 해제']),
     );
 
     fireEvent.click(relaxButton('‘주차 가능’ 해제'));
     await waitFor(() => expect(lastSearch()).toMatchObject({ trigger: 'relax', changed: ['attributes', 'page'] }));
-    expect(lastCall()).toMatchObject({ keyword: '궁궐', sidoCode: '11', page: 0 });
+    expect(lastCall()).toMatchObject({ keyword: '궁궐', page: 0 });
+    expect(lastCall().sidoCode).toBeUndefined();
     expect(attrParams(lastCall())).toEqual([]);
   });
 
@@ -160,7 +162,6 @@ describe('0건 — 조건 해제 버튼', () => {
     fireEvent.click(relaxButton('검색어 빼고 보기'));
     await waitFor(() => expect(lastSearch()).toMatchObject({ trigger: 'relax', changed: ['keyword', 'page'] }));
     expect(lastCall().keyword).toBeUndefined();
-    expect(lastCall()).toMatchObject({ sidoCode: '11' });
     expect(screen.getByRole('textbox')).toHaveValue('');
   });
 

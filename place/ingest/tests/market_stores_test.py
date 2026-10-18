@@ -174,6 +174,14 @@ def test_legal_dong_parser_does_not_truncate_city_or_gu_names():
     assert ms.parcel('서울 동대문구 장안동 1')[0] != ms.parcel('서울 동대문구 답십리동 1')[0]
 
 
+def test_parcel_matches_spelled_out_and_short_province_names():
+    # 상가정보(경상북도)와 온누리(경북) 표기가 달라 같은 필지가 갈리면 가맹점이 좌표를 못 받는다.
+    assert ms.parcel('경상북도 경주시 성건동 339-2') == ms.parcel('경북경주시성건동339-2번지중앙시장5-21호') == ('경북경주시성건동', '339-2')
+    assert ms.parcel('충청남도 서산시 동문동 900')[0] == ms.parcel('충남서산시동문동900번지A동393호')[0]
+    assert ms.parcel('서울시 중구 남창동 49')[0] == ms.parcel('서울특별시 중구 남창동 49')[0]
+    assert ms.key('경상북도 경주시') != ms.key('경북 경주시')  # 가게 키는 원문 표기 그대로
+
+
 def test_duplicate_standard_source_keys_fail_preflight():
     attraction = {'contentId':'1','lang':'ko','status':'ACTIVE','lclsSystm2':'SH06','title':'시장','address':'경기 광명시 광명동 1'}
     standard = {'시장명':'시장','소재지지번주소':'경기 광명시 광명동 1'}

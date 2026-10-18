@@ -15,9 +15,9 @@ function mount(contentId: string, lang: 'ko' | 'en' = 'ko') {
 }
 
 describe('market preview in the place search panel', () => {
-  it('shows the map preview and a market map link with the shop count for a market', async () => {
+  it('shows the map preview and a market map link counting shops judged inside, the same basis as market search', async () => {
     vi.mocked(fetchMarketContentIds).mockResolvedValue(['990539']);
-    vi.mocked(fetchMarket).mockResolvedValue({ market: { name: '경주 중앙시장' }, zones: [], stores: [store(1, 'IN'), store(2, 'UNKNOWN'), store(3, 'OUT')] } as unknown as MarketResponse);
+    vi.mocked(fetchMarket).mockResolvedValue({ market: { name: '경주 중앙시장' }, zones: [], stores: [store(1, 'IN'), store(4, 'IN'), store(2, 'UNKNOWN'), store(3, 'OUT')] } as unknown as MarketResponse);
     mount('990539');
     expect(await screen.findByRole('link', { name: '시장 지도 보기 · 가게 2곳' })).toHaveAttribute('href', '/attractions/34447/market');
     expect(screen.getByTestId('preview-map')).toBeInTheDocument();

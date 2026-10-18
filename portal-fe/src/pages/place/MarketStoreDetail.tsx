@@ -19,7 +19,7 @@ export default function MarketStoreDetail({ store, number, lang, onClose, onFocu
   const position = store.pinKind === 'REFERENCE' ? [store.relativePosition, store.positionNote].filter(Boolean).join(' · ') : '';
   return <aside ref={panel} className="market-store-detail" role="dialog" aria-labelledby="market-store-detail-title" tabIndex={-1} onKeyDown={event => { if (event.key === 'Escape') onClose(); }}>
     <header>
-      <h2 id="market-store-detail-title">{number != null && <span className="market-list-no">{number}</span>}{marketDisplayName(store, lang)}</h2>
+      <h2 id="market-store-detail-title">{number != null && <span className="market-list-no">{number}</span>}{marketDisplayName(store, lang)}{store.storeNo && <span className="market-store-no">{store.storeNo}</span>}</h2>
       <button type="button" aria-label={en ? 'Close' : '닫기'} onClick={onClose}>×</button>
     </header>
     <p className="market-store-detail-type"><span className="market-map-type-dot" aria-hidden="true" style={{ background: marketStoreTypeColor(type.key) }} />{type[lang]}{categories && <span className="place-market-source"> · {categories}</span>}</p>

@@ -138,6 +138,18 @@ describe('dedicated market map page', () => {
     fireEvent.click(screen.getByRole('button', { name: '지도에서 보기' })); expect(mapProps.focusStoreId).toBe(2);
     fireEvent.click(screen.getByRole('button', { name: '닫기' })); expect(screen.queryByRole('dialog')).toBeNull();
   });
+  it('shows the market\'s own stall number in the list row and detail, and keeps one numbers map while the numbering is unchanged', async () => {
+    vi.mocked(fetchMarket).mockResolvedValue({ ...data, stores: data.stores.map(store => store.id === 2 ? { ...store, storeNo: '5-21호' } : store) });
+    mount(); await screen.findByTestId('map');
+    fireEvent.click(screen.getByRole('button', { name: '핀 선택' }));
+    const numbers = mapProps.numbers;
+    fireEvent.click(screen.getByRole('button', { name: '가게 목록 크기 조절' }));
+    expect(mapProps.numbers).toBe(numbers);
+    const row = within(screen.getByRole('complementary')).getAllByRole('listitem').find(item => item.textContent?.includes('하늘가게'))!;
+    expect(row.querySelector('.market-store-no')).toHaveTextContent('5-21호');
+    fireEvent.click(screen.getByRole('button', { name: '상세보기: 하늘가게' }));
+    expect(screen.getByRole('dialog').querySelector('.market-store-no')).toHaveTextContent('5-21호');
+  });
   it.each([['2', '하늘가게'], ['abc', null], ['999', null]])('opens the detail panel and focuses the shop from ?store=%s', async (store, name) => {
     mount(`/attractions/7/market?store=${store}`); await screen.findByTestId('map');
     if (name) { expect(screen.getByRole('dialog')).toHaveTextContent(name); expect(mapProps.focusStoreId).toBe(2); }

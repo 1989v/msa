@@ -71,7 +71,7 @@ export function buildMarketOverlay({ data, zoom, bounds, selection = {}, lang = 
   const stores = all.filter((s) => storeIds == null || storeIds.includes(s.id));
   const parcels = groupMarketPins(stores); const parcelFor = (store: MarketStore) => parcels.find((p) => p.stores.includes(store))!;
   // A group pin shows how many shops share the spot only when there are two or more; a lone pin shows its list number or nothing,
-  // and a named pin puts the number before the name. The counts are not stall numbers (the sources carry none).
+  // and a named pin puts the market's own stall number (or else the list number) before the name. Counts are never stall numbers.
   const numberOf = (store: MarketStore) => store.id == null ? undefined : selection.numbers?.get(store.id);
   const marker = (key: string, latitude: number, longitude: number, members: MarketStore[], selectionKey: string, label: boolean): OverlayMarker => {
     const highlighted = members.some((s) => selection.searchStoreIds?.includes(s.id!) || selection.storeId != null && selection.storeId === s.id) || selection.selectedKey === selectionKey;
@@ -79,7 +79,7 @@ export function buildMarketOverlay({ data, zoom, bounds, selection = {}, lang = 
     const size = label ? 12 : members.length < 10 ? 20 : members.length < 100 ? 26 : 32;
     const fontSize = `var(--ko-text-${label || size === 32 ? 'base' : size === 20 ? 'xs' : 'sm'})`;
     const number = members.length === 1 ? numberOf(members[0]) : undefined;
-    const text = label ? [number, marketDisplayName(members[0], lang)].filter((part) => part != null).join(' · ') : members.length >= 2 ? String(members.length) : number != null ? String(number) : '';
+    const text = label ? [members[0].storeNo || number, marketDisplayName(members[0], lang)].filter((part) => part != null).join(' · ') : members.length >= 2 ? String(members.length) : number != null ? String(number) : '';
     return { key, latitude, longitude, selectionKey, storeIds: members.map((s) => s.id), text, title: members.map((s) => marketDisplayName(s, lang)).join(', '), color, strokeColor: highlighted ? 'var(--ko-accent-primary)' : 'var(--ko-surface-0)', strokeWeight: highlighted ? 4 : 2, size, fontSize, iconPath: circlePath(size), labelOffset: { x: 0, y: 0 }, highlighted, searchMatch: members.some((s) => selection.searchStoreIds?.includes(s.id!)), textColor: label ? highlighted ? 'var(--ko-accent-text)' : color : 'var(--ko-surface-0)', label };
   };
   const visibleStores = stores.filter((s) => inside(s, bounds));

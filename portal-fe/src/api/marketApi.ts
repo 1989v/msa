@@ -59,6 +59,8 @@ export interface MarketStore extends MarketEnglishFields {
   relativePosition: string | null;
   positionNote: string | null;
   goodPrice?: (GoodPriceShop & { matchedBy: 'NAME' | 'ROAD' }) | null;
+  /** 시장이 붙인 가게 번호(「5-21호」). 온누리 가맹점 주소에 적힌 것만 있다. */
+  storeNo?: string | null;
 }
 
 export type MarketCoordinate = [number, number]; // [latitude, longitude]

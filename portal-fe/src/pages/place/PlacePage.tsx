@@ -584,6 +584,9 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
    * 시도 없는 첫 질의(landing)가 그 값을 가져간다.
    */
   const triggerRef = useRef<SearchTrigger | null>(restored ? 'restore' : null);
+  // 지금 걸린 시도가 첫 진입 자동 선택이면 참 — 검색어는 그 지역에 묶지 않고 전국에서 찾는다.
+  // 「경주 중앙시장」을 쳤는데 서울 카드만 나오면 검색이 안 되는 것처럼 보인다. 사람이 고른 지역은 그대로 둔다.
+  const autoRegionRef = useRef(false);
   const landingTag = preset ? `${preset.seo.code}/${preset.seo.attr}` : null;
   const changedRef = useRef<string[]>([]);
   const sentViewRef = useRef<string | null>(null);
@@ -828,6 +831,7 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
       const nextSigungu = 'level' in next ? null : next.sigunguCode;
       triggerRef.current = trigger;
       changedRef.current = ['sidoCode', 'sigunguCode'];
+      autoRegionRef.current = trigger === 'initial';
       setSidoCode(nextSido);
       setSigunguCode(nextSigungu);
       setAreaCode(null);
@@ -1463,6 +1467,13 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
     setShowSuggest(false);
     triggerRef.current = 'submit';
     changedRef.current = ['keyword'];
+    if (keywordInput.trim() && autoRegionRef.current) {
+      autoRegionRef.current = false;
+      changedRef.current = ['keyword', 'sidoCode', 'sigunguCode'];
+      setSidoCode(null);
+      setSigunguCode(null);
+      setAreaCode(null);
+    }
     setKeyword(keywordInput.trim());
     setGeo(null);
     setPage(0);

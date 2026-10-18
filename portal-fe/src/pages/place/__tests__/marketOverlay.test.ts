@@ -23,6 +23,11 @@ describe('market overlay model', () => {
     const named = buildMarketOverlay({ data: { ...overlayData, stores }, zoom: 19, selection: { numbers: new Map([[3, 1]]) } });
     expect(named.markers.map(marker => marker.text).sort()).toEqual(['1 · Shop 3', 'Shop 1', 'Shop 2', 'Shop 4']);
   });
+  it('puts the market\'s own stall number before a named pin, ahead of the list ordinal', () => {
+    const stores = [shop(1, 37.5, 127, { storeNo: '5-21호' }), shop(3, 37.51, 127.01)];
+    const named = buildMarketOverlay({ data: { ...overlayData, stores }, zoom: 19, selection: { numbers: new Map([[1, 1], [3, 2]]) } });
+    expect(named.markers.map(marker => marker.text).sort()).toEqual(['2 · Shop 3', '5-21호 · Shop 1']);
+  });
   it('derives drawing-only hulls from IN coordinates without changing classification or response', () => {
     const before = JSON.stringify(overlayData); const model = buildMarketOverlay({ data: overlayData, zoom: 19 });
     expect(model.marketPolygon!).toMatchObject({ key: 'market', fillOpacity: .12, strokeWeight: 1.5 });

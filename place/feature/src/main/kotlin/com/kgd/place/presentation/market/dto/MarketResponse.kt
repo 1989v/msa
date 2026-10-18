@@ -2,6 +2,7 @@ package com.kgd.place.presentation.market.dto
 
 import com.kgd.place.application.market.usecase.*
 import com.kgd.place.application.market.dto.GoodPriceProjection
+import com.kgd.place.application.market.dto.MarketStoreNumberProjection
 import com.kgd.place.domain.market.model.GoodPriceMenu
 import com.kgd.place.domain.market.model.Market
 import com.kgd.place.domain.market.model.MarketActorKind
@@ -53,6 +54,7 @@ data class MarketResponse(val market: Info, val zones: List<Zone>, val stores: L
         val nearby: Boolean = false,
         val tourMenu: MarketTourMenuUseCase.Menu? = null,
         val nameEn: String? = null, val categoryEn: String? = null, val itemsEn: String? = null,
+        val storeNo: String? = null,
     )
 
     companion object {
@@ -75,6 +77,7 @@ data class MarketResponse(val market: Info, val zones: List<Zone>, val stores: L
                     goodPrice = GoodPriceProjection.from(source.goodPriceRaw)?.let {
                         GoodPrice(it.category, it.menus, source.goodPriceMatchedBy)
                     },
+                    storeNo = MarketStoreNumberProjection.from(source, result.market.name),
                 )
             }, boundary = result.boundary?.view(), paths = result.paths.map { it.view() }, entrances = result.entrances.map { it.view().copy(pathId = it.viaPathId?.takeIf { id -> result.paths.any { path -> path.id == id } }) },
             nearbyRadiusMetres = result.nearbyRadiusMetres,

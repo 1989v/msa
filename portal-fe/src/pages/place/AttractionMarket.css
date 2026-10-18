@@ -48,6 +48,8 @@
 .place-market-shops li[data-outside] { color: var(--ko-text-secondary); }
 .place-market-shops p { margin: 0.5rem 0 0; overflow-wrap: anywhere; }
 .place-market-badges { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+/* 시장이 붙인 가게 번호 — 목록 순번(채운 원)과 갈리도록 테두리만 둔다. */
+.market-store-no { display: inline-block; margin-inline-start: var(--ko-space-1); padding: 0 var(--ko-space-1); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius-asym); color: var(--ko-text-secondary); font-size: var(--ko-text-xs); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .place-market-badges span { border: 1px solid var(--ko-border-default); padding: 0.125rem 0.5rem; font-size: 0.875rem; }
 
 @media (prefers-reduced-motion: reduce) { .place-market *, .place-market *::before, .place-market *::after { transition: none; animation: none; } }

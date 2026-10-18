@@ -671,13 +671,29 @@ describe('PlacePage 계측', () => {
       expect(lastSearch()[1]).toMatchObject({ entityId: '*', screenRef: '', payload: { trigger: 'landing', total: 0 } });
     });
 
-    it('submit — 검색어 확정', async () => {
+    it('submit — 검색어 확정. 첫 진입에 자동으로 걸린 시도는 풀고 전국에서 찾는다', async () => {
       renderPage();
       await untilInitial();
       fireEvent.change(screen.getByRole('textbox'), { target: { value: ' 궁궐 ' } });
       fireEvent.click(screen.getByRole('button', { name: '검색' }));
-      await waitFor(() => expect(lastSearch()[1].payload).toMatchObject({ trigger: 'submit', term: '궁궐', changed: ['keyword'] }));
+      await waitFor(() => expect(lastSearch()[1].payload).toMatchObject({ trigger: 'submit', term: '궁궐', changed: ['keyword', 'sidoCode', 'sigunguCode'] }));
       expect(lastSearch()[1].entityId).toBe('궁궐');
+      expect(lastSearch()[1].screenRef).toBe('');
+      expect(vi.mocked(searchAttractions).mock.calls.at(-1)![0]).toMatchObject({ keyword: '궁궐', sidoCode: undefined });
+    });
+
+    it('submit — 사람이 고른 시도는 검색어를 넣어도 그대로 둔다', async () => {
+      renderPage();
+      await untilInitial();
+      fireEvent.click(await screen.findByRole('button', { name: /서울특별시/ }));
+      const sheet = await screen.findByRole('dialog', { name: '지역 선택' });
+      fireEvent.click(await within(sheet).findByRole('button', { name: /종로구/ }));
+      await waitFor(() => expect(lastSearch()[1]).toMatchObject({ screenRef: '11110', payload: { trigger: 'region' } }));
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: '궁궐' } });
+      fireEvent.click(screen.getByRole('button', { name: '검색' }));
+      await waitFor(() => expect(lastSearch()[1].payload).toMatchObject({ trigger: 'submit', changed: ['keyword'] }));
+      expect(lastSearch()[1].screenRef).toBe('11110');
+      expect(vi.mocked(searchAttractions).mock.calls.at(-1)![0]).toMatchObject({ keyword: '궁궐', sidoCode: '11', sigunguCode: '110' });
     });
 
     it('suggestion — 자동완성 선택은 SEARCH 한 건이고 CLICK 이 아니다. 반경만 남고 좌표는 없다', async () => {

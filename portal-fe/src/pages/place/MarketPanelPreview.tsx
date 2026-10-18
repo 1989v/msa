@@ -19,7 +19,8 @@ export default function MarketPanelPreview({ contentId, attractionId, lang }: { 
   if (!isMarket) return null;
   const href = marketMapPath(lang, attractionId);
   const label = en ? 'View market map' : '시장 지도 보기';
-  const count = data?.stores.filter(store => store.membership !== 'OUT').length;
+  // 시장 검색의 「가게 N곳」과 같은 기준 — 시장 안으로 판정된 가게.
+  const count = data?.stores.filter(store => store.membership === 'IN').length;
   return <section className="place-market-panel" aria-label={label}>
     {NAVER_MAP_KEY_ID && data && failed !== contentId && <div className="place-market-preview">
       <MarketNaverMap contentId={contentId} data={data} lang={lang} keyId={NAVER_MAP_KEY_ID} interactive={false} initialZoom={16} onActivate={() => navigate(href)} onError={() => setFailed(contentId)} />

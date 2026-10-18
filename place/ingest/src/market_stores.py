@@ -63,9 +63,21 @@ def locality(address):
     return m[1] if m else ""
 
 
+# 상가정보는 도 이름을 풀어 쓰고(경상북도) 온누리는 줄여 쓴다(경북). 필지를 견주기 전에만 같은 표기로 맞춘다 —
+# norm 에 넣으면 그것으로 만든 가게 키(key)가 바뀌어 기존 행이 새 행으로 다시 들어온다.
+PROVINCES = (("경상북도", "경북"), ("경상남도", "경남"), ("충청북도", "충북"), ("충청남도", "충남"),
+             ("전라북도", "전북"), ("전라남도", "전남"), ("강원도", "강원"), ("제주도", "제주"), ("세종특별자치시", "세종"))
+
+
 def parcel(address):
     """Whitespace-free source addresses, including 서울중구남창동49; never cross legal dong."""
-    m = re.match(r"(.+?(?:동\d+가|로\d+가|동|리|읍|면))(?=\d|$)(\d+(?:-\d+)?)?", norm(address))
+    s = norm(address)
+    for full, short in PROVINCES:
+        if s.startswith(full):
+            s = short + s[len(full):]
+    # 온누리의 「서울시 …」 표기. 광주는 경기 광주시와 겹쳐 뺀다.
+    s = re.sub(r"^(서울|부산|대구|인천|대전|울산)시(?=.+(?:구|군))", r"\1", s)
+    m = re.match(r"(.+?(?:동\d+가|로\d+가|동|리|읍|면))(?=\d|$)(\d+(?:-\d+)?)?", s)
     return (m[1], m[2] or "") if m else ("", "")
 
 
