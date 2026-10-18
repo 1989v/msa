@@ -1,0 +1,50 @@
+<!-- source: game/domain/src/main/kotlin/com/kgd/game/domain/territory/, game/feature/src/main/kotlin/com/kgd/game/, portal-fe/public/games/territory/ -->
+# Territory online — approved implementation contract
+
+User approval 2026-10-18: actual shared online world, curve movement after preview, ordinary CPU server (no GPU machine). Existing samples remain comparison artifacts. This supersedes the earlier four-direction choice for the final game. Risk L3 explicitly authorized by user's final implementation request. Deploy/publish remains separate.
+
+## Product rules
+
+- One continuously running in-memory world, default4096×4096 logical units, unit occupancy raster, sparse64×64 chunks. No gameplay seat cap. Capacity is measured, not unlimited. Server restart resets world; no offline territory retention promise.
+- Join at any time. Population target max(30, humans); bots leave as humans join and replenish after departure/death. Human death offers explicit respawn. Server-generated random valid non-overlapping spawn patches, equal49-cell start/speed16units/s. Failed spawning returns visible retry state; never overlap.
+- Continuous coordinates/heading, responsive turn cap1080degrees/s. Input held only; release stops, trail remains vulnerable. Desktop mouse hold aims; WASD/arrows normalized eight-direction intent; touch drag joystick. All players including bots use identical speed/rules. Own-land reverse is free; exposed immediate backward input stops instead of self-elimination. Other curve self-crossings remain lethal after local body clearance; swept path collision prevents tunneling.
+- Cut opponent exposed trail to eliminate owner; selfcross/worldedge/headcollision lethal. Resolve simultaneous hits independently of collection order. Death/disconnect clears owned land/trail/signs. Disconnected surviving territory stays owned after stealing. Bots actively target reachable nearby exposed enemy lines before expanding.
+- Return to own land encloses territory using owned cells and new trail as walls. Capture all enclosed cells including other owners; overlapping captures must have deterministic documented conflict behavior (neutral for same-tick competing claims). Land count/sign anchors track mutations, not wholeworld rescans.
+- Settings/help/blur stop only your input; online world keeps running and you remain vulnerable. Explain this in UI. Disconnect freezes local control and clearly shows disconnected state; no fake offline fallback. Explicit reconnect/respawn obtains fresh authoritative state.
+- Preserve sample cosmetics: color palette,3patterns,solid/dashedborder,nickname via existing server profile, max3 anchored plaintext24char signs with builtin symbols. Validate everything on server; no uploads/links/paid ads. Signs disappear if anchor stolen/death. Preferences may persist locally, authoritative placements do not.
+- Fullviewport rounded player/trails with no visible background cells, compact collapsible upperleftstats, transparent upperrighttop10 paging5/6sec with area/approxcoords, collapsed bottomright translucent minimap. Thinchevrons44pxhitareas. Existing root DESIGN tokens. Render visiblechunks only; update minimap coarsely. No global perframe ownershipscan.
+
+## Architecture and protocol
+
+- New pure domain territory simulation in game:domain; application world coordinator/usecase/ports in game:feature; HTTP/WS adapters outside application. Existing content:app host; no new service/DB/broker/dependency/GPU. Territory exact WS endpoint does not modify existing relay games' protocol (ADR0088 still applies there).
+-40Hz server fixed-step (25ms), swept path segments;10Hz snapshots. Client predicts its local held movement and reconciles authoritative positions; interpolate remote players. Bound catchup after stalls; never unbounded tick backlog.
+- Reuse existing game profile identity: HTTP short-lived one-use random ticket authenticated by existing profile resolver; cookie currently path/api/v1/games so do not rely on it reaching/ws. WS first join frame redeems ticket, never URLtoken. Profile identity/name server-derived, one active session perplayer; duplicate join explicit policy. Origin allowlist (public game/portal and localhost configured), message size/rate/sequence/finitenumber validation, staleinputlease stops movement, bounded outputbuffer/slowconsumer disconnect. No client-authoritative positions/land/death/score.
+- Proposed API POST/api/v1/games/territory/tickets; no-store response ApiResponse with ticket/expiry/wsPath. Existing guest profile creation remains explicit via existing API/UI. Test identity and replay/expiry. A same-origin local launcher may use test-only injected profile stub; production must never accept that bypass.
+- WS version1 JSON. C→S:join(ticket,version),input(seq,moving,angle),respawn,cosmetics,placeSign,removeSign,ping. S→C:welcome(self/worldparameters),state(tick,ack,self,nearbyplayers,changedchunks,removedchunks,top10,population,coarsemap,status),error(code),pong. Exact DTO schemas/examples written by implementation before adaptercoding in protocol.md. Clients do not choose arbitrary viewbounds; neighborhood follows authoritativeplayer, bounded radius.
+- Chunk revision syncing: send initial nearby terrain then onlychanged chunks, evict leavingview, include owners'appearance for visibleland even ifowner isremote. Bound initialbatch/frame and recover new/reconnected clients without losingterrain. Rankings/coarsemap frequency lower thanmovement. Server output is backpressure-aware and cannot holdworldsimulationlock for networkIO.
+
+## CPU and memory design
+
+- No4096² allocation/scan each tick or capture. Sparsechunks forownership/trails and incrementalarea counts. Head/trail spatial queries and budgetedbotplanning; noallworldperbotsearch.
+- Capture work uses conservative bounds containing owner's complete land bounds+newtrail (not merelytrailbbox which can misclassify openregions), incrementallyprocessed cell budget perworldtick. No boundingbox truncation silently changesownership. Mutations during multi-tick capture must invalidate/revalidate beforecommit; never overwrite laterlandchanges from stale result. Largecommit itself must also be bounded/atomic via testedtransaction strategy or conservative stagedprocessing, not hiddenfullworldloop. Report chosenalgorithm/tradeoffs before implementation if materiallydifferent.
+- Admission not limited to100 bygameplay. Resource budgets prevent unbounded queues/tickets/pendingjoins. Exhaustion visible; neverclaiminfinitecapacity.
+- Benchmark default4096 world100human-equivalent inputs plusAIwhenapplicable, crowdedtrailattack, simultaneouslargeclosures, chunkserialization/fanout. Recordp50/p95/max tick, capturelatency, heap, bytes/sec and machine/runtime. Targetp95 simulation+snapshotproduction<25ms and boundedcapturework; not a promise on untestedcheapserver. Also100real WSconnections localintegration; noGPU. Failure oftarget means optimize/report, not silentlyreduceplayers/map.
+
+## Verification acceptance
+
+- Domain:curveequal-speed/stop/reverse/sweptcollision/cuts/selfcross/headcollision, steal+splitretention, correctconcave/openboundarycapture, simultaneouscaptures, mutationduringcapture, spawnexhaustion, botfill30 andtrailpursuit, nofullmaptickwork.
+- Transport realTomcat and independentWSclients: sameworldjoinmidgame/inputack/stoplease/reconnect/respawn/latejointerrain sync/ticket replayexpiry/profileidentity/origin/malformedrate/slowconsumer. Regression existingrelay andprofiletests.
+- ClientNode puretests forcontrols/protocol/cache/prediction; syntax/scopedlint/build asapplicable. NoUIverification claim withoutfreshscopedapproval. LocalHTTP+WS smoke usesprotocol clients, notbrowserautomation.
+- Freshcontextreview ofdiff+spec; relevantGradletests and architecturegate. Scopedcommitsonly; do notstageunrelateddirtyfiles orrootgamespointer withothercontributors'commits.
+
+### Clarifications
+
+- Persistentworldentry explicitly overrides the roomlobbystandard forTerritory only (ADR0104). No artificialroomcode/startwait.
+-4096 dimensions areworldunits; unitraster means4096²potentialcells. Server may take3×120Hzsubsteps within40Hztick forcurvature, still20/40Hz intent and10Hz snapshots. Do notrestore0.5raster.
+- Gatewayticket route must use existing gamePlayerConfig identityfilter beforepubliccatchall, strippinguntrustedidentityheaders. Narrowcodechange only; preserveothergatewayedits. HTTPticket origin/CSRF boundary andWSOriginallowlist must be tested.
+
+### Capture implementation strategy
+
+Use sparse immutable chunk payload versions under a fixed4096slot root (64×64positions). Capture snapshots root references, reads conservativecompleteownerbounds+trail+outsidepadding and performs floodfill/staging under tickbudget. Stage affectedchunkclones, ownershipcounts andsignchanges before publication. Validate everyreadchunk revision, then clone currentrootdescriptors and atomicallyswap stagedrefs (atmost4096descriptoroperations, nocellloop atcommit). Death uses ownershipgeneration tombstones forinstantsemanticclear, withbudgetedphysicalcleanup; generation changes invalidatecapturework. Same-tickclosures batchcompetingclaims to neutral. Limitconcurrentjobs/totalworkspace while permitting largevalidclosures toqueue; visiblependingstatus, trailvulnerable, inputstop whilepending. Avoidblanket globalrevisionretry underunrelatedremoteactivity; readsetvalidation islocal. This strategy requires tests fordeathduringcapture,stealing/signinvalidations andretrywithoutdoublecount.
+
+Capture review safeguards: land revisions are independent of frequent head/trail updates; only frozen closingtrail/ownland forms capturewalls. Validate relevantownerlife-generation changes aswell asreadlandrevisions. Boundpendingjobs andsnapshotworkspace, sharebudgetroundrobin andavoidretryonunrelatedremoteactivity. NewlifeID perrespawn andexplicitlife/tombstonestate letclientcache renderdeadownershipneutral; noIDreuse. Finalfairness/queuebounds recordedinprotocol/implementationevidence.
