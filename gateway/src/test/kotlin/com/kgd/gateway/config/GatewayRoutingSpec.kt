@@ -9,6 +9,9 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.cloud.gateway.route.RouteLocator
 import org.springframework.core.env.Environment
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.mock.http.server.reactive.MockServerHttpRequest
+import org.springframework.mock.web.server.MockServerWebExchange
+import reactor.core.publisher.Mono
 
 /**
  * 게이트웨이 라우트 표의 인증 경계를 고정한다.
@@ -153,6 +156,15 @@ class GatewayRoutingSpec(
     }
 
     Given("게임 계정 프로필 라우트") {
+        Then("영역 입장 티켓도 인증 경계를 거쳐 캐치올보다 먼저 매칭한다") {
+            val exchange = MockServerWebExchange.from(MockServerHttpRequest.post("/api/v1/games/territory/tickets"))
+            val match = routeLocator.routes.collectList().block().orEmpty().first { Mono.from(it.predicate.apply(exchange)).block() == true }
+            match.id shouldBe "game-player-profile"
+            client.post().uri("/api/v1/games/territory/tickets")
+                .header("Authorization", "Bearer invalid")
+                .header("X-User-Id", "1")
+                .exchange().expectStatus().isUnauthorized
+        }
         Then("/profile/me를 회원 전용 */me보다 먼저 잡는다") {
             val routes = routeLocator.routes.collectList().block().orEmpty().map { it.id }
             (routes.indexOf("game-player-profile") < routes.indexOf("game-my-record")) shouldBe true

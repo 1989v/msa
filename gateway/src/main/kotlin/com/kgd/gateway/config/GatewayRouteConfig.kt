@@ -496,7 +496,7 @@ class GatewayRouteConfig(
             }
             // /profile/me 는 아래 */me 보다 먼저 매칭해야 게스트도 프로필을 쓸 수 있다.
             .route("game-player-profile") { r ->
-                r.path("/api/v1/games/profile/me")
+                r.path("/api/v1/games/profile/me", "/api/v1/games/territory/tickets")
                     .filters { f -> f.filter(authFilter.apply(gamePlayerConfig())).stripPrefix(0) }
                     .uri(CONTENT_URI)
             }
