@@ -419,6 +419,8 @@ export const OVERLAY_CATEGORIES = ['food', 'shopping', 'stay'] as const;
 
 /** 목록 분류 칩의 행사 — 고르면 상태 칩이 나오고 시작일 순으로 받는다. */
 export const EVENT_CATEGORY = 'festival';
+/** 목록 분류 칩의 전통시장 — 쇼핑에서 떼어 둔 분류. 검색어 검색에도 더한다. */
+export const MARKET_CATEGORY = 'market';
 /** 목록 분류 칩의 여행코스 — 국문 전용(영문 서비스에는 코스 유형이 없다). */
 export const COURSE_CATEGORY = 'course';
 
@@ -434,7 +436,7 @@ export const STAY_CATEGORY = 'stay';
  *
  * 숙박(`stay`)은 여기 없다 — 「근처 숙소」 절이 그 몫을 갖는다. 둘 다에 두면 같은 숙소 카드가 한 화면에 두 번 뜬다.
  */
-export const AMENITY_CATEGORIES = ['shopping', 'food'] as const;
+export const AMENITY_CATEGORIES = ['shopping', 'food', 'market'] as const;
 
 export interface AttractionQuery {
   keyword?: string;

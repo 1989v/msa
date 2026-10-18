@@ -1107,12 +1107,12 @@ class AttractionPageRenderer(
         val CATEGORY_KO = mapOf(
             "nature" to "자연", "history" to "역사", "culture" to "문화", "leisure" to "레포츠",
             "shopping" to "쇼핑", "food" to "음식", "stay" to "숙박", "etc" to "기타",
-            "festival" to "행사", "course" to "여행코스",
+            "festival" to "행사", "course" to "여행코스", "market" to "전통시장",
         )
         val CATEGORY_EN = mapOf(
             "nature" to "Nature", "history" to "History", "culture" to "Culture", "leisure" to "Leisure",
             "shopping" to "Shopping", "food" to "Food", "stay" to "Stay", "etc" to "Etc",
-            "festival" to "Events", "course" to "Courses",
+            "festival" to "Events", "course" to "Courses", "market" to "Markets",
         )
 
         /**

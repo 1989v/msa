@@ -42,7 +42,7 @@ class NearbyAttractionsService(
 
     companion object {
         const val SIGHT_CATEGORIES = "nature,history,culture,leisure"
-        const val AMENITY_CATEGORIES = "shopping,food"
+        const val AMENITY_CATEGORIES = "shopping,food,market"
         const val STAY_CATEGORY = "stay"
         const val EVENT_CATEGORY = "festival"
         const val NEARBY_RADIUS_KM = 5.0

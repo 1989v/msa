@@ -7,6 +7,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   COURSE_CATEGORY,
+  MARKET_CATEGORY,
   EVENT_CATEGORY,
   fetchAdministrativeRegions,
   fetchAttraction,
@@ -99,7 +100,7 @@ type ListEventStatus = 'ONGOING' | 'WEEKEND' | 'UPCOMING';
 const LIST_EVENT_STATUSES: ListEventStatus[] = ['ONGOING', 'WEEKEND', 'UPCOMING'];
 /** 로그인 복귀로 되살릴 수 있는 값 — 화면이 고를 수 있는 것만 */
 const HUB_KNOWN: PlaceHubKnownValues = {
-  categories: [...SIGHT_CATEGORIES, EVENT_CATEGORY, COURSE_CATEGORY],
+  categories: [...SIGHT_CATEGORIES, EVENT_CATEGORY, MARKET_CATEGORY, COURSE_CATEGORY],
   attributes: ATTRIBUTE_CHIPS.map((c) => c.id),
   eventStatuses: LIST_EVENT_STATUSES,
   conditionParams: ATTRIBUTE_PARAMS,
@@ -155,7 +156,7 @@ const UI = {
     categories: {
       nature: '자연', history: '역사', culture: '문화', leisure: '레포츠',
       shopping: '쇼핑', food: '음식', stay: '숙박', etc: '기타',
-      festival: '행사', course: '여행코스',
+      festival: '행사', course: '여행코스', market: '전통시장',
     } as Record<string, string>,
     eventStatusGroup: '행사 상태',
     eventStatuses: { ONGOING: '진행 중', WEEKEND: '이번 주말', UPCOMING: '예정' } as Record<ListEventStatus, string>,
@@ -212,7 +213,7 @@ const UI = {
     categories: {
       nature: 'Nature', history: 'History', culture: 'Culture', leisure: 'Leisure',
       shopping: 'Shopping', food: 'Food', stay: 'Stay', etc: 'Etc',
-      festival: 'Events', course: 'Courses',
+      festival: 'Events', course: 'Courses', market: 'Markets',
     } as Record<string, string>,
     eventStatusGroup: 'Event status',
     eventStatuses: { ONGOING: 'Ongoing', WEEKEND: 'This weekend', UPCOMING: 'Upcoming' } as Record<ListEventStatus, string>,
@@ -504,8 +505,8 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
       sigunguCode: sigunguCode ?? undefined,
       // 분류를 안 고르면 관광 분류 전체 — 음식·쇼핑은 목록에 올리지 않는다.
       // 검색어가 있으면 끝나지 않은 행사도 더한다 — 「보령 머드축제」를 친 사람이 0건을 받지 않게 (ADR-0071 §5)
-      // 쇼핑도 더한다 — 전통시장이 쇼핑 분류라 「광명시장」을 친 사람이 시장을 못 받는다. 검색어가 걸러 주니 상점 목록이 되지 않는다.
-      category: category ?? (keyword ? [...SIGHT_CATEGORIES, EVENT_CATEGORY, 'shopping'] : SIGHT_CATEGORIES).join(','),
+      // 전통시장도 더한다 — 「광명시장」을 친 사람이 시장을 받게. 쇼핑(상점)은 더하지 않는다.
+      category: category ?? (keyword ? [...SIGHT_CATEGORIES, EVENT_CATEGORY, MARKET_CATEGORY] : SIGHT_CATEGORIES).join(','),
       lat: geo?.lat,
       lng: geo?.lng,
       radiusKm: geo?.radiusKm,
@@ -1727,8 +1728,8 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
                 >
                   {L.all}
                 </button>
-                {/* 행사는 모든 언어, 여행코스는 국문만 — 영문 서비스에는 코스 유형이 없어 0건 칩이 된다 */}
-                {[...SIGHT_CATEGORIES, EVENT_CATEGORY, ...(lang === 'ko' ? [COURSE_CATEGORY] : [])].map((c) => (
+                {/* 행사·전통시장은 모든 언어, 여행코스는 국문만 — 영문 서비스에는 코스 유형이 없어 0건 칩이 된다 */}
+                {[...SIGHT_CATEGORIES, EVENT_CATEGORY, MARKET_CATEGORY, ...(lang === 'ko' ? [COURSE_CATEGORY] : [])].map((c) => (
                   <button
                     key={c}
                     className={`place-chip ${category === c ? 'active' : ''}`}

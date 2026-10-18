@@ -461,15 +461,15 @@ describe('PlacePage 행사·여행코스·숙박', () => {
   const categoryChips = () =>
     Array.from(openFilters().querySelectorAll('.place-filters [data-category]')).map((el) => el.getAttribute('data-category'));
 
-  it('국문은 행사·여행코스 칩을, 영문은 행사 칩만 그린다 — 영문 코스는 0건이다', async () => {
+  it('국문은 행사·전통시장·여행코스 칩을, 영문은 행사·전통시장 칩만 그린다 — 영문 코스는 0건이다', async () => {
     renderPage();
     await screen.findByText('관광지 a1');
-    expect(categoryChips()).toEqual(['nature', 'history', 'culture', 'leisure', 'festival', 'course']);
+    expect(categoryChips()).toEqual(['nature', 'history', 'culture', 'leisure', 'festival', 'market', 'course']);
     cleanup();
 
     renderPage('/en/place');
     await screen.findByText('관광지 a1');
-    expect(categoryChips()).toEqual(['nature', 'history', 'culture', 'leisure', 'festival']);
+    expect(categoryChips()).toEqual(['nature', 'history', 'culture', 'leisure', 'festival', 'market']);
     expect(screen.queryByRole('button', { name: 'Courses' })).toBeNull();
     expect(within(openFilters()).getByRole('button', { name: 'Events' })).toBeInTheDocument();
   });
@@ -496,7 +496,7 @@ describe('PlacePage 행사·여행코스·숙박', () => {
     expect(within(group).getByRole('button', { name: '이번 주말' })).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('검색어가 있는 「전체」는 관광 분류에 행사·쇼핑(전통시장)을 더하고 NOT_ENDED 를 보낸다 — 검색어가 없으면 관광 분류만', async () => {
+  it('검색어가 있는 「전체」는 관광 분류에 행사·전통시장을 더하고 NOT_ENDED 를 보낸다 — 검색어가 없으면 관광 분류만', async () => {
     renderPage();
     await screen.findByText('관광지 a1');
     expect(calls()[0].category).toBe('nature,history,culture,leisure');
@@ -507,7 +507,7 @@ describe('PlacePage 행사·여행코스·숙박', () => {
     await waitFor(() =>
       expect(calls().at(-1)).toMatchObject({
         keyword: '보령 머드축제',
-        category: 'nature,history,culture,leisure,festival,shopping',
+        category: 'nature,history,culture,leisure,festival,market',
         eventStatus: 'NOT_ENDED',
         sort: 'relevance',
       }),

@@ -467,13 +467,13 @@ export const PLACE_BRAND_EN = 'K-Tour';
 export const PLACE_CATEGORY_KO = {
   nature: '자연', history: '역사', culture: '문화', leisure: '레포츠',
   shopping: '쇼핑', food: '음식', stay: '숙박', etc: '기타',
-  festival: '행사', course: '여행코스',
+  festival: '행사', course: '여행코스', market: '전통시장',
 };
 
 export const PLACE_CATEGORY_EN = {
   nature: 'Nature', history: 'History', culture: 'Culture', leisure: 'Leisure',
   shopping: 'Shopping', food: 'Food', stay: 'Stay', etc: 'Etc',
-  festival: 'Events', course: 'Courses',
+  festival: 'Events', course: 'Courses', market: 'Markets',
 };
 
 export function placeBrand(lang) {

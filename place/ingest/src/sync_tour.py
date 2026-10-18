@@ -107,9 +107,14 @@ LCLS2_MAP = {
 # 레코드를 지우지는 않는다 — 원천이 재분류할 수 있고, 지우면 되돌릴 근거가 사라진다.
 NON_TOURISM_LCLS3 = {"EX050800"}
 
+# 전통시장 — 쇼핑에서 떼어 제 분류로 둔다. SH06 = 정기·상설 시장, 구 소분류 A04010100(5일장)·A04010200(상설시장).
+# SH04 는 브랜드 매장(1만여 곳)이고 제목의 「시장」은 「○○시장점」·여행기 글까지 잡아 쓰지 않는다.
+MARKET_CLASSES = {"SH06"}
+MARKET_CAT3 = {"A04010100", "A04010200"}
+
 
 def categorize(cat1: str, cat2: str, lcls1: str = "", lcls2: str = "", lcls3: str = "",
-               content_type_id: str = "") -> str:
+               content_type_id: str = "", cat3: str = "") -> str:
     """**더 구체적인 코드가 이긴다** — 신/구 어느 체계인지가 아니라 얼마나 좁게 말하는지로 고른다.
 
     원천은 한 레코드에 두 체계를 같이 준다. 신 체계를 통째로 앞세우면 캠핑장 1,335건이
@@ -131,6 +136,8 @@ def categorize(cat1: str, cat2: str, lcls1: str = "", lcls2: str = "", lcls3: st
         return by_type
     if lcls3 in NON_TOURISM_LCLS3:
         return "etc"
+    if lcls2 in MARKET_CLASSES or cat3 in MARKET_CAT3:
+        return "market"
     return (LCLS2_MAP.get(lcls2)
             or CAT2_OVERRIDE.get(cat2)
             or CAT1_MAP.get(cat1)
@@ -259,7 +266,7 @@ def normalize_row(it: dict, lang: str) -> dict:
         **_ldong(it),
         "category": categorize(it.get("cat1") or "", it.get("cat2") or "",
                                it.get("lclsSystm1") or "", it.get("lclsSystm2") or "",
-                               it.get("lclsSystm3") or "", content_type_id or ""),
+                               it.get("lclsSystm3") or "", content_type_id or "", it.get("cat3") or ""),
         "cat1": it.get("cat1") or None,
         "cat2": it.get("cat2") or None,
         "cat3": it.get("cat3") or None,

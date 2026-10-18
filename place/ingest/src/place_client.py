@@ -11,6 +11,8 @@ import time
 import urllib.parse
 import urllib.request
 
+from src.sync_tour import MARKET_CAT3, MARKET_CLASSES
+
 BASE = os.environ.get("PLACE_API", "http://place:8096").rstrip("/")
 PAGE_SIZE = 200           # place 가 목록 size 를 200 으로 자른다 — 더 크게 보내도 200건씩 온다
 BULK_CHUNK = 2000          # place 가 요청당 2000건으로 제한한다
@@ -358,9 +360,6 @@ def prune_attraction_access(computed_at: str) -> dict:
     return _request("POST", "/internal/attractions/access/prune", {"computedAt": computed_at}, timeout=300)["data"]
 
 
-# SH06 = 정기·상설 시장. SH04 는 브랜드 매장(1만여 곳), 제목의 「시장」은 「○○시장점」·여행기 글까지 잡아 쓰지 않는다.
-MARKET_CLASSES = {"SH06"}
-MARKET_CAT3 = {"A04010100", "A04010200"}
 
 
 def is_market_attraction(row: dict) -> bool:
