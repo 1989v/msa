@@ -1,5 +1,5 @@
 ---
-version: 1.0.1
+version: 1.0.2
 extends: ../../../DESIGN.md
 archetype: k-heritage-arcade
 tokens:
@@ -25,7 +25,7 @@ Ink ground, giwa panels, hanji text, ocher rules and labels, yeonji primary star
 System/Pretendard sans for Korean; system monospace for metrics and technical labels. Title 24px, area/rank 30px (24px mobile), secondary labels 10–13px. No downloaded fonts.
 
 ## 4. Layout & spacing
-Desktop: flexible dominant field and 264px sidebar. At 760px, field first, 2-column map/rank below, full-width cosmetics and controls. This standalone game uses a full battlefield instead of the product's mobile SPA width. Field at least 320px high; touch arrows 60×48px, all controls at least 44px high.
+The field fills100dvw×100dvh (vw/vh fallback) with no permanent header/sidebar. Compact HUD floats upper-left, transparent TOP10 upper-right, touch pad lower-left, map toggle lower-right; safe-area insets protect controls. The map starts hidden and opens above its toggle as a translucent click-through square with transparent empty terrain. Cosmetics/settings live in a closed-by-default scrollable overlay. Opening pauses; closing does not resume. During placement, current-position/cancel controls float separately from the closed drawer. Short-landscape overrides keep placement actions above the touch pad. All interactive controls remain at least44px high; direction keys48×48px. Browser fullscreen is not required.
 
 ## 5. Elevation & depth
 No card shadows or gradients. Flat surfaces, one-pixel ocher-mixed rules, contiguous territory fills, crisp ownership borders and opaque dialog content separate layers.

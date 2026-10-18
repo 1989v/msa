@@ -19,3 +19,7 @@ Final online build is a separate future task: persistent shared world, always-op
 - [x] Expand default world to 720×720; preserve camera/movement and cache minimap/area work on terrain revisions.
 - [x] Add solid/dashed boundaries and built-in symbol signs anchored to owned cells, max 3, with paused placement/current-position/cancel, edit/remove and ownership-loss cleanup.
 - [x] Verify 33 engine/input/cosmetic/geometry/paging tests, including seeded 720 simulation. Static checks and fresh review recorded in progress.
+
+- [x] Increase shared movement to12cells/s; fill viewport with floating HUD and collapsed settings.
+- [x] Default/reset minimap closed; accessible map toggle and transparent bottom-right click-through overlay.
+- [x] Keep drawer/placement paused and placement controls reachable; non-UI shell regression plus33existing cases.
