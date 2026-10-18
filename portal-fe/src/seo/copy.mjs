@@ -226,8 +226,8 @@ export function detailMeta(lang, game) {
   return {
     title:
       lang === 'en'
-        ? `${name} — ${label} Game | ${BRAND}`
-        : `${name} — ${label} 게임 | ${BRAND}`,
+        ? `${name} — Free ${label} Browser Game | ${BRAND}`
+        : `${name} — 설치 없이 하는 ${label} 웹게임 | ${BRAND}`,
     description: clampDescription(raw.length >= 50 ? raw : `${raw} ${fallback}`.trim()),
     heading: name,
   };
@@ -303,6 +303,8 @@ export function videoGameJsonLd(lang, game) {
     url: gameDetailUrl(lang, game.slug),
     inLanguage: lang,
     genre: genreLabelOf(game.genre, lang),
+    // 검색 의도 어휘 — 장르 + 태그 + 「웹게임/브라우저 게임」. 참조작 이름은 쓰지 않는다
+    keywords: [genreLabelOf(game.genre, lang), ...(game.tags || []), ...(lang === 'en' ? ['browser game', 'web game'] : ['웹게임', '브라우저 게임'])].join(', '),
     gamePlatform: 'Web Browser',
     applicationCategory: 'Game',
     operatingSystem: 'Any',

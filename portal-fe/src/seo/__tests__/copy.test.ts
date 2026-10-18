@@ -39,6 +39,10 @@ import {
   videoGameJsonLd,
 } from '../copy.mjs';
 
+it('lists genre, tags and web-game vocabulary as keywords', () => {
+  expect(videoGameJsonLd('ko', { slug: 'test', title: 'Test', genre: 'VERSUS', tags: ['artillery', 'turn-based'] }).keywords).toBe('대전, artillery, turn-based, 웹게임, 브라우저 게임');
+  expect(videoGameJsonLd('en', { slug: 'test', title: 'Test', genre: 'ACTION' }).keywords).toBe('Action, browser game, web game');
+});
 it.each(['SINGLE', 'MULTI', null, undefined])('does not infer structured playMode from unverified catalog mode %s', (playerMode) => {
   expect(videoGameJsonLd('en', { slug: 'test', title: 'Test', genre: 'ACTION', playerMode, tags: ['multiplayer'] })).not.toHaveProperty('playMode');
 });
@@ -82,8 +86,8 @@ describe('게임 URL 규칙', () => {
 
 describe('메타 카피', () => {
   it('상세 타이틀은 언어별 포맷을 따른다', () => {
-    expect(detailMeta('ko', game).title).toBe('감자 투기장 — 액션 게임 | 1989v 게임');
-    expect(detailMeta('en', game).title).toBe('Spud Arena — Action Game | 1989v 게임');
+    expect(detailMeta('ko', game).title).toBe('감자 투기장 — 설치 없이 하는 액션 웹게임 | 1989v 게임');
+    expect(detailMeta('en', game).title).toBe('Spud Arena — Free Action Browser Game | 1989v 게임');
   });
 
   it('설명이 짧으면 장르 문구를 덧붙여 빈약한 스니펫을 막는다', () => {
