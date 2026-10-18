@@ -26,6 +26,14 @@ const scripts = () => document.querySelectorAll<HTMLScriptElement>('script[src^=
 beforeEach(() => { maps = sdk(); });
 afterEach(() => { cleanup(); scripts().forEach((s) => s.remove()); Reflect.deleteProperty(window, 'naver'); });
 describe('MarketNaverMap', () => {
+  it('opens at the fitted market zoom when no zoom is given', async () => {
+    install(); vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ width: 640, height: 360, top: 0, left: 0, right: 640, bottom: 360, x: 0, y: 0, toJSON: () => ({}) } as DOMRect);
+    render(<MarketNaverMap {...props} interactive={false} onActivate={vi.fn()} />);
+    await waitFor(() => expect(maps.Map).toHaveBeenCalledOnce());
+    // 세 가게가 십여 m 안에 있다 — 가장 가까운 줌으로 연다
+    expect(maps.Map).toHaveBeenCalledWith(expect.any(HTMLElement), expect.objectContaining({ zoom: 19 }));
+    vi.restoreAllMocks();
+  });
   it('disables gestures and controls for a zoom-16 preview, activates pins and polygons without selection or viewport reports', async () => {
     install(); const onActivate = vi.fn(); const onSelect = vi.fn(); const onViewportChange = vi.fn();
     const { container } = render(<MarketNaverMap {...props} interactive={false} initialZoom={16} onActivate={onActivate} onSelect={onSelect} onViewportChange={onViewportChange} />);

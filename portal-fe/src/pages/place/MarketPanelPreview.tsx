@@ -23,7 +23,7 @@ export default function MarketPanelPreview({ contentId, attractionId, lang }: { 
   const count = data?.stores.filter(store => store.membership === 'IN').length;
   return <section className="place-market-panel" aria-label={label}>
     {NAVER_MAP_KEY_ID && data && failed !== contentId && <div className="place-market-preview">
-      <MarketNaverMap contentId={contentId} data={data} lang={lang} keyId={NAVER_MAP_KEY_ID} interactive={false} initialZoom={16} onActivate={() => navigate(href)} onError={() => setFailed(contentId)} />
+      <MarketNaverMap contentId={contentId} data={data} lang={lang} keyId={NAVER_MAP_KEY_ID} interactive={false} onActivate={() => navigate(href)} onError={() => setFailed(contentId)} />
       <Link className="place-market-preview-link" to={href} aria-label={label} tabIndex={-1} />
     </div>}
     <Link className="place-btn primary" to={href}>{label}{count ? (en ? ` · ${count} shops` : ` · 가게 ${count}곳`) : ''}</Link>

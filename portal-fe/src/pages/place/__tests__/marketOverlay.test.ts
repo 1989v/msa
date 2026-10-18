@@ -1,10 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import type { MarketResponse, MarketStore } from '../../../api/marketApi';
-import { buildMarketOverlay } from '../marketOverlay';
+import { buildMarketOverlay, marketFitZoom } from '../marketOverlay';
 const shop = (id: number, lat: number | null, lng: number | null, extra: Partial<MarketStore> = {}): MarketStore => ({ id, name: `Shop ${id}`, latitude: lat, longitude: lng, zoneId: 1, membership: 'IN', items: null, roadAddress: null, jibunAddress: null, buildingName: null, dong: null, floor: null, ho: null, categoryMajor: '음식', categoryMid: '한식', categorySub: null, sources: [], pinKind: 'EXACT', manual: false, actorKind: null, relativePosition: null, positionNote: null, ...extra });
 export const overlayData: MarketResponse = { market: { name: 'Market', marketType: 'STREET', sourceMarketType: null, storeCountRaw: null, openingCycle: null, facilities: null, attribution: null }, zones: [{ id: 1, parentId: null, kind: 'ROAD', name: 'Alley', dong: null, floor: null, children: [] }], stores: [shop(1, 37.5, 127), shop(2, 37.50001, 127.00001), shop(3, 37.5001, 127), shop(4, null, null), shop(5, 37.52, 127.02, { membership: 'OUT', nearby: true })], paths: [{ id: 1, name: 'Alley', named: true, source: 'OSM', geometry: [[37.5, 127], [37.501, 127]] }, { id: 2, name: 'Alley', named: true, source: 'OSM', geometry: [[37.5, 127], [37.502, 127]] }] };
 const bounds = { north: 37.501, south: 37.499, west: 126.999, east: 127.001 };
 describe('market overlay model', () => {
+  it('opens at the zoom where the market outline fits the box, never below the zoom that draws alleys and shops', () => {
+    const spread = (dLat: number, dLng: number) => ({ ...overlayData, stores: [shop(1, 37.5, 127), shop(2, 37.5 + dLat, 127), shop(3, 37.5, 127 + dLng), shop(4, 37.5 + dLat, 127 + dLng)] });
+    expect(marketFitZoom(spread(.001, .002), 640, 360)).toBe(18);
+    expect(marketFitZoom(spread(.00005, .00005), 640, 360)).toBe(19);
+    expect(marketFitZoom(spread(.01, .01), 640, 360)).toBe(17);
+    // OUT 가게는 윤곽에 넣지 않는다 — 시장 밖 한 곳 때문에 시장이 작아지지 않게
+    expect(marketFitZoom({ ...spread(.001, .002), stores: [...spread(.001, .002).stores, shop(9, 37.6, 127.1, { membership: 'OUT' })] }, 640, 360)).toBe(18);
+  });
   it('uses one market marker at 16, parcel clusters at 17 and individual named shops at 19', () => {
     const low = buildMarketOverlay({ data: overlayData, zoom: 16, bounds });
     expect(low.markers).toHaveLength(1); expect(low.markers[0].text).toBe('Market · 5');

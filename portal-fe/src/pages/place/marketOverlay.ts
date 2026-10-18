@@ -40,6 +40,22 @@ function screen([lat, lng]: MarketCoordinate, zoom: number) {
   const scale = 256 * 2 ** zoom;
   return { x: (lng + 180) / 360 * scale, y: (.5 - Math.log((1 + sin) / (1 - sin)) / (4 * Math.PI)) * scale };
 }
+/** 이 줌부터 골목·가게를 그린다 — 아래에서는 시장 이름 핀 하나만 둔다. */
+export const MARKET_DETAIL_ZOOM = 17;
+/** Drawn outline: the boundary, else the hull of IN stores. */
+const outlineOf = (data: MarketResponse, all: (MarketStore & Position)[]) => data.boundary?.polygon.length ? data.boundary.polygon : hull(all.filter((s) => s.membership === 'IN').map(coordinate));
+/** 시장 윤곽이 상자에 들어오는 줌 — 들어가서 바로 시장이 크게 보이게. 골목·가게가 보이는 줌 아래로는 내리지 않는다. */
+export function marketFitZoom(data: MarketResponse, width: number, height: number): number {
+  const all = data.stores.filter(hasMarketCoordinate);
+  const outline = outlineOf(data, all);
+  const points = outline.length ? outline : all.filter((s) => s.membership === 'IN').map(coordinate);
+  if (points.length < 2 || width < 1 || height < 1) return MARKET_DETAIL_ZOOM;
+  const world = points.map((p) => screen(p, 0));
+  const span = (axis: 'x' | 'y') => Math.max(...world.map((p) => p[axis])) - Math.min(...world.map((p) => p[axis]));
+  // 가장자리에 여백 20% — 윤곽이 화면 끝에 붙지 않게
+  const fit = Math.floor(Math.log2(Math.min(width * .8 / span('x'), height * .8 / span('y'))));
+  return Math.max(MARKET_DETAIL_ZOOM, Math.min(19, fit));
+}
 /** 화면 안 가게가 이보다 많으면 줌 19 이상이어도 묶음을 유지한다 — 남대문은 줌 19 한 화면에 790곳이 들어온다. */
 const INDIVIDUAL_LIMIT = 150;
 const inside = (store: Position, bounds?: MarketBounds) => !bounds || (store.latitude >= bounds.south && store.latitude <= bounds.north && (bounds.west <= bounds.east ? store.longitude >= bounds.west && store.longitude <= bounds.east : store.longitude >= bounds.west || store.longitude <= bounds.east));
@@ -52,7 +68,7 @@ export function buildMarketOverlay({ data, zoom, bounds, selection = {}, lang = 
 }): MarketOverlay {
   const paths = data.paths ?? [];
   const all = data.stores.filter(hasMarketCoordinate);
-  const polygon = data.boundary?.polygon.length ? data.boundary.polygon : hull(all.filter((s) => s.membership === 'IN').map(coordinate));
+  const polygon = outlineOf(data, all);
   const centre = centreOf(polygon.length ? polygon : all.length ? all.map(coordinate) : paths.flatMap((p) => p.geometry).concat((data.entrances ?? []).map((e) => [e.lat, e.lng])));
   const model: MarketOverlay = { centre, marketPolygon: null, alleys: [], markers: [], labels: [], userPosition: null, focus: null };
   if (polygon.length >= 3) model.marketPolygon = { key: 'market', coordinates: polygon, color: muted, fillOpacity: .12, strokeWeight: 1.5, strokeOpacity: 1 };
@@ -83,7 +99,7 @@ export function buildMarketOverlay({ data, zoom, bounds, selection = {}, lang = 
     return { key, latitude, longitude, selectionKey, storeIds: members.map((s) => s.id), text, title: members.map((s) => marketDisplayName(s, lang)).join(', '), color, strokeColor: highlighted ? 'var(--ko-accent-primary)' : 'var(--ko-surface-0)', strokeWeight: highlighted ? 4 : 2, size, fontSize, iconPath: circlePath(size), labelOffset: { x: 0, y: 0 }, highlighted, searchMatch: members.some((s) => selection.searchStoreIds?.includes(s.id!)), textColor: label ? highlighted ? 'var(--ko-accent-text)' : color : 'var(--ko-surface-0)', label };
   };
   const visibleStores = stores.filter((s) => inside(s, bounds));
-  if (zoom <= 16 && centre) model.markers.push({ key: 'market-name', ...centre, storeIds: [], text: `${data.market.name} · ${data.stores.length}`, title: data.market.name, color: muted, strokeColor: 'var(--ko-surface-0)', strokeWeight: 2, size: 32, fontSize: 'var(--ko-text-base)', iconPath: circlePath(32), labelOffset: { x: 0, y: 20 }, textColor: muted, highlighted: false, searchMatch: false, label: true });
+  if (zoom < MARKET_DETAIL_ZOOM && centre) model.markers.push({ key: 'market-name', ...centre, storeIds: [], text: `${data.market.name} · ${data.stores.length}`, title: data.market.name, color: muted, strokeColor: 'var(--ko-surface-0)', strokeWeight: 2, size: 32, fontSize: 'var(--ko-text-base)', iconPath: circlePath(32), labelOffset: { x: 0, y: 20 }, textColor: muted, highlighted: false, searchMatch: false, label: true });
   else if (zoom >= 19 && visibleStores.length <= INDIVIDUAL_LIMIT) model.markers = visibleStores.map((s, index) => marker(`store:${s.id ?? index}`, s.latitude, s.longitude, [s], parcelFor(s).key, true));
   else {
     const visible = groupMarketPins(visibleStores).map((p) => ({ ...p, ...screen([p.latitude, p.longitude], zoom) }));

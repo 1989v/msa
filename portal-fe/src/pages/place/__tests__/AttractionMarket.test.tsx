@@ -36,7 +36,8 @@ describe('attraction market summary card', () => {
     expect(within(card).getByRole('link', { name: '전국전통시장표준데이터' })).toHaveAttribute('href', data.market.attribution!.url);
     expect(card).toHaveTextContent('공공누리 제1유형');
     expect(card).toHaveTextContent('© OpenStreetMap contributors');
-    expect(previewProps).toMatchObject({ contentId: '100', interactive: false, initialZoom: 16, lang });
+    expect(previewProps).toMatchObject({ contentId: '100', interactive: false, lang });
+    expect(previewProps.initialZoom).toBeUndefined();
     const href = `${lang === 'en' ? '/en' : ''}/attractions/7/market`;
     const links = within(card).getAllByRole('link', { name: lang === 'ko' ? '지도 전체 보기' : 'View full map' });
     expect(links).toHaveLength(2); links.forEach(link => expect(link).toHaveAttribute('href', href));

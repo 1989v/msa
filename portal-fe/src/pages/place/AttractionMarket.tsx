@@ -49,7 +49,7 @@ function MarketSection({ contentId, attractionId, data, lang }: { contentId: str
           {types.slice(0, 3).map(type => <Link key={type.key} to={`${href}?type=${type.key}`}>{type[lang]} ({type.count})</Link>)}
         </nav>
         {NAVER_MAP_KEY_ID && !previewFailed && <div className="place-market-preview">
-          <MarketNaverMap contentId={contentId} data={data} lang={lang} keyId={NAVER_MAP_KEY_ID} interactive={false} initialZoom={16} onActivate={() => navigate(href)} onError={() => setPreviewFailed(true)} />
+          <MarketNaverMap contentId={contentId} data={data} lang={lang} keyId={NAVER_MAP_KEY_ID} interactive={false} onActivate={() => navigate(href)} onError={() => setPreviewFailed(true)} />
           <Link className="place-market-preview-link" to={href} aria-label={C.fullMap} />
         </div>}
         <Link className="place-market-full-map" to={href}>{C.fullMap}</Link>

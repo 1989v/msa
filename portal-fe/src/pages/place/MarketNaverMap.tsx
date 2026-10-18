@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from 'react';
 import type { MarketResponse, MarketStore } from '../../api/marketApi';
-import { buildMarketOverlay, type MarketBounds, type OverlayMarker, type OverlaySelection } from './marketOverlay';
+import { buildMarketOverlay, MARKET_DETAIL_ZOOM, marketFitZoom, type MarketBounds, type OverlayMarker, type OverlaySelection } from './marketOverlay';
 import { marketDisplayName } from './marketView';
 import { MARKET_STORE_TYPES, marketStoreType } from './marketStoreType';
 
@@ -105,7 +105,7 @@ function pinIcon(marker: OverlayMarker): HTMLElement {
 }
 
 export default function MarketNaverMap(props: MarketNaverMapProps) {
-  const { contentId, lang, keyId, interactive = true, initialZoom = 17 } = props;
+  const { contentId, lang, keyId, interactive = true, initialZoom } = props;
   const host = useRef<HTMLDivElement>(null); const latest = useRef(props); latest.current = props;
   const identity = JSON.stringify([contentId, keyId, lang, interactive, initialZoom]);
   const [ready, setReady] = useState<{ identity: string; map: any; sdk: any } | null>(null);
@@ -118,7 +118,7 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
     const unregister = registerAuthFailure(fail);
     loadSdk(keyId, lang).then((sdk) => {
       if (disposed || errorReported || !host.current) return;
-      const centre = buildMarketOverlay({ ...latest.current, zoom: initialZoom }).centre;
+      const centre = buildMarketOverlay({ ...latest.current, zoom: MARKET_DETAIL_ZOOM }).centre;
       if (!centre) return;
       const canObserve = typeof ResizeObserver !== 'undefined';
       const create = () => {
@@ -127,7 +127,7 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
         // 상자 크기가 0 인 채로 만들면 기본 크기로 굳는다 — 크기가 잡힌 뒤에 만들고 그 크기를 넘긴다(크기를 지켜볼 수 없는 환경에선 바로 만든다).
         const sized = r.width >= 1 && r.height >= 1;
         if (!sized && canObserve) return;
-        map = new sdk.Map(host.current, { center: new sdk.LatLng(centre.latitude, centre.longitude), zoom: initialZoom, ...(sized && sdk.Size ? { size: new sdk.Size(Math.round(r.width), Math.round(r.height)) } : {}), scaleControl: interactive, mapTypeControl: false, zoomControl: interactive, ...(!interactive ? { draggable: false, scrollWheel: false, pinchZoom: false, keyboardShortcuts: false, disableDoubleClickZoom: true } : {}) });
+        map = new sdk.Map(host.current, { center: new sdk.LatLng(centre.latitude, centre.longitude), zoom: initialZoom ?? marketFitZoom(latest.current.data, r.width, r.height), ...(sized && sdk.Size ? { size: new sdk.Size(Math.round(r.width), Math.round(r.height)) } : {}), scaleControl: interactive, mapTypeControl: false, zoomControl: interactive, ...(!interactive ? { draggable: false, scrollWheel: false, pinchZoom: false, keyboardShortcuts: false, disableDoubleClickZoom: true } : {}) });
         setReady({ identity, map, sdk });
       };
       // 카드·시트·회전으로 상자가 바뀌면 지도에 새 크기를 알린다. 아직 못 만들었으면 그때 만든다.
@@ -181,7 +181,7 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
       const bounds = map.getBounds?.(); const ne = bounds?.getNE(); const sw = bounds?.getSW();
       const frame: MarketBounds | undefined = ne && sw ? { north: ne.lat(), east: ne.lng(), south: sw.lat(), west: sw.lng() } : undefined;
       const input = latest.current;
-      const zoom = Math.round(map.getZoom?.() ?? initialZoom);
+      const zoom = Math.round(map.getZoom?.() ?? initialZoom ?? MARKET_DETAIL_ZOOM);
       const model = buildMarketOverlay({ ...input, zoom, bounds: frame });
       if (interactive && reportViewport && frame) input.onViewportChange?.({ bounds: frame, zoom });
       const selectedKey = input.selection?.selectedKey ?? null;

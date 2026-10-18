@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from 'react';
-import { buildMarketOverlay, type MarketBounds } from './marketOverlay';
+import { buildMarketOverlay, MARKET_DETAIL_ZOOM, marketFitZoom, type MarketBounds } from './marketOverlay';
 import type { MarketLiveMapProps } from './MarketNaverMap';
 import { loadGoogleMaps } from './googleMaps';
 
@@ -22,7 +22,7 @@ function registerAuthFailure(callback: () => void) {
 }
 
 export default function MarketGoogleMap(props: MarketLiveMapProps) {
-  const { contentId, lang, interactive = true, initialZoom = 17 } = props;
+  const { contentId, lang, interactive = true, initialZoom } = props;
   const host = useRef<HTMLDivElement>(null); const latest = useRef(props); latest.current = props;
   const identity = JSON.stringify([contentId, lang, interactive, initialZoom]);
   const [ready, setReady] = useState<{ identity: string; map: any; sdk: any } | null>(null);
@@ -35,7 +35,7 @@ export default function MarketGoogleMap(props: MarketLiveMapProps) {
     const unregister = registerAuthFailure(fail);
     loadGoogleMaps().then((sdk) => {
       if (disposed || errorReported || !host.current) return;
-      const centre = buildMarketOverlay({ ...latest.current, zoom: initialZoom }).centre;
+      const centre = buildMarketOverlay({ ...latest.current, zoom: MARKET_DETAIL_ZOOM }).centre;
       if (!centre) return;
       const canObserve = typeof ResizeObserver !== 'undefined';
       const create = () => {
@@ -43,7 +43,7 @@ export default function MarketGoogleMap(props: MarketLiveMapProps) {
         const r = host.current.getBoundingClientRect();
         // 상자 크기가 0 인 채로 만들지 않는다 — 크기가 잡힌 뒤에 만든다(크기를 지켜볼 수 없는 환경에선 바로 만든다).
         if ((r.width < 1 || r.height < 1) && canObserve) return;
-        map = new sdk.Map(host.current, { center: { lat: centre.latitude, lng: centre.longitude }, zoom: initialZoom, ...(!interactive ? { gestureHandling: 'none', disableDefaultUI: true, keyboardShortcuts: false } : {}), clickableIcons: false, streetViewControl: false, mapTypeControl: false });
+        map = new sdk.Map(host.current, { center: { lat: centre.latitude, lng: centre.longitude }, zoom: initialZoom ?? marketFitZoom(latest.current.data, r.width, r.height), ...(!interactive ? { gestureHandling: 'none', disableDefaultUI: true, keyboardShortcuts: false } : {}), clickableIcons: false, streetViewControl: false, mapTypeControl: false });
         setReady({ identity, map, sdk });
       };
       // 상자 크기가 바뀌면 지도에 알리고 중심을 지킨다(구글은 resize 이벤트로 다시 잰다). 아직 못 만들었으면 그때 만든다.
@@ -67,7 +67,7 @@ export default function MarketGoogleMap(props: MarketLiveMapProps) {
       const bounds = map.getBounds?.(); const ne = bounds?.getNorthEast(); const sw = bounds?.getSouthWest();
       const frame: MarketBounds | undefined = ne && sw ? { north: ne.lat(), east: ne.lng(), south: sw.lat(), west: sw.lng() } : undefined;
       const input = latest.current;
-      const zoom = Math.round(map.getZoom?.() ?? initialZoom);
+      const zoom = Math.round(map.getZoom?.() ?? initialZoom ?? MARKET_DETAIL_ZOOM);
       const model = buildMarketOverlay({ ...input, zoom, bounds: frame });
       if (interactive && reportViewport && frame) input.onViewportChange?.({ bounds: frame, zoom });
       const wanted = new Set<string>();
