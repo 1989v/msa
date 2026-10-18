@@ -1,5 +1,7 @@
 # Online work handoff
 
+2026-10-18 naming follow-up: final client branding is **영역 전쟁 · zone-war**, matching the user's exact Korean/English choice. Public `/games/territory/`, internal identifiers and transport contracts remain unchanged. Scoped client Node verification: 9 tests, 9 pass, 0 fail; both repositories' scoped diff checks passed. No browser interaction, push or deployment performed for this naming change. Parent continues deployment preparation separately.
+
 2026-10-18: Approved curve online implementation completed by `/root/territory_online` (gpt-6.1-sol); parent retained design and final verification. Fresh review concluded SHIP after bounded capture, cleanup and capacity fixes.
 
 Implementation commits: root `96f07414e`; games submodule `736d9b3d`, `21ca1339`. Design: `1f7f4b029`. Preserve unrelated staged/dirty files and concurrent games changes; do not stage the root games pointer indiscriminately.

@@ -1,5 +1,7 @@
 <!-- source: game/domain/src/main/kotlin/com/kgd/game/domain/territory/, game/feature/src/main/kotlin/com/kgd/game/, portal-fe/public/games/territory/ -->
-# Territory online — approved implementation contract
+# 영역 전쟁 · zone-war — approved implementation contract
+
+Public naming approved 2026-10-18: Korean **영역 전쟁**, English **zone-war**. Preserve `/games/territory/`, existing API/WebSocket paths and internal territory identifiers. Earlier local sample names remain historical comparison artifacts.
 
 User approval 2026-10-18: actual shared online world, curve movement after preview, ordinary CPU server (no GPU machine). Existing samples remain comparison artifacts. This supersedes the earlier four-direction choice for the final game. Risk L3 explicitly authorized by user's final implementation request. Deploy/publish remains separate.
 
