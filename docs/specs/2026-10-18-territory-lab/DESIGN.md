@@ -22,7 +22,7 @@ Dominant top-down battlefield in a restrained heritage arcade shell. Read root D
 Ink ground, giwa panels, hanji text, ocher rules and labels, yeonji primary start/retry. Six dedicated territory identifiers above are sample game-state tokens, not financial status colors. Distinguish players with names, circular markers and three patterns in addition to color.
 
 ## 3. Typography
-System/Pretendard sans for Korean; system monospace for metrics and technical labels. Title 24px, area/rank 30px (24px mobile), secondary labels 10–13px. No downloaded fonts.
+System/Pretendard sans for Korean; system monospace for metrics and technical labels. Title 24px, area/rank 18px (16px mobile), secondary labels 10–13px. No downloaded fonts.
 
 ## 4. Layout & spacing
 The field fills100dvw×100dvh (vw/vh fallback) with no permanent header/sidebar. Compact HUD floats upper-left, transparent TOP10 upper-right, touch pad lower-left, map toggle lower-right; safe-area insets protect controls. The map starts hidden and opens above its toggle as a translucent click-through square with transparent empty terrain. Cosmetics/settings live in a closed-by-default scrollable overlay. Opening pauses; closing does not resume. During placement, current-position/cancel controls float separately from the closed drawer. Short-landscape overrides keep placement actions above the touch pad. All interactive controls remain at least44px high; direction keys48×48px. Browser fullscreen is not required.
@@ -47,3 +47,5 @@ Start/retry is the primary action. Buttons have hover, focus-visible and pressed
 
 ## Anchored cosmetics
 Solid/dashed perimeter choices retain the existing palette and equal mechanics. Signs use built-in flag/star/leaf symbols and short plain text on a bounded 168×19px ink label with owner-color rule/pole. Max three per human, offscreen culling, owned-cell anchors and automatic loss/death cleanup. Explicit placement status/crosshair, current-position keyboard button, cancel/Escape and intentional resume. Existing sidebar layout and token mappings are reused.
+
+Personal stats collapse independently from always reachable pause/settings/help. The matching stats/map chevrons use26px outlined rounded squares within44×44px buttons; labels are provided through title and aria-label, with expanded/controls state. Stats start/reset expanded; minimap starts/reset closed.

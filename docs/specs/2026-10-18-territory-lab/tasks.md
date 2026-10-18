@@ -23,3 +23,6 @@ Final online build is a separate future task: persistent shared world, always-op
 - [x] Increase shared movement to12cells/s; fill viewport with floating HUD and collapsed settings.
 - [x] Default/reset minimap closed; accessible map toggle and transparent bottom-right click-through overlay.
 - [x] Keep drawer/placement paused and placement controls reachable; non-UI shell regression plus33existing cases.
+
+- [x] Allow safe reverse within owned land, retain exposed-trail reverse guard under rapid/repeated input; increase shared speed to16cells/s.
+- [x] Compact/collapse personal stats independently from controls; matching accessible thin chevron map/stats toggles and reset defaults.
