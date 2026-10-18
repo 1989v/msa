@@ -504,7 +504,8 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
       sigunguCode: sigunguCode ?? undefined,
       // 분류를 안 고르면 관광 분류 전체 — 음식·쇼핑은 목록에 올리지 않는다.
       // 검색어가 있으면 끝나지 않은 행사도 더한다 — 「보령 머드축제」를 친 사람이 0건을 받지 않게 (ADR-0071 §5)
-      category: category ?? (keyword ? [...SIGHT_CATEGORIES, EVENT_CATEGORY] : SIGHT_CATEGORIES).join(','),
+      // 쇼핑도 더한다 — 전통시장이 쇼핑 분류라 「광명시장」을 친 사람이 시장을 못 받는다. 검색어가 걸러 주니 상점 목록이 되지 않는다.
+      category: category ?? (keyword ? [...SIGHT_CATEGORIES, EVENT_CATEGORY, 'shopping'] : SIGHT_CATEGORIES).join(','),
       lat: geo?.lat,
       lng: geo?.lng,
       radiusKm: geo?.radiusKm,

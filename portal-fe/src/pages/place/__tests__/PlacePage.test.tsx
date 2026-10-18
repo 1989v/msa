@@ -496,7 +496,7 @@ describe('PlacePage 행사·여행코스·숙박', () => {
     expect(within(group).getByRole('button', { name: '이번 주말' })).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('검색어가 있는 「전체」는 관광 분류에 행사를 더하고 NOT_ENDED 를 보낸다 — 검색어가 없으면 관광 분류만', async () => {
+  it('검색어가 있는 「전체」는 관광 분류에 행사·쇼핑(전통시장)을 더하고 NOT_ENDED 를 보낸다 — 검색어가 없으면 관광 분류만', async () => {
     renderPage();
     await screen.findByText('관광지 a1');
     expect(calls()[0].category).toBe('nature,history,culture,leisure');
@@ -507,7 +507,7 @@ describe('PlacePage 행사·여행코스·숙박', () => {
     await waitFor(() =>
       expect(calls().at(-1)).toMatchObject({
         keyword: '보령 머드축제',
-        category: 'nature,history,culture,leisure,festival',
+        category: 'nature,history,culture,leisure,festival,shopping',
         eventStatus: 'NOT_ENDED',
         sort: 'relevance',
       }),
