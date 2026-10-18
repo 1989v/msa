@@ -73,3 +73,31 @@ node/network failure fencing are outside this single-process design.
 Rebased onto published main `579456950` after the site and landslide releases.
 The unapplied zone-war seed is V110 so it follows production migrations V108/V109;
 no existing migration was changed. No Kotlin source conflicts occurred.
+
+## CI fixture correction — 2026-10-18
+
+Images run 39134354531 stopped before publishing images: the 100-client test
+expected 100 active movers and failed. The fixture advanced its orbit angle by
+an assumed 50ms per batch, while sending 100 sockets plus sleeping took longer.
+A controlled reproduction changed only the batch sleep to 100ms: all 100 clients
+received sequence 61 and stayed alive, but all entered `CAPTURE_PENDING` after
+their drifting paths left their 7×7 safe plots. This was a fixture trajectory
+failure rather than evidence of 100 lost connections. Reproduction evidence:
+`/private/tmp/zone-war-timing-repro.log` and `zone-war-timing-repro.xml`.
+
+The test now steers each client toward a lookahead point on its original orbit
+using its actual position. It never teleports players or changes land after the
+measured traffic starts. Both the original 50ms and delayed 100ms schedules run
+with 100 independent real WS clients. Final input receipt is synchronized and
+asserted for every client; the existing requirement that all 100 remain alive,
+moving and outside capture remains unchanged. Failure diagnostics print grouped
+life/movement/capture/status/sequence states. Production code is unchanged.
+
+`./gradlew :game:feature:test --console=plain`: `BUILD SUCCESSFUL in 51s`;
+312 tests, zero failures/errors/skips. Both schedules reported all 100 READY,
+alive, moving, not pending, and sequence 61 received. This remains a local
+transport/fixture check, not proof of production 100-player capacity. Full-suite
+evidence: `/private/tmp/zone-war-full-feature-fixed.log` and Gradle XML reports.
+Parent will rebuild content, gateway and portal-fe together because the failed
+original run published none of them. The separate broad CI DrillExportSpec
+generated-data failure is outside this game release and was not changed.
