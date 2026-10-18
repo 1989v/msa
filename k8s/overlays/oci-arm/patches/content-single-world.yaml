@@ -1,0 +1,9 @@
+# Territory has one in-memory owner. Recreate waits for old Pods to terminate;
+# maxSurge: 0 alone can still overlap a terminating process with the new one.
+- op: replace
+  path: /spec/replicas
+  value: 1
+- op: replace
+  path: /spec/strategy
+  value:
+    type: Recreate

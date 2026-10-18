@@ -78,6 +78,12 @@ patches:
   - path: patches/rolling-surge-first.yaml
     target:
       kind: Deployment
+  # ADR-0104: one in-memory territory owner; user approved brief content outage.
+  # Apply AFTER the global surge patch so old and new worlds never overlap.
+  - path: patches/content-single-world.yaml
+    target:
+      kind: Deployment
+      name: content
   # ─── 롤아웃 훈련 표식 — 날짜를 바꾸면 전 Deployment 동시 롤아웃 (ADR-0075 검증용) ──
   - path: patches/rollout-drill.yaml
     target:

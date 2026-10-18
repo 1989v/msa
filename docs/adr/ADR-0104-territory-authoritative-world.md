@@ -22,3 +22,15 @@ Alternatives: hostrelay rejected duehostdeparture/latejoin/largeauthoritativesta
 ## Lobby standard exception
 
 The user's explicit anytime-join persistentworld requirement overrides docs/standards/online-versus-lobby.md's five-entry matchlobby/no-midmatchjoin for thisgame only. Territory has one worldentry/leave/respawn flow, nohost/startcountdown/roomcode. Othergames' lobby remainsunchanged. Serverprofile naming follows laterADR0102, notolderlocalStorage-authority wording inlobbystandard.
+
+## Approved OCI rollout exception — 2026-10-18
+
+The user approved a single-server replacement, including a brief outage for the
+content-hosted game/place/blog APIs and a world reset. In the OCI overlay only,
+content remains at one replica and uses `Recreate` after the global surge patch.
+This waits for the old process to terminate before creating its replacement.
+RollingUpdate with zero surge would still allow a terminating owner to overlap.
+Other Deployments retain their existing rollout policy. Manual scaling, parallel
+content Deployments and owner handoff remain unsupported. A dedicated game host
+would require a separate design. This exception supersedes the earlier rollout
+review deferral for this approved OCI release.
