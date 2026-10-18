@@ -4,6 +4,7 @@
 <!-- source: portal-fe/scripts/prerender-seo.mjs -->
 <!-- source: blog/feature/src/main/kotlin/com/kgd/blog/infrastructure/render/BlogMetaRenderer.kt -->
 <!-- source: game/feature/src/main/resources/gamedb/migration/V108__landslide_multiplayer_tag.sql -->
+<!-- source: game/feature/src/main/resources/gamedb/migration/V109__landslide_multiplayer_json_snapshot.sql -->
 # 2026-10-18 사이트 조사 보완 작업
 
 이하 구현·브라우저·초기 build 기록은 최초 공유 작업공간 시점이다. **배포 checkout의 최신 상태와 검증은 바로 아래 절을 우선한다.**
@@ -101,3 +102,10 @@ Fresh review에서 발견한 두 캐시 결함은 재현 테스트 후 수정했
 - generic patch 뒤 portal-fe의 startup `httpGet.path`만 `/`로 override한다. readiness/liveness도 기존 실제 루트 `/`를 유지한다. probe 제거나 예산 완화, nginx 가짜 actuator는 추가하지 않는다.
 - `kubectl kustomize k8s/overlays/k3s-lite` 및 `kubectl kustomize k8s/overlays/oci-arm` 모두 성공. 렌더 YAML의 두 overlay × portal-fe/content/search/gateway **8개 조합**을 assertion으로 검증했다: FE의 startup/readiness/liveness는 `/`, JVM은 actuator 경로 유지, 모든 startup failureThreshold60 유지. `git diff --check` 통과.
 - 운영 적용·Argo sync 검증은 부모가 이어서 수행한다.
+
+## 배포 후 Landslide JSON 태그 정합성 보완
+
+- 부모가 운영 V108 적용 성공에도 API tags에 `multiplayer`가 없고 playerMode가 SINGLE인 것을 확인했다. `GameCatalogAdapters.syncTagMap`은 `Game.tags` JSON snapshot → map 단방향이며 `GameQueryService`도 JSON tags로 playerMode를 계산한다. V108의 normalized map 한 행만으로 API 원천이 바뀌지 않았음을 확인했다.
+- 이미 적용된 V108은 변경하지 않는다. 신규 V109는 landslide에 한정하여 기존 JSON 배열에 multiplayer가 없을 때만 append하고, normalized map도 INSERT IGNORE로 정합한다. 기존 태그·순서를 보존하고 null/빈 배열은 multiplayer 배열로 만든다. 다른 게임/스키마를 수정하지 않는다. 운영에서는 기존 Flyway가 V108→V109 자동 적용하며 부모가 배포/API 검증을 담당한다.
+- 실제 MySQL 8 격리 검증: `python3 game/feature/src/test/scripts/verify_landslide_tag_migration.py`. V1의 실제 game/tag/map DDL을 사용해 V108 적용 상태·이미 태그 존재·빈 배열·null·landslide 없음 5개 시나리오를 실행한다. 각 시나리오에서 V109를 두 번 실행하여 전체 game JSON/updated_at과 map의 멱등성, 기존 태그 보존, 다른 게임 JSON/updated_at/map 불변을 검사한다.
+- 실행 결과: **`MySQL 8 V109: 5 scenarios passed`**, exit0. V108 diff 없음, `git diff --check` 통과. 테스트 컨테이너는 finally에서 제거됐고 운영 DB에는 연결하지 않았다.
