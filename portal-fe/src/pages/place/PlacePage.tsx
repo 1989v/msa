@@ -1549,7 +1549,7 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
         ) : (
           <p className="place-subtitle">{placeHubIntro(lang)}</p>
         )}
-        <a className="place-btn" href={placePath(lang, '/markets')}>{lang === 'en' ? 'Find market shops & goods' : '시장 가게 찾기'}</a>
+        <a className="place-btn place-market-entry" href={placePath(lang, '/markets')}>{lang === 'en' ? 'Find market shops & goods' : '시장 가게 찾기'}</a>
       </header>
 
       <div className="place-toolbar" ref={toolbarRef}>

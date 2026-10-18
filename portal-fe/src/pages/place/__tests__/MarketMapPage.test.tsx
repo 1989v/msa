@@ -138,6 +138,11 @@ describe('dedicated market map page', () => {
     fireEvent.click(screen.getByRole('button', { name: '지도에서 보기' })); expect(mapProps.focusStoreId).toBe(2);
     fireEvent.click(screen.getByRole('button', { name: '닫기' })); expect(screen.queryByRole('dialog')).toBeNull();
   });
+  it.each([['2', '하늘가게'], ['abc', null], ['999', null]])('opens the detail panel and focuses the shop from ?store=%s', async (store, name) => {
+    mount(`/attractions/7/market?store=${store}`); await screen.findByTestId('map');
+    if (name) { expect(screen.getByRole('dialog')).toHaveTextContent(name); expect(mapProps.focusStoreId).toBe(2); }
+    else expect(screen.queryByRole('dialog')).toBeNull();
+  });
   it('cycles peek/half/full, moves only one snap for a 60px drag, keeps the sheet on pin selection, and opens half from the info window list action or search focus', async () => {
     mount(); await screen.findByRole('heading', { name: '시장' });
     const page = document.querySelector('main')!; const handle = screen.getByRole('button', { name: '가게 목록 크기 조절' });

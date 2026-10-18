@@ -36,10 +36,12 @@ function MarketMapScreen() {
   const [includeOutside, setIncludeOutside] = useState(false);
   const storeType = MARKET_STORE_TYPES.find(type => type.key === params.get('type'))?.key ?? null;
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const [focusStoreId, setFocusStoreId] = useState<number | null>(null);
+  // `?store=` 는 검색 화면 지도에서 「상세보기」로 들어올 때 — 그 가게에 맞추고 상세를 연다. 초깃값만 읽는다.
+  const [linkedStore] = useState(() => { const id = Number(params.get('store')); return Number.isSafeInteger(id) && id > 0 ? id : null; });
+  const [focusStoreId, setFocusStoreId] = useState<number | null>(linkedStore);
   const [viewport, setViewport] = useState<MarketViewport | null>(null);
   const [snap, setSnap] = useState<Snap>('peek');
-  const [detailId, setDetailId] = useState<number | null>(null);
+  const [detailId, setDetailId] = useState<number | null>(linkedStore);
   // 목록 페이지(「더 보기」)와 번호는 페이지가 갖는다 — 지도가 같은 번호를 핀에 쓴다. 조건이 바뀌면 50으로 돌아간다.
   const [page, setPage] = useState({ key: '', limit: 50 });
   const numbersCache = useRef({ key: '', map: new Map<number, number>() });

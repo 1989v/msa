@@ -1,14 +1,18 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, useLocation } from 'react-router-dom';
+import type { ComponentProps } from 'react';
+import type MarketNaverMap from '../MarketNaverMap';
 import { searchMarkets, searchMarketStores, fetchMarket, type MarketSearchResult } from '../../../api/marketApi';
 import MarketSearchPage from '../MarketSearchPage';
 
 vi.mock('../../../api/marketApi', () => ({ searchMarkets: vi.fn(), searchMarketStores: vi.fn(), fetchMarket: vi.fn() }));
 vi.mock('../../../components/Footer', () => ({ default: () => null }));
+let mapProps: ComponentProps<typeof MarketNaverMap> | null = null;
+vi.mock('../MarketNaverMap', () => ({ default: (props: ComponentProps<typeof MarketNaverMap>) => { mapProps = props; return <div data-testid="market-map" />; } }));
 vi.mock('../../../hooks/useHeritageSurface', () => ({ useHeritageSurface: vi.fn() }));
-afterEach(() => { cleanup(); vi.resetAllMocks(); });
+afterEach(() => { cleanup(); vi.resetAllMocks(); mapProps = null; });
 // The route id is the attraction id (per language), never the TourAPI contentId.
 const market = { contentId: '100', name: '광명시장', region: '경기 광명', marketType: 'STREET', storeCount: 153, attraction: { id: 7, lang: 'ko' as const } };
 const result: MarketSearchResult = { query: '', markets: [market], stores: { items: [], total: 0, page: 0, size: 20 } };
@@ -109,7 +113,7 @@ it('shows match evidence, related category distinction and English fields from s
   expect(screen.queryByText(/Signature menu/)).not.toBeInTheDocument();
 });
 
-it('uses one engine request for market and shop rows without fetching market details', async () => {
+it('uses one engine request for market and shop rows and fetches only the mapped market', async () => {
   vi.mocked(searchMarketStores).mockResolvedValue({ items: [{ storeId: 4, contentId: '100', matchedBy: 'NAME', score: 4,
     name: '국수집', nameEn: 'Noodle shop', address: '서울 중구 시장길 1', marketName: '광명시장', goodPrice: true, goodPriceMenus: ['칼국수', '수제비'],
     attraction: { id: 8, lang: 'en' } }], total: 1, markets: [{ contentId: '100', marketName: '광명시장', region: '경기 광명', marketType: 'STREET', count: 12, attraction: { id: 7, lang: 'ko' } }] });
@@ -123,7 +127,9 @@ it('uses one engine request for market and shop rows without fetching market det
   expect(searchMarketStores).toHaveBeenCalledOnce();
   expect(searchMarketStores).toHaveBeenCalledWith('noodle', { lang: 'en', page: 0, size: 20 });
   expect(searchMarkets).not.toHaveBeenCalled();
-  expect(fetchMarket).not.toHaveBeenCalled();
+  // 행마다가 아니라 옆 지도에 띄운 첫 시장 하나만 받는다.
+  await waitFor(() => expect(fetchMarket).toHaveBeenCalledOnce());
+  expect(fetchMarket).toHaveBeenCalledWith('100', false, 'en');
 });
 it.each([null, { items: [], total: 0, markets: [] }])('falls back for unavailable or empty engine results %j', async engine => {
   vi.mocked(searchMarketStores).mockResolvedValue(engine);
@@ -132,5 +138,37 @@ it.each([null, { items: [], total: 0, markets: [] }])('falls back for unavailabl
   expect(await screen.findByText('광명시장')).toBeInTheDocument();
   expect(searchMarketStores).toHaveBeenCalledOnce();
   expect(searchMarkets).toHaveBeenCalledWith('국수', 'ko', 0);
-  expect(fetchMarket).not.toHaveBeenCalled();
+  await waitFor(() => expect(fetchMarket).toHaveBeenCalledOnce());
+  expect(fetchMarket).toHaveBeenCalledWith('100', false, 'ko');
+});
+
+it('shows the first market beside search results and switches the map on a plain click', async () => {
+  const other = { ...market, contentId: '200', name: '통인시장', attraction: { id: 9, lang: 'ko' as const } };
+  vi.mocked(searchMarketStores).mockResolvedValue(null);
+  vi.mocked(searchMarkets).mockResolvedValue({ ...result, markets: [market, other], stores: { ...result.stores, total: 1, items: [{ storeId: 5, name: '기름떡볶이', items: null, category: '분식', marketContentId: '200', marketName: '통인시장', zoneName: null, latitude: null, longitude: null, attraction: { id: 9, lang: 'ko' } }] } });
+  vi.mocked(fetchMarket).mockImplementation(async contentId => ({ market: { name: contentId === '200' ? '통인시장' : '광명시장', marketType: 'STREET' }, zones: [], stores: [] }) as never);
+  mount('/markets?q=떡볶이');
+  expect(await screen.findByRole('region', { name: '광명시장 지도' })).toBeInTheDocument();
+  await waitFor(() => expect(mapProps?.contentId).toBe('100'));
+  expect(screen.getByRole('link', { name: '지도 크게 보기' })).toHaveAttribute('href', `/attractions/7/market?marketQuery=${encodeURIComponent('떡볶이')}`);
+
+  fireEvent.click(screen.getByRole('link', { name: /기름떡볶이/ }));
+  expect(screen.getByTestId('address')).toHaveTextContent('/markets?q=떡볶이');
+  expect(await screen.findByRole('region', { name: '통인시장 지도' })).toBeInTheDocument();
+  await waitFor(() => expect(mapProps?.contentId).toBe('200'));
+  expect(mapProps?.selection).toMatchObject({ storeId: 5, searchStoreIds: [5] });
+  expect(screen.getByRole('link', { name: /기름떡볶이/ })).toHaveAttribute('aria-current', 'true');
+  act(() => mapProps?.onOpenStore?.(5));
+  expect(screen.getByTestId('address')).toHaveTextContent('/attractions/9/market?store=5');
+});
+
+it('opens the full map when the result already on the map is clicked again', async () => {
+  vi.mocked(searchMarketStores).mockResolvedValue(null);
+  vi.mocked(searchMarkets).mockResolvedValue(result);
+  vi.mocked(fetchMarket).mockResolvedValue({ market: { name: '광명시장', marketType: 'STREET' }, zones: [], stores: [] } as never);
+  mount('/markets?q=광명');
+  const link = await screen.findByRole('link', { name: /광명시장 경기/ });
+  expect(link).toHaveAttribute('aria-current', 'true');
+  fireEvent.click(link);
+  expect(screen.getByTestId('address')).toHaveTextContent(`/attractions/7/market?marketQuery=${encodeURIComponent('광명')}`);
 });

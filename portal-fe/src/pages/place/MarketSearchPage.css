@@ -19,3 +19,21 @@
 .market-search-good-price-menu { font-variant-numeric: tabular-nums; }
 
 .market-search-results span[data-related] { color: var(--ko-text-secondary); }
+
+/* 검색 결과 옆 시장 지도 — 모바일은 결과 위, 데스크톱은 오른쪽 열에 붙어 스크롤을 따라온다. */
+.market-search-map { display: flex; flex-direction: column; gap: .5rem; margin-block: 0 1.5rem; min-width: 0; }
+.market-search-map header { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+.market-search-map h2 { margin: 0; font-size: 1.125rem; min-width: 0; overflow-wrap: anywhere; }
+.market-search-map header a { display: inline-flex; align-items: center; min-height: 44px; flex-shrink: 0; color: var(--ko-accent-text); }
+/* z-index: 0 이 지도 SDK 컨트롤의 높은 z-index 를 이 틀 안에 가둔다. */
+.market-search-map-frame { position: relative; z-index: 0; height: min(55vh, 26rem); overflow: hidden; border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius); background: var(--ko-surface-1); }
+.market-search-map-frame > [role='status'] { display: grid; place-items: center; height: 100%; margin: 0; color: var(--ko-text-secondary); }
+.market-search-map-frame > [role='group'] { height: 100%; }
+.market-search-map-frame > [role='group'] > div:first-child { height: 100%; aspect-ratio: auto !important; min-height: 0 !important; }
+.market-search-results a[aria-current] { background: var(--ko-accent-primary-bg); }
+@media (min-width: 1024px) {
+  .market-search-main[data-map] { width: min(100%, 84rem); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); column-gap: 2rem; }
+  .market-search-main[data-map] > :not(.market-search-map) { grid-column: 1; }
+  .market-search-main[data-map] > .market-search-map { grid-column: 2; grid-row: 1 / span 4; align-self: start; position: sticky; top: 1rem; margin: 0; }
+  .market-search-main[data-map] .market-search-map-frame { height: calc(100dvh - 6rem); }
+}
