@@ -122,17 +122,20 @@ describe('MarketNaverMap', () => {
     before = closes(); rerender(<MarketNaverMap {...props} data={{ ...data, stores }} selection={{ selectedKey: null }} onSelect={onSelect} onOpenStore={onOpenStore} onShowList={onShowList} />); expect(closes()).toBe(before + 1);
     content.remove();
   });
-  it('refills an open info window in list order with the numbers the page assigns after the click', async () => {
+  it('keeps a just-opened info window through map events that redraw before the page selects, then refills it in list order with the page numbers', async () => {
     install(); const onSelect = vi.fn();
-    const { rerender } = render(<MarketNaverMap {...props} selection={{ selectedKey: 'x' }} onSelect={onSelect} />);
+    const { rerender } = render(<MarketNaverMap {...props} selection={{}} onSelect={onSelect} />);
     await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce());
-    fireEvent.click(maps.Marker.mock.calls[0][0].icon.content);
+    fireEvent.click(maps.Marker.mock.calls[0][0].icon.content); expect(maps.infoWindow.opened).toBe(true);
+    // panBy/bounds_changed arrives with the old props (no selected key yet): the window must not be closed.
+    act(() => maps.listeners.get('bounds_changed')!()); act(() => maps.listeners.get('idle')!()); expect(maps.infoWindow.opened).toBe(true);
     const names = () => [...maps.infoWindow.content!.querySelectorAll('.place-market-naver-info-row strong')].map((node) => node.textContent);
     expect(names()).toEqual(['<Shop 1>', '<Shop 2>', '<Shop 3>']); const fills = maps.infoWindow.setContent.mock.calls.length;
     rerender(<MarketNaverMap {...props} selection={{ selectedKey: 'x', numbers: new Map([[3, 1], [2, 2]]) }} onSelect={onSelect} />);
     expect(maps.infoWindow.setContent).toHaveBeenCalledTimes(fills + 1); expect(names()).toEqual(['1<Shop 3>', '2<Shop 2>', '<Shop 1>']);
     expect(maps.infoWindow.content!.querySelectorAll('.market-list-no')).toHaveLength(2);
-    act(() => maps.listeners.get('bounds_changed')!()); expect(maps.infoWindow.setContent).toHaveBeenCalledTimes(fills + 1);
+    act(() => maps.listeners.get('bounds_changed')!()); expect(maps.infoWindow.setContent).toHaveBeenCalledTimes(fills + 1); expect(maps.infoWindow.opened).toBe(true);
+    rerender(<MarketNaverMap {...props} selection={{ selectedKey: null }} onSelect={onSelect} />); expect(maps.infoWindow.opened).toBe(false);
   });
   it('opens the info window for the focused shop only and never for a noninteractive preview', async () => {
     install(); const { rerender } = render(<MarketNaverMap {...props} selection={{ storeId: 2 }} />);

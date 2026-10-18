@@ -153,6 +153,8 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
     const info = interactive && sdk.InfoWindow ? new sdk.InfoWindow({ content: document.createElement('div'), borderWidth: 0, backgroundColor: 'transparent', disableAnchor: true, pixelOffset: { x: 0, y: -(PIN_BOX / 2 + 4) } }) : null;
     // 열린 창의 가게들과 그때 쓴 번호 Map. 번호는 클릭 뒤 페이지가 다시 그릴 때 오므로, Map 이 바뀌면 같은 창을 목록 순서·번호로 다시 채운다.
     let shown: { storeIds: (number | null)[]; at: { latitude: number; longitude: number } } | null = null; let shownNumbers: ReadonlyMap<number, number> | undefined;
+    // 선택 해제는 「있다가 없어질 때」만 본다. 클릭 직후 지도 이벤트(panBy 의 bounds_changed 등)가 페이지보다 먼저 다시 그리면 선택 키가 아직 옛 값(null)이라, 값만 보면 방금 연 창을 닫아 버린다.
+    let lastSelectedKey: string | null = latest.current.selection?.selectedKey ?? null;
     const fillInfo = () => {
       if (!info || !shown) return false;
       const current = latest.current; const numbers = current.selection?.numbers;
@@ -180,8 +182,10 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
       const zoom = Math.round(map.getZoom?.() ?? initialZoom);
       const model = buildMarketOverlay({ ...input, zoom, bounds: frame });
       if (interactive && reportViewport && frame) input.onViewportChange?.({ bounds: frame, zoom });
-      if (!input.selection?.selectedKey) { info?.close(); shown = null; }
-      else if (shown && info?.getMap?.() && input.selection.numbers !== shownNumbers) fillInfo();
+      const selectedKey = input.selection?.selectedKey ?? null;
+      if (selectedKey == null && lastSelectedKey != null) { info?.close(); shown = null; }
+      else if (selectedKey != null && shown && info?.getMap?.() && input.selection?.numbers !== shownNumbers) fillInfo();
+      lastSelectedKey = selectedKey;
       const wanted = new Set<string>();
       const sync = (key: string, value: unknown, create: () => any, click?: () => void) => {
         wanted.add(key); const signature = JSON.stringify(value); const old = overlays.get(key);
