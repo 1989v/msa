@@ -69,6 +69,7 @@
 @media (max-width: 480px) { .market-map-top { gap: var(--ko-space-1); padding-inline: var(--ko-space-1); } .market-map-top h1 { flex-basis: 5rem; } .market-map-top label { max-width: 4rem; } }
 
 @media (max-width: 1023px) {
+  .market-store-detail { width: 100%; border-left: 0; }
   /* 시트 높이는 모바일에서만 snap 을 따른다 — 데스크톱 패널은 snap 과 무관하게 지도 높이를 꽉 채운다. */
   .market-map-page[data-snap='half'] .market-map-list { height: 55%; }
   .market-map-page[data-snap='full'] .market-map-list { height: 85%; }
