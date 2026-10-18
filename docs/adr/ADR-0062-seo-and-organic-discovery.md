@@ -531,3 +531,13 @@ seven-seconds. 그중 둘은 썸네일조차 없어 텍스트 카드였다). 호
 
 **해결된 것 (목록에서 뺐다)** — deal 허브 OG(§15), 영문 카피(영문 상세 74장 전부 영문 제목),
 게임 설명 길이(meta description 중앙값 89자), place sitemap `lastmod`(§13 search 배포 후 채워짐).
+
+## 2026-10-18 보완 — 선언된 SPA 경로와 초기 404
+
+미등록 URL의 `index.html` 무조건 fallback은 초기 HTTP 200과 색인 가능 메타를 만들었다.
+FE 빌드에서 TypeScript AST로 `App.tsx`의 실제 `<Route path>` 선언과 호스트 조건을 추출해 nginx map을 생성한다.
+별도 수동 경로 목록은 두지 않는다. 정적 파일·기존 프리렌더·게임 프레임은 기존 우선순위를 유지한다.
+프리렌더가 없는 선언된 동적 경로는 SPA로 이어지고, 미등록 경로는 정적 복구 본문+noindex와 실제 404를 반환한다.
+route 선언의 리터럴이 아닌 path/알 수 없는 호스트 조건은 빌드 오류로 드러낸다.
+URL query는 경로 판정에서 제외하고 trailing slash는 React Router처럼 허용한다.
+경로 형태는 자원의 존재를 증명하지 않는다. 없는 상품·관광지·게임 ID의 응답은 기존 API/서버 상세 렌더와 클라이언트 noindex가 담당하며, nginx가 전체 상세를 404로 만들지 않는다.

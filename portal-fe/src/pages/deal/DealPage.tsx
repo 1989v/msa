@@ -9,7 +9,7 @@ import {
 import Footer from '../../components/Footer';
 import ThemeToggle from '../../components/ThemeToggle';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
-import { DEAL_AFFILIATE_NOTE, dealHubMeta } from '../../seo/copy.mjs';
+import { DEAL_AFFILIATE_NOTE, DEAL_CONDITIONS_NOTE, dealOfferKind, dealHubMeta } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import './DealPage.css';
 import AdSlot from '../../components/ads/AdSlot';
@@ -65,7 +65,7 @@ function OfferCard({ offer }: { offer: DealOffer }) {
       // 검색엔진에도 사용자에게도 사실과 다른 신호가 된다.
       rel={offer.disclosureRequired ? 'sponsored nofollow noopener' : 'nofollow noopener'}
     >
-      <span className="deal-card__merchant kh-caps">{offer.merchant}</span>
+      <span className="deal-card__merchant kh-caps">{offer.merchant} · {dealOfferKind(offer)}</span>
       <p className="deal-card__benefit">{offer.benefit}</p>
       <h3 className="deal-card__title">{offer.title}</h3>
       {offer.summary && <p className="deal-card__summary">{offer.summary}</p>}
@@ -144,6 +144,7 @@ export default function DealPage() {
           여행 · 커머스 · 구독 · 교육 · 생활 혜택을 분류별로 모았습니다.
         </p>
       </header>
+      <p className="deal-header__subtitle">{DEAL_CONDITIONS_NOTE}</p>
 
       <div className="deal-search">
         <label className="deal-search__label" htmlFor="deal-search-input">

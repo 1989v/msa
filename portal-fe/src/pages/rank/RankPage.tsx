@@ -76,10 +76,10 @@ export default function RankPage() {
       <main className="rank-main">
         {boards.isLoading && <p className="rank-state">불러오는 중…</p>}
         {boards.isError && (
-          <p className="rank-state kh-status-error">랭킹을 불러오지 못했습니다.</p>
+          <div role="alert"><p className="rank-state kh-status-error">랭킹을 불러오지 못했습니다.</p><button className="kh-button" onClick={() => void boards.refetch()} disabled={boards.isFetching}>다시 불러오기</button></div>
         )}
         {!boards.isLoading && !boards.isError && shown.length === 0 && (
-          <p className="rank-state">아직 집계된 랭킹이 없습니다. 첫 수집이 끝나면 채워집니다.</p>
+          <p className="rank-state" role="status">{scope ? '이 지역에 집계된 랭킹이 없습니다. 다른 지역을 선택해 주세요.' : '랭킹 서비스를 준비 중입니다. 아직 집계된 데이터가 없습니다.'} <a href="https://1989v.com/#services">다른 서비스 둘러보기</a></p>
         )}
 
         <div className="rank-grid">

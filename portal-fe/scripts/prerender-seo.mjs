@@ -41,6 +41,7 @@ import {
   drawMeta,
   gameDiscoveryLinks,
   gamePath,
+  gamePlayerLabel,
   gameUrl,
   genreLabelOf,
   genreMeta,
@@ -77,6 +78,9 @@ import {
   portalUrl,
   DEAL_ORIGIN,
   DEAL_BRAND,
+  DEAL_AFFILIATE_NOTE,
+  DEAL_CONDITIONS_NOTE,
+  dealOfferKind,
   DEAL_SITE_NAME,
   dealHubMeta,
   dealUrl,
@@ -200,7 +204,10 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   });
 }
 
+let footerServices = [];
+
 async function main() {
+  try { footerServices = await getJson("/api/v1/display/services"); } catch { footerServices = []; }
   const shell = await readFile(resolve(DIST, 'index.html'), 'utf8');
   if (!shell.includes('<!--seo:start-->')) {
     throw new Error('index.html 에 <!--seo:start--> 마커가 없습니다');
@@ -612,19 +619,23 @@ const SITE_LINKS = [
  * 사이트 그래프는 apex 에서 한 방향으로만 뻗은 나무였다 — 한 허브에 들어온 크롤러는
  * 거기서 끝난다. 화면의 GNB 는 JS 가 그리므로 크롤러 사본에는 없다.
  */
-export function siteFooter() {
-  const links = [
-    ...SITE_LINKS,
-    // 신뢰 링크(방침·소개·연락처·데이터 출처)는 apex 문서라 어느 호스트에서든 apex 절대 주소로 건다
-    ...TRUST_LINKS.map(({ path, label }) => [`${PORTAL_ORIGIN}${path}`, label]),
-  ]
-    .map(([href, label]) => `<a href="${escapeHtml(href)}">${escapeHtml(label)}</a>`)
-    .join(' · ');
-  return `<footer><nav>${links}</nav></footer>`;
+export function siteFooter(lang = 'ko', services = footerServices) {
+  const en = lang === 'en';
+  const english = ['1989v', 'Free web games', 'Explore Korea', 'Blog', 'Rankings', 'Deals'];
+  const links = SITE_LINKS.flatMap(([href, label], i) => {
+    if (href === RANK_ORIGIN) {
+      const rank = services.find((service) => service.code === 'rank');
+      if (!rank) return [];
+      if (rank.status !== 'OPEN') return [`<span>${en ? 'Rankings (coming soon)' : '랭킹 리더보드 (준비 중)'}</span>`];
+    }
+    return [`<a href="${escapeHtml(href)}">${escapeHtml(en ? english[i] : label)}</a>`];
+  });
+  links.push(...TRUST_LINKS.map(({ path, label, labelEn }) => `<a href="${PORTAL_ORIGIN}${path}">${escapeHtml(en ? labelEn : label)}</a>`));
+  return `<footer><nav>${links.join(' · ')}</nav></footer>`;
 }
 
-function shellBody(inner) {
-  return `<div style="max-width:1080px;margin:0 auto;padding:32px 20px;color:#dce4f5;font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif">${inner}${siteFooter()}</div>`;
+function shellBody(inner, lang = 'ko') {
+  return `<div style="max-width:1080px;margin:0 auto;padding:32px 20px;color:#dce4f5;font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif">${inner}${siteFooter(lang)}</div>`;
 }
 
 function gameLinkList(lang, games) {
@@ -711,7 +722,7 @@ export function renderDraw(shell, lang) {
       `<section aria-labelledby="draw-guide-heading"><h2 id="draw-guide-heading">${escapeHtml(copy.guideHeading)}</h2><ol>` +
       copy.steps.map((step) => `<li>${escapeHtml(step)}</li>`).join('') +
       `</ol><p>${escapeHtml(copy.privacy)}</p></section>` + renderGameDiscoveryLinks(lang) +
-      `<p><a href="${gamePath(lang)}">${lang === 'en' ? 'All browser games' : '전체 웹게임'}</a></p>`),
+      `<p><a href="${gamePath(lang)}">${lang === 'en' ? 'All browser games' : '전체 웹게임'}</a></p>`, lang),
   });
 }
 
@@ -734,7 +745,7 @@ export function renderHub(shell, lang, games) {
       `<h1>${escapeHtml(meta.heading)}</h1><p class="games-subtitle">${escapeHtml(gameHubIntro(lang))}</p>` +
         genreNav(lang, games) +
         gameLinkList(lang, games) +
-        renderGameHubGuide(lang),
+        renderGameHubGuide(lang), lang
     ),
   });
 }
@@ -762,7 +773,7 @@ export function renderGenre(shell, lang, genre, inGenre, allGames) {
     body: shellBody(
       `<h1>${escapeHtml(meta.heading)}</h1><p>${escapeHtml(meta.description)}</p>` +
         genreNav(lang, allGames) +
-        gameLinkList(lang, inGenre) + renderGameDiscoveryLinks(lang),
+        gameLinkList(lang, inGenre) + renderGameDiscoveryLinks(lang), lang
     ),
   });
 }
@@ -810,8 +821,7 @@ export function renderDetail(shell, lang, game, games) {
         instructions +
         (game.slug === 'marble-race' ? renderGameDiscoveryLinks(lang) : '') +
         '<ul>' +
-        (game.playerMode === 'MULTI' ? `<li>${lang === 'en' ? '2+ players' : '2인 이상'}</li>` :
-          game.playerMode === 'SINGLE' ? `<li>${lang === 'en' ? 'Single player' : '1인'}</li>` : '') +
+        (game.playerMode || game.slug === 'landslide' ? `<li>${escapeHtml(gamePlayerLabel(game, lang))}</li>` : '') +
         (game.estimatedMinutes != null ? `<li>${escapeHtml(lang === 'en' ? `~${game.estimatedMinutes} min` : `약 ${game.estimatedMinutes}분`)}</li>` : '') +
         (game.supportsMobile === true ? `<li>${lang === 'en' ? 'Mobile' : '모바일 지원'}</li>` : '') +
         '</ul>' +
@@ -819,7 +829,7 @@ export function renderDetail(shell, lang, game, games) {
         play +
         (related.length
           ? `<h2>${lang === 'en' ? 'More Games Like This' : '비슷한 게임 더 보기'}</h2>${gameLinkList(lang, related)}`
-          : ''),
+          : ''), lang
     ),
   });
 }
@@ -1437,7 +1447,7 @@ export function placeHubPages(shell, places, regions, { guidesListed = false } =
           // 편집 페이지는 국문만이고 published 가 있을 때만 목록이 있다 — 없는 목록(404)으로 링크하지 않는다
           (guidesListed && lang === 'ko'
             ? `<p><a href="${guidePath()}">${escapeHtml(GUIDE_INDEX_META.heading)}</a></p>`
-            : ''),
+            : ''), lang
       ),
     }).replace('</head>', `${PLACE_PHOTO_PRECONNECT}\n  </head>`);
     pages.push({ path: `prerender/_hosts/${PLACE_HOST}${lang === 'en' ? '.en' : ''}.html`, html });
@@ -1585,7 +1595,7 @@ export function renderRegionDetail(
           : '') +
         (landingLinks
           ? `<h2>${lang === 'en' ? 'Lists by feature' : '조건별 목록'}</h2><ul>${landingLinks}</ul>`
-          : ''),
+          : ''), lang
     ),
   });
 }
@@ -2037,11 +2047,8 @@ export function placeGuideSitemapEntries(guidePages = { pages: [], index: null }
 /**
  * 혜택 허브 프리렌더 (ADR-0069, 2026-08-24 색인 개방).
  *
- * 본문에 **오퍼를 텍스트로 적는다.** 링크로 적지 않는 이유가 둘이다: 정적 본문의 `/go/`
- * 링크는 robots 로 막아 둔 경로라 크롤러에게 막다른 길이고, 무엇보다 `rel="sponsored"`
- * 는 React 가 `revenueType` 을 보고 붙이는 것이라 정적 복사본에는 그 표시가 없다 —
- * 고지 없는 제휴 링크를 초기 HTML 로 내보내는 셈이 된다. 텍스트로 두면 무 JS 크롤러는
- * 카탈로그 내용을 읽고, 실제 링크는 하이드레이션 후의 정상 마크업만 존재한다.
+ * 초기 HTML 도 SPA 와 같은 /go/ 링크, rel 및 카드별 제휴 고지를 제공한다.
+ * 리다이렉터는 계속 robots 에서 제외한다.
  *
  * 언퍼러(카카오톡·슬랙·X)는 JS 를 실행하지 않으므로 OG 는 여기서 확정돼야 한다.
  */
@@ -2057,9 +2064,12 @@ export function renderDealHubHtml(shell, sections = []) {
     .map((section) => {
       const items = section.offers
         .map((o) => {
-          const line = [o.merchant, o.benefit, o.title].filter(Boolean).join(' · ');
+          const line = [dealOfferKind(o), o.merchant, o.benefit, o.title].filter(Boolean).join(' · ');
           const summary = o.summary ? ` ${o.summary}` : '';
-          return `<li>${escapeHtml(line)}${escapeHtml(summary)}</li>`;
+          const rel = o.disclosureRequired ? 'sponsored nofollow noopener' : 'nofollow noopener';
+          const disclosure = o.disclosureRequired ? ` <span>${escapeHtml(DEAL_AFFILIATE_NOTE)}</span>` : '';
+          const href = `/go/${encodeURIComponent(o.slug)}`;
+          return `<li><a href="${escapeHtml(href)}" rel="${rel}" target="_blank">${escapeHtml(line)}${escapeHtml(summary)}${disclosure}</a></li>`;
         })
         .join('');
       return `<h2>${escapeHtml(section.category.label)}</h2><ul>${items}</ul>`;
@@ -2078,7 +2088,7 @@ export function renderDealHubHtml(shell, sections = []) {
       websiteJsonLd({ name: DEAL_SITE_NAME, url: DEAL_ORIGIN }),
     ],
     body: shellBody(
-      `<h1>${escapeHtml(DEAL_BRAND)}</h1><p>${escapeHtml(meta.description)}</p>${body}`,
+      `<h1>${escapeHtml(DEAL_BRAND)}</h1><p>${escapeHtml(meta.description)}</p><p>${escapeHtml(DEAL_CONDITIONS_NOTE)}</p>${body}`,
     ),
   });
 }
@@ -2709,7 +2719,7 @@ export function placeMarketPages(shell) {
         lang, ...meta, canonical: placeUrl(lang, '/markets'), siteName: placeBrand(lang),
         image: ogCardUrl(PLACE_ORIGIN, 'place'), imageAlt: meta.heading,
         alternates: placeHreflangAlternates('/markets'),
-        body: shellBody(`<nav><a href="${placePath(lang)}">${escapeHtml(placeBrand(lang))}</a></nav><h1>${escapeHtml(meta.heading)}</h1><p>${escapeHtml(meta.description)}</p>`),
+        body: shellBody(`<nav><a href="${placePath(lang)}">${escapeHtml(placeBrand(lang))}</a></nav><h1>${escapeHtml(meta.heading)}</h1><p>${escapeHtml(meta.description)}</p>`, lang),
       }),
     };
   });

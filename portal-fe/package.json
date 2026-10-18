@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/render-content.mjs && vite",
-    "build": "node scripts/render-content.mjs && tsc -b && vite build && node scripts/prerender-seo.mjs && node scripts/strip-html-comments.mjs",
+    "build": "node scripts/render-content.mjs && tsc -b && vite build && node scripts/spa-routes.mjs && node scripts/prerender-seo.mjs && node scripts/strip-html-comments.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",

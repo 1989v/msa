@@ -53,7 +53,7 @@ export default function Footer({
         </p>
       </div>
 
-      {explorerOpen && <ServiceExplorer onClose={() => setExplorerOpen(false)} />}
+      {explorerOpen && <ServiceExplorer lang={lang} onClose={() => setExplorerOpen(false)} />}
     </footer>
   );
 }

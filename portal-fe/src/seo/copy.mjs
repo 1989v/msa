@@ -308,6 +308,7 @@ export function videoGameJsonLd(lang, game) {
     gamePlatform: 'Web Browser',
     applicationCategory: 'Game',
     operatingSystem: 'Any',
+    ...(game.slug === 'landslide' ? { playMode: ['SinglePlayer', 'MultiPlayer'] } : {}),
     // 개발자 이름이 시드에 따로 있으면 그것을, 없으면 운영자 본인이다
     author: game.developerName && game.developerName !== 'kgd'
       ? { '@type': 'Organization', name: game.developerName }
@@ -1910,4 +1911,18 @@ export function marketMapMeta(lang, attraction, market) {
     canonical: `${PLACE_ORIGIN}${marketMapPath(lang, id)}`,
     alternates: attraction?.alternateId ? attractionHreflangAlternates(attraction.lang, id, attraction.alternateId).map(link => ({ ...link, href: `${link.href}/market` })) : [],
   };
+}
+
+/** Verified catalog exception: Landslide supports bot practice and online duels (V93).
+ * Shared by the interactive detail and its initial HTML; other game modes keep their contract.
+ */
+export function gamePlayerLabel(game, lang = 'ko') {
+  if (game.slug === 'landslide') return lang === 'en' ? 'Solo practice · Online 1v1' : '혼자 연습 · 온라인 1대1';
+  if (game.playerMode === 'MULTI') return lang === 'en' ? '2+ players' : '2인 이상';
+  return lang === 'en' ? 'Single player' : '1인';
+}
+
+export const DEAL_CONDITIONS_NOTE = '혜택 적용 대상·최소 결제금액·기간·제외 조건은 제공처에서 확인하세요. 조건 최종 확인일은 제공되지 않습니다.';
+export function dealOfferKind(offer) {
+  return /모음|전체보기|목록|이벤트/.test(`${offer.title ?? ''} ${offer.summary ?? ''}`) ? '이벤트 모음' : '혜택 안내';
 }

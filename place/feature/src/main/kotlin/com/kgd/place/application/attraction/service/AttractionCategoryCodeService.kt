@@ -22,7 +22,15 @@ class AttractionCategoryCodeService(
     override fun findAll(lang: String?): List<SyncAttractionCategoryCodesUseCase.View> =
         repository.findAll(lang).map {
             SyncAttractionCategoryCodesUseCase.View(
-                lang = it.lang, code = it.code, depth = it.depth, parentCode = it.parentCode, name = it.name,
+                lang = it.lang, code = it.code, depth = it.depth, parentCode = it.parentCode, name = displayName(it),
             )
+        }
+    // TourAPI's English VE040200 has a known spelling error (2026-10-18).
+    // Preserve imported data; apply only this exact correction at the public code-name boundary.
+    private fun displayName(code: AttractionCategoryCode): String =
+        if (code.lang == "en" && code.code == "VE040200" && code.name == "Village Tourism Siteas") {
+            "Village Tourism Sites"
+        } else {
+            code.name
         }
 }

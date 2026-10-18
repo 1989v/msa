@@ -129,7 +129,7 @@ export default function BlogHomePage() {
           />
         )}
         {posts.isLoading && <p className="blog-status">불러오는 중…</p>}
-        {posts.isError && <p className="blog-status">글을 불러오지 못했습니다.</p>}
+        {posts.isError && <div role="alert"><p className="blog-status">글을 불러오지 못했습니다.</p><button className="blog-btn blog-btn--ghost" onClick={() => void posts.refetch()} disabled={posts.isFetching}>다시 불러오기</button></div>}
         {posts.data && posts.data.items.length === 0 && (
           <p className="blog-empty">아직 발행된 글이 없습니다.</p>
         )}

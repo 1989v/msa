@@ -338,3 +338,11 @@ describe('attractionPhone — 행동 줄의 전화 링크', () => {
     expect(attractionPhone(undefined)).toBeNull();
   });
 });
+
+import { gamePlayerLabel, websiteJsonLd } from '../copy.mjs';
+it('preserves the implemented search action and verified player labels', () => {
+ expect(JSON.stringify(websiteJsonLd())).toContain('/search?q=');
+ expect(gamePlayerLabel({ slug: 'landslide', playerMode: 'SINGLE' }, 'ko')).toBe('혼자 연습 · 온라인 1대1');
+ expect(gamePlayerLabel({ slug: 'other', playerMode: 'SINGLE' }, 'en')).toBe('Single player');
+ expect(gamePlayerLabel({ slug: 'other', playerMode: 'MULTI' }, 'ko')).toBe('2인 이상');
+});

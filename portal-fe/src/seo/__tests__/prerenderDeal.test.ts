@@ -51,9 +51,10 @@ describe('혜택 허브 프리렌더 (ADR-0069 색인 개방)', () => {
     expect(html).toContain('회원가 기준으로 추가 할인이 붙는 상시 프로모션입니다.');
   });
 
-  it('정적 본문에 /go/ 링크를 넣지 않는다 — rel="sponsored" 는 React 가 붙이므로 고지 없는 제휴 링크가 된다', () => {
-    expect(html).not.toContain('/go/');
-    expect(html).not.toContain('trip-com');
+  it('초기 링크도 카드별 제휴 고지와 sponsored 표시를 갖는다', () => {
+    expect(html).toContain('href="/go/trip-com"');
+    expect(html).toContain('rel="sponsored nofollow noopener"');
+    expect(html).toContain('제휴 링크 · 구매 시 수수료를 받습니다');
   });
 
   it('오퍼가 없는 분류는 본문에 넣지 않는다 — 빈 제목만 늘면 얇은 페이지가 된다', () => {

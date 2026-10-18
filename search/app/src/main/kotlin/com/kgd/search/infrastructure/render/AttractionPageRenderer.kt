@@ -78,7 +78,7 @@ class AttractionPageRenderer(
             feed = AttractionFeedRenderer.feedTitle(lang) to origin + AttractionFeedRenderer.feedPath(lang),
             jsonLd = listOf(primaryJsonLd(lang, doc, meta), breadcrumbJsonLd(lang, doc)),
         )
-        return compose(shell, lang, head, shellBody(attractionBody(lang, doc, meta, today)), dataScript(data))
+        return compose(shell, lang, head, shellBody(attractionBody(lang, doc, meta, today), lang), dataScript(data))
     }
 
     /** 요청 id 를 쓰지 않는다 — 경로에서 온 값을 페이지에 되돌리지 않는다. */
@@ -98,7 +98,7 @@ class AttractionPageRenderer(
         )
         val heading = if (l == EN) "Attraction not found" else "찾을 수 없는 관광지"
         val back = if (l == EN) "Explore Korea" else "한국 관광지 탐색으로"
-        return compose(shell, l, head, shellBody("<h1>$heading</h1><p><a href=\"${placePath(l)}\">$back</a></p>"))
+        return compose(shell, l, head, shellBody("<h1>$heading</h1><p><a href=\"${placePath(l)}\">$back</a></p>", l))
     }
 
     override fun fallbackPage(shell: String?): String = shell ?: MINIMAL_SHELL
@@ -573,7 +573,8 @@ class AttractionPageRenderer(
         val en = lang == EN
         val na = if (en) NOT_PROVIDED_EN else NOT_PROVIDED_KO
         val attributes = doc.attributes
-        fun lines(vararg values: String?) = values.filterNot { it.isNullOrEmpty() }.joinToString("\n")
+        fun lines(vararg values: String?) = values.filterNotNull().filter { it.isNotEmpty() }
+            .distinctBy { it.replace(Regex("\\s+"), "").trim() }.joinToString("\n")
         val closure = when (val c = attributes?.regularClosure) {
             RegularClosure.AlwaysOpen -> if (en) "Open every day" else "연중무휴"
             is RegularClosure.Weekly -> weeklyClosureLabel(en, c.closedDays)
@@ -611,7 +612,7 @@ class AttractionPageRenderer(
         // feeText 도 escapeHtml 만 — 원문 값은 위에서 이미 sourceText 를 거쳤다
         return "<dl data-place-section=\"visit-summary\">" +
             rows.joinToString("") { (label, value) ->
-                "<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(visitSummaryValue(value?.ifEmpty { null } ?: na))}</dd>"
+                "<dt>${escapeHtml(label)}</dt><dd>${visitSummaryHtml(value?.ifEmpty { null } ?: na)}</dd>"
             } +
             "</dl>"
     }
@@ -621,6 +622,16 @@ class AttractionPageRenderer(
      * 칸이 길어져 첫 화면의 길찾기를 밀어낸다. 표시 값에만 거는 규칙이다(원천·색인 원문과 다른 절은 그대로).
      * 화면 `visitSummaryValue`(placeAttributes.ts)와 같은 규칙.
      */
+    /** Preserve seasonal/source line breaks as readable list items in initial HTML. */
+    private fun visitSummaryHtml(value: String): String {
+        val lines = visitSummaryValue(value).split('\n').filter { it.isNotBlank() }
+        return if (lines.size > 1) {
+            "<ul>" + lines.joinToString("") { "<li>${escapeHtml(it)}</li>" } + "</ul>"
+        } else {
+            escapeHtml(lines.singleOrNull().orEmpty())
+        }
+    }
+
     private fun visitSummaryValue(value: String): String = value.replace(VISIT_SUMMARY_BLANK_LINES, "\n")
 
     /**
@@ -932,26 +943,36 @@ class AttractionPageRenderer(
      * prerender `shellBody` — SPA 가 마운트되면 통째로 교체되는 임시 본문. 바닥글은 호스트 사이를 잇는다.
      * 프리렌더와 다른 점: main — 본문을 `<main>` 으로 감싼다(바닥글은 밖). 화면(AttractionPage)의 랜드마크와 같다.
      */
-    private fun shellBody(inner: String): String {
-        val footer = (siteLinks() + trustLinks())
+    private fun shellBody(inner: String, lang: String): String {
+        val footer = (siteLinks(lang) + trustLinks(lang))
             .joinToString(" · ") { (href, label) -> "<a href=\"$href\">${escapeHtml(label)}</a>" }
         return "<div style=\"max-width:1080px;margin:0 auto;padding:32px 20px;color:#dce4f5;" +
             "font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif\">" +
             "<main>$inner</main><footer><nav>$footer</nav></footer></div>"
     }
 
-    /** prerender `SITE_LINKS` */
-    private fun siteLinks() = listOf(
+    /** Public cross-host links. Omit rank without display-service status; never infer OPEN. */
+    private fun siteLinks(lang: String) = if (lang == EN) listOf(
+        "https://1989v.com" to "1989v",
+        "https://game.1989v.com" to "Free web games",
+        origin to "Explore Korea",
+        "https://blog.1989v.com" to "Blog",
+        "https://deal.1989v.com" to "Deals",
+    ) else listOf(
         "https://1989v.com" to "1989v",
         "https://game.1989v.com" to "무료 웹게임",
         origin to "한국 관광지 검색",
         "https://blog.1989v.com" to "블로그",
-        "https://rank.1989v.com" to "랭킹 리더보드",
         "https://deal.1989v.com" to "혜택 링크 허브",
     )
 
-    /** copy.mjs `TRUST_LINKS` — apex 문서라 place 에서도 apex 절대 주소로 건다. 영문 상세도 국문 라벨이다 */
-    private fun trustLinks() = listOf(
+    /** copy.mjs `TRUST_LINKS` — apex 문서라 place 에서도 apex 절대 주소로 건다. 영문 상세는 같은 목적지의 영문 내비게이션 라벨이다 */
+    private fun trustLinks(lang: String) = if (lang == EN) listOf(
+        "https://1989v.com/privacy" to "Privacy policy",
+        "https://1989v.com/about" to "About",
+        "https://1989v.com/contact" to "Contact",
+        "https://1989v.com/data-sources" to "Data sources",
+    ) else listOf(
         "https://1989v.com/privacy" to "개인정보처리방침",
         "https://1989v.com/about" to "사이트 소개",
         "https://1989v.com/contact" to "연락처",

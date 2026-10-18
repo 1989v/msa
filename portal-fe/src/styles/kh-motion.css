@@ -4,8 +4,8 @@
  * 스밈(.kh-seep) · 긋기(.kh-rule-draw) · 어긋남(.kh-settle) · 찍힘(.kh-stamp) · 눌림(:active).
  *
  * 발화 계약: useReveal 훅이 컨테이너에 `data-reveal="pending" → "in"` 을 붙인다.
- * 아래 규칙은 전부 `[data-reveal]` 존재를 전제로만 숨긴다 — 속성은 JS 만 붙이므로
- * 프리렌더 HTML·무 JS 환경에서는 아무것도 숨겨지지 않는다 (SEO·no-JS 안전).
+ * 콘텐츠 불투명도는 항상 1이다. observer/애니메이션이 멈춰도 본문을 숨기지 않는다.
+ * `[data-reveal]`은 장식 transform/전환만 발화한다. 프리렌더·무 JS·관측 지연 모두 읽을 수 있다.
  *
  * 규칙: transform + opacity 만 쓴다 (blur/filter 금지 — 스며듬의 질감은
  * duration 과 easing 이 만든다). 퇴장은 fade 만, 입장의 75% 속도.
@@ -22,7 +22,7 @@
 /* ─── 스밈 — 먹이 한지에 스며들듯 떠오른다 ──────────────────────────────── */
 
 [data-reveal] .kh-seep {
-  opacity: 0;
+  opacity: 1;
   transform: translateY(8px);
   transition:
     opacity var(--kh-dur-enter) var(--kh-ease-enter),
@@ -65,7 +65,7 @@
  * 제 오프셋으로 이동한다 — 깊이가 "생기는" 순간을 보여준다. */
 
 [data-reveal] .kh-settle {
-  opacity: 0;
+  opacity: 1;
   transition: opacity var(--kh-dur-enter) var(--kh-ease-enter);
 }
 
@@ -85,7 +85,7 @@
 /* ─── 찍힘 — 도장이 눌리듯 살짝 크게 나타나 자리를 잡는다 ────────────────── */
 
 [data-reveal] .kh-stamp {
-  opacity: 0;
+  opacity: 1;
   transform: scale(1.06);
   transition:
     opacity var(--kh-dur-state) var(--kh-ease-enter),

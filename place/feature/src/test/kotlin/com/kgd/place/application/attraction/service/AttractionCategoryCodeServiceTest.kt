@@ -86,4 +86,14 @@ class AttractionCategoryCodeServiceTest : BehaviorSpec({
             }
         }
     }
+    Given("TourAPI 영어 분류명에 확인된 오타가 있을 때") {
+        val raw = AttractionCategoryCode.of("en", "VE040200", 3, "Village Tourism Siteas", "VE04")
+        val other = AttractionCategoryCode.of("en", "VE040201", 3, "Village Tourism Siteas", "VE04")
+        every { repository.findAll("en") } returns listOf(raw, other)
+        Then("정확한 코드와 원천값 조합만 표시에서 고치고 원천은 보존한다") {
+            service.findAll("en").map { it.name } shouldBe listOf("Village Tourism Sites", "Village Tourism Siteas")
+            raw.name shouldBe "Village Tourism Siteas"
+        }
+    }
+
 })

@@ -1,7 +1,7 @@
 import GameDiscoveryLinks from './GameDiscoveryLinks';
 import { gameSelectionGuide } from '../../seo/gameGuide.mjs';
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   fetchGameCollections,
   fetchGameTags,
@@ -33,6 +33,7 @@ import {
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import GameCard from './GameCard';
+import { catalogCache, type ListResult } from './catalogState';
 import PickSheet from '../../components/dispenser/PickSheet';
 import { displayTitle } from '../../api/gameApi';
 import { escapeHtml } from 'card-dispenser';
@@ -91,27 +92,40 @@ function visibleCollections(collections: GameCollection[]): GameCollection[] {
 export default function GamesPage() {
   useHeritageSurface();
   const { pathname } = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { genre: genreParam } = useParams();
   const navigate = useNavigate();
   const [collections, setCollections] = useState<GameCollection[]>([]);
   const [tags, setTags] = useState<GameTag[]>([]);
   const [catalogCounts, setCatalogCounts] = useState<Record<string, number>>({});
-  const [listResult, setListResult] = useState<{ key: string; content: GameSummary[]; error: boolean } | null>(null);
-  const [activeTag, setActiveTag] = useState<string | null>(null);
-  const [sort, setSort] = useState<GameSortKey>('trending');
+  const activeTag = searchParams.get('tag') || null;
+  const sort: GameSortKey = searchParams.get('sort') === 'new' ? 'new' : searchParams.get('sort') === 'top' ? 'top' : 'trending';
+  const requestKey = JSON.stringify([pathname, activeTag, sort]);
+  const [listResult, setListResult] = useState<ListResult | null>(() => catalogCache.get(requestKey)?.result ?? null);
+  const [retry, setRetry] = useState(0);
+  const [moreState, setMoreState] = useState<{ key: string; loading: boolean; error: boolean } | null>(null);
+  const currentKey = useRef(requestKey);
+  const requestEpoch = useRef(0);
+  const latestResult = useRef(listResult);
+  useLayoutEffect(() => { currentKey.current = requestKey; latestResult.current = listResult; }, [requestKey, listResult]);
+  function setFilter(name: string, value: string | null) {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      if (value) next.set(name, value); else next.delete(name);
+      return next;
+    });
+  }
   const [partyPool, setPartyPool] = useState<GameSummary[]>([]);
   // 뽑기 — 지금 걸린 장르·태그·정렬 목록에서 하나. 목록이 곧 후보다 (48개까지 한 번에 받는다)
   const [pickOpen, setPickOpen] = useState(false);
 
-  // 언어와 장르는 URL 이 원본 — 검색엔진이 색인할 수 있는 상태만 주소로 승격한다.
-  // (정렬·태그는 같은 게임 목록의 재배열이라 중복 콘텐츠가 되므로 로컬 상태로 둔다)
+  // Filters live in the URL for back navigation; canonical remains the unfiltered landing page.
   const lang: GameLang = pathname === '/en' || pathname.startsWith('/en/') ? 'en' : 'ko';
   const genre = genreFromSlug(genreParam) as GameGenre | null;
 
-  const requestKey = JSON.stringify([activeTag, genre, sort]);
   const loading = listResult?.key !== requestKey;
   const error = !loading && listResult?.error;
-  const games = listResult?.content ?? EMPTY_GAMES;
+  const games = !loading ? listResult?.content ?? EMPTY_GAMES : EMPTY_GAMES;
 
   const L = UI[lang];
   const SORTS: { key: GameSortKey; label: string }[] = [
@@ -140,11 +154,55 @@ export default function GamesPage() {
 
   useEffect(() => {
     let current = true;
-    listGames({ tag: activeTag ?? undefined, genre: genre ?? undefined, sort, size: 48 })
-      .then((page) => { if (current) setListResult({ key: requestKey, content: page.content, error: false }); })
-      .catch(() => { if (current) setListResult({ key: requestKey, content: [], error: true }); });
-    return () => { current = false; };
-  }, [activeTag, genre, sort, requestKey]);
+    requestEpoch.current += 1;
+    const cached = catalogCache.get(requestKey);
+    const request = cached
+      ? Promise.resolve(cached.result)
+      : listGames({ tag: activeTag ?? undefined, genre: genre ?? undefined, sort, size: 48 })
+        .then((page) => ({ ...page, key: requestKey, error: false }));
+    request.then((result) => {
+      if (!current) return;
+      setListResult(result);
+      setMoreState(null);
+      if (cached) requestAnimationFrame(() => { if (current) window.scrollTo(0, cached.scroll); });
+    }).catch(() => {
+      if (current) {
+        setListResult({ key: requestKey, content: [], number: 0, totalPages: 0, totalElements: 0, error: true });
+        setMoreState(null);
+      }
+    });
+    let scroll = cached?.scroll ?? 0;
+    const rememberScroll = () => { scroll = window.scrollY; };
+    window.addEventListener('scroll', rememberScroll, { passive: true });
+    return () => {
+      current = false;
+      window.removeEventListener('scroll', rememberScroll);
+      const result = latestResult.current;
+      if (result?.key === requestKey && !result.error) {
+        catalogCache.delete(requestKey);
+        catalogCache.set(requestKey, { result, scroll });
+        if (catalogCache.size > 20) catalogCache.delete(catalogCache.keys().next().value!);
+      }
+    };
+  }, [activeTag, genre, sort, requestKey, retry]);
+
+  async function loadMore() {
+    if (!listResult || (moreState?.key === requestKey && moreState.loading) || loading) return;
+    const key = requestKey;
+    const epoch = requestEpoch.current;
+    setMoreState({ key, loading: true, error: false });
+    try {
+      const page = await listGames({ tag: activeTag ?? undefined, genre: genre ?? undefined, sort, size: 48, page: listResult.number + 1 });
+      if (currentKey.current !== key || requestEpoch.current !== epoch) return;
+      setListResult((previous) => previous?.key === key ? {
+        ...page, key, error: false,
+        content: [...new Map([...previous.content, ...page.content].map((game) => [game.id, game])).values()],
+      } : previous);
+      setMoreState({ key, loading: false, error: false });
+    } catch {
+      if (currentKey.current === key && requestEpoch.current === epoch) setMoreState({ key, loading: false, error: true });
+    }
+  }
 
   // 태그·정렬은 카탈로그 수를 바꾸지 않는다. 페이지 길이가 아닌 전체 건수를 따로 읽는다.
   useEffect(() => {
@@ -280,7 +338,8 @@ export default function GamesPage() {
             <button
               key={s.key}
               className={`games-sort-btn ${sort === s.key ? 'active' : ''}`}
-              onClick={() => setSort(s.key)}
+              aria-pressed={sort === s.key}
+              onClick={() => setFilter('sort', s.key === 'trending' ? null : s.key)}
             >
               {s.label}
             </button>
@@ -316,7 +375,8 @@ export default function GamesPage() {
         <div className="games-tags">
           <button
             className={`game-tag-filter ${activeTag === null ? 'active' : ''}`}
-            onClick={() => setActiveTag(null)}
+            aria-pressed={activeTag === null}
+            onClick={() => setFilter('tag', null)}
           >
             {L.all}
           </button>
@@ -324,7 +384,8 @@ export default function GamesPage() {
             <button
               key={tag.slug}
               className={`game-tag-filter ${activeTag === tag.slug ? 'active' : ''}`}
-              onClick={() => setActiveTag(activeTag === tag.slug ? null : tag.slug)}
+              aria-pressed={activeTag === tag.slug}
+              onClick={() => setFilter('tag', activeTag === tag.slug ? null : tag.slug)}
             >
               {tag.name}
             </button>
@@ -344,9 +405,9 @@ export default function GamesPage() {
           </section>
         ))}
 
-      <section className="games-all" aria-label={L.allLabel}>
+      <section className="games-all" aria-label={L.allLabel} aria-busy={loading}>
         {loading && <p className="games-status">{L.loading}</p>}
-        {error && <p className="games-status">{L.error}</p>}
+        {error && <div role="alert"><p className="games-status">{L.error}</p><button className="games-sort-btn" onClick={() => { catalogCache.delete(requestKey); setListResult(null); setRetry((value) => value + 1); }}>{lang === 'en' ? 'Try again' : '다시 불러오기'}</button></div>}
         {!loading && !error && games.length === 0 && <p className="games-status">{L.empty}</p>}
 
         {genreSections
@@ -387,6 +448,13 @@ export default function GamesPage() {
               </div>
             </>
           )}
+        {!loading && !error && listResult && <p role="status" className="games-status">{games.length} / {listResult.totalElements}{lang === 'en' ? ' games' : '개'}</p>}
+        {moreState?.key === requestKey && moreState.error && <p role="alert">{L.error}</p>}
+        {!loading && !error && listResult && listResult.number + 1 < listResult.totalPages && (
+          <button className="games-sort-btn" onClick={loadMore} disabled={moreState?.key === requestKey && moreState.loading}>
+            {moreState?.key === requestKey && moreState.loading ? L.loading : lang === 'en' ? 'Load more' : '더 보기'}
+          </button>
+        )}
       </section>
 
       {genre && <GameDiscoveryLinks lang={lang} />}
@@ -426,7 +494,7 @@ export default function GamesPage() {
       {/* 목록 끝. 게임 프레임(iframe) 안에는 두지 않는다 — 조작 방해이자 정책 위반 (ADR-0076) */}
       <AdSlot placement="game-hub-end" contextKey={adContext} shape="horizontal" minHeight={90} />
 
-      <Footer />
+      <Footer lang={lang} />
       </div>
       {pickOpen && (
         <PickSheet<GameSummary>

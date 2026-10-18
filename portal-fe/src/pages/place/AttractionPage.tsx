@@ -617,7 +617,7 @@ export default function AttractionPage() {
                       {summary.rows.map((row) => (
                         <div className="place-detail-info-row" key={row.label}>
                           <dt>{row.label}</dt>
-                          <dd>{row.value}</dd>
+                          <dd>{row.value.includes('\n') ? <ul>{row.value.split(/\n+/).filter(Boolean).map((line, index) => <li key={index}>{line}</li>)}</ul> : row.value}</dd>
                         </div>
                       ))}
                     </dl>

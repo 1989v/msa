@@ -405,7 +405,7 @@ function visitSummaryValue(value: string): string {
 export function visitSummary(a: Attraction, lang: PlaceLang): VisitSummary {
   const en = lang === 'en';
   const na = NOT_PROVIDED[lang];
-  const lines = (...values: Array<string | null | undefined>) => values.filter((v): v is string => !!v).join('\n');
+  const lines = (...values: Array<string | null | undefined>) => [...new Map(values.filter((v): v is string => !!v).map((value) => [value.replace(/\s+/g, ''), value])).values()].join('\n');
   const pet =
     a.petPolicy === 'ALLOWED' ? (en ? 'Pets allowed' : '반려동물 동반 가능')
       : a.petPolicy === 'PARTIAL' ? (en ? 'Pets allowed in some areas' : '반려동물 일부 구역 동반 가능')

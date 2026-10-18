@@ -11,6 +11,7 @@ import DispenserStage, { type DispenserSkin } from '../dispenser/DispenserStage'
 import { useShownItems } from '../dispenser/useDispenser';
 import PickLine from '../dispenser/PickLine';
 import TileGrid from './TileGrid';
+import { useNearViewport } from '../../hooks/useNearViewport';
 import { useReveal } from '../../hooks/useReveal';
 import { BLOG_ORIGIN, PLACE_ORIGIN, attractionPath, blogPostUrl, gameUrl, secureImageUrl } from '../../seo/copy.mjs';
 import './Home.css';
@@ -142,16 +143,23 @@ function ServiceBlock<T>({
 
 export default function ServiceShowcase({ services }: { services: DisplayService[] | null }) {
   const reveal = useReveal();
+  const [observe, ready] = useNearViewport();
+  const sectionRef = useMemo(() => (node: HTMLElement | null) => {
+    const cleanupReveal = reveal(node);
+    const cleanupObserve = observe(node);
+    return () => { cleanupReveal?.(); cleanupObserve?.(); };
+  }, [reveal, observe]);
 
   const place = useQuery({
     queryKey: ['home', 'place'],
+    enabled: ready,
     // 서울 · 관광 분류만 — 음식·쇼핑은 목록에 올리지 않는다 (place 화면과 같은 기준)
     queryFn: () => searchAttractions({ lang: 'ko', areaCode: '1', category: 'nature,history,culture,leisure', size: 80 }),
     staleTime: STALE,
   });
-  const games = useQuery({ queryKey: ['home', 'games'], queryFn: () => listGames({ sort: 'top', size: 100 }), staleTime: STALE });
-  const posts = useQuery({ queryKey: ['home', 'posts'], queryFn: () => fetchPosts({ size: 30 }), staleTime: STALE });
-  const products = useQuery({ queryKey: ['home', 'products'], queryFn: () => fetchProducts(0, 100), staleTime: STALE });
+  const games = useQuery({ queryKey: ['home', 'games'], enabled: ready, queryFn: () => listGames({ sort: 'top', size: 100 }), staleTime: STALE });
+  const posts = useQuery({ queryKey: ['home', 'posts'], enabled: ready, queryFn: () => fetchPosts({ size: 30 }), staleTime: STALE });
+  const products = useQuery({ queryKey: ['home', 'products'], enabled: ready, queryFn: () => fetchProducts(0, 100), staleTime: STALE });
 
   // 터치 기기는 40장까지만 꽂는다 (useShownItems) — 캡션의 개수도 실제로 꽂은 수를 말한다
   const attractions = useShownItems(place.data?.attractions);
@@ -187,7 +195,7 @@ export default function ServiceShowcase({ services }: { services: DisplayService
   );
 
   return (
-    <section id="services" className="home-section" ref={reveal}>
+    <section id="services" className="home-section" ref={sectionRef}>
       <div className="home-inner">
         <div className="kh-section-head kh-rule-draw">
           <span className="kh-mono kh-index">01_</span>

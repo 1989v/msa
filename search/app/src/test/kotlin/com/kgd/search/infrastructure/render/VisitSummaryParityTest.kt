@@ -42,7 +42,7 @@ class VisitSummaryParityTest : BehaviorSpec({
         val dl = Regex("""<dl data-place-section="visit-summary">([\s\S]*?)</dl>""").find(html)?.groupValues?.get(1)
             ?: error("방문 요약 <dl> 이 없다")
         return Regex("""<dt>([\s\S]*?)</dt><dd>([\s\S]*?)</dd>""").findAll(dl)
-            .map { decodeHtml(it.groupValues[1]) to decodeHtml(it.groupValues[2]) }.toList()
+            .map { decodeHtml(it.groupValues[1]) to decodeHtml(it.groupValues[2].replace("<ul>", "").replace("</ul>", "").replace("<li>", "").replace("</li>", "\n").trimEnd()) }.toList()
     }
 
     fun badgeLine(html: String): String? =

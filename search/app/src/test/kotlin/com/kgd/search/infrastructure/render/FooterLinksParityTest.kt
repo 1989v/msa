@@ -39,10 +39,13 @@ class FooterLinksParityTest : BehaviorSpec({
             expected shouldHaveSize 10
         }
 
-        then("국·영 상세의 바닥글 링크가 골든과 순서째 같다") {
-            listOf(doc(), doc(id = "6001", lang = "en")).forEach { d ->
-                footerLinks(renderer.page(SHELL, d, TODAY)) shouldBe expected
-            }
+        then("골든의 목적지와 순서는 유지하고 각 언어와 준비 상태 라벨을 검증한다") {
+            val knownStatus = expected.filterNot { it.first == "https://rank.1989v.com" }
+            val ko = knownStatus
+            footerLinks(renderer.page(SHELL, doc(), TODAY)) shouldBe ko
+            val english = listOf("1989v", "Free web games", "Explore Korea", "Blog", "Deals", "Privacy policy", "About", "Contact", "Data sources")
+            footerLinks(renderer.page(SHELL, doc(id = "6001", lang = "en"), TODAY)) shouldBe
+                knownStatus.mapIndexed { index, (href, _) -> href to english[index] }
         }
     }
 })

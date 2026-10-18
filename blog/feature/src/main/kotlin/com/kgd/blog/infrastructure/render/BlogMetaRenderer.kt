@@ -4,6 +4,11 @@ import com.kgd.blog.application.post.dto.BlogAuthorSpace
 import com.kgd.blog.application.post.dto.BlogCrumb
 import com.kgd.blog.application.post.dto.BlogPostDetail
 import com.kgd.blog.application.post.dto.BlogPostSummary
+import org.commonmark.ext.gfm.tables.TablesExtension
+import org.commonmark.node.BlockQuote
+import org.commonmark.node.Paragraph
+import org.commonmark.node.Text
+import org.commonmark.node.SoftLineBreak
 import org.commonmark.node.HtmlBlock
 import org.commonmark.node.HtmlInline
 import org.commonmark.node.Node
@@ -28,7 +33,8 @@ class BlogMetaRenderer(
     @Value("\${blog.origin:https://blog.1989v.com}") private val origin: String,
     private val objectMapper: ObjectMapper,
 ) : BlogPageRenderPort {
-    private val parser = Parser.builder().build()
+    private val extensions = listOf(TablesExtension.create())
+    private val parser = Parser.builder().extensions(extensions).build()
 
     /**
      * 저자가 쓴 raw HTML 은 크롤러 사본에서 **버린다**. 이스케이프하면 XSS 경로는 사라지지만
@@ -40,12 +46,40 @@ class BlogMetaRenderer(
      */
     private val renderer = HtmlRenderer.builder()
         .escapeHtml(true)
-        .nodeRendererFactory {
+        .sanitizeUrls(true)
+        .extensions(extensions)
+        .nodeRendererFactory { context ->
             object : NodeRenderer {
                 override fun getNodeTypes(): Set<Class<out Node>> =
-                    setOf(HtmlBlock::class.java, HtmlInline::class.java)
+                    setOf(HtmlBlock::class.java, HtmlInline::class.java, BlockQuote::class.java)
 
-                override fun render(node: Node) = Unit
+                override fun render(node: Node) {
+                    if (node !is BlockQuote) return
+                    val paragraph = node.firstChild as? Paragraph
+                    val first = paragraph?.firstChild as? Text
+                    val match = first?.literal?.let { ALERT_HEAD.matchEntire(it) }
+                    val kind = match?.groupValues?.get(1)?.lowercase(java.util.Locale.ROOT)
+                    val label = ALERT_LABELS[kind]
+                    val writer = context.writer
+                    writer.line()
+                    writer.tag("blockquote", if (label != null) mapOf("class" to "kh-alert kh-alert--$kind") else emptyMap())
+                    if (label != null && first != null && match != null) {
+                        writer.tag("p", mapOf("class" to "kh-alert__title"))
+                        writer.text(match.groupValues[2].trim().ifBlank { label })
+                        writer.tag("/p")
+                        val following = first.next
+                        first.unlink()
+                        if (following is SoftLineBreak) following.unlink()
+                        if (paragraph.firstChild == null) paragraph.unlink()
+                    }
+                    var child = node.firstChild
+                    while (child != null) {
+                        context.render(child)
+                        child = child.next
+                    }
+                    writer.tag("/blockquote")
+                    writer.line()
+                }
             }
         }
         .build()
@@ -314,6 +348,8 @@ class BlogMetaRenderer(
         .replace("\"", "&quot;")
 
     private companion object {
+        val ALERT_HEAD = Regex("\\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)]\\s*(.*)", RegexOption.IGNORE_CASE)
+        val ALERT_LABELS = mapOf("note" to "참고", "tip" to "도움말", "important" to "중요", "warning" to "주의", "caution" to "경고")
         val SEO_BLOCK = Regex("<!--seo:start-->[\\s\\S]*?<!--seo:end-->")
 
         /** portal-fe `src/seo/copy.mjs` 의 SEO_MULTI_ATTR 과 같은 값이어야 한다 */

@@ -18,7 +18,7 @@ import './ServiceExplorer.css';
 /* 첫 열림에만 부른다 — 탐색은 세션 중 여러 번 열리는데 목록은 사실상 정적이다 */
 let cache: DisplayService[] | null = null;
 
-export default function ServiceExplorer({ onClose }: { onClose: () => void }) {
+export default function ServiceExplorer({ onClose, lang = 'ko' }: { onClose: () => void; lang?: 'ko' | 'en' }) {
   const [services, setServices] = useState<DisplayService[] | null>(cache);
   const [failed, setFailed] = useState(false);
   const [query, setQuery] = useState('');
@@ -47,16 +47,18 @@ export default function ServiceExplorer({ onClose }: { onClose: () => void }) {
     };
   }, []);
 
+  const englishNames: Record<string, string> = { game: 'Free web games', games: 'Free web games', place: 'Explore Korea', blog: 'Blog', rank: 'Rankings', deal: 'Deals', tech: 'Code dictionary', shop: 'Shop', quant: 'Trading', gifticon: 'Gift cards', commerce: 'Commerce', portfolio: 'Portfolio', ads: 'Ad network', fulfillment: 'Fulfillment' };
+  const label = (service: DisplayService) => lang === 'en' ? englishNames[service.code] ?? service.code : service.label;
   return (
-    <KhSheet label="서비스 탐색" onClose={onClose} className="kh-sheet--dialog">
+    <KhSheet label={lang === 'en' ? 'Explore services' : '서비스 탐색'} onClose={onClose} className="kh-sheet--dialog">
       <form className="kh-explorer-search" role="search" onSubmit={submitSearch}>
         <input
           className="kh-field"
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="모든 서비스에서 찾기 — 관광지 · 글 · 게임 · 개념 · 혜택 · 상품"
-          aria-label="통합 검색어"
+          placeholder={lang === 'en' ? 'Search all services' : '모든 서비스에서 찾기 — 관광지 · 글 · 게임 · 개념 · 혜택 · 상품'}
+          aria-label={lang === 'en' ? 'Search all services' : '통합 검색어'}
           enterKeyHint="search"
         />
       </form>
@@ -65,7 +67,7 @@ export default function ServiceExplorer({ onClose }: { onClose: () => void }) {
             display_service 는 런처 "위에" 전시할 것만 담으므로 런처 자신이 없다. */}
         <li>
           <a className="kh-explorer-item" href={portalHomeHref()}>
-            <span className="kh-explorer-label">1989v 홈</span>
+            <span className="kh-explorer-label">{lang === 'en' ? '1989v home' : '1989v 홈'}</span>
             <span className="kh-explorer-tagline kh-mono">service launcher</span>
           </a>
         </li>
@@ -76,15 +78,15 @@ export default function ServiceExplorer({ onClose }: { onClose: () => void }) {
                 className="kh-explorer-item"
                 href={resolveExplorerHref(service.code, service.href)}
               >
-                <span className="kh-explorer-label">{service.label}</span>
-                {service.tagline && (
+                <span className="kh-explorer-label">{label(service)}</span>
+                {lang === 'ko' && service.tagline && (
                   <span className="kh-explorer-tagline kh-mono">{service.tagline}</span>
                 )}
               </a>
             ) : (
               <div className="kh-explorer-item is-preopen" aria-disabled="true">
-                <span className="kh-explorer-label">{service.label}</span>
-                <span className="kh-explorer-badge">오픈 예정</span>
+                <span className="kh-explorer-label">{label(service)}</span>
+                <span className="kh-explorer-badge">{lang === 'en' ? 'Coming soon' : '오픈 예정'}</span>
               </div>
             )}
           </li>
@@ -92,7 +94,7 @@ export default function ServiceExplorer({ onClose }: { onClose: () => void }) {
       </ul>
       {!services && (
         <p className="kh-explorer-status" role="status">
-          {failed ? '서비스 목록을 불러오지 못했습니다.' : '불러오는 중…'}
+          {lang === 'en' ? (failed ? 'Could not load services.' : 'Loading…') : (failed ? '서비스 목록을 불러오지 못했습니다.' : '불러오는 중…')}
         </p>
       )}
     </KhSheet>

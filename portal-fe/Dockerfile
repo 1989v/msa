@@ -43,7 +43,7 @@ ENV VITE_API_URL=""
 # GIT_SHA 는 렌더가 빌드 커밋으로 찍고 아래 lib 지문도 쓴다. ARG 는 선언 이후 줄에만 보여 여기서 선언한다.
 ARG GIT_SHA="dev"
 # 빌드 매니페스트(dist/.vite)는 프리렌더가 청크 이름을 읽는 데만 쓴다 — 서빙물에 남기지 않는다.
-RUN node scripts/render-content.mjs && npx tsc -b --force && npx vite build --base / && node scripts/prerender-seo.mjs && rm -rf dist/.vite
+RUN node scripts/render-content.mjs && npx tsc -b --force && npx vite build --base / && node scripts/spa-routes.mjs && node scripts/prerender-seo.mjs && rm -rf dist/.vite
 # 게임 JS minify — 서빙물에서 원문 가독성 제거 (소스맵 미발행). 인라인 스크립트 HTML 게임은
 # 55종 일괄 회귀 위험 대비 이득이 작아 제외 — 수익 티어(다중 파일) 게임과 공용 lib 만.
 # Unity 산출물(Build/)은 제외한다 — 엔진이 낸 코드라 이미 최소화돼 있고, 5MB 짜리를

@@ -20,6 +20,7 @@ dependencies {
     // 글 상세의 크롤러용 본문을 서버에서 만든다 (ADR-0072 §6). raw HTML 은 이스케이프하므로
     // 별도 sanitizer 가 필요 없다.
     implementation(libs.commonmark)
+    implementation("org.commonmark:commonmark-ext-gfm-tables:${libs.versions.commonmark.get()}")
     // 셸 HTML 캐시 — deal 과 같은 이유로 Spring cache 추상화를 쓰지 않고 직접 쓴다.
     implementation(libs.caffeine)
     implementation(libs.kotlin.logging)

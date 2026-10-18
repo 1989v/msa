@@ -118,6 +118,40 @@ class BlogMetaRendererTest : BehaviorSpec({
         }
     }
 
+    given("GFM 표와 알림이 있는 본문") {
+        val html = renderer.postPage(shell, detail(body = """
+            | 항목 | Lucene | Faiss |
+            | --- | --- | --- |
+            | 메모리 | 적음 | 많음 |
+
+            > [!NOTE]
+            > **보존된 본문**
+
+            > [!IMPORTANT] 직접 정한 제목
+            > 다음 문장
+
+            ```html
+            <script>alert(1)</script>
+            ```
+
+            [위험](javascript:alert%281%29)
+        """.trimIndent()))
+        then("표의 행·열과 알림 제목·강조가 남는다") {
+            html shouldContain "<table>"
+            html shouldContain "<th>Lucene</th>"
+            html shouldContain "<td>많음</td>"
+            html shouldContain "kh-alert--note"
+            html shouldContain "참고</p>"
+            html shouldContain "<strong>보존된 본문</strong>"
+            html shouldContain "직접 정한 제목</p>"
+            html shouldNotContain "[!NOTE]"
+        }
+        then("코드 블록은 이스케이프하고 위험 링크는 차단한다") {
+            html shouldContain "&lt;script&gt;alert(1)&lt;/script&gt;"
+            html shouldNotContain "href=\"javascript:"
+        }
+    }
+
     given("셸을 받지 못했을 때") {
         val html = renderer.postPage(null, detail())
 

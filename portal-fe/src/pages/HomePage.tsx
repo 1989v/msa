@@ -46,6 +46,7 @@ export default function HomePage() {
   const [timeline, setTimeline] = useState<Timeline | null>(null);
   const [openSource, setOpenSource] = useState<OpenSourceItem[] | null>(null);
   const [failed, setFailed] = useState(false);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -75,7 +76,7 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [retry]);
 
   // 실제로 렌더된 섹션만 메뉴에 올린다 — 데이터가 비면 섹션이 통째로 빠지므로,
   // 고정 메뉴를 두면 눌러도 아무 일이 없는 항목이 남는다.
@@ -117,10 +118,11 @@ export default function HomePage() {
               굴러가게 하는 데까지.
             </p>
             <div className="kh-seep home-hero-actions">
-              <a className="kh-button" href="#portfolio">
-                지나온 것 보기
+              <a className="kh-button" href="#services">
+                서비스 둘러보기
                 <span aria-hidden="true">→</span>
               </a>
+              <a href={hasTimeline ? '#portfolio' : '#about'}>{hasTimeline ? '경력·프로젝트 보기' : '운영자 소개'}</a>
               {timeline && (
                 <span className="kh-mono home-hero-meta">
                   {timeline.career.yearsInField}년차 · 백엔드
@@ -151,6 +153,7 @@ export default function HomePage() {
               ? '서비스 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'
               : '불러오는 중…'}
           </p>
+          {failed && <button className="kh-button" onClick={() => { setFailed(false); setRetry((value) => value + 1); }}>다시 불러오기</button>}
         </div>
       )}
 

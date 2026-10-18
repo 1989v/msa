@@ -4,6 +4,7 @@ import com.kgd.search.domain.attraction.model.AttractionAccess
 import com.kgd.search.domain.attraction.model.AttractionClickSignal
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.AttractionRegion
+import com.kgd.search.domain.attraction.model.RegularClosure
 import com.kgd.search.domain.attraction.model.EventPeriod
 import com.kgd.search.domain.attraction.model.EventSchedule
 import com.kgd.search.domain.attraction.model.EventStatus
@@ -184,8 +185,8 @@ class AttractionPageRendererTest : BehaviorSpec({
 
         then("해석된 값은 방문 요약 칸 첫 줄로, 칸이 없는 것은 배지 줄로 — UNKNOWN 은 해석 줄이 없다") {
             val summary = root.substringAfter("<dl data-place-section=\"visit-summary\">").substringBefore("</dl>")
-            summary shouldContain "<dt>쉬는 날</dt><dd>매주 화요일 휴무\n매주 화요일</dd>"
-            summary shouldContain "<dt>주차</dt><dd>주차 가능\n가능</dd>"
+            summary shouldContain "<dt>쉬는 날</dt><dd><ul><li>매주 화요일 휴무</li><li>매주 화요일</li></ul></dd>"
+            summary shouldContain "<dt>주차</dt><dd><ul><li>주차 가능</li><li>가능</li></ul></dd>"
             summary shouldContain "<dt>반려동물</dt><dd>정보 없음</dd>"
             root shouldContain "<p data-place-section=\"visit-badges\">유모차 대여 없음</p>"
             root shouldNotContain "신용카드"
@@ -227,7 +228,7 @@ class AttractionPageRendererTest : BehaviorSpec({
 
         then("방문 요약 칸의 원문 <br> 은 줄바꿈으로 평문화된다") {
             root.substringAfter("<dl data-place-section=\"visit-summary\">").substringBefore("</dl>") shouldContain
-                "<dt>이용시간</dt><dd>09:00~18:00\n입장 마감 17:00</dd>"
+                "<dt>이용시간</dt><dd><ul><li>09:00~18:00</li><li>입장 마감 17:00</li></ul></dd>"
         }
 
         then("일반 유형은 「이용 안내」·「방문 정보 요약」 절을 내지 않는다 — 방문 요약이 대신한다") {
@@ -885,7 +886,7 @@ class AttractionPageRendererTest : BehaviorSpec({
 
         then("feeText 가 없으면 원천 useFee 를 정규화해 쓰고, 둘 다 없으면 「정보 없음」") {
             summaryValue(rootOf(render(SHELL, doc().copy(useFee = "어른 1,000원<br>&lt;어린이&gt; 무료"))), "요금") shouldBe
-                "어른 1,000원\n&lt;어린이&gt; 무료"
+                "<ul><li>어른 1,000원</li><li>&lt;어린이&gt; 무료</li></ul>"
             summaryValue(rootOf(render(SHELL, doc())), "요금") shouldBe "정보 없음"
             summaryValue(rootOf(render(SHELL, doc(id = "2001", lang = "en"))), "Admission") shouldBe "Not provided"
         }
@@ -1072,6 +1073,25 @@ class AttractionPageRendererTest : BehaviorSpec({
             }
         }
     }
+    given("영문 초기 푸터와 줄바꿈이 있는 방문 정보") {
+        val html = render(SHELL, doc(lang = "en", title = "Example").copy(useTime = "Summer: 09:00–18:00<br>Winter: 09:00–17:00"))
+        then("서비스·정책 링크는 영어로 표시한다") {
+            rootOf(html) shouldContain ">Free web games</a>"
+            rootOf(html) shouldContain ">Privacy policy</a>"
+            rootOf(html) shouldNotContain ">개인정보처리방침</a>"
+        }
+        then("원천의 계절별 시간은 의미 있는 목록으로 보존한다") {
+            rootOf(html) shouldContain "<li>Summer: 09:00–18:00</li><li>Winter: 09:00–17:00</li>"
+        }
+    }
+
+    given("휴무 해석과 원문이 완전히 같을 때") {
+        val html = withoutData(render(SHELL, doc(attributes = PARSED.copy(regularClosure = RegularClosure.AlwaysOpen)).copy(restDate = "연중무휴")))
+        then("같은 문구를 두 번 내지 않고 하나로 보여 준다") {
+            rootOf(html) shouldContain "<dt>쉬는 날</dt><dd>연중무휴</dd>"
+        }
+    }
+
 })
 
 /** 골든용 관광지 — 첫 화면의 모든 절이 나오는 문서 */

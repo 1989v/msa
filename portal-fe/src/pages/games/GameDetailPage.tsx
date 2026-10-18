@@ -20,6 +20,7 @@ import {
   detailMeta,
   gameDetailUrl,
   gamePath,
+  gamePlayerLabel,
   gameUrl,
   genreSlug,
   hreflangAlternates,
@@ -466,9 +467,7 @@ export default function GameDetailPage() {
             </div>
             <ul className="game-stage-facts">
               <li>{genreLabel(game.genre, lang)}</li>
-              <li>{game.playerMode === 'MULTI'
-                ? (lang === 'en' ? '2+ players' : '2인 이상')
-                : (lang === 'en' ? 'Single player' : '1인')}</li>
+              <li>{gamePlayerLabel(game, lang)}</li>
               {game.estimatedMinutes != null && (
                 <li>{lang === 'en' ? `~${game.estimatedMinutes} min` : `약 ${game.estimatedMinutes}분`}</li>
               )}
