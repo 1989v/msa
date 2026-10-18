@@ -1,5 +1,7 @@
 # Key decisions — 2026-10-18
 
+- 2026-10-19 approved entry correction: keep the platform's native-form-blocking iframe sandbox; use explicit button clicks and Enter (excluding IME composition) for territory entry, cosmetics and signs. Reuse shared GameRank profile validation, normalization, uniqueness, ownership and cross-frame synchronization. Nickname edits update the common game profile, not a territory-specific identity. Invoke fullscreen synchronously in the entry gesture and use the existing zone-war start_fullscreen catalog flag for portal Play; unsupported/denied fullscreen must not block play. Gameplay/WS contracts unchanged.
+
 - 2026-10-18 approved final public name: Korean **영역 전쟁**, English **zone-war**. Apply to the final online client's page title, entry branding and accessible battlefield name. Preserve `/games/territory/`, API/WebSocket contracts and comparison sample names; naming does not require an internal path migration.
 
 - Decision: separate static playable sample, human + local AI. Reason: user wants to experience a sample before the final online build. Impact: only new territory-lab game/spec directories.

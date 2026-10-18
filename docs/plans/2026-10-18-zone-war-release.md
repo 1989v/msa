@@ -101,3 +101,41 @@ evidence: `/private/tmp/zone-war-full-feature-fixed.log` and Gradle XML reports.
 Parent will rebuild content, gateway and portal-fe together because the failed
 original run published none of them. The separate broad CI DrillExportSpec
 generated-data failure is outside this game release and was not changed.
+
+## Entry, shared profile and fullscreen correction — 2026-10-19
+
+The game was playable through direct HTTP/WS smoke, but its embedded entry used
+a native form submit handler while the portal iframe deliberately omitted
+`allow-forms`. The HTML Standard submission algorithm returns for that sandbox
+flag before dispatching `submit`, so that path never reached the join handler.
+Parent observed an actual entry click with no UI change before this correction.
+Worker used no browser/UI tools. Standard evidence:
+https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#form-submission-algorithm
+
+Per approved scope, the global iframe sandbox stays unchanged. Territory entry,
+cosmetics and signs use explicit type=button click and input Enter handlers;
+IME composition does not trigger entry. The client loads the existing GameRank
+profile client for NFKC normalization, 2–16 Unicode codepoints, permitted
+characters, unique names, server ownership, session refresh and profile sync.
+It preserves an existing name unless the user edits it, retains a typed draft
+across a slow read, and exposes duplicate-name/API/WS errors with retry available.
+The intro stays visible until welcome; a pending socket has a bounded join wait.
+
+Fullscreen is requested directly in the start gesture before profile/ticket
+awaits. Denied/unsupported fullscreen leaves entry/play usable. V111 sets only
+zone-war's existing start_fullscreen flag so portal Play also follows its
+existing fullscreen policy; BOTH orientation remains unchanged.
+
+Evidence: `node --test territory/tests/*.test.mjs` passed 17/17, including actual
+app wiring exercised with inert DOM/canvas/HTTP/WS stubs (no UI automation).
+`lib/tests/rank-profile.test.mjs` passed 13/13 against the shared profile client.
+Both modified modules passed `node --check`. `./gradlew verifyArchitecture`
+reported `BUILD SUCCESSFUL in 16s`. Fresh local MySQL 8.4 applied V111 twice after
+V110: zone-war start_fullscreen=1, orientation=BOTH, other games changed=0;
+migration versions remain unique. Logs: `/private/tmp/zone-war-entry-node.log`
+and `/private/tmp/zone-war-entry-architecture.log`; shared-profile output is in
+`/private/tmp/zone-war-entry-shared-profile.log`, and the fresh-schema V111
+before/after comparison is in `/private/tmp/zone-war-entry-sql.log`.
+Fresh-context read-only review of the entry diff and V111 returned SHIP with
+no blocking findings. Parent owns publication,
+deployment and separately approved real browser verification.
