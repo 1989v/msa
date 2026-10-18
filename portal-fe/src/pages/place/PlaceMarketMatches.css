@@ -1,0 +1,9 @@
+/* 장소 검색 목록 위 「시장 N곳」 — 카드보다 낮은 단계의 줄 목록. */
+.place-market-matches { margin-block-end: var(--ko-space-3); padding: var(--ko-space-3); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius); background: var(--ko-surface-1); }
+.place-market-matches h2 { margin: 0 0 var(--ko-space-2); font-size: var(--ko-text-sm); color: var(--ko-text-secondary); }
+.place-market-matches ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--ko-space-1); }
+.place-market-matches a { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--ko-space-2); min-height: 44px; padding: var(--ko-space-1) var(--ko-space-2); border-radius: var(--kh-radius); color: var(--ko-text-primary); text-decoration: none; }
+.place-market-matches a:hover { background: var(--ko-surface-2); }
+.place-market-matches a:focus-visible { outline: var(--ko-focus-ring); outline-offset: 2px; }
+.place-market-matches span { font-size: var(--ko-text-sm); color: var(--ko-text-secondary); }
+.place-market-matches .place-market-matches-go { margin-inline-start: auto; color: var(--ko-accent-text); }

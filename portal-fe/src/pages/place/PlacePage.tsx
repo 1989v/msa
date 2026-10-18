@@ -1,5 +1,6 @@
 import MarketMapBadge from './MarketMapBadge';
 import MarketPanelPreview from './MarketPanelPreview';
+import PlaceMarketMatches from './PlaceMarketMatches';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -1865,6 +1866,8 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
           )}
           {(isMobile || listOpen) && !pickingRegion && (
             <section className="place-list" aria-busy={isLoading}>
+              {/* 시장은 목록 분류(관광)에서 빠져 있다 — 검색어가 시장 이름과 맞으면 위에 따로 띄운다 */}
+              {keyword && <PlaceMarketMatches keyword={keyword} lang={lang} />}
               {/* 교정 안내는 0건에도 — 고친 검색어로 0건이면 무엇으로 찾았는지가 곧 0건의 이유다 */}
               {data?.correctedKeyword && (
                 <p className="place-corrected" role="status">
