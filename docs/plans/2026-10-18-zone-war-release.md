@@ -139,3 +139,45 @@ before/after comparison is in `/private/tmp/zone-war-entry-sql.log`.
 Fresh-context read-only review of the entry diff and V111 returned SHIP with
 no blocking findings. Parent owns publication,
 deployment and separately approved real browser verification.
+
+## Fullscreen toggle, visual correction, duration and respawn focus — 2026-10-19
+
+Pure client scope. A persistent compact fullscreen control observes both the
+game document and a containing same-origin portal fullscreen, including Escape;
+requests remain inside a click and unsupported/denied requests keep play usable.
+A small ranking-adjacent `플레이 mm:ss` (hours supported) uses performance.now
+since welcome, continues through menus/death/respawn, freezes on disconnect and
+resets only on the next welcome. It creates no interval or API traffic.
+
+The previous camera directly followed the predicted player, which was overwritten
+by each 10Hz authoritative snapshot. A deterministic delayed-snapshot trace at
+the current 8px scale produced a 3.733px backward step. Small snapshot correction
+offsets now decay in display coordinates only (80ms time constant, bounded to four
+world units). Camera and self-marker use the same display point. The same trace
+has zero backward steps; stopping converges without drift. Large corrections,
+death and new life snap immediately. Prediction/input/ownership/collision and all
+server simulation code remain unchanged.
+
+The actual app regression reproduced focus remaining on the respawn BUTTON;
+the intentional keyboard target filter then ignored movement keys. Existing
+settings close already focused canvas, so it was not itself the original root
+cause. New-life stopped state and the in-flight dead-snapshot/death-panel race
+are corrected. Confirmed respawn dismisses its pending death panel and restores
+focus; an explicitly reopened settings editor remains open, as does an actively edited automatically reopened
+death panel. Stop/resume,
+settings/help close and fullscreen transitions clear held controls and restore
+canvas focus when an active input/select/editor does not need it.
+
+Verification: `node --test territory/tests/*.test.mjs`, 28 tests passed, zero
+failures, including actual app/controls DOM stubs, Escape/reentry, parent
+fullscreen, rejected requests, irregular frame decay, snapshot trace, input
+direction/reverse invariance, stop convergence, respawn ordering and editing
+focus. Modules passed `node --check`; `git diff --check` passed. Evidence:
+`/private/tmp/zone-war-polish-node.log`, pre-fix focus regression in
+`/private/tmp/zone-war-focus-before.log`. No worker UI automation was used.
+
+Local preview: `http://127.0.0.1:4178/zone-war-preview` (process launched with
+`node /private/tmp/zone-war-polish-preview.mjs`). It serves the games release
+checkout in the same form-blocking sandbox and forwards API/WS only to the
+existing local verification backend at 127.0.0.1:4180, never production. Parent
+owns the separately approved browser checks and publication/deployment.
