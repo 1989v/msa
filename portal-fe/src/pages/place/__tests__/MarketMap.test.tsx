@@ -73,8 +73,8 @@ describe('market map provider', () => {
     const pin = container.querySelector('.place-market-naver-pin')!;
     expect(pin).toHaveTextContent('2');
     expect(pin.firstElementChild?.getAttribute('style')).toContain('background: var(--market-type-1)');
-    expect(pin.firstElementChild?.getAttribute('style')).toContain('border-width: 3px');
-    expect(pin.firstElementChild?.getAttribute('style')).toContain('border-color: var(--ko-accent-text)');
+    expect(pin.firstElementChild?.getAttribute('style')).toContain('border-width: 4px');
+    expect(pin.firstElementChild?.getAttribute('style')).toContain('border-color: var(--ko-accent-primary)');
     expect(maps.Polygon).toHaveBeenCalledOnce();
     fireEvent.click(pin);
     expect(screen.getByTestId('selection').textContent).not.toBe('');
@@ -178,8 +178,8 @@ it.each(['naver', 'canvas'])('uses engine IDs without browser-match unions in %s
   if (provider === 'naver') {
     await waitFor(() => expect(container.querySelector('.place-market-naver-pin')).not.toBeNull());
     const pins = Array.from(container.querySelectorAll('.place-market-naver-pin'));
-    expect(pins.find(pin => pin.getAttribute('aria-label')?.includes('엔진 결과'))?.firstElementChild?.getAttribute('style')).toContain('border-color: var(--ko-accent-text)');
-    expect(pins.find(pin => pin.getAttribute('aria-label')?.includes('가게'))?.firstElementChild?.getAttribute('style')).not.toContain('border-color: var(--ko-accent-text)');
+    expect(pins.find(pin => pin.getAttribute('aria-label')?.includes('엔진 결과'))?.firstElementChild?.getAttribute('style')).toContain('border-color: var(--ko-accent-primary)');
+    expect(pins.find(pin => pin.getAttribute('aria-label')?.includes('가게'))?.firstElementChild?.getAttribute('style')).not.toContain('border-color: var(--ko-accent-primary)');
   } else {
     expect(container.querySelectorAll('.place-market-hit-label')).toHaveLength(1);
     expect(container.querySelector('.place-market-hit-label')).toHaveTextContent('엔진 결과');

@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from 'react';
-import type { MarketResponse } from '../../api/marketApi';
+import type { MarketResponse, MarketStore } from '../../api/marketApi';
 import { buildMarketOverlay, type MarketBounds, type OverlayMarker, type OverlaySelection } from './marketOverlay';
+import { marketDisplayName } from './marketView';
+import { MARKET_STORE_TYPES, marketStoreType } from './marketStoreType';
 
 export type MarketViewport = { bounds: MarketBounds; zoom: number };
 export type MarketLiveMapProps = {
@@ -11,6 +13,8 @@ export type MarketLiveMapProps = {
   userPosition?: { latitude: number; longitude: number; accuracy: number } | null;
   onViewportChange?: (viewport: MarketViewport) => void;
   onSelect?: (key: string) => void; onError?: () => void;
+  /** Info window actions: open one shop's detail panel; show the list (mobile sheet) for the rest of a group. */
+  onOpenStore?: (id: number) => void; onShowList?: () => void;
 };
 export type MarketNaverMapProps = MarketLiveMapProps & { keyId: string };
 const currentSdk = () => typeof window === 'undefined' ? undefined : (window as Window & { naver?: { maps?: any } }).naver?.maps;
@@ -60,6 +64,25 @@ function registerAuthFailure(callback: () => void) {
 
 /** 핀 버튼 한 변(px). 마우스는 SDK 의 이벤트 레이어가 받아 아이콘 상자로 핀을 찾으므로, 상자(size·anchor)와 버튼이 같은 자리여야 한다. */
 const PIN_BOX = 44;
+/** 정보 창에 이름을 늘어놓는 상한. 더 많으면 목록으로 보낸다. */
+const INFO_LIMIT = 3;
+/** Info window body: up to three shops with a detail button each, then a "N more · show list" button. Text only — merchants write the names. */
+function infoContent(stores: MarketStore[], lang: 'ko' | 'en', on: { close: () => void; open: (id: number) => void; list: () => void }): HTMLElement {
+  const en = lang === 'en';
+  const root = document.createElement('div'); root.className = 'place-market-naver-info'; root.setAttribute('role', 'dialog'); root.setAttribute('aria-label', en ? 'Selected shops' : '선택한 가게');
+  const close = document.createElement('button'); close.type = 'button'; close.className = 'place-market-naver-info-close'; close.setAttribute('aria-label', en ? 'Close' : '닫기'); close.textContent = '×'; close.onclick = on.close; root.appendChild(close);
+  for (const store of stores.slice(0, INFO_LIMIT)) {
+    const name = marketDisplayName(store, lang);
+    const row = document.createElement('div'); row.className = 'place-market-naver-info-row';
+    const title = document.createElement('strong'); title.textContent = name; row.appendChild(title);
+    const type = MARKET_STORE_TYPES.find((candidate) => candidate.key === marketStoreType(store));
+    const meta = document.createElement('p'); meta.textContent = [type?.[lang], store.roadAddress || store.jibunAddress].filter(Boolean).join(' · '); row.appendChild(meta);
+    if (store.id != null) { const id = store.id; const detail = document.createElement('button'); detail.type = 'button'; detail.textContent = en ? 'Details' : '상세보기'; detail.setAttribute('aria-label', `${en ? 'Details' : '상세보기'}: ${name}`); detail.onclick = () => on.open(id); row.appendChild(detail); }
+    root.appendChild(row);
+  }
+  if (stores.length > INFO_LIMIT) { const more = document.createElement('button'); more.type = 'button'; more.className = 'place-market-naver-info-more'; more.textContent = en ? `${stores.length - INFO_LIMIT} more · Show list` : `외 ${stores.length - INFO_LIMIT}곳 · 목록 보기`; more.onclick = on.list; root.appendChild(more); }
+  return root;
+}
 const pinHtmlIcon = (content: HTMLElement) => ({ content, size: { width: PIN_BOX, height: PIN_BOX }, anchor: { x: PIN_BOX / 2, y: PIN_BOX / 2 } });
 /** HTML uses textContent, including store names supplied by merchants. */
 function pinIcon(marker: OverlayMarker): HTMLElement {
@@ -123,6 +146,17 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
     const token = (color: string) => { const name = /^var\((--[\w-]+)\)$/.exec(color)?.[1]; return name ? getComputedStyle(host.current!).getPropertyValue(name).trim() : color; };
     const coord = (p: { latitude: number; longitude: number }) => new sdk.LatLng(p.latitude, p.longitude);
     const remove = (entry: { object: any; listener?: any }) => { if (entry.listener != null) sdk.Event.removeListener(entry.listener); entry.object.setMap(null); };
+    // 핀 클릭·목록 포커스 때 핀 자리에 간단 정보. 위치 기준으로 열어 핀이 다시 그려져도 남고, 지도 빈 곳·×·선택 해제로 닫힌다.
+    const info = interactive && sdk.InfoWindow ? new sdk.InfoWindow({ content: document.createElement('div'), borderWidth: 0, backgroundColor: 'transparent', disableAnchor: true, pixelOffset: { x: 0, y: -(PIN_BOX / 2 + 4) } }) : null;
+    const openInfo = (storeIds: (number | null)[], at: { latitude: number; longitude: number }) => {
+      if (!info) return;
+      const current = latest.current;
+      const stores = storeIds.flatMap((id) => { const store = current.data.stores.find((s) => s.id === id); return store ? [store] : []; });
+      if (!stores.length) return;
+      info.setContent(infoContent(stores, current.lang, { close: () => info.close(), open: (id) => latest.current.onOpenStore?.(id), list: () => latest.current.onShowList?.() }));
+      info.open(map, coord(at));
+    };
+    const mapClick = info ? sdk.Event.addListener(map, 'click', () => info.close()) : undefined;
     redraw.current = (reportViewport = false) => {
       const bounds = map.getBounds?.(); const ne = bounds?.getNE(); const sw = bounds?.getSW();
       const frame: MarketBounds | undefined = ne && sw ? { north: ne.lat(), east: ne.lng(), south: sw.lat(), west: sw.lng() } : undefined;
@@ -130,6 +164,7 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
       const zoom = Math.round(map.getZoom?.() ?? initialZoom);
       const model = buildMarketOverlay({ ...input, zoom, bounds: frame });
       if (interactive && reportViewport && frame) input.onViewportChange?.({ bounds: frame, zoom });
+      if (!input.selection?.selectedKey) info?.close();
       const wanted = new Set<string>();
       const sync = (key: string, value: unknown, create: () => any, click?: () => void) => {
         wanted.add(key); const signature = JSON.stringify(value); const old = overlays.get(key);
@@ -141,10 +176,13 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
       for (const shape of [model.marketPolygon].filter((shape) => shape != null)) sync(shape.key, shape, () => new sdk.Polygon({ map, paths: shape.coordinates.map(([lat, lng]) => new sdk.LatLng(lat, lng)), fillColor: token(shape.color), fillOpacity: shape.fillOpacity, strokeColor: token(shape.color), strokeWeight: shape.strokeWeight, strokeOpacity: shape.strokeOpacity }), !interactive ? () => latest.current.onActivate?.() : undefined);
       for (const line of model.alleys) sync(line.key, line, () => new sdk.Polyline({ map, path: line.coordinates.map(([lat, lng]) => new sdk.LatLng(lat, lng)), strokeColor: token(line.color), strokeWeight: line.strokeWeight, strokeOpacity: line.strokeOpacity }), !interactive ? () => latest.current.onActivate?.() : undefined);
       // 터치는 핀 버튼에 닿지만 마우스는 SDK 이벤트 레이어에서 멈춘다 — 버튼 onclick 과 SDK marker click 둘 다 건다(한 동작은 한쪽만 받는다).
-      for (const marker of model.markers) sync(marker.key, marker, () => {
-        const content = pinIcon(marker); content.onclick = () => { if (!interactive) latest.current.onActivate?.(); else if (marker.selectionKey) latest.current.onSelect?.(marker.selectionKey); };
-        return new sdk.Marker({ map, position: coord(marker), title: marker.title, icon: pinHtmlIcon(content) });
-      }, !interactive ? () => latest.current.onActivate?.() : marker.selectionKey ? () => latest.current.onSelect?.(marker.selectionKey!) : undefined);
+      for (const marker of model.markers) {
+        const select = () => { if (!interactive) latest.current.onActivate?.(); else if (marker.selectionKey) { latest.current.onSelect?.(marker.selectionKey); openInfo(marker.storeIds, marker); } };
+        sync(marker.key, marker, () => {
+          const content = pinIcon(marker); content.onclick = select;
+          return new sdk.Marker({ map, position: coord(marker), title: marker.title, icon: pinHtmlIcon(content) });
+        }, !interactive || marker.selectionKey ? select : undefined);
+      }
       for (const label of model.labels) sync(label.key, label, () => {
         const content = document.createElement('span'); content.textContent = label.text; content.className = 'place-market-naver-label'; content.style.color = label.color;
         return new sdk.Marker({ map, position: coord(label), title: label.text, icon: { content, anchor: { x: 0, y: 0 } } });
@@ -158,12 +196,12 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
       if (!interactive || !model.focus) appliedFocus.current = null;
       else {
         const request = JSON.stringify([identity, model.focus]);
-        if (appliedFocus.current !== request) { appliedFocus.current = request; map.panTo(coord(model.focus)); map.setZoom(model.focus.zoom); latest.current.onSelect?.(model.focus.selectionKey); }
+        if (appliedFocus.current !== request) { appliedFocus.current = request; map.panTo(coord(model.focus)); map.setZoom(model.focus.zoom); latest.current.onSelect?.(model.focus.selectionKey); openInfo([input.selection?.storeId ?? null], model.focus); }
       }
     };
     redraw.current(true);
     const listeners = ['zoom_changed', 'idle', 'bounds_changed'].map((event) => sdk.Event.addListener(map, event, () => redraw.current(event === 'idle')));
-    return () => { redraw.current = () => {}; listeners.forEach((listener) => sdk.Event.removeListener(listener)); overlays.forEach(remove); };
+    return () => { redraw.current = () => {}; listeners.forEach((listener) => sdk.Event.removeListener(listener)); if (mapClick != null) sdk.Event.removeListener(mapClick); info?.close(); overlays.forEach(remove); };
   }, [ready, identity, keyId, initialZoom, interactive]);
   useEffect(() => { redraw.current(); }, [props.data, props.selection, props.storeIds, props.userPosition]);
   if (!keyId) return null;

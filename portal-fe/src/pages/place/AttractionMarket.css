@@ -125,6 +125,16 @@
   white-space: nowrap;
   transform: translate(-50%, -50%);
 }
+/* 핀 정보 창(네이버 InfoWindow 의 내용) — SDK 의 상자는 투명하게 두고 여기서 표면을 그린다. */
+.place-market-naver-info { position: relative; box-sizing: border-box; width: max-content; max-width: min(18rem, 80vw); padding: var(--ko-space-2) var(--ko-space-3); background: var(--ko-surface-0); color: var(--ko-text-primary); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius-asym); font-size: var(--ko-text-sm); text-align: left; }
+.place-market-naver-info button { font: inherit; min-height: 2rem; padding: 0 var(--ko-space-2); background: var(--ko-surface-1); color: var(--ko-accent-text); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius); cursor: pointer; }
+.place-market-naver-info button:focus-visible { outline: var(--ko-focus-ring); outline-offset: 2px; }
+.place-market-naver-info-close { position: absolute; top: var(--ko-space-1); right: var(--ko-space-1); width: 2rem; color: var(--ko-text-secondary); background: transparent !important; border-color: transparent !important; }
+.place-market-naver-info-row { padding-block: var(--ko-space-2); padding-inline-end: 2rem; }
+.place-market-naver-info-row + .place-market-naver-info-row { border-top: 1px solid var(--ko-border-subtle); }
+.place-market-naver-info-row strong { display: block; overflow-wrap: anywhere; }
+.place-market-naver-info-row p { margin: var(--ko-space-1) 0 var(--ko-space-2); color: var(--ko-text-secondary); overflow-wrap: anywhere; }
+.place-market-naver-info-more { display: block; width: 100%; margin-top: var(--ko-space-2); }
 
 .place-market-summary { padding: var(--ko-space-4); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius-asym); background: var(--ko-surface-1); }
 .place-market-types a { display: inline-flex; align-items: center; min-height: 2.75rem; padding: var(--ko-space-2) var(--ko-space-3); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius); color: var(--ko-accent-text); }

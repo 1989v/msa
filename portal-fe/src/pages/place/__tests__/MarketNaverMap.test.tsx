@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MarketResponse, MarketStore } from '../../../api/marketApi';
 import MarketNaverMap from '../MarketNaverMap';
@@ -11,7 +11,9 @@ function sdk() {
   const overlay = () => { const object = { setMap: vi.fn() }; objects.push(object); return object; };
   const destroy = vi.fn(); const panTo = vi.fn(); const setZoom = vi.fn((z: number) => { zoom = z; });
   const map = { destroy, panTo, setZoom, getZoom: () => zoom, getBounds: () => ({ getNE: () => ({ lat: () => north, lng: () => 128 }), getSW: () => ({ lat: () => 37, lng: () => 126 }) }) };
-  return { objects, destroy, panTo, setZoom, listeners, zoom: (z: number) => { zoom = z; }, north: (n: number) => { north = n; },
+  const infoWindow = { content: null as HTMLElement | null, open: vi.fn(), close: vi.fn(), setContent: vi.fn((element: HTMLElement) => { infoWindow.content = element; }) };
+  return { objects, destroy, panTo, setZoom, listeners, infoWindow, zoom: (z: number) => { zoom = z; }, north: (n: number) => { north = n; },
+    InfoWindow: vi.fn(function (_options: unknown) { return infoWindow; }),
     Map: vi.fn(function (_host: HTMLElement, options: { zoom: number }) { zoom = options.zoom; return map; }), LatLng: vi.fn(function (latitude: number, longitude: number) { return { latitude, longitude }; }),
     Marker: vi.fn(function (_options: { icon: { content: HTMLElement }; title?: string }) { return overlay(); }),
     Polygon: vi.fn(function (_options: unknown) { return overlay(); }), Polyline: vi.fn(function (_options: unknown) { return overlay(); }), Circle: vi.fn(function (_options: unknown) { return overlay(); }),
@@ -100,5 +102,32 @@ describe('MarketNaverMap', () => {
     fireEvent.click(options.icon.content); expect(onSelect).toHaveBeenCalledTimes(1);
     const click = maps.Event.addListener.mock.calls.find(([target, event]) => target === object && event === 'click')![2]; act(() => click());
     expect(onSelect).toHaveBeenCalledTimes(2); expect(onSelect.mock.calls[1][0]).toBe(onSelect.mock.calls[0][0]);
+  });
+  it('opens an info window at the pin with three shops, detail and list actions, and closes it on ×, map click or cleared selection', async () => {
+    const stores = [store(1, 37.5, 127), store(2, 37.50001, 127.00001), store(3, 37.5001, 127), store(4, 37.50002, 127.00002)];
+    install(); const onSelect = vi.fn(); const onOpenStore = vi.fn(); const onShowList = vi.fn();
+    const { rerender } = render(<MarketNaverMap {...props} data={{ ...data, stores }} selection={{ selectedKey: 'x' }} onSelect={onSelect} onOpenStore={onOpenStore} onShowList={onShowList} />);
+    await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce());
+    expect(maps.InfoWindow).toHaveBeenCalledOnce(); expect(maps.infoWindow.open).not.toHaveBeenCalled();
+    fireEvent.click(maps.Marker.mock.calls[0][0].icon.content);
+    expect(onSelect).toHaveBeenCalledOnce(); expect(maps.infoWindow.open).toHaveBeenCalledWith(expect.anything(), { latitude: expect.any(Number), longitude: expect.any(Number) });
+    const content = maps.infoWindow.content!; document.body.appendChild(content);
+    expect(content.querySelectorAll('.place-market-naver-info-row')).toHaveLength(3); expect(content.textContent).toContain('<Shop 1>'); expect(content.querySelector('shop')).toBeNull();
+    expect(content.textContent).toContain('음식점');
+    fireEvent.click(within(content).getByRole('button', { name: '상세보기: <Shop 2>' })); expect(onOpenStore).toHaveBeenCalledWith(2);
+    fireEvent.click(within(content).getByRole('button', { name: '외 1곳 · 목록 보기' })); expect(onShowList).toHaveBeenCalledOnce();
+    const closes = () => maps.infoWindow.close.mock.calls.length; let before = closes();
+    fireEvent.click(within(content).getByRole('button', { name: '닫기' })); expect(closes()).toBe(before + 1);
+    before = closes(); act(() => maps.listeners.get('click')!()); expect(closes()).toBe(before + 1);
+    before = closes(); rerender(<MarketNaverMap {...props} data={{ ...data, stores }} selection={{ selectedKey: null }} onSelect={onSelect} onOpenStore={onOpenStore} onShowList={onShowList} />); expect(closes()).toBe(before + 1);
+    content.remove();
+  });
+  it('opens the info window for the focused shop only and never for a noninteractive preview', async () => {
+    install(); const { rerender } = render(<MarketNaverMap {...props} selection={{ storeId: 2 }} />);
+    await waitFor(() => expect(maps.infoWindow.open).toHaveBeenCalledOnce());
+    expect(maps.infoWindow.content!.querySelectorAll('.place-market-naver-info-row')).toHaveLength(1); expect(maps.infoWindow.content!.textContent).toContain('<Shop 2>');
+    rerender(<MarketNaverMap {...props} keyId="" />); maps = sdk(); install();
+    render(<MarketNaverMap {...props} interactive={false} initialZoom={16} onActivate={vi.fn()} />); await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce());
+    fireEvent.click(maps.Marker.mock.calls[0][0].icon.content); expect(maps.InfoWindow).not.toHaveBeenCalled();
   });
 });

@@ -13,8 +13,12 @@ const PREFERENCE = 'market-map-provider';
 export default function MarketMap(props: ComponentProps<typeof MarketCanvas> & {
   onViewportChange?: (viewport: MarketViewport | null) => void;
   contentId: string;
+  /** List ordinals (store id → 1-based) shown on lone pins and name labels. */
+  numbers?: ReadonlyMap<number, number>;
+  onOpenStore?: (id: number) => void;
+  onShowList?: () => void;
 }) {
-  const { contentId, data, lang, points, query, dishes, selectedKey, focusStoreId, onSelect } = props;
+  const { contentId, data, lang, points, query, dishes, selectedKey, focusStoreId, onSelect, numbers, onOpenStore, onShowList } = props;
   const [provider, setProvider] = useState(() => {
     try { return typeof window !== 'undefined' && window.localStorage.getItem(PREFERENCE) === 'canvas' ? 'canvas' : 'naver'; }
     catch { return 'naver'; }
@@ -24,9 +28,9 @@ export default function MarketMap(props: ComponentProps<typeof MarketCanvas> & {
   const live = typeof window !== 'undefined' && provider !== 'canvas' && failed !== 'google';
   const naver = Boolean(NAVER_MAP_KEY_ID) && failed !== 'naver';
   const storeIds = useMemo(() => points.flatMap((p) => p.stores.map((s) => s.id)), [points]);
-  const selection = useMemo(() => ({ storeId: focusStoreId, selectedKey,
+  const selection = useMemo(() => ({ storeId: focusStoreId, selectedKey, numbers,
     searchStoreIds: props.searchStoreIds ?? data.stores.filter((s) => matchesMarketStore(s, query, dishes)).flatMap((s) => s.id == null ? [] : [s.id]),
-  }), [props.searchStoreIds, data.stores, query, dishes, focusStoreId, selectedKey]);
+  }), [props.searchStoreIds, data.stores, query, dishes, focusStoreId, selectedKey, numbers]);
   // 중심만 필요하지만 모델 전체(묶음 포함)를 계산하므로 응답이 바뀔 때만 다시 센다.
   const centre = useMemo(() => buildMarketOverlay({ data, zoom: 17 }).centre, [data]);
   useEffect(() => { if (!live || !centre) props.onViewportChange?.(null); }, [live, centre, props.onViewportChange]);
@@ -35,7 +39,7 @@ export default function MarketMap(props: ComponentProps<typeof MarketCanvas> & {
     setProvider(next); setFailed(null);
     try { window.localStorage.setItem(PREFERENCE, next); } catch { /* Storage is optional. */ }
   };
-  const liveProps = { contentId, data, lang, selection, storeIds, userPosition: position, onSelect, onViewportChange: props.onViewportChange };
+  const liveProps = { contentId, data, lang, selection, storeIds, userPosition: position, onSelect, onOpenStore, onShowList, onViewportChange: props.onViewportChange };
   return <>
     {typeof window !== 'undefined' && <button type="button" className="place-market-provider" onClick={toggle}>{live
       ? (lang === 'en' ? 'Use our map' : '우리 지도로 보기')

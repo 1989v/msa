@@ -6,9 +6,9 @@
 }
 .market-map-page *, .market-map-page *::before, .market-map-page *::after { box-sizing: border-box; }
 /* 상단 바·구역 칩·목록의 버튼만 — 네이버 지도 안의 핀(button.place-market-naver-pin)에 상자가 씌워지면 안 된다. */
-.market-map-top :is(button, input), .market-map-types button, .market-map-list button { font: inherit; color: inherit; }
-.market-map-top button, .market-map-types button, .market-map-list button, .market-map-top > a { min-height: 44px; }
-.market-map-top button, .market-map-types button, .market-map-list button { background: var(--ko-surface-1); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius-asym); padding: var(--ko-space-2); }
+.market-map-top :is(button, input), .market-map-types button, .market-map-list button, .market-store-detail button { font: inherit; color: inherit; }
+.market-map-top button, .market-map-types button, .market-map-list button, .market-store-detail button, .market-map-top > a { min-height: 44px; }
+.market-map-top button, .market-map-types button, .market-map-list button, .market-store-detail button { background: var(--ko-surface-1); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius-asym); padding: var(--ko-space-2); }
 .market-map-page :is(button, input, a):focus-visible { outline: var(--ko-focus-ring); outline-offset: 2px; }
 .market-map-top { display: flex; align-items: center; gap: var(--ko-space-2); padding: var(--ko-space-2) max(var(--ko-space-3), env(safe-area-inset-right)) var(--ko-space-2) max(var(--ko-space-3), env(safe-area-inset-left)); border-bottom: 1px solid var(--ko-border-default); }
 .market-map-top > a { display: grid; place-items: center; min-width: 44px; color: var(--ko-accent-text); }
@@ -41,6 +41,22 @@
 .market-list-body { overflow-y: auto; min-height: 0; overscroll-behavior: contain; padding-bottom: var(--ko-space-4); }
 .market-list-rows { max-height: none; overflow: visible; }
 .market-list-rows li[data-selected] { padding-inline: var(--ko-space-3); background: var(--ko-accent-primary-bg); }
+.market-list-row-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--ko-space-2); }
+.market-list-row-head > button:first-of-type { flex: 1; min-width: 0; text-align: left; }
+.market-list-detail { flex-shrink: 0; color: var(--ko-accent-text); }
+/* 목록 순번 — 검색 결과·선택한 필지의 행과 같은 번호를 지도 핀이 쓴다. */
+.market-list-no { display: inline-grid; place-items: center; min-width: 1.5rem; height: 1.5rem; padding-inline: var(--ko-space-1); margin-inline-end: var(--ko-space-1); border-radius: 999px; background: var(--ko-text-primary); color: var(--ko-surface-0); font-size: var(--ko-text-xs); font-weight: 700; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+/* 가게 상세 — 지도 오른쪽에서 들어온다. 모바일에서는 작업 영역 전체를 덮는다. */
+.market-store-detail { position: absolute; inset: 0 0 0 auto; width: min(24rem, 100%); z-index: 4; overflow-y: auto; overscroll-behavior: contain; background: var(--ko-surface-0); border-left: 1px solid var(--ko-border-default); padding: var(--ko-space-3) var(--ko-space-4) calc(var(--ko-space-4) + env(safe-area-inset-bottom)); animation: market-store-detail-in var(--ko-duration-normal, 250ms) var(--ko-ease-out, ease-out); }
+.market-store-detail:focus { outline: none; }
+.market-store-detail header { display: flex; align-items: flex-start; gap: var(--ko-space-2); }
+.market-store-detail h2 { flex: 1; margin: 0; font-size: var(--ko-text-base); display: flex; align-items: center; gap: var(--ko-space-1); overflow-wrap: anywhere; }
+.market-store-detail header button { flex-shrink: 0; min-width: 44px; }
+.market-store-detail p { margin: var(--ko-space-2) 0 0; overflow-wrap: anywhere; }
+.market-store-detail-type { display: flex; align-items: center; gap: var(--ko-space-2); flex-wrap: wrap; }
+.market-store-detail-menus { margin: var(--ko-space-2) 0 0; padding-inline-start: 1.25rem; font-variant-numeric: tabular-nums; }
+@keyframes market-store-detail-in { from { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { .market-store-detail { animation: none; } }
 .market-map-page[data-snap='peek'] .market-list-body { display: none; }
 @media (min-width: 1024px) {
   .market-map-workspace { display: grid; grid-template-columns: 400px minmax(0, 1fr); }

@@ -10,7 +10,18 @@ describe('market overlay model', () => {
     expect(low.markers).toHaveLength(1); expect(low.markers[0].text).toBe('Market · 5');
     expect(buildMarketOverlay({ data: overlayData, zoom: 17, bounds }).markers).toHaveLength(1);
     const high = buildMarketOverlay({ data: overlayData, zoom: 19, bounds, selection: { searchStoreIds: [2] } });
-    expect(high.markers).toHaveLength(3); expect(high.markers[1].text).toBe('Shop 2'); expect(high.markers[1].strokeColor).toBe('var(--ko-accent-text)'); expect(high.markers[1]).toMatchObject({ highlighted: true, searchMatch: true });
+    expect(high.markers).toHaveLength(3); expect(high.markers[1].text).toBe('Shop 2'); expect(high.markers[1]).toMatchObject({ strokeColor: 'var(--ko-accent-primary)', strokeWeight: 4, highlighted: true, searchMatch: true });
+  });
+  it('counts only groups of two or more, numbers lone pins and name labels from the list ordinals, and leaves other pins blank', () => {
+    const stores = [shop(1, 37.5, 127), shop(2, 37.5, 127), shop(3, 37.51, 127.01), shop(4, 37.49, 126.99)];
+    const grouped = buildMarketOverlay({ data: { ...overlayData, stores }, zoom: 17 });
+    expect(grouped.markers.map(marker => marker.text).sort()).toEqual(['', '', '2']);
+    const numbered = buildMarketOverlay({ data: { ...overlayData, stores }, zoom: 17, selection: { numbers: new Map([[3, 1], [1, 2]]) } });
+    expect(numbered.markers.find(marker => marker.storeIds.includes(3))!.text).toBe('1');
+    expect(numbered.markers.find(marker => marker.storeIds.includes(1))!.text).toBe('2');
+    expect(numbered.markers.find(marker => marker.storeIds.includes(4))!.text).toBe('');
+    const named = buildMarketOverlay({ data: { ...overlayData, stores }, zoom: 19, selection: { numbers: new Map([[3, 1]]) } });
+    expect(named.markers.map(marker => marker.text).sort()).toEqual(['1 · Shop 3', 'Shop 1', 'Shop 2', 'Shop 4']);
   });
   it('derives drawing-only hulls from IN coordinates without changing classification or response', () => {
     const before = JSON.stringify(overlayData); const model = buildMarketOverlay({ data: overlayData, zoom: 19 });

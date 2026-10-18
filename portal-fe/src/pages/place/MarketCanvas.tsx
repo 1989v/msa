@@ -187,7 +187,7 @@ export default function MarketCanvas({ data, lang, projection, points, hasGeomet
             <circle r="22" className="place-market-pin-hit-area" />
             {hit && <circle r="18" className="place-market-hit-ring" />}
             <circle r={hit || active ? 13 : 10} className="place-market-dot" strokeDasharray={pin.stores.some((store) => store.pinKind === 'REFERENCE') ? '3 3' : undefined} />
-            <text textAnchor="middle" dy="4">{pin.stores.length}</text>
+            {pin.stores.length > 1 && <text textAnchor="middle" dy="4">{pin.stores.length}</text>}
             {hit && <text className="place-market-hit-label" textAnchor={pin.x < 150 ? 'start' : pin.x > 450 ? 'end' : 'middle'} y="-25">{hitLabel(pin.stores.filter((store) => matches(store)).map((store) => marketDisplayName(store, lang)), en)}</text>}
           </g>;
         })}

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type { MarketDish, MarketResponse } from '../../api/marketApi';
 import type { PlaceLang } from '../../api/placeApi';
 import type { MarketViewport } from './MarketNaverMap';
@@ -18,17 +17,18 @@ export function marketListStores(market: MarketResponse, query: string, storeTyp
   rows.sort((a, b) => engine ? search.storeIds.indexOf(a.id!) - search.storeIds.indexOf(b.id!) : Number(hasMarketCoordinate(b)) - Number(hasMarketCoordinate(a)) || Number(selected.has(b)) - Number(selected.has(a)) || (matchesMarketStore(a, query, dishes)?.rank ?? 5) - (matchesMarketStore(b, query, dishes)?.rank ?? 5) || a.name.localeCompare(b.name, 'ko') || (a.id ?? 0) - (b.id ?? 0));
   return { rows, selected, searching };
 }
+export type MarketListing = ReturnType<typeof marketListStores>;
 
-/** The same list instance serves the mobile sheet and desktop panel. */
-export default function MarketList({ market, query, storeType, viewport, selectedKey, focusStore, includeOutside, lang, onFocusStore, dishes = [], search }: {
-  focusStore?: number | null; market: MarketResponse; query: string; storeType: MarketStoreTypeKey | null; viewport: MarketViewport | null; selectedKey: string | null; includeOutside: boolean; lang: PlaceLang; dishes?: MarketDish[]; search?: MarketStoreSearch; onFocusStore: (id: number) => void;
+/** The same list instance serves the mobile sheet and desktop panel. The page owns the rows, the page size and the
+ * numbers so the map can show the same ordinals next to its pins. */
+export default function MarketList({ market, listing, limit, numbers, query, focusStore, lang, dishes = [], search, onFocusStore, onOpenStore, onMore }: {
+  market: MarketResponse; listing: MarketListing; limit: number; numbers: ReadonlyMap<number, number>; query: string; focusStore?: number | null;
+  lang: PlaceLang; dishes?: MarketDish[]; search?: MarketStoreSearch;
+  onFocusStore: (id: number) => void; onOpenStore: (id: number) => void; onMore: () => void;
 }) {
   const en = lang === 'en';
-  const { rows, selected, searching } = marketListStores(market, query, storeType, viewport, selectedKey, includeOutside, dishes, search);
+  const { rows, selected, searching } = listing;
   const match = (store: MarketResponse['stores'][number]) => search?.status === 'engine' ? search.matchedBy.get(store.id!) ?? null : matchesMarketStore(store, query, dishes);
-  const resetKey = JSON.stringify([market.market.contentId, query, storeType, viewport, includeOutside, selectedKey]);
-  const [page, setPage] = useState({ key: resetKey, limit: 50 });
-  const limit = page.key === resetKey ? page.limit : 50;
   // 좌표 없는 가게는 목록 끝에 남기되 「현 지도에서」 수에는 넣지 않는다 — 지도에 없는 것을 지도 안이라 세지 않는다.
   const unplaced = rows.filter(store => !hasMarketCoordinate(store)).length;
   const placed = rows.length - unplaced;
@@ -45,24 +45,32 @@ export default function MarketList({ market, query, storeType, viewport, selecte
     <div className="market-list-body">
       {rows.length === 0 && <p>{en ? 'No shops to display' : '표시할 가게가 없습니다'}</p>}
       <ul className="place-market-shops market-list-rows">
-        {rows.slice(0, limit).map((store, index) => <li key={store.id ?? `${store.name}-${index}`} data-selected={selected.has(store) || store.id === focusStore || undefined} data-found={searching || undefined} data-outside={store.membership === 'OUT' || undefined}>
-          {hasMarketCoordinate(store) && store.id != null ? <button type="button" aria-pressed={store.id === focusStore} aria-label={`${en ? 'Show on map' : '지도에서 보기'}: ${store.name}`} onClick={() => onFocusStore(store.id!)}><strong>{marketDisplayName(store, lang)}</strong></button> : <strong>{marketDisplayName(store, lang)}</strong>}
-          <div className="place-market-badges">
-            {selected.has(store) && <span>{en ? 'Selected parcel' : '선택한 필지'}</span>}
-            {store.goodPrice && <span className="place-market-good-price-badge">{en ? 'Good price' : '착한가격'}</span>}
-            {sectionMatchLabel(match(store), lang) && <span data-related={search?.status !== 'engine' && matchesMarketStore(store, query, dishes)?.matchedBy === 'related' || undefined}>{sectionMatchLabel(match(store), lang)}</span>}
-            {marketSourceBadges(store, lang).map(badge => <span key={badge}>{badge}</span>)}
-            {store.nearby ? <span>{en ? 'Nearby · Membership unconfirmed' : '주변 · 소속 미확인'}</span> : store.membership === 'OUT' && <span>{en ? 'Outside market' : '시장 밖'}</span>}
-            {store.membership === 'UNKNOWN' && <span>{en ? 'Location unconfirmed' : '위치 미확인'}</span>}
-            {!hasMarketCoordinate(store) && <span>{en ? 'No map location' : '지도 위치 없음'}</span>}
-          </div>
-          {store.goodPrice && store.goodPrice.menus.length > 0 && <p className="place-market-good-price-menus">{(selected.has(store) ? store.goodPrice.menus : store.goodPrice.menus.slice(0, 2)).map(menu => formatGoodPriceMenu(menu, lang)).join(' · ')}</p>}
-          <MarketMenuDetails store={store} lang={lang} />
-          <p>{[store.roadAddress || store.jibunAddress, store.buildingName, store.dong, formatMarketFloor(store.floor, lang), store.ho].filter(Boolean).join(' · ')}</p>
-          {store.pinKind === 'REFERENCE' && <p>{[store.relativePosition, store.positionNote].filter(Boolean).join(' · ')}</p>}
-        </li>)}
+        {rows.slice(0, limit).map((store, index) => {
+          const number = store.id == null ? undefined : numbers.get(store.id);
+          const name = marketDisplayName(store, lang);
+          return <li key={store.id ?? `${store.name}-${index}`} data-selected={selected.has(store) || store.id === focusStore || undefined} data-found={searching || undefined} data-outside={store.membership === 'OUT' || undefined}>
+            <div className="market-list-row-head">
+              {number != null && <span className="market-list-no">{number}</span>}
+              {hasMarketCoordinate(store) && store.id != null ? <button type="button" aria-pressed={store.id === focusStore} aria-label={`${en ? 'Show on map' : '지도에서 보기'}: ${name}`} onClick={() => onFocusStore(store.id!)}><strong>{name}</strong></button> : <strong>{name}</strong>}
+              {store.id != null && <button type="button" className="market-list-detail" aria-label={`${en ? 'Details' : '상세보기'}: ${name}`} onClick={() => onOpenStore(store.id!)}>{en ? 'Details' : '상세보기'}</button>}
+            </div>
+            <div className="place-market-badges">
+              {selected.has(store) && <span>{en ? 'Selected parcel' : '선택한 필지'}</span>}
+              {store.goodPrice && <span className="place-market-good-price-badge">{en ? 'Good price' : '착한가격'}</span>}
+              {sectionMatchLabel(match(store), lang) && <span data-related={search?.status !== 'engine' && matchesMarketStore(store, query, dishes)?.matchedBy === 'related' || undefined}>{sectionMatchLabel(match(store), lang)}</span>}
+              {marketSourceBadges(store, lang).map(badge => <span key={badge}>{badge}</span>)}
+              {store.nearby ? <span>{en ? 'Nearby · Membership unconfirmed' : '주변 · 소속 미확인'}</span> : store.membership === 'OUT' && <span>{en ? 'Outside market' : '시장 밖'}</span>}
+              {store.membership === 'UNKNOWN' && <span>{en ? 'Location unconfirmed' : '위치 미확인'}</span>}
+              {!hasMarketCoordinate(store) && <span>{en ? 'No map location' : '지도 위치 없음'}</span>}
+            </div>
+            {store.goodPrice && store.goodPrice.menus.length > 0 && <p className="place-market-good-price-menus">{(selected.has(store) ? store.goodPrice.menus : store.goodPrice.menus.slice(0, 2)).map(menu => formatGoodPriceMenu(menu, lang)).join(' · ')}</p>}
+            <MarketMenuDetails store={store} lang={lang} />
+            <p>{[store.roadAddress || store.jibunAddress, store.buildingName, store.dong, formatMarketFloor(store.floor, lang), store.ho].filter(Boolean).join(' · ')}</p>
+            {store.pinKind === 'REFERENCE' && <p>{[store.relativePosition, store.positionNote].filter(Boolean).join(' · ')}</p>}
+          </li>;
+        })}
       </ul>
-      {rows.length > limit && <button type="button" onClick={() => setPage({ key: resetKey, limit: limit + 50 })}>{en ? 'Show more' : '더 보기'}</button>}
+      {rows.length > limit && <button type="button" onClick={onMore}>{en ? 'Show more' : '더 보기'}</button>}
     </div>
   </>;
 }

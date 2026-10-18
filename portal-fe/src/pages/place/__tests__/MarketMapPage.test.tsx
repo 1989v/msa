@@ -16,7 +16,7 @@ let mapProps: ComponentProps<typeof MarketMap>;
 vi.mock('../MarketMap', () => ({ default: (props: ComponentProps<typeof MarketMap>) => {
   mapProps = props;
   useEffect(() => { props.onViewportChange?.({ bounds, zoom: 17 }); }, []);
-  return <div data-testid="map"><button onClick={() => props.onSelect('필지2')}>핀 선택</button><button onClick={() => props.onViewportChange?.({ bounds: { ...bounds, north: 0, south: -1 }, zoom: 19 })}>지도 이동</button></div>;
+  return <div data-testid="map"><button onClick={() => props.onSelect('필지2')}>핀 선택</button><button onClick={() => props.onViewportChange?.({ bounds: { ...bounds, north: 0, south: -1 }, zoom: 19 })}>지도 이동</button><button onClick={() => props.onOpenStore?.(2)}>상세 열기</button><button onClick={() => props.onShowList?.()}>목록 보기</button></div>;
 } }));
 const shop = (id: number, name: string, extra: Partial<MarketStore> = {}): MarketStore => ({
   id, name, items: null, zoneId: 1, membership: 'IN', latitude: 37.5, longitude: 127,
@@ -106,7 +106,8 @@ describe('dedicated market map page', () => {
   });
   it('keeps selected parcel shops first and highlighted, missing coordinates last, and focuses a row on map', async () => {
     mount(); await screen.findByRole('heading', { name: '현 지도에서 2곳 · 지도 위치 없음 1곳' });
-    fireEvent.click(screen.getByRole('button', { name: '핀 선택' }));
+    // 핀 선택은 시트를 올리지 않는다(정보 창이 가려진다) — 정보 창의 「목록 보기」가 올린다. peek 에서는 목록 본문이 숨겨져 있다.
+    fireEvent.click(screen.getByRole('button', { name: '핀 선택' })); fireEvent.click(screen.getByRole('button', { name: '목록 보기' }));
     const rows = within(screen.getByRole('complementary')).getAllByRole('listitem');
     expect(rows[0]).toHaveTextContent('하늘가게'); expect(rows[0]).toHaveAttribute('data-selected', 'true'); expect(rows[0]).toHaveTextContent('선택한 필지');
     expect(rows.at(-1)).toHaveTextContent('지도 위치 없음');
@@ -120,7 +121,24 @@ describe('dedicated market map page', () => {
     fireEvent.click(screen.getByRole('button', { name: '더 보기' })); expect(within(screen.getByRole('complementary')).getAllByRole('listitem')).toHaveLength(72);
     fireEvent.change(screen.getByRole('searchbox'), { target: { value: '상점' } }); expect(within(screen.getByRole('complementary')).getAllByRole('listitem')).toHaveLength(50);
   });
-  it('cycles peek/half/full, moves only one snap for a 60px drag, and opens half on pin or search focus', async () => {
+  it('numbers the selected parcel and search results in the list and on the map, and opens the detail panel from a row or the map', async () => {
+    mount(); await screen.findByRole('heading', { name: '현 지도에서 2곳 · 지도 위치 없음 1곳' });
+    expect(mapProps.numbers?.size ?? 0).toBe(0); expect(document.querySelectorAll('.market-list-no')).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: '핀 선택' })); fireEvent.click(screen.getByRole('button', { name: '목록 보기' }));
+    expect([...mapProps.numbers!.entries()]).toEqual([[2, 1]]);
+    const rows = within(screen.getByRole('complementary')).getAllByRole('listitem');
+    expect(rows[0].querySelector('.market-list-no')).toHaveTextContent('1'); expect(rows[1].querySelector('.market-list-no')).toBeNull();
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: '가게' } });
+    expect([...mapProps.numbers!.values()]).toEqual([1, 2, 3]); expect(mapProps.numbers!.size).toBe(3);
+    fireEvent.click(screen.getByRole('button', { name: '상세보기: 하늘가게' }));
+    const dialog = screen.getByRole('dialog'); expect(dialog).toHaveFocus();
+    expect(dialog).toHaveTextContent('하늘가게'); expect(dialog).toHaveTextContent('음식점'); expect(dialog).toHaveTextContent('음식 › 한식'); expect(dialog).toHaveTextContent('필지2'); expect(dialog).toHaveTextContent('가맹점');
+    fireEvent.keyDown(dialog, { key: 'Escape' }); expect(screen.queryByRole('dialog')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: '상세 열기' })); expect(screen.getByRole('dialog')).toHaveTextContent('하늘가게');
+    fireEvent.click(screen.getByRole('button', { name: '지도에서 보기' })); expect(mapProps.focusStoreId).toBe(2);
+    fireEvent.click(screen.getByRole('button', { name: '닫기' })); expect(screen.queryByRole('dialog')).toBeNull();
+  });
+  it('cycles peek/half/full, moves only one snap for a 60px drag, keeps the sheet on pin selection, and opens half from the info window list action or search focus', async () => {
     mount(); await screen.findByRole('heading', { name: '시장' });
     const page = document.querySelector('main')!; const handle = screen.getByRole('button', { name: '가게 목록 크기 조절' });
     expect(page).toHaveAttribute('data-snap', 'peek');
@@ -130,7 +148,9 @@ describe('dedicated market map page', () => {
     pointer('pointerdown', 200); pointer('pointerup', 145); expect(page).toHaveAttribute('data-snap', 'peek');
     pointer('pointerdown', 200); pointer('pointerup', 140); fireEvent.click(handle); expect(page).toHaveAttribute('data-snap', 'half');
     pointer('pointerdown', 200); pointer('pointerup', 0); fireEvent.click(handle); expect(page).toHaveAttribute('data-snap', 'full');
-    fireEvent.click(screen.getByRole('button', { name: '핀 선택' })); expect(page).toHaveAttribute('data-snap', 'half');
+    fireEvent.click(screen.getByRole('button', { name: '핀 선택' })); expect(page).toHaveAttribute('data-snap', 'full');
+    fireEvent.click(handle); expect(page).toHaveAttribute('data-snap', 'peek');
+    fireEvent.click(screen.getByRole('button', { name: '목록 보기' })); expect(page).toHaveAttribute('data-snap', 'half');
     fireEvent.click(handle); expect(page).toHaveAttribute('data-snap', 'full'); fireEvent.focus(screen.getByRole('searchbox')); expect(page).toHaveAttribute('data-snap', 'half');
   });
   it('shows only nonempty shop types and requests outside shops only on toggle', async () => {
@@ -172,7 +192,7 @@ it('enters via type URL, preserves other params and clears focus and selection o
   await screen.findByRole('heading', { name: '현 지도에서 2곳 · 지도 위치 없음 1곳' });
   expect(screen.getByRole('button', { name: '음식점 (3)' })).toHaveAttribute('aria-pressed', 'true');
   expect(mapProps.points.flatMap(point => point.stores.map(store => store.id))).toEqual([1, 2]);
-  fireEvent.click(screen.getByRole('button', { name: '핀 선택' })); fireEvent.click(screen.getByRole('button', { name: '지도에서 보기: 가게' })); expect(mapProps.focusStoreId).toBe(1);
+  fireEvent.click(screen.getByRole('button', { name: '핀 선택' })); fireEvent.click(screen.getByRole('button', { name: '목록 보기' })); fireEvent.click(screen.getByRole('button', { name: '지도에서 보기: 가게' })); expect(mapProps.focusStoreId).toBe(1);
   fireEvent.click(screen.getByRole('button', { name: '의류·신발 (1)' }));
   expect(mapProps.selectedKey).toBeNull(); expect(mapProps.focusStoreId).toBeNull(); expect(screen.getByTestId('address')).toHaveTextContent('type=fashion&keep=1'); expect(screen.getByText('표시할 가게가 없습니다')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: '전체' })); expect(screen.getByTestId('address')).toHaveTextContent('/attractions/7/market?keep=1');

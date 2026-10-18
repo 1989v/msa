@@ -54,6 +54,8 @@ describe('MarketCanvas navigation and shared SVG coordinates', () => {
     expect(container.querySelector('.place-market-pin text')).toHaveTextContent('2');
     for (let i = 0; i < 3; i++) fireEvent.click(screen.getByRole('button', { name: '확대' }));
     expect(container.querySelectorAll('.place-market-pin')).toHaveLength(2);
+    // Lone pins carry no count; only the search hit label remains.
+    expect(container.querySelectorAll('.place-market-pin text:not(.place-market-hit-label)')).toHaveLength(0);
     expect(screen.getByRole('button', { name: '확대' })).toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: '축소' }));
     expect(container.querySelectorAll('.place-market-pin')).toHaveLength(2);

@@ -11,7 +11,8 @@ import { groupMarketPins, projectMarketPins, visibleMarketStores } from './marke
 import { useMarketStoreSearch } from './useMarketStoreSearch';
 import { MARKET_STORE_TYPES, marketStoreType, marketStoreTypeColor, marketStoreTypeCounts } from './marketStoreType';
 import MarketMap from './MarketMap';
-import MarketList from './MarketList';
+import MarketList, { marketListStores } from './MarketList';
+import MarketStoreDetail from './MarketStoreDetail';
 import type { MarketViewport } from './MarketNaverMap';
 import './PlacePage.css';
 import './AttractionMarket.css';
@@ -38,6 +39,10 @@ function MarketMapScreen() {
   const [focusStoreId, setFocusStoreId] = useState<number | null>(null);
   const [viewport, setViewport] = useState<MarketViewport | null>(null);
   const [snap, setSnap] = useState<Snap>('peek');
+  const [detailId, setDetailId] = useState<number | null>(null);
+  // 목록 페이지(「더 보기」)와 번호는 페이지가 갖는다 — 지도가 같은 번호를 핀에 쓴다. 조건이 바뀌면 50으로 돌아간다.
+  const [page, setPage] = useState({ key: '', limit: 50 });
+  const numbersCache = useRef({ key: '', map: new Map<number, number>() });
   const pointerStart = useRef<number | null>(null);
   const dragged = useRef(false);
   const attraction = useQuery({ queryKey: ['attraction', id], queryFn: () => fetchAttraction(id), enabled: !!id, retry: false });
@@ -51,7 +56,17 @@ function MarketMapScreen() {
   const types = marketStoreTypeCounts(visibleMarketStores(data.stores, includeOutside));
   const stores = visibleMarketStores(data.stores, includeOutside, storeType);
   const projection = projectMarketPins(groupMarketPins(stores), data);
-  const clear = () => { setSelectedKey(null); setFocusStoreId(null); };
+  const listing = marketListStores(data, query, storeType, viewport, selectedKey, includeOutside, dishes, storeSearch);
+  const resetKey = JSON.stringify([data.market.contentId, query, storeType, viewport, includeOutside, selectedKey]);
+  const limit = page.key === resetKey ? page.limit : 50;
+  // 번호는 검색 중이면 보이는 결과에, 아니면 선택한 필지(또는 포커스한 가게)에 1부터. 같은 Map 이 목록과 지도에 간다.
+  const numbered = listing.searching ? listing.rows.slice(0, limit) : listing.rows.filter(store => listing.selected.has(store) || (focusStoreId != null && store.id === focusStoreId));
+  const numbersKey = numbered.map(store => store.id).join(',');
+  if (numbersCache.current.key !== numbersKey) numbersCache.current = { key: numbersKey, map: new Map(numbered.flatMap((store, index) => store.id == null ? [] : [[store.id, index + 1] as const])) };
+  const numbers = numbersCache.current.map;
+  const detailStore = detailId == null ? null : data.stores.find(store => store.id === detailId) ?? null;
+  const clear = () => { setSelectedKey(null); setFocusStoreId(null); setDetailId(null); };
+  const focusStore = (id: number) => { flushSync(() => setFocusStoreId(null)); setFocusStoreId(id); };
   const pickType = (key: typeof storeType) => { const next = new URLSearchParams(params); if (key) next.set('type', key); else next.delete('type'); setParams(next, { replace: true }); clear(); };
   const color = (store: typeof stores[number]) => marketStoreTypeColor(marketStoreType(store));
   return <main className="market-map-page" data-snap={snap}>
@@ -70,15 +85,16 @@ function MarketMapScreen() {
     </nav>
     <div className="market-map-workspace">
       <div className="market-map-stage">
-        {projection ? <MarketMap contentId={attraction.data.contentId} data={data} lang={lang} projection={projection} points={projection.points} hasGeometry={!!data.boundary?.polygon.length || !!data.paths?.some(path => path.geometry.length)} query={query} searchStoreIds={storeSearch.status === 'engine' ? storeSearch.storeIds : undefined} dishes={dishes} selectedKey={selectedKey} focusStoreId={focusStoreId} color={color} onViewportChange={setViewport} onSelect={key => { setSelectedKey(key); if (key != null) setSnap('half'); }} /> : <p>{en ? 'No shop coordinates available.' : '좌표가 있는 가게가 없습니다.'}</p>}
+        {projection ? <MarketMap contentId={attraction.data.contentId} data={data} lang={lang} projection={projection} points={projection.points} hasGeometry={!!data.boundary?.polygon.length || !!data.paths?.some(path => path.geometry.length)} query={query} searchStoreIds={storeSearch.status === 'engine' ? storeSearch.storeIds : undefined} dishes={dishes} selectedKey={selectedKey} focusStoreId={focusStoreId} color={color} numbers={numbers} onViewportChange={setViewport} onSelect={setSelectedKey} onOpenStore={setDetailId} onShowList={() => setSnap('half')} /> : <p>{en ? 'No shop coordinates available.' : '좌표가 있는 가게가 없습니다.'}</p>}
       </div>
       <aside className="market-map-list" aria-label={en ? 'Shop list' : '가게 목록'}>
         <button type="button" className="market-map-handle" aria-label={en ? 'Resize shop list' : '가게 목록 크기 조절'} aria-valuetext={snap} onPointerDown={event => { pointerStart.current = event.clientY; dragged.current = false; event.currentTarget.setPointerCapture?.(event.pointerId); }} onPointerUp={event => {
           const delta = (pointerStart.current ?? event.clientY) - event.clientY; pointerStart.current = null;
           if (Math.abs(delta) >= 60) { dragged.current = true; setSnap(SNAPS[Math.max(0, Math.min(2, SNAPS.indexOf(snap) + (delta > 0 ? 1 : -1)))]); }
         }} onPointerCancel={() => { pointerStart.current = null; }} onClick={() => { if (dragged.current) { dragged.current = false; return; } setSnap(SNAPS[(SNAPS.indexOf(snap) + 1) % 3]); }}><span aria-hidden="true">━</span></button>
-        <MarketList search={storeSearch} market={data} query={query} storeType={storeType} viewport={viewport} selectedKey={selectedKey} focusStore={focusStoreId} includeOutside={includeOutside} lang={lang} dishes={dishes} onFocusStore={id => { flushSync(() => setFocusStoreId(null)); setFocusStoreId(id); }} />
+        <MarketList search={storeSearch} market={data} listing={listing} limit={limit} numbers={numbers} query={query} focusStore={focusStoreId} lang={lang} dishes={dishes} onFocusStore={focusStore} onOpenStore={setDetailId} onMore={() => setPage({ key: resetKey, limit: limit + 50 })} />
       </aside>
+      {detailStore && <MarketStoreDetail store={detailStore} number={detailStore.id == null ? undefined : numbers.get(detailStore.id)} lang={lang} onClose={() => setDetailId(null)} onFocus={focusStore} />}
     </div>
   </main>;
 }

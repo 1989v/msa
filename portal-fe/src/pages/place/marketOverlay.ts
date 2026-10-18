@@ -4,7 +4,8 @@ import { clusterByScreenDistance, groupMarketPins, hasMarketCoordinate, marketDi
 import { majorityMarketStoreType, marketStoreTypeColor } from './marketStoreType';
 
 export type MarketBounds = { north: number; south: number; east: number; west: number };
-export type OverlaySelection = { storeId?: number | null; searchStoreIds?: number[]; selectedKey?: string | null };
+/** `numbers` are the list ordinals (store id → 1-based) the page assigns to search results or the selected parcel. */
+export type OverlaySelection = { storeId?: number | null; searchStoreIds?: number[]; selectedKey?: string | null; numbers?: ReadonlyMap<number, number> };
 type Position = { latitude: number; longitude: number };
 type Shape = { key: string; coordinates: MarketCoordinate[]; color: string; strokeWeight: number; strokeOpacity: number };
 export type OverlayMarker = Position & { key: string; selectionKey?: string; storeIds: (number | null)[]; text: string; title: string; color: string; strokeColor: string; strokeWeight: number; size: number; fontSize: string; labelOffset: { x: number; y: number }; iconPath: string; textColor: string; highlighted: boolean; searchMatch: boolean; label: boolean };
@@ -69,19 +70,24 @@ export function buildMarketOverlay({ data, zoom, bounds, selection = {}, lang = 
   model.labels = [...names].map(([text, { midpoint }]) => ({ key: `label:${text}`, text, ...midpoint, color: muted }));
   const stores = all.filter((s) => storeIds == null || storeIds.includes(s.id));
   const parcels = groupMarketPins(stores); const parcelFor = (store: MarketStore) => parcels.find((p) => p.stores.includes(store))!;
-  const marker = (key: string, latitude: number, longitude: number, members: MarketStore[], selectionKey: string, text: string, label: boolean): OverlayMarker => {
+  // A group pin shows how many shops share the spot only when there are two or more; a lone pin shows its list number or nothing,
+  // and a named pin puts the number before the name. The counts are not stall numbers (the sources carry none).
+  const numberOf = (store: MarketStore) => store.id == null ? undefined : selection.numbers?.get(store.id);
+  const marker = (key: string, latitude: number, longitude: number, members: MarketStore[], selectionKey: string, label: boolean): OverlayMarker => {
     const highlighted = members.some((s) => selection.searchStoreIds?.includes(s.id!) || selection.storeId != null && selection.storeId === s.id) || selection.selectedKey === selectionKey;
     const color = members.every((s) => s.membership === 'OUT') ? muted : marketStoreTypeColor(majorityMarketStoreType(members));
     const size = label ? 12 : members.length < 10 ? 20 : members.length < 100 ? 26 : 32;
     const fontSize = `var(--ko-text-${label || size === 32 ? 'base' : size === 20 ? 'xs' : 'sm'})`;
-    return { key, latitude, longitude, selectionKey, storeIds: members.map((s) => s.id), text, title: members.map((s) => marketDisplayName(s, lang)).join(', '), color, strokeColor: highlighted ? 'var(--ko-accent-text)' : 'var(--ko-surface-0)', strokeWeight: highlighted ? 3 : 2, size, fontSize, iconPath: circlePath(size), labelOffset: { x: 0, y: 0 }, highlighted, searchMatch: members.some((s) => selection.searchStoreIds?.includes(s.id!)), textColor: label ? highlighted ? 'var(--ko-accent-text)' : color : 'var(--ko-surface-0)', label };
+    const number = members.length === 1 ? numberOf(members[0]) : undefined;
+    const text = label ? [number, marketDisplayName(members[0], lang)].filter((part) => part != null).join(' · ') : members.length >= 2 ? String(members.length) : number != null ? String(number) : '';
+    return { key, latitude, longitude, selectionKey, storeIds: members.map((s) => s.id), text, title: members.map((s) => marketDisplayName(s, lang)).join(', '), color, strokeColor: highlighted ? 'var(--ko-accent-primary)' : 'var(--ko-surface-0)', strokeWeight: highlighted ? 4 : 2, size, fontSize, iconPath: circlePath(size), labelOffset: { x: 0, y: 0 }, highlighted, searchMatch: members.some((s) => selection.searchStoreIds?.includes(s.id!)), textColor: label ? highlighted ? 'var(--ko-accent-text)' : color : 'var(--ko-surface-0)', label };
   };
   const visibleStores = stores.filter((s) => inside(s, bounds));
   if (zoom <= 16 && centre) model.markers.push({ key: 'market-name', ...centre, storeIds: [], text: `${data.market.name} · ${data.stores.length}`, title: data.market.name, color: muted, strokeColor: 'var(--ko-surface-0)', strokeWeight: 2, size: 32, fontSize: 'var(--ko-text-base)', iconPath: circlePath(32), labelOffset: { x: 0, y: 20 }, textColor: muted, highlighted: false, searchMatch: false, label: true });
-  else if (zoom >= 19 && visibleStores.length <= INDIVIDUAL_LIMIT) model.markers = visibleStores.map((s, index) => marker(`store:${s.id ?? index}`, s.latitude, s.longitude, [s], parcelFor(s).key, marketDisplayName(s, lang), true));
+  else if (zoom >= 19 && visibleStores.length <= INDIVIDUAL_LIMIT) model.markers = visibleStores.map((s, index) => marker(`store:${s.id ?? index}`, s.latitude, s.longitude, [s], parcelFor(s).key, true));
   else {
     const visible = groupMarketPins(visibleStores).map((p) => ({ ...p, ...screen([p.latitude, p.longitude], zoom) }));
-    model.markers = clusterByScreenDistance(visible, 1, 24).map((p) => marker(`pin:${p.key}`, p.latitude, p.longitude, p.stores, p.key, String(p.stores.length), false));
+    model.markers = clusterByScreenDistance(visible, 1, 24).map((p) => marker(`pin:${p.key}`, p.latitude, p.longitude, p.stores, p.key, false));
   }
   const focused = stores.find((s) => selection.storeId != null && s.id === selection.storeId);
   if (focused) model.focus = { latitude: focused.latitude, longitude: focused.longitude, selectionKey: parcelFor(focused).key, zoom: 19 };
