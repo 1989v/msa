@@ -94,3 +94,10 @@ Fresh review에서 발견한 두 캐시 결함은 재현 테스트 후 수정했
 
 - 최종 날짜 수정 검증: `npx vitest run src/seo/__tests__/siteAuditRemaining.test.ts src/seo/__tests__/prerenderPlace.test.ts` → **2 files /34 tests passed**. 기존 응답 날짜/없는 날짜/offset 원천 날짜 및 생성 HTML까지 확인했다. 뒤이어 `npx tsc -b`·변경 eslint exit0.
 - 부모의 마지막 승인 Safari reload에서 **Source updated: 2026-06-23 · Collection date: Not provided.**를 실제 확인했다. 구형 Vite cache가 남는 환경이라 최종 수정 후 서버를 재시작하고 HTTP 원문 제공까지 확인했다. 날짜 검증 미완료 상태는 해소됐으며 승인된 UI bundle은 완료됐다.
+
+## 배포 startup probe 후속 수정
+
+- 사이트 실제 404 정책 적용 후 기존 k3s-lite의 전체 commerce Deployment용 startup probe가 nginx FE에도 `/actuator/health/liveness`를 주입한 문제가 드러났다. 이전 SPA soft404 응답이 이를 숨겼다. 부모는 새 FE 내부 `/` 응답 성공과 startup404로 rollout 대기를 확인했다.
+- generic patch 뒤 portal-fe의 startup `httpGet.path`만 `/`로 override한다. readiness/liveness도 기존 실제 루트 `/`를 유지한다. probe 제거나 예산 완화, nginx 가짜 actuator는 추가하지 않는다.
+- `kubectl kustomize k8s/overlays/k3s-lite` 및 `kubectl kustomize k8s/overlays/oci-arm` 모두 성공. 렌더 YAML의 두 overlay × portal-fe/content/search/gateway **8개 조합**을 assertion으로 검증했다: FE의 startup/readiness/liveness는 `/`, JVM은 actuator 경로 유지, 모든 startup failureThreshold60 유지. `git diff --check` 통과.
+- 운영 적용·Argo sync 검증은 부모가 이어서 수행한다.

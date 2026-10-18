@@ -48,6 +48,25 @@ patches:
       kind: Deployment
       labelSelector: "app.kubernetes.io/part-of=commerce-platform"
 
+  # portal-fe serves nginx, not Spring actuator. Keep the startup budget above,
+  # but probe its real root document just like its readiness/liveness probes.
+  - target:
+      kind: Deployment
+      name: portal-fe
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: portal-fe
+      spec:
+        template:
+          spec:
+            containers:
+              - name: app
+                startupProbe:
+                  httpGet:
+                    path: /
+
   # Redis cluster -> standalone override. Only services whose
   # application-kubernetes.yml declares cluster.nodes get this patch.
   # Implementation: inject SPRING_APPLICATION_JSON env var with higher
