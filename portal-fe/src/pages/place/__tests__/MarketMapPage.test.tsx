@@ -43,6 +43,21 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); vi.resetAllMocks(); });
 describe('dedicated market map page', () => {
+  it('shows each shop\'s goods and puts a popular good into the search when picked', async () => {
+    vi.mocked(fetchMarket).mockResolvedValue({ ...data, stores: [shop(1, '가게', { items: '과일,채소' }), shop(2, '하늘가게', { items: '과일', latitude: 37.5001 }), shop(3, '옷가게', { items: '정장' })] });
+    mount(); const list = await screen.findByRole('complementary');
+    const popular = await within(list).findByRole('navigation', { name: '많이 파는 품목' });
+    expect(within(popular).getAllByRole('button').map(button => button.textContent)).toEqual(['과일 2']);
+    expect(within(list).getAllByText('판매 품목')).toHaveLength(3);
+    expect(within(list).getByText('채소')).toHaveClass('market-store-item');
+    // 검색창에 쳤다 지운 뒤에도 고른 품목이 들어간다 — 손댄 입력은 defaultValue 를 따르지 않는다
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: '옷' } }); fireEvent.change(screen.getByRole('searchbox'), { target: { value: '' } });
+    fireEvent.click(within(await within(list).findByRole('navigation', { name: '많이 파는 품목' })).getByRole('button', { name: /과일/ }));
+    expect(screen.getByRole('searchbox')).toHaveValue('과일');
+    await waitFor(() => expect(screen.getByTestId('address')).toHaveTextContent('marketQuery=%EA%B3%BC%EC%9D%BC'));
+    await within(list).findByRole('heading', { name: '찾은 가게 2곳' });
+    expect(within(list).queryByRole('navigation', { name: '많이 파는 품목' })).toBeNull();
+  });
   it.each(['/attractions/7/market', '/en/attractions/7/market'])('loads attraction and market on %s with a detail back link', async entry => {
     mount(entry); await screen.findByRole('heading', { name: entry.startsWith('/en') ? '관광지' : '시장' });
     expect(fetchAttraction).toHaveBeenCalledWith('7');

@@ -38,6 +38,11 @@
 .market-list-header { flex-shrink: 0; overflow: auto; }
 .market-list-header h2 { font-size: var(--ko-text-base); margin: var(--ko-space-2) 0; }
 .market-list-header p { margin-block: var(--ko-space-1); }
+/* 많이 파는 품목 — 누르면 검색창에 넣는다. 한 줄로 두고 넘치면 가로로 민다. */
+.market-top-items { display: flex; align-items: center; gap: var(--ko-space-2); overflow-x: auto; padding-block: var(--ko-space-1); }
+.market-top-items > span { flex-shrink: 0; color: var(--ko-text-secondary); font-size: var(--ko-text-xs); }
+.market-top-items button { flex-shrink: 0; }
+.market-top-items button span { color: var(--ko-text-secondary); font-variant-numeric: tabular-nums; }
 .market-list-body { overflow-y: auto; min-height: 0; overscroll-behavior: contain; padding-bottom: var(--ko-space-4); }
 /* 관광지 상세의 `.place-market-shops { max-height: 28rem }` 을 이겨야 한다 — 같은 특이도면 운영 번들에서 CSS 청크 순서에 따라 그쪽이 이겨 목록이 448px 에서 잘린다. */
 .market-map-list .market-list-rows { max-height: none; overflow: visible; }

@@ -21,10 +21,10 @@ export type MarketListing = ReturnType<typeof marketListStores>;
 
 /** The same list instance serves the mobile sheet and desktop panel. The page owns the rows, the page size and the
  * numbers so the map can show the same ordinals next to its pins. */
-export default function MarketList({ market, listing, limit, numbers, query, focusStore, lang, dishes = [], search, onFocusStore, onOpenStore, onMore }: {
+export default function MarketList({ market, listing, limit, numbers, query, focusStore, lang, dishes = [], search, topItems = [], onFocusStore, onOpenStore, onMore, onPickItem }: {
   market: MarketResponse; listing: MarketListing; limit: number; numbers: ReadonlyMap<number, number>; query: string; focusStore?: number | null;
-  lang: PlaceLang; dishes?: MarketDish[]; search?: MarketStoreSearch;
-  onFocusStore: (id: number) => void; onOpenStore: (id: number) => void; onMore: () => void;
+  lang: PlaceLang; dishes?: MarketDish[]; search?: MarketStoreSearch; topItems?: { item: string; count: number }[];
+  onFocusStore: (id: number) => void; onOpenStore: (id: number) => void; onMore: () => void; onPickItem?: (item: string) => void;
 }) {
   const en = lang === 'en';
   const { rows, selected, searching } = listing;
@@ -38,6 +38,7 @@ export default function MarketList({ market, listing, limit, numbers, query, foc
   return <>
     <header className="market-list-header">
       <h2>{heading}</h2>
+      {!searching && topItems.length > 0 && onPickItem && <nav className="market-top-items" aria-label={en ? 'Popular goods' : '많이 파는 품목'}><span>{en ? 'Popular goods' : '많이 파는 품목'}</span>{topItems.map(({ item, count }) => <button key={item} type="button" onClick={() => onPickItem(item)}>{item} <span aria-hidden="true">{count}</span></button>)}</nav>}
       {market.market.goodPrice && <p className="place-market-source">{formatGoodPriceSummary(market.market.goodPrice, lang)} · <a href={market.market.goodPrice.attribution.url} target="_blank" rel="noreferrer">{market.market.goodPrice.attribution.name}</a></p>}
       {market.market.attribution && <p className="place-market-source"><a href={market.market.attribution.url} target="_blank" rel="noreferrer">{market.market.attribution.name}</a> · {market.market.attribution.license}</p>}
       {(market.attribution ?? []).map(credit => <p className="place-market-source" key={credit}>{credit}</p>)}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { MarketStore } from '../../../api/marketApi';
-import { clusterByScreenDistance, formatMarketPrice, formatGoodPriceSummary, formatMarketFloor, groupMarketPins, longestMarketSegmentMidpoint, marketSourceBadges, matchesMarketName, matchesMarketStore, projectMarketPins, visibleMarketStores } from '../marketView';
+import { clusterByScreenDistance, formatMarketPrice, formatGoodPriceSummary, formatMarketFloor, groupMarketPins, longestMarketSegmentMidpoint, marketSourceBadges, marketStoreItems, matchesMarketName, matchesMarketStore, projectMarketPins, topMarketItems, visibleMarketStores } from '../marketView';
 
 const store = (overrides: Partial<MarketStore> = {}): MarketStore => ({
   id: 1, name: '유명 순대국', items: null, zoneId: 1, membership: 'IN', latitude: 37.5, longitude: 127,
@@ -10,6 +10,13 @@ const store = (overrides: Partial<MarketStore> = {}): MarketStore => ({
 });
 
 describe('market display projection', () => {
+  it('splits Onnuri goods into single items and ranks the goods two or more shops sell', () => {
+    expect(marketStoreItems(store({ items: '카페트,커텐, 천막·지물/카페트' }), 'ko')).toEqual(['카페트', '커텐', '천막', '지물']);
+    expect(marketStoreItems(store({ items: '과일', itemsEn: 'Fruit' }), 'en')).toEqual(['Fruit']);
+    expect(marketStoreItems(store({ items: null, categorySub: '떡/한과' }), 'ko')).toEqual([]);
+    const shops = [store({ items: '과일,채소' }), store({ items: '과일' }), store({ items: '정장' }), store({ items: '채소' }), store({ items: '과일' })];
+    expect(topMarketItems(shops, 'ko')).toEqual([{ item: '과일', count: 3 }, { item: '채소', count: 2 }]);
+  });
   it('uses boundary bounds independently of stores, including when there are no shops', () => {
     const geometry = { boundary: { polygon: [[37.5, 127], [37.501, 127], [37.501, 127.001], [37.5, 127.001]] as [number, number][], source: 'OSM' as const } };
     const empty = projectMarketPins([], geometry)!;

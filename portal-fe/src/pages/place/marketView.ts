@@ -24,6 +24,18 @@ export function matchesMarketStore(store: MarketStore, query: string, dishes: Ma
 // Keep map highlighting and the result list on the same search contract.
 export const matchesMarketName = (store: MarketStore, query: string, dishes: MarketDish[] = []) => matchesMarketStore(store, query, dishes) != null;
 
+/** 가게의 판매 품목 — 온누리 가맹점이 적은 취급품목(「카페트,커텐,천막,지물」)을 낱개로 나눈다. 업종은 품목이 아니라 넣지 않는다. */
+export function marketStoreItems(store: { items: string | null } & MarketEnglishFields, lang: PlaceLang): string[] {
+  const raw = (lang === 'en' ? store.itemsEn || store.items : store.items) ?? '';
+  return [...new Set(raw.split(/[,，·/、]/).map((item) => item.trim()).filter(Boolean))];
+}
+/** 시장에서 많이 파는 품목 — 그 품목을 적은 가게 수 순. 둘 이상인 것만 — 한 곳뿐이면 「많이」가 아니다. */
+export function topMarketItems(stores: MarketStore[], lang: PlaceLang, limit = 8): { item: string; count: number }[] {
+  const counts = new Map<string, number>();
+  for (const store of stores) for (const item of marketStoreItems(store, lang)) counts.set(item, (counts.get(item) ?? 0) + 1);
+  return [...counts].filter(([, count]) => count >= 2).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'ko')).slice(0, limit).map(([item, count]) => ({ item, count }));
+}
+
 export function visibleMarketStores(stores: MarketStore[], includeOutside: boolean, type?: MarketStoreTypeKey | null) {
   return stores.filter((store) => (includeOutside || store.membership !== 'OUT' || store.nearby === true)
     && (type == null || marketStoreType(store) === type));

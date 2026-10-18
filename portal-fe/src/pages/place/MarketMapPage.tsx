@@ -7,7 +7,7 @@ import { attractionPath, marketMapMeta } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import { useAttractionMarket, useMarketDishes } from './marketQueries';
-import { groupMarketPins, projectMarketPins, visibleMarketStores } from './marketView';
+import { groupMarketPins, projectMarketPins, topMarketItems, visibleMarketStores } from './marketView';
 import { useMarketStoreSearch } from './useMarketStoreSearch';
 import { MARKET_STORE_TYPES, marketStoreType, marketStoreTypeColor, marketStoreTypeCounts } from './marketStoreType';
 import MarketMap from './MarketMap';
@@ -54,6 +54,7 @@ function MarketMapScreen() {
   // 아래 조건부 return 뒤에서 쓰므로 useMemo 대신 마운트마다 하나씩 둔다.
   const [numbersFor] = useState(() => rememberLast(numbersOf));
   const pointerStart = useRef<number | null>(null);
+  const searchInput = useRef<HTMLInputElement>(null);
   const dragged = useRef(false);
   const attraction = useQuery({ queryKey: ['attraction', id], queryFn: () => fetchAttraction(id), enabled: !!id, retry: false });
   const market = useAttractionMarket(attraction.data?.contentId ?? '', lang, includeOutside);
@@ -75,6 +76,9 @@ function MarketMapScreen() {
   const detailStore = detailId == null ? null : data.stores.find(store => store.id === detailId) ?? null;
   const clear = () => { setSelectedKey(null); setFocusStoreId(null); setDetailId(null); };
   const focusStore = (id: number) => { flushSync(() => setFocusStoreId(null)); setFocusStoreId(id); };
+  const setQuery = (value: string) => { const next = new URLSearchParams(params); if (value) next.set('marketQuery', value); else next.delete('marketQuery'); setParams(next, { replace: true }); clear(); };
+  // 품목을 고르면 검색창에 넣는다 — 입력은 제어하지 않으므로 값을 직접 쓴다.
+  const pickItem = (item: string) => { if (searchInput.current) searchInput.current.value = item; setQuery(item); setSnap('half'); };
   const pickType = (key: typeof storeType) => { const next = new URLSearchParams(params); if (key) next.set('type', key); else next.delete('type'); setParams(next, { replace: true }); clear(); };
   const color = (store: typeof stores[number]) => marketStoreTypeColor(marketStoreType(store));
   return <main className="market-map-page" data-snap={snap}>
@@ -82,9 +86,7 @@ function MarketMapScreen() {
       <Link to={attractionPath(lang, id)} aria-label={en ? 'Back to attraction' : '관광지 상세로'}>←</Link>
       <h1>{(en ? attraction.data.title : null) || data.market.name || attraction.data.title}</h1>
       {/* 제어 입력이면 입력 직후 React 가 URL 의 옛 값을 되써서 한글 조합이 끊긴다(URL 갱신은 트랜지션). 화면은 경로마다 다시 마운트되므로 초깃값만 URL 에서 읽는다. */}
-      <input type="search" aria-label={en ? 'Find a shop, goods or category' : '가게·품목·업종 찾기'} maxLength={50} defaultValue={query} onFocus={() => setSnap('half')} onChange={event => {
-        const next = new URLSearchParams(params); if (event.target.value) next.set('marketQuery', event.target.value); else next.delete('marketQuery'); setParams(next, { replace: true }); clear();
-      }} />
+      <input ref={searchInput} type="search" aria-label={en ? 'Find a shop, goods or category' : '가게·품목·업종 찾기'} maxLength={50} defaultValue={query} onFocus={() => setSnap('half')} onChange={event => setQuery(event.target.value)} />
       <label><input type="checkbox" checked={includeOutside} onChange={event => { setIncludeOutside(event.target.checked); clear(); }} />{en ? 'Include outside' : '시장 밖도 보기'}</label>
     </div>
     <nav className="market-map-types" aria-label={en ? 'Shop types' : '가게 유형'}>
@@ -100,7 +102,7 @@ function MarketMapScreen() {
           const delta = (pointerStart.current ?? event.clientY) - event.clientY; pointerStart.current = null;
           if (Math.abs(delta) >= 60) { dragged.current = true; setSnap(SNAPS[Math.max(0, Math.min(2, SNAPS.indexOf(snap) + (delta > 0 ? 1 : -1)))]); }
         }} onPointerCancel={() => { pointerStart.current = null; }} onClick={() => { if (dragged.current) { dragged.current = false; return; } setSnap(SNAPS[(SNAPS.indexOf(snap) + 1) % 3]); }}><span aria-hidden="true">━</span></button>
-        <MarketList search={storeSearch} market={data} listing={listing} limit={limit} numbers={numbers} query={query} focusStore={focusStoreId} lang={lang} dishes={dishes} onFocusStore={focusStore} onOpenStore={setDetailId} onMore={() => setPage({ key: resetKey, limit: limit + 50 })} />
+        <MarketList search={storeSearch} market={data} listing={listing} limit={limit} numbers={numbers} query={query} focusStore={focusStoreId} lang={lang} dishes={dishes} topItems={topMarketItems(stores, lang)} onPickItem={pickItem} onFocusStore={focusStore} onOpenStore={setDetailId} onMore={() => setPage({ key: resetKey, limit: limit + 50 })} />
       </aside>
       {detailStore && <MarketStoreDetail store={detailStore} number={detailStore.id == null ? undefined : numbers.get(detailStore.id)} lang={lang} onClose={() => setDetailId(null)} onFocus={focusStore} />}
     </div>
