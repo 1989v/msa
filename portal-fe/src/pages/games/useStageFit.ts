@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 
 // 잰 값이 있을 때의 하한 — 너무 크게 잡으면 작은 캔버스 아래에 빈 공간이 남는다.
 const MIN_H = 200;
@@ -78,6 +78,9 @@ function visibleHeight(): number | null {
 /**
  * `portraitGame` 은 카탈로그 orientation — 세로 게임은 잴 결과(창 높이)를 미리 알므로 처음부터 그
  * 높이로 띄운다. 기본 560 으로 띄웠다가 로드 뒤 늘리면 시작하자마자 무대가 한 번 튄다.
+ * 나머지는 첫 측정 전까지 16:9 로 띄운다 — 가로 게임 캔버스가 대부분 16:9 근처라(1150px 폭에서
+ * 잰 값 642~690) 560 에서 시작하면 로드 직후 100px 가까이 늘어났다. 창에 맞춰 캔버스를 다시
+ * 잡는 게임은 처음 받은 높이를 그대로 쓰므로 이 값이 곧 최종값이다.
  */
 export function useStageFit(active: boolean, forceImmersive = false, portraitGame = false) {
   const ref = useRef<HTMLIFrameElement | null>(null);
@@ -214,5 +217,12 @@ export function useStageFit(active: boolean, forceImmersive = false, portraitGam
 
   // 첫 측정 전에도 세로 게임은 창 높이로 시작한다 — 측정 결과가 같은 값이라 로드 뒤 튀지 않는다
   const initial = active && portraitGame ? viewCap() : null;
-  return { ref, height: immersive ? null : (height ?? initial), immersive, portrait, stageHeight };
+  const fitted = immersive ? null : (height ?? initial);
+  // 높이를 아직 모르는 가로 게임은 폭에 비율로 맞춘다 — 폭은 레이아웃이 정하므로 CSS 가 계산한다
+  const frameStyle: CSSProperties | undefined = fitted
+    ? { height: `${fitted}px`, minHeight: 0 }
+    : active && !immersive
+      ? { aspectRatio: '16 / 9', maxHeight: `${viewCap()}px`, minHeight: 0 }
+      : undefined;
+  return { ref, height: fitted, frameStyle, immersive, portrait, stageHeight };
 }

@@ -31,3 +31,12 @@ it('forced desktop immersion uses visible viewport, ignores content height and p
     expect(result.current.immersive).toBe(true); expect(result.current.height).toBeNull();
   } finally { frame.remove(); }
 });
+it('before the first measurement, landscape games start at 16:9 and portrait games at the window height', () => {
+  vi.stubGlobal('innerWidth', 1440); vi.stubGlobal('innerHeight', 900);
+  vi.stubGlobal('matchMedia', () => ({ matches: false }));
+  const landscape = renderHook(() => useStageFit(true, false, false)).result.current;
+  expect(landscape.height).toBeNull();
+  expect(landscape.frameStyle).toEqual({ aspectRatio: '16 / 9', maxHeight: '812px', minHeight: 0 });
+  const portrait = renderHook(() => useStageFit(true, false, true)).result.current;
+  expect(portrait.frameStyle).toEqual({ height: '812px', minHeight: 0 });
+});
