@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    
+    <script>
+      (function () {
+        var host = location.hostname;
+        // 개발 중 클릭이 실제 리포트에 섞이면 유입 분석이 흐려진다
+        if (host === "localhost" || host === "127.0.0.1") return;
+        if (host.split(".")[0] === "resume") return;
+        if (/^\/shared\//.test(location.pathname) || /%2Fshared%2F/i.test(location.search) || /^[a-z][a-z0-9+.-]*:\/\/[^\/?#]+\/shared\//i.test(document.referrer)) return;
+        var id = "G-5EE8XW7JHN";
+        var tag = document.createElement("script");
+        tag.async = true;
+        tag.src = "https://www.googletagmanager.com/gtag/js?id=" + id;
+        document.head.appendChild(tag);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () {
+          window.dataLayer.push(arguments);
+        };
+        window.gtag("js", new Date());
+        window.gtag("config", id);
+      })();
+    </script>
+
+    
+
+    
+    <meta name="google-adsense-account" content="ca-pub-4627924728297793" />
+
+    
+    <meta name="theme-color" content="#0a0a0a" />
+
+    
+    <meta name="color-scheme" content="only light" />
+
+    
+    <script>
+      (function () {
+        var KEY = "kh-theme";
+        function stored() {
+          var hit = document.cookie.split("; ").find(function (c) {
+            return c.indexOf(KEY + "=") === 0;
+          });
+          var v = hit && hit.slice(KEY.length + 1);
+          if (v === "light" || v === "dark") return v;
+          try {
+            v = localStorage.getItem(KEY);
+          } catch (e) {
+            v = null;
+          }
+          return v === "light" || v === "dark" ? v : null;
+        }
+        var root = document.documentElement;
+        var theme;
+        // /tech 만 브랜드 면이 아니다 — dark-trading 팔레트를 전제로 그려진 화면이라 다크 고정.
+        if (location.pathname === "/tech") {
+          theme = "dark";
+        } else {
+          theme =
+            stored() ||
+            (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light");
+          root.setAttribute("data-surface", "heritage");
+        }
+        root.setAttribute("data-theme", theme);
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute("content", theme === "dark" ? "#131313" : "#f9f8f2");
+        var scheme = document.querySelector('meta[name="color-scheme"]');
+        if (scheme) scheme.setAttribute("content", "only " + theme);
+      })();
+    </script>
+
+    
+    <!--seo:prerendered-->
+    <title>스토어 — 1989v</title>
+    <meta name="description" content="MSA 커머스 플랫폼 데모 스토어 — 상품 검색·추천·주문 플로우를 실제 서비스로 확인할 수 있습니다." />
+    <link rel="canonical" href="https://1989v.com/shop" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="1989v" />
+    <meta property="og:title" content="스토어 — 1989v" />
+    <meta property="og:description" content="MSA 커머스 플랫폼 데모 스토어 — 상품 검색·추천·주문 플로우를 실제 서비스로 확인할 수 있습니다." />
+    <meta property="og:url" content="https://1989v.com/shop" />
+    <meta property="og:locale" content="ko_KR" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="스토어 — 1989v" />
+    <meta name="twitter:description" content="MSA 커머스 플랫폼 데모 스토어 — 상품 검색·추천·주문 플로우를 실제 서비스로 확인할 수 있습니다." />
+    <meta property="og:image" content="https://1989v.com/og/portal.png" />
+    <meta property="og:image:secure_url" content="https://1989v.com/og/portal.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="1989v" />
+    <meta name="twitter:image" content="https://1989v.com/og/portal.png" />
+    <meta name="twitter:image:alt" content="1989v" />
+    <script type="module" crossorigin src="/assets/index-CYqPQZ7Z.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/jsx-runtime-D-oznMWL.js">
+    <link rel="modulepreload" crossorigin href="/assets/preload-helper-DWTEM3RW.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-DcCgrBX5.js">
+    <link rel="modulepreload" crossorigin href="/assets/useQuery-Ck_Sa3Qn.js">
+    <link rel="modulepreload" crossorigin href="/assets/useMutation-ZbKdggdq.js">
+    <link rel="modulepreload" crossorigin href="/assets/useSeo-D_9uIxBL.js">
+    <link rel="modulepreload" crossorigin href="/assets/purify.es-2MU4SxTA.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-dom-DNNtxExO.js">
+    <link rel="modulepreload" crossorigin href="/assets/tracker-3r4219MP.js">
+    <link rel="modulepreload" crossorigin href="/assets/ServiceExplorer-9f9MNHU9.js">
+    <link rel="modulepreload" crossorigin href="/assets/auth-c5ts2mcW.js">
+    <link rel="modulepreload" crossorigin href="/assets/refresh-BNlEIik8.js">
+    <link rel="modulepreload" crossorigin href="/assets/gameApi-B7eq2LUm.js">
+    <link rel="modulepreload" crossorigin href="/assets/shopApi-Bfte-00h.js">
+    <link rel="modulepreload" crossorigin href="/assets/useAuth-BvXT1tfi.js">
+    <link rel="modulepreload" crossorigin href="/assets/useHeritageSurface-2ggg5XKW.js">
+    <link rel="stylesheet" crossorigin href="/assets/ServiceExplorer-D3NAtV-o.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-BkGIYVfC.css">
+  </head>
+  <body>
+    <div id="root"><div style="max-width:1080px;margin:0 auto;padding:32px 20px;color:#dce4f5;font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif"><h1>스토어</h1><p>MSA 커머스 플랫폼 데모 스토어 — 상품 검색·추천·주문 플로우를 실제 서비스로 확인할 수 있습니다.</p><nav><a href="/">1989v</a> · <a href="/tech">IT</a> · <a href="/tech/search">검색 아키텍처</a> · <a href="/tech/recommendation">추천 아키텍처</a> · <a href="/tech/order">주문 · 결제 아키텍처</a> · <a href="/tech/ads">광고 아키텍처</a> · <a href="/tech/catalog">상품 · 재고 아키텍처</a> · <a href="/portfolio">포트폴리오</a> · <a href="/shop">스토어</a> · <a href="/privacy">개인정보처리방침</a> · <a href="/about">사이트 소개</a> · <a href="/contact">연락처</a> · <a href="/data-sources">데이터 출처</a></nav><footer><nav><a href="https://1989v.com">1989v</a> · <a href="https://game.1989v.com">무료 웹게임</a> · <a href="https://place.1989v.com">한국 관광지 검색</a> · <a href="https://blog.1989v.com">블로그</a> · <a href="https://rank.1989v.com">랭킹 리더보드</a> · <a href="https://deal.1989v.com">혜택 링크 허브</a> · <a href="https://1989v.com/privacy">개인정보처리방침</a> · <a href="https://1989v.com/about">사이트 소개</a> · <a href="https://1989v.com/contact">연락처</a> · <a href="https://1989v.com/data-sources">데이터 출처</a></nav></footer></div></div>
+  </body>
+</html>

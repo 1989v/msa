@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    
+    <script>
+      (function () {
+        var host = location.hostname;
+        // 개발 중 클릭이 실제 리포트에 섞이면 유입 분석이 흐려진다
+        if (host === "localhost" || host === "127.0.0.1") return;
+        if (host.split(".")[0] === "resume") return;
+        if (/^\/shared\//.test(location.pathname) || /%2Fshared%2F/i.test(location.search) || /^[a-z][a-z0-9+.-]*:\/\/[^\/?#]+\/shared\//i.test(document.referrer)) return;
+        var id = "G-5EE8XW7JHN";
+        var tag = document.createElement("script");
+        tag.async = true;
+        tag.src = "https://www.googletagmanager.com/gtag/js?id=" + id;
+        document.head.appendChild(tag);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () {
+          window.dataLayer.push(arguments);
+        };
+        window.gtag("js", new Date());
+        window.gtag("config", id);
+      })();
+    </script>
+
+    
+
+    
+    <meta name="google-adsense-account" content="ca-pub-4627924728297793" />
+
+    
+    <meta name="theme-color" content="#0a0a0a" />
+
+    
+    <meta name="color-scheme" content="only light" />
+
+    
+    <script>
+      (function () {
+        var KEY = "kh-theme";
+        function stored() {
+          var hit = document.cookie.split("; ").find(function (c) {
+            return c.indexOf(KEY + "=") === 0;
+          });
+          var v = hit && hit.slice(KEY.length + 1);
+          if (v === "light" || v === "dark") return v;
+          try {
+            v = localStorage.getItem(KEY);
+          } catch (e) {
+            v = null;
+          }
+          return v === "light" || v === "dark" ? v : null;
+        }
+        var root = document.documentElement;
+        var theme;
+        // /tech 만 브랜드 면이 아니다 — dark-trading 팔레트를 전제로 그려진 화면이라 다크 고정.
+        if (location.pathname === "/tech") {
+          theme = "dark";
+        } else {
+          theme =
+            stored() ||
+            (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light");
+          root.setAttribute("data-surface", "heritage");
+        }
+        root.setAttribute("data-theme", theme);
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute("content", theme === "dark" ? "#131313" : "#f9f8f2");
+        var scheme = document.querySelector('meta[name="color-scheme"]');
+        if (scheme) scheme.setAttribute("content", "only " + theme);
+      })();
+    </script>
+
+    
+    <!--seo:prerendered-->
+    <title>Things to Do in Korea — Attractions by Region &amp; Map | K-Tour</title>
+    <meta name="description" content="Find things to do across South Korea — search tourist attractions by region, theme, or your current location. Official Korea Tourism Organization data…" />
+    <link rel="canonical" href="https://place.1989v.com/en" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="K-Tour" />
+    <meta property="og:title" content="Things to Do in Korea — Attractions by Region &amp; Map | K-Tour" />
+    <meta property="og:description" content="Find things to do across South Korea — search tourist attractions by region, theme, or your current location. Official Korea Tourism Organization data…" />
+    <meta property="og:url" content="https://place.1989v.com/en" />
+    <meta property="og:locale" content="en_US" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Things to Do in Korea — Attractions by Region &amp; Map | K-Tour" />
+    <meta name="twitter:description" content="Find things to do across South Korea — search tourist attractions by region, theme, or your current location. Official Korea Tourism Organization data…" />
+    <meta property="og:image" content="https://place.1989v.com/og/place.png" />
+    <meta property="og:image:secure_url" content="https://place.1989v.com/og/place.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Explore Korea" />
+    <meta name="twitter:image" content="https://place.1989v.com/og/place.png" />
+    <meta name="twitter:image:alt" content="Explore Korea" />
+    <link rel="alternate" hreflang="ko" href="https://place.1989v.com/" data-seo-multi />
+    <link rel="alternate" hreflang="en" href="https://place.1989v.com/en" data-seo-multi />
+    <link rel="alternate" hreflang="x-default" href="https://place.1989v.com/en" data-seo-multi />
+    <link rel="alternate" type="application/rss+xml" title="K-Tour — Recently Updated Attractions" href="https://place.1989v.com/en/feed.xml" data-seo-multi />
+    <script type="application/ld+json" data-seo-multi>{"@context":"https://schema.org","@type":"CollectionPage","name":"Things to Do in Korea — Attractions by Region & Map | K-Tour","description":"Find things to do across South Korea — search tourist attractions by region, theme, or your current location. Official Korea Tourism Organization data…","url":"https://place.1989v.com/en","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"K-Tour","url":"https://place.1989v.com"}}</script>
+    <script type="application/ld+json" data-seo-multi>{"@context":"https://schema.org","@type":"ItemList","numberOfItems":30,"itemListElement":[{"@type":"ListItem","position":1,"url":"https://place.1989v.com/en/attractions/21","name":"Gyeongbokgung Palace"},{"@type":"ListItem","position":2,"url":"https://place.1989v.com/en/attractions/24","name":"Insa-dong"},{"@type":"ListItem","position":3,"url":"https://place.1989v.com/en/attractions/1625","name":"Seoul Cruise"},{"@type":"ListItem","position":4,"url":"https://place.1989v.com/en/attractions/1651","name":"Songhyeon Green Plaza"},{"@type":"ListItem","position":5,"url":"https://place.1989v.com/en/attractions/1652","name":"Youngchive Seongsu"},{"@type":"ListItem","position":6,"url":"https://place.1989v.com/en/attractions/1656","name":"Seongbuk-dong–Bukchon Hanok Village Course"},{"@type":"ListItem","position":7,"url":"https://place.1989v.com/en/attractions/1658","name":"Euljiro Nogari Alley"},{"@type":"ListItem","position":8,"url":"https://place.1989v.com/en/attractions/1662","name":"Alleys of Changsin-dong"},{"@type":"ListItem","position":9,"url":"https://place.1989v.com/en/attractions/13425","name":"Hanboknam - Gyeongbokgung Branch"},{"@type":"ListItem","position":10,"url":"https://place.1989v.com/en/attractions/13452","name":"Cocory Color Research Institute - Hongdae Branch (코코리색채연구소(홍대점))"},{"@type":"ListItem","position":11,"url":"https://place.1989v.com/en/attractions/13453","name":"Cocory Color Research Institute - Yeonhui Main Branch (코코리색채연구소(연희본점))"},{"@type":"ListItem","position":12,"url":"https://place.1989v.com/en/attractions/13454","name":"Cocory Color Research Institute - Gangnam Branch (코코리색채연구소(강남점))"},{"@type":"ListItem","position":13,"url":"https://place.1989v.com/en/attractions/13455","name":"Cocory Color Research Institute - Myeongdong Branch (코코리색채연구소(명동점))"},{"@type":"ListItem","position":14,"url":"https://place.1989v.com/en/attractions/13471","name":"Garden of Gratitude"},{"@type":"ListItem","position":15,"url":"https://place.1989v.com/en/attractions/13488","name":"Baek In-je House"},{"@type":"ListItem","position":16,"url":"https://place.1989v.com/en/attractions/13686","name":"Cheonho-dong Rose Village"},{"@type":"ListItem","position":17,"url":"https://place.1989v.com/en/attractions/13696","name":"Choong Ang High School"},{"@type":"ListItem","position":18,"url":"https://place.1989v.com/en/attractions/13698","name":"Culture Station Seoul 284"},{"@type":"ListItem","position":19,"url":"https://place.1989v.com/en/attractions/13703","name":"Naksan Park"},{"@type":"ListItem","position":20,"url":"https://place.1989v.com/en/attractions/13712","name":"Mangwon Hangang Park (한강시민공원 망원지구 (망원한강공원))"},{"@type":"ListItem","position":21,"url":"https://place.1989v.com/en/attractions/13713","name":"Yeouido Hangang Park"},{"@type":"ListItem","position":22,"url":"https://place.1989v.com/en/attractions/13715","name":"Ichon Hangang Park"},{"@type":"ListItem","position":23,"url":"https://place.1989v.com/en/attractions/13716","name":"Banpo Hangang Park"},{"@type":"ListItem","position":24,"url":"https://place.1989v.com/en/attractions/13770","name":"Lotte World"},{"@type":"ListItem","position":25,"url":"https://place.1989v.com/en/attractions/13785","name":"Spa 1978 (SPA 1978)"},{"@type":"ListItem","position":26,"url":"https://place.1989v.com/en/attractions/13793","name":"Korean Spa Yeo Yong Guk"},{"@type":"ListItem","position":27,"url":"https://place.1989v.com/en/attractions/13797","name":"Heidi Haus"},{"@type":"ListItem","position":28,"url":"https://place.1989v.com/en/attractions/13816","name":"Deoksugung Palace"},{"@type":"ListItem","position":29,"url":"https://place.1989v.com/en/attractions/13848","name":"Gwanghwamun Square"},{"@type":"ListItem","position":30,"url":"https://place.1989v.com/en/attractions/13849","name":"Jongno 3 (sam)-ga Pocha Street"}]}</script>
+    <script type="module" crossorigin src="/assets/index-CYqPQZ7Z.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/jsx-runtime-D-oznMWL.js">
+    <link rel="modulepreload" crossorigin href="/assets/preload-helper-DWTEM3RW.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-DcCgrBX5.js">
+    <link rel="modulepreload" crossorigin href="/assets/useQuery-Ck_Sa3Qn.js">
+    <link rel="modulepreload" crossorigin href="/assets/useMutation-ZbKdggdq.js">
+    <link rel="modulepreload" crossorigin href="/assets/useSeo-D_9uIxBL.js">
+    <link rel="modulepreload" crossorigin href="/assets/purify.es-2MU4SxTA.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-dom-DNNtxExO.js">
+    <link rel="modulepreload" crossorigin href="/assets/tracker-3r4219MP.js">
+    <link rel="modulepreload" crossorigin href="/assets/ServiceExplorer-9f9MNHU9.js">
+    <link rel="modulepreload" crossorigin href="/assets/auth-c5ts2mcW.js">
+    <link rel="modulepreload" crossorigin href="/assets/refresh-BNlEIik8.js">
+    <link rel="modulepreload" crossorigin href="/assets/gameApi-B7eq2LUm.js">
+    <link rel="modulepreload" crossorigin href="/assets/shopApi-Bfte-00h.js">
+    <link rel="modulepreload" crossorigin href="/assets/useAuth-BvXT1tfi.js">
+    <link rel="modulepreload" crossorigin href="/assets/useHeritageSurface-2ggg5XKW.js">
+    <link rel="stylesheet" crossorigin href="/assets/ServiceExplorer-D3NAtV-o.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-BkGIYVfC.css">
+  <link rel="preconnect" href="https://tong.visitkorea.or.kr" />
+  </head>
+  <body>
+    <div id="root"><div style="max-width:1080px;margin:0 auto;padding:32px 20px;color:#dce4f5;font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif"><h1>Explore Korea</h1><p class="place-subtitle">Find places to visit in South Korea by region and theme. Compare attraction photos, addresses, maps and available opening hours and visitor information, then check nearby stations and bus stops on each detail page.</p><ul><li><a href="/en/regions/11">Seoul</a></li><li><a href="/en/regions/12">Jeonnam-Gwangju Special Metropolitan City</a></li><li><a href="/en/regions/26">Busan</a></li><li><a href="/en/regions/27">Daegu</a></li><li><a href="/en/regions/28">Incheon</a></li><li><a href="/en/regions/30">Daejeon</a></li><li><a href="/en/regions/31">Ulsan</a></li><li><a href="/en/regions/36">Sejong</a></li><li><a href="/en/regions/41">Gyeonggi-do</a></li><li><a href="/en/regions/43">Chungcheongbuk-do</a></li><li><a href="/en/regions/44">Chungcheongnam-do</a></li><li><a href="/en/regions/47">Gyeongsangbuk-do</a></li><li><a href="/en/regions/48">Gyeongsangnam-do</a></li><li><a href="/en/regions/50">Jeju-do</a></li><li><a href="/en/regions/51">Gangwon-do</a></li><li><a href="/en/regions/52">Jeonbuk-do</a></li></ul><p><a href="/en/markets">Find market shops &amp; goods</a></p><ul><li><a href="/en/attractions/21">Gyeongbokgung Palace</a></li><li><a href="/en/attractions/24">Insa-dong</a></li><li><a href="/en/attractions/1625">Seoul Cruise</a></li><li><a href="/en/attractions/1651">Songhyeon Green Plaza</a></li><li><a href="/en/attractions/1652">Youngchive Seongsu</a></li><li><a href="/en/attractions/1656">Seongbuk-dong–Bukchon Hanok Village Course</a></li><li><a href="/en/attractions/1658">Euljiro Nogari Alley</a></li><li><a href="/en/attractions/1662">Alleys of Changsin-dong</a></li><li><a href="/en/attractions/13425">Hanboknam - Gyeongbokgung Branch</a></li><li><a href="/en/attractions/13452">Cocory Color Research Institute - Hongdae Branch (코코리색채연구소(홍대점))</a></li><li><a href="/en/attractions/13453">Cocory Color Research Institute - Yeonhui Main Branch (코코리색채연구소(연희본점))</a></li><li><a href="/en/attractions/13454">Cocory Color Research Institute - Gangnam Branch (코코리색채연구소(강남점))</a></li><li><a href="/en/attractions/13455">Cocory Color Research Institute - Myeongdong Branch (코코리색채연구소(명동점))</a></li><li><a href="/en/attractions/13471">Garden of Gratitude</a></li><li><a href="/en/attractions/13488">Baek In-je House</a></li><li><a href="/en/attractions/13686">Cheonho-dong Rose Village</a></li><li><a href="/en/attractions/13696">Choong Ang High School</a></li><li><a href="/en/attractions/13698">Culture Station Seoul 284</a></li><li><a href="/en/attractions/13703">Naksan Park</a></li><li><a href="/en/attractions/13712">Mangwon Hangang Park (한강시민공원 망원지구 (망원한강공원))</a></li><li><a href="/en/attractions/13713">Yeouido Hangang Park</a></li><li><a href="/en/attractions/13715">Ichon Hangang Park</a></li><li><a href="/en/attractions/13716">Banpo Hangang Park</a></li><li><a href="/en/attractions/13770">Lotte World</a></li><li><a href="/en/attractions/13785">Spa 1978 (SPA 1978)</a></li><li><a href="/en/attractions/13793">Korean Spa Yeo Yong Guk</a></li><li><a href="/en/attractions/13797">Heidi Haus</a></li><li><a href="/en/attractions/13816">Deoksugung Palace</a></li><li><a href="/en/attractions/13848">Gwanghwamun Square</a></li><li><a href="/en/attractions/13849">Jongno 3 (sam)-ga Pocha Street</a></li><li><a href="/en/attractions/13863">Unhyeongung Royal Residence</a></li><li><a href="/en/attractions/13864">Jongmyo Shrine [UNESCO World Heritage]</a></li><li><a href="/en/attractions/13865">Changgyeonggung Palace</a></li><li><a href="/en/attractions/13866">Changdeokgung Palace Complex [UNESCO World Heritage Site]</a></li><li><a href="/en/attractions/13944">Picasso Mural</a></li><li><a href="/en/attractions/13949">Nemamdaero Hongdae Branch</a></li><li><a href="/en/attractions/13953">Waple Wood Artwork Place</a></li><li><a href="/en/attractions/13962">Park Habio Water Kingdom Water Park &amp; Jjimjil Spa</a></li><li><a href="/en/attractions/13963">Heunginjimun Gate - Dongdaemun Gate</a></li><li><a href="/en/attractions/13964">Banpo Bridge Rainbow Fountain</a></li><li><a href="/en/attractions/13965">Songpa Naru Park (Seokchonhosu Lake) (송파나루공원 (석촌호수))</a></li><li><a href="/en/attractions/13966">Ssamzigil</a></li><li><a href="/en/attractions/14119">Kkwonggogae Park</a></li><li><a href="/en/attractions/14147">Ginkgo Tree at the Fortress Well Site</a></li><li><a href="/en/attractions/14148">The Street in front of Cheongwadae (The Blue House)</a></li><li><a href="/en/attractions/14154">Namsangol Hanok Village</a></li><li><a href="/en/attractions/14160">Jingwansa Temple (Seoul) [진관사(서울)]</a></li><li><a href="/en/attractions/14176">Bukchon Hanok Village</a></li><li><a href="/en/attractions/14181">Seoul Botanic Park</a></li><li><a href="/en/attractions/14193">Mangnidan Street</a></li><li><a href="/en/attractions/14197">Bamseom Island (Ecosystem Conservation Area)</a></li><li><a href="/en/attractions/14203">Itaewon Antiques Street</a></li><li><a href="/en/attractions/14206">Kansong House</a></li><li><a href="/en/attractions/14209">Jennyhouse</a></li><li><a href="/en/attractions/14223">Songnidan-gil Street</a></li><li><a href="/en/attractions/14238">Ogeum Park</a></li><li><a href="/en/attractions/14241">Waterworks Museum</a></li><li><a href="/en/attractions/14255">Changdeokgung Injeongmun Gate</a></li><li><a href="/en/attractions/14262">Hyosajeong Pavilion</a></li><li><a href="/en/attractions/14264">Memorial to the Loyal Dead</a></li></ul><footer><nav><a href="https://1989v.com">1989v</a> · <a href="https://game.1989v.com">무료 웹게임</a> · <a href="https://place.1989v.com">한국 관광지 검색</a> · <a href="https://blog.1989v.com">블로그</a> · <a href="https://rank.1989v.com">랭킹 리더보드</a> · <a href="https://deal.1989v.com">혜택 링크 허브</a> · <a href="https://1989v.com/privacy">개인정보처리방침</a> · <a href="https://1989v.com/about">사이트 소개</a> · <a href="https://1989v.com/contact">연락처</a> · <a href="https://1989v.com/data-sources">데이터 출처</a></nav></footer></div></div>
+  </body>
+</html>

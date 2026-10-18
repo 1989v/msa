@@ -1,0 +1,1851 @@
+[
+  {
+    "url": "https://1989v.com/",
+    "observed_at": "2026-10-18T10:09:32.677186+00:00",
+    "curl": "200\thttps://1989v.com/\ttext/html\t1.844520",
+    "error": "",
+    "file": "1989v_com.body",
+    "sha256": "61cf48994e299814d0b81740520d18ac50f906c91b89fe6b331a41c767c0c36b",
+    "title": [
+      "1989v — 만든 서비스들"
+    ],
+    "meta": [
+      {
+        "charset": "UTF-8"
+      },
+      {
+        "name": "viewport",
+        "content": "width=device-width, initial-scale=1.0, viewport-fit=cover"
+      },
+      {
+        "name": "google-adsense-account",
+        "content": "ca-pub-4627924728297793"
+      },
+      {
+        "name": "theme-color",
+        "content": "#0a0a0a"
+      },
+      {
+        "name": "color-scheme",
+        "content": "only light"
+      },
+      {
+        "name": "description",
+        "content": "직접 설계하고 운영 중인 서비스들 — 한국 관광 검색, 웹 게임 플랫폼, 코드 개념 사전, 커머스 데모. 백엔드 엔지니어 권기덕이 만들고 운영합니다."
+      },
+      {
+        "rel": "canonical",
+        "href": "https://1989v.com/"
+      },
+      {
+        "property": "og:type",
+        "content": "website"
+      },
+      {
+        "property": "og:site_name",
+        "content": "1989v"
+      },
+      {
+        "property": "og:title",
+        "content": "1989v — 만든 서비스들"
+      },
+      {
+        "property": "og:description",
+        "content": "직접 설계하고 운영 중인 서비스들 — 한국 관광 검색, 웹 게임 플랫폼, 코드 개념 사전, 커머스 데모. 백엔드 엔지니어 권기덕이 만들고 운영합니다."
+      },
+      {
+        "property": "og:url",
+        "content": "https://1989v.com/"
+      },
+      {
+        "property": "og:locale",
+        "content": "ko_KR"
+      },
+      {
+        "name": "twitter:card",
+        "content": "summary_large_image"
+      },
+      {
+        "name": "twitter:title",
+        "content": "1989v — 만든 서비스들"
+      },
+      {
+        "name": "twitter:description",
+        "content": "직접 설계하고 운영 중인 서비스들 — 한국 관광 검색, 웹 게임 플랫폼, 코드 개념 사전, 커머스 데모. 백엔드 엔지니어 권기덕이 만들고 운영합니다."
+      },
+      {
+        "property": "og:image",
+        "content": "https://1989v.com/og/portal.png"
+      },
+      {
+        "property": "og:image:secure_url",
+        "content": "https://1989v.com/og/portal.png"
+      },
+      {
+        "property": "og:image:type",
+        "content": "image/png"
+      },
+      {
+        "property": "og:image:width",
+        "content": "1200"
+      },
+      {
+        "property": "og:image:height",
+        "content": "630"
+      },
+      {
+        "property": "og:image:alt",
+        "content": "1989v"
+      },
+      {
+        "name": "twitter:image",
+        "content": "https://1989v.com/og/portal.png"
+      },
+      {
+        "name": "twitter:image:alt",
+        "content": "1989v"
+      }
+    ],
+    "links": [
+      "/",
+      "/tech",
+      "/tech/search",
+      "/tech/recommendation",
+      "/tech/order",
+      "/tech/ads",
+      "/tech/catalog",
+      "/portfolio",
+      "/shop",
+      "/privacy",
+      "/about",
+      "/contact",
+      "/data-sources",
+      "https://place.1989v.com/regions/11",
+      "https://1989v.com",
+      "https://game.1989v.com",
+      "https://place.1989v.com",
+      "https://blog.1989v.com",
+      "https://rank.1989v.com",
+      "https://deal.1989v.com",
+      "https://1989v.com/privacy",
+      "https://1989v.com/about",
+      "https://1989v.com/contact",
+      "https://1989v.com/data-sources"
+    ],
+    "text": "1989v — 만든 서비스들\n1989v\n직접 설계하고 운영 중인 서비스들 — 한국 관광 검색, 웹 게임 플랫폼, 코드 개념 사전, 커머스 데모. 백엔드 엔지니어 권기덕이 만들고 운영합니다.\n1989v\n·\nIT\n·\n검색 아키텍처\n·\n추천 아키텍처\n·\n주문 · 결제 아키텍처\n·\n광고 아키텍처\n·\n상품 · 재고 아키텍처\n·\n포트폴리오\n·\n스토어\n·\n개인정보처리방침\n·\n사이트 소개\n·\n연락처\n·\n데이터 출처\n서울 가볼 만한 곳\n1989v\n·\n무료 웹게임\n·\n한국 관광지 검색\n·\n블로그\n·\n랭킹 리더보드\n·\n혜택 링크 허브\n·\n개인정보처리방침\n·\n사이트 소개\n·\n연락처\n·\n데이터 출처",
+    "bytes": 8527
+  },
+  {
+    "url": "https://1989v.com/tech",
+    "observed_at": "2026-10-18T10:09:31.235309+00:00",
+    "curl": "200\thttps://1989v.com/tech\ttext/html\t0.407209",
+    "error": "",
+    "file": "1989v_com_tech.body",
+    "sha256": "0f844da96a59ed032f3f2f6a76ff4e7b5a0f35f15a7833b61f8e7f88e157de1d",
+    "title": [
+      "IT — 1989v"
+    ],
+    "meta": [
+      {
+        "charset": "UTF-8"
+      },
+      {
+        "name": "viewport",
+        "content": "width=device-width, initial-scale=1.0, viewport-fit=cover"
+      },
+      {
+        "name": "google-adsense-account",
+        "content": "ca-pub-4627924728297793"
+      },
+      {
+        "name": "theme-color",
+        "content": "#0a0a0a"
+      },
+      {
+        "name": "color-scheme",
+        "content": "only light"
+      },
+      {
+        "name": "description",
+        "content": "도메인 열한 개의 IT 개념을 그래프로 좁혀 가며 배우는 개념 아틀라스. 개념마다 이 레포의 코드와 그것을 다룬 글이 붙어 있습니다."
+      },
+      {
+        "rel": "canonical",
+        "href": "https://1989v.com/tech"
+      },
+      {
+        "property": "og:type",
+        "content": "website"
+      },
+      {
+        "property": "og:site_name",
+        "content": "1989v"
+      },
+      {
+        "property": "og:title",
+        "content": "IT — 1989v"
+      },
+      {
+        "property": "og:description",
+        "content": "도메인 열한 개의 IT 개념을 그래프로 좁혀 가며 배우는 개념 아틀라스. 개념마다 이 레포의 코드와 그것을 다룬 글이 붙어 있습니다."
+      },
+      {
+        "property": "og:url",
+        "content": "https://1989v.com/tech"
+      },
+      {
+        "property": "og:locale",
+        "content": "ko_KR"
+      },
+      {
+        "name": "twitter:card",
+        "content": "summary_large_image"
+      },
+      {
+        "name": "twitter:title",
+        "content": "IT — 1989v"
+      },
+      {
+        "name": "twitter:description",
+        "content": "도메인 열한 개의 IT 개념을 그래프로 좁혀 가며 배우는 개념 아틀라스. 개념마다 이 레포의 코드와 그것을 다룬 글이 붙어 있습니다."
+      },
+      {
+        "property": "og:image",
+        "content": "https://1989v.com/og/portal.png"
+      },
+      {
+        "property": "og:image:secure_url",
+        "content": "https://1989v.com/og/portal.png"
+      },
+      {
+        "property": "og:image:type",
+        "content": "image/png"
+      },
+      {
+        "property": "og:image:width",
+        "content": "1200"
+      },
+      {
+        "property": "og:image:height",
+        "content": "630"
+      },
+      {
+        "property": "og:image:alt",
+        "content": "1989v"
+      },
+      {
+        "name": "twitter:image",
+        "content": "https://1989v.com/og/portal.png"
+      },
+      {
+        "name": "twitter:image:alt",
+        "content": "1989v"
+      }
+    ],
+    "links": [
+      "/",
+      "/tech",
+      "/tech/search",
+      "/tech/recommendation",
+      "/tech/order",
+      "/tech/ads",
+      "/tech/catalog",
+      "/portfolio",
+      "/shop",
+      "/privacy",
+      "/about",
+      "/contact",
+      "/data-sources",
+      "/tech/basics",
+      "/tech/data-structure",
+      "/tech/algorithm",
+      "/tech/design-pattern",
+      "/tech/concurrency",
+      "/tech/distributed-system",
+      "/tech/architecture",
+      "/tech/infrastructure",
+      "/tech/data",
+      "/tech/security",
+      "/tech/network",
+      "/tech/testing",
+      "/tech/language-feature",
+      "https://1989v.com",
+      "https://game.1989v.com",
+      "https://place.1989v.com",
+      "https://blog.1989v.com",
+      "https://rank.1989v.com",
+      "https://deal.1989v.com",
+      "https://1989v.com/privacy",
+      "https://1989v.com/about",
+      "https://1989v.com/contact",
+      "https://1989v.com/data-sources"
+    ],
+    "text": "IT — 1989v\nIT\n도메인 열한 개의 IT 개념을 그래프로 좁혀 가며 배우는 개념 아틀라스. 개념마다 이 레포의 코드와 그것을 다룬 글이 붙어 있습니다.\n1989v\n·\nIT\n·\n검색 아키텍처\n·\n추천 아키텍처\n·\n주문 · 결제 아키텍처\n·\n광고 아키텍처\n·\n상품 · 재고 아키텍처\n·\n포트폴리오\n·\n스토어\n·\n개인정보처리방침\n·\n사이트 소개\n·\n연락처\n·\n데이터 출처\n분류별 용어집\n프로그래밍 기초\n· 26개\n자료구조\n· 27개\n알고리즘\n· 56개\n디자인 패턴\n· 18개\n동시성\n· 31개\n분산 시스템\n· 34개\n아키텍처\n· 38개\n인프라\n· 58개\n데이터\n· 93개\n보안\n· 30개\n네트워크\n· 32개\n테스트\n· 25개\n언어 기능\n· 32개\n1989v\n·\n무료 웹게임\n·\n한국 관광지 검색\n·\n블로그\n·\n랭킹 리더보드\n·\n혜택 링크 허브\n·\n개인정보처리방침\n·\n사이트 소개\n·\n연락처\n·\n데이터 출처",
+    "bytes": 8444
+  },
+  {
+    "url": "https://1989v.com/portfolio",
+    "observed_at": "2026-10-18T10:09:31.230112+00:00",
+    "curl": "200\thttps://1989v.com/portfolio\ttext/html\t0.396323",
+    "error": "",
+    "file": "1989v_com_portfolio.body",
+    "sha256": "3acea4e9975dc4d1c5ea2060bc53d0bb5821438dc2e5b4e3a224ecddecf3e8ee",
+    "title": [
+      "포트폴리오 — 1989v"
+    ],
+    "meta": [
+      {
+        "charset": "UTF-8"
+      },
+      {
+        "name": "viewport",
+        "content": "width=device-width, initial-scale=1.0, viewport-fit=cover"
+      },
+      {
+        "name": "google-adsense-account",
+        "content": "ca-pub-4627924728297793"
+      },
+      {
+        "name": "theme-color",
+        "content": "#0a0a0a"
+      },
+      {
+        "name": "color-scheme",
+        "content": "only light"
+      },
+      {
+        "name": "description",
+        "content": "검색·전시·커머스·인프라·AI 엔지니어링 도메인에서 만든 것들과 그때의 판단."
+      },
+      {
+        "rel": "canonical",
+        "href": "https://1989v.com/portfolio"
+      },
+      {
+        "property": "og:type",
+        "content": "website"
+      },
+      {
+        "property": "og:site_name",
+        "content": "1989v"
+      },
+      {
+        "property": "og:title",
+        "content": "포트폴리오 — 1989v"
+      },
+      {
+        "property": "og:description",
+        "content": "검색·전시·커머스·인프라·AI 엔지니어링 도메인에서 만든 것들과 그때의 판단."
+      },
+      {
+        "property": "og:url",
+        "content": "https://1989v.com/portfolio"
+      },
+      {
+        "property": "og:locale",
+        "content": "ko_KR"
+      },
+      {
+        "name": "twitter:card",
+        "content": "summary_large_image"
+      },
+      {
+        "name": "twitter:title",
+        "content": "포트폴리오 — 1989v"
+      },
+      {
+        "name": "twitter:description",
+        "content": "검색·전시·커머스·인프라·AI 엔지니어링 도메인에서 만든 것들과 그때의 판단."
+      },
+      {
+        "property": "og:image",
+        "content": "https://1989v.com/og/portal.png"
+      },
+      {
+        "property": "og:image:secure_url",
+        "content": "https://1989v.com/og/portal.png"
+      },
+      {
+        "property": "og:image:type",
+        "content": "image/png"
+      },
+      {
+        "property": "og:image:width",
+        "content": "1200"
+      },
+      {
+        "property": "og:image:height",
+        "content": "630"
+      },
+      {
+        "property": "og:image:alt",
+        "content": "1989v"
+      },
+      {
+        "name": "twitter:image",
+        "content": "https://1989v.com/og/portal.png"
+      },
+      {
+        "name": "twitter:image:alt",
+        "content": "1989v"
+      }
+    ],
+    "links": [
+      "/",
+      "/tech",
+      "/tech/search",
+      "/tech/recommendation",
+      "/tech/order",
+      "/tech/ads",
+      "/tech/catalog",
+      "/portfolio",
+      "/shop",
+      "/privacy",
+      "/about",
+      "/contact",
+      "/data-sources",
+      "https://1989v.com",
+      "https://game.1989v.com",
+      "https://place.1989v.com",
+      "https://blog.1989v.com",
+      "https://rank.1989v.com",
+      "https://deal.1989v.com",
+      "https://1989v.com/privacy",
+      "https://1989v.com/about",
+      "https://1989v.com/contact",
+      "https://1989v.com/data-sources"
+    ],
+    "text": "포트폴리오 — 1989v\n포트폴리오\n검색·전시·커머스·인프라·AI 엔지니어링 도메인에서 만든 것들과 그때의 판단.\n1989v\n·\nIT\n·\n검색 아키텍처\n·\n추천 아키텍처\n·\n주문 · 결제 아키텍처\n·\n광고 아키텍처\n·\n상품 · 재고 아키텍처\n·\n포트폴리오\n·\n스토어\n·\n개인정보처리방침\n·\n사이트 소개\n·\n연락처\n·\n데이터 출처\n1989v\n·\n무료 웹게임\n·\n한국 관광지 검색\n·\n블로그\n·\n랭킹 리더보드\n·\n혜택 링크 허브\n·\n개인정보처리방침\n·\n사이트 소개\n·\n연락처\n·\n데이터 출처",
+    "bytes": 7389
+  },
+  {
+    "url": "https://1989v.com/shop",
+    "observed_at": "2026-10-18T10:09:31.349083+00:00",
+    "curl": "200\thttps://1989v.com/shop\ttext/html\t0.521652",
+    "error": "",
+    "file": "1989v_com_shop.body",
+    "sha256": "462c3df4601963fb9db28088acb5f00ca94d4a2fc48f53c0eb988fe673f91885",
+    "title": [
+      "스토어 — 1989v"
+    ],
+    "meta": [
+      {
+        "charset": "UTF-8"
+      },
+      {
+        "name": "viewport",
+        "content": "width=device-width, initial-scale=1.0, viewport-fit=cover"
+      },
+      {
+        "name": "google-adsense-account",
+        "content": "ca-pub-4627924728297793"
+      },
+      {
+        "name": "theme-color",
+        "content": "#0a0a0a"
+      },
+      {
+        "name": "color-scheme",
+        "content": "only light"
+      },
+      {
+        "name": "description",
+        "content": "MSA 커머스 플랫폼 데모 스토어 — 상품 검색·추천·주문 플로우를 실제 서비스로 확인할 수 있습니다."
+      },
+      {
+        "rel": "canonical",
+        "href": "https://1989v.com/shop"
+      },
+      {
+        "property": "og:type",
+        "content": "website"
+      },
+      {
+        "property": "og:site_name",
+        "content": "1989v"
+      },
+      {
+        "property": "og:title",
+        "content": "스토어 — 1989v"
+      },
+      {
+        "property": "og:description",
+        "content": "MSA 커머스 플랫폼 데모 스토어 — 상품 검색·추천·주문 플로우를 실제 서비스로 확인할 수 있습니다."
+      },
+      {
+        "property": "og:url",
+        "content": "https://1989v.com/shop"
+      },
+      {
+        "property": "og:locale",
+        "content": "ko_KR"
+      },
+      {
+        "name": "twitter:card",
+        "content": "summary_large_image"
+      },
+      {
+        "name": "twitter:title",
+        "content": "스토어 — 1989v"
+      },
+      {
+        "name": "twitter:description",
+        "content": "MSA 커머스 플랫폼 데모 스토어 — 상품 검색·추천·주문 플로우를 실제 서비스로 확인할 수 있습니다."
+      },
+      {
+        "property": "og:image",
+        "content": "https://1989v.com/og/portal.png"
+      },
+      {
+        "property": "og:image:secure_url",
+        "content": "https://1989v.com/og/portal.png"
+      },
+      {
+        "property": "og:image:type",
+        "content": "image/png"
+      },
+      {
+        "property": "og:image:width",
+        "content": "1200"
+      },
+      {
+        "property": "og:image:height",
+        "content": "630"
+      },
+      {
+        "property": "og:image:alt",
+        "content": "1989v"
+      },
+      {
+        "name": "twitter:image",
+        "content": "https://1989v.com/og/portal.png"
+      },
+      {
+        "name": "twitter:image:alt",
+        "content": "1989v"
+      }
+    ],
+    "links": [
+      "/",
+      "/tech",
+      "/tech/search",
+      "/tech/recommendation",
+      "/tech/order",
+      "/tech/ads",
+      "/tech/catalog",
+      "/portfolio",
+      "/shop",
+      "/privacy",
+      "/about",
+      "/contact",
+      "/data-sources",
+      "https://1989v.com",
+      "https://game.1989v.com",
+      "https://place.1989v.com",
+      "https://blog.1989v.com",
+      "https://rank.1989v.com",
+      "https://deal.1989v.com",
+      "https://1989v.com/privacy",
+      "https://1989v.com/about",
+      "https://1989v.com/contact",
+      "https://1989v.com/data-sources"
+    ],
+    "text": "스토어 — 1989v\n스토어\nMSA 커머스 플랫폼 데모 스토어 — 상품 검색·추천·주문 플로우를 실제 서비스로 확인할 수 있습니다.\n1989v\n·\nIT\n·\n검색 아키텍처\n·\n추천 아키텍처\n·\n주문 · 결제 아키텍처\n·\n광고 아키텍처\n·\n상품 · 재고 아키텍처\n·\n포트폴리오\n·\n스토어\n·\n개인정보처리방침\n·\n사이트 소개\n·\n연락처\n·\n데이터 출처\n1989v\n·\n무료 웹게임\n·\n한국 관광지 검색\n·\n블로그\n·\n랭킹 리더보드\n·\n혜택 링크 허브\n·\n개인정보처리방침\n·\n사이트 소개\n·\n연락처\n·\n데이터 출처",
+    "bytes": 7467
+  },
+  {
+    "url": "https://1989v.com/search?q=Kafka",
+    "observed_at": "2026-10-18T10:09:31.711266+00:00",
+    "curl": "200\thttps://1989v.com/search?q=Kafka\ttext/html\t0.457077",
+    "error": "",
+    "file": "1989v_com_search_q_Kafka.body",
+    "sha256": "2c889d80523fe4a1a43d9aa4d1b57ba1332ca74fec1a16e7bda837171242f847",
+    "title": [
+      "1989v"
+    ],
+    "meta": [
+      {
+        "charset": "UTF-8"
+      },
+      {
+        "name": "viewport",
+        "content": "width=device-width, initial-scale=1.0, viewport-fit=cover"
+      },
+      {
+        "name": "google-adsense-account",
+        "content": "ca-pub-4627924728297793"
+      },
+      {
+        "name": "theme-color",
+        "content": "#0a0a0a"
+      },
+      {
+        "name": "color-scheme",
+        "content": "only light"
+      },
+      {
+        "name": "description",
+        "content": "직접 설계하고 운영 중인 서비스들 — 한국 관광 검색, 웹 게임, 블로그, 랭킹, 코드 개념 사전."
+      },
+      {
+        "property": "og:type",
+        "content": "website"
+      },
+      {
+        "property": "og:site_name",
+        "content": "1989v"
+      },
+      {
+        "property": "og:title",
+        "content": "1989v"
+      },
+      {
+        "property": "og:description",
+        "content": "한국 관광 검색 · 웹 게임 · 블로그 · 랭킹 · 코드 개념 사전"
+      },
+      {
+        "property": "og:locale",
+        "content": "ko_KR"
+      },
+      {
+        "name": "twitter:card",
+        "content": "summary"
+      },
+      {
+        "name": "twitter:title",
+        "content": "1989v"
+      },
+      {
+        "name": "twitter:description",
+        "content": "한국 관광 검색 · 웹 게임 · 블로그 · 랭킹 · 코드 개념 사전"
+      }
+    ],
+    "links": [],
+    "text": "1989v",
+    "bytes": 5234
+  },
+  {
+    "url": "https://1989v.com/audit-nonexistent-20261018",
+    "observed_at": "2026-10-18T10:09:31.529774+00:00",
+    "curl": "200\thttps://1989v.com/audit-nonexistent-20261018\ttext/html\t0.274700",
+    "error": "",
+    "file": "1989v_com_audit_nonexistent_20261018.body",
+    "sha256": "2c889d80523fe4a1a43d9aa4d1b57ba1332ca74fec1a16e7bda837171242f847",
+    "title": [
+      "1989v"
+    ],
+    "meta": [
+      {
+        "charset": "UTF-8"
+      },
+      {
+        "name": "viewport",
+        "content": "width=device-width, initial-scale=1.0, viewport-fit=cover"
+      },
+      {
+        "name": "google-adsense-account",
+        "content": "ca-pub-4627924728297793"
+      },
+      {
+        "name": "theme-color",
+        "content": "#0a0a0a"
+      },
+      {
+        "name": "color-scheme",
+        "content": "only light"
+      },
+      {
+        "name": "description",
+        "content": "직접 설계하고 운영 중인 서비스들 — 한국 관광 검색, 웹 게임, 블로그, 랭킹, 코드 개념 사전."
+      },
+      {
+        "property": "og:type",
+        "content": "website"
+      },
+      {
+        "property": "og:site_name",
+        "content": "1989v"
+      },
+      {
+        "property": "og:title",
+        "content": "1989v"
+      },
+      {
+        "property": "og:description",
+        "content": "한국 관광 검색 · 웹 게임 · 블로그 · 랭킹 · 코드 개념 사전"
+      },
+      {
+        "property": "og:locale",
+        "content": "ko_KR"
+      },
+      {
+        "name": "twitter:card",
+        "content": "summary"
+      },
+      {
+        "name": "twitter:title",
+        "content": "1989v"
+      },
+      {
+        "name": "twitter:description",
+        "content": "한국 관광 검색 · 웹 게임 · 블로그 · 랭킹 · 코드 개념 사전"
+      }
+    ],
+    "links": [],
+    "text": "1989v",
+    "bytes": 5234
+  },
+  {
+    "url": "https://game.1989v.com/",
+    "observed_at": "2026-10-18T10:09:31.855552+00:00",
+    "curl": "200\thttps://game.1989v.com/\ttext/html\t0.480766",
+    "error": "",
+    "file": "game_1989v_com.body",
+    "sha256": "ae4096f463e36fb3c951f42d7ac8bf1bab4a777fceb10c9035268d1bfca4cd09",
+    "title": [
+      "무료 웹게임 아케이드 — 설치 없이 브라우저에서 바로 | 1989v 게임"
+    ],
+    "meta": [
+      {
+        "charset": "UTF-8"
+      },
+      {
+        "name": "viewport",
+        "content": "width=device-width, initial-scale=1.0, viewport-fit=cover"
+      },
+      {
+        "name": "google-adsense-account",
+        "content": "ca-pub-4627924728297793"
+      },
+      {
+        "name": "theme-color",
+        "content": "#0a0a0a"
+      },
+      {
+        "name": "color-scheme",
+        "content": "only light"
+      },
+      {
+        "name": "description",
+        "content": "1989v 게임의 무료 웹게임 82종을 설치·회원가입 없이 브라우저에서 바로 즐기세요. 퍼즐·액션·디펜스·RPG·전략 게임을 한곳에서 플레이하세요."
+      },
+      {
+        "rel": "canonical",
+        "href": "https://game.1989v.com/"
+      },
+      {
+        "property": "og:type",
+        "content": "website"
+      },
+      {
+        "property": "og:site_name",
+        "content": "1989v 게임"
+      },
+      {
+        "property": "og:title",
+        "content": "무료 웹게임 아케이드 — 설치 없이 브라우저에서 바로 | 1989v 게임"
+      },
+      {
+        "property": "og:description",
+        "content": "1989v 게임의 무료 웹게임 82종을 설치·회원가입 없이 브라우저에서 바로 즐기세요. 퍼즐·액션·디펜스·RPG·전략 게임을 한곳에서 플레이하세요."
+      },
+      {
+        "property": "og:url",
+        "content": "https://game.1989v.com/"
+      },
+      {
+        "property": "og:locale",
+        "content": "ko_KR"
+      },
+      {
+        "name": "twitter:card",
+        "content": "summary_large_image"
+      },
+      {
+        "name": "twitter:title",
+        "content": "무료 웹게임 아케이드 — 설치 없이 브라우저에서 바로 | 1989v 게임"
+      },
+      {
+        "name": "twitter:description",
+        "content": "1989v 게임의 무료 웹게임 82종을 설치·회원가입 없이 브라우저에서 바로 즐기세요. 퍼즐·액션·디펜스·RPG·전략 게임을 한곳에서 플레이하세요."
+      },
+      {
+        "property": "og:image",
+        "content": "https://game.1989v.com/games/thumbs/og/hub.png"
+      },
+      {
+        "property": "og:image:secure_url",
+        "content": "https://game.1989v.com/games/thumbs/og/hub.png"
+      },
+      {
+        "property": "og:image:type",
+        "content": "image/png"
+      },
+      {
+        "property": "og:image:width",
+        "content": "1200"
+      },
+      {
+        "property": "og:image:height",
+        "content": "630"
+      },
+      {
+        "property": "og:image:alt",
+        "content": "무료 웹게임 아케이드"
+      },
+      {
+        "name": "twitter:image",
+        "content": "https://game.1989v.com/games/thumbs/og/hub.png"
+      },
+      {
+        "name": "twitter:image:alt",
+        "content": "무료 웹게임 아케이드"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "ko",
+        "href": "https://game.1989v.com/",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://game.1989v.com/en",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://game.1989v.com/en",
+        "data-seo-multi": null
+      }
+    ],
+    "links": [
+      "/games/genre/defense",
+      "/games/genre/action",
+      "/games/genre/strategy",
+      "/games/genre/rpg",
+      "/games/genre/arcade",
+      "/games/genre/puzzle",
+      "/games/genre/versus",
+      "/games/genre/casual",
+      "/games/genre/decider",
+      "/games/duel-defense",
+      "/games/marine-command",
+      "/games/epoch-of-nations",
+      "/games/gwiyahaeng",
+      "/games/landslide",
+      "/games/arena",
+      "/games/circle-trace",
+      "/games/seven-seconds",
+      "/games/zombie-lane",
+      "/games/zombie-march",
+      "/games/infinity-step",
+      "/games/last-one",
+      "/games/nine-bells",
+      "/games/archer-outbreak",
+      "/games/random-card-defense",
+      "/games/infinity-tower",
+      "/games/random-tower-defense",
+      "/games/bee-guard",
+      "/games/card-flip",
+      "/games/marble-race",
+      "/games/ladder-draw",
+      "/games/pixel-logic",
+      "/games/hoop-order",
+      "/games/sum-trail",
+      "/games/coin-corgi",
+      "/games/aero-vendetta",
+      "/games/curfew-siren",
+      "/games/deadline",
+      "/games/ashen-warband",
+      "/games/nova-strike",
+      "/games/raging-fist-saga",
+      "/games/abyssal-crown",
+      "/games/nether-return",
+      "/games/sketch-sleuth",
+      "/games/drift-continent",
+      "/games/moon-angler",
+      "/games/cliff-climber",
+      "/games/relic-heir",
+      "/games/element-pilgrim",
+      "/games/hand-alchemy",
+      "/games/spud-arena",
+      "/games/midnight-tide",
+      "/games/serpent-legion",
+      "/games/dawn-ward",
+      "/games/beat-dojo",
+      "/games/breeze-links",
+      "/games/alley-pool",
+      "/games/starlight-farm",
+      "/games/hero-dispatch",
+      "/games/cog-foundry",
+      "/games/abyss-drill",
+      "/games/bracket-battle",
+      "/games/acid-rain",
+      "/games/rope-works",
+      "/games/stone-sage",
+      "/games/mine-pioneer",
+      "/games/crate-shift",
+      "/games/block-burst",
+      "/games/number-garden",
+      "/games/royal-grid",
+      "/games/pixel-mine",
+      "/games/quad-weave",
+      "/games/word-warden",
+      "/games/rift-front",
+      "/games/dice-citadel",
+      "/games/storm-corridor",
+      "/games/crimson-ravine",
+      "/games/wall-breaker",
+      "/games/cave-glide",
+      "/games/rune-merge",
+      "/games/golden-forge",
+      "/games/echo-duel",
+      "/games/frost-outpost",
+      "/games/ember-temple",
+      "/games/iron-vanguard",
+      "/games/gear-bastion",
+      "/games/gate-holdout",
+      "/games/outlaw-frontier",
+      "/games/monster-tamer",
+      "/games/depth-delver",
+      "/games/overworld-quest",
+      "/games/snake",
+      "/games/marble-race",
+      "/games/block-burst",
+      "/games/mine-pioneer",
+      "/games/seven-seconds",
+      "/games/circle-trace",
+      "/games/rift-front",
+      "/games/genre/arcade",
+      "/games/genre/action",
+      "/games/genre/puzzle",
+      "/games/genre/rpg",
+      "/games/genre/strategy",
+      "/games/genre/defense",
+      "/games/genre/versus",
+      "/games/genre/casual",
+      "/games/genre/decider",
+      "/draw",
+      "/games/marble-race",
+      "/games/genre/decider",
+      "https://1989v.com",
+      "https://game.1989v.com",
+      "https://place.1989v.com",
+      "https://blog.1989v.com",
+      "https://rank.1989v.com",
+      "https://deal.1989v.com",
+      "https://1989v.com/privacy",
+      "https://1989v.com/about",
+      "https://1989v.com/contact",
+      "https://1989v.com/data-sources"
+    ],
+    "text": "무료 웹게임 아케이드 — 설치 없이 브라우저에서 바로 | 1989v 게임\n무료 웹게임 아케이드\n1989v 게임은 설치·회원가입 없이 즐기는 무료 웹게임 서비스입니다. 원하는 장르를 골라 바로 플레이하세요.\n디펜스\n·\n액션\n·\n전략\n·\nRPG\n·\n아케이드\n·\n퍼즐\n·\n대전\n·\n캐주얼\n·\n순서 정하기\n대전 디펜스\n· 전략\n궁수 키우기: 거점 원정\n· RPG\nEPOCH OF NATIONS\n· 전략\n귀야행 척준경\n· 액션\n사태\n· 대전\nAMP ARENA\n· 대전\n원 그리기\n· 캐주얼\n7초를 맞춰라\n· 캐주얼\n좀비 레인\n· 아케이드\n좀비 행군\n· 전략\n인피니티 스탭\n· 액션\n마지막 한 사람\n· 액션\n아홉 종\n· 액션\n궁수 키우기: 좀비 개척\n· 액션\n랜덤 카드 디펜스\n· 디펜스\n인피니티 타워\n· 디펜스\n랜덤 타워 디펜스\n· 디펜스\n그어서 막기\n· 퍼즐\n카드 뒤집기\n· 순서 정하기\n구슬 레이스\n· 순서 정하기\n사다리타기\n· 순서 정하기\n그림 로직\n· 퍼즐\n고리 맞추기\n· 퍼즐\n합이 딱\n· 퍼즐\n코인 코기\n· 아케이드\n에어로 벤데타\n· 아케이드\nNight Shift\n· 액션\n데드라인\n· 액션\nDungeon Crew\n· 액션\nNova Strike\n· 액션\nRaging Fist\n· 액션\nAbyssal Crown\n· RPG\nRewind\n· RPG\n그려봐\n· 대전\nDrift\n· RPG\nMoon Fishing\n· 캐주얼\nCliff Climb\n· 아케이드\nRelic\n· 캐주얼\nElemental\n· 전략\nHand Alchemy\n· 전략\nSpud Battle\n· 액션\nMidnight\n· 액션\nSerpent\n· 액션\n새벽까지\n· 액션\nBeat Dojo\n· 아케이드\nBreeze Golf\n· 아케이드\nAlley Pool\n· 아케이드\nStarlight Farm\n· 캐주얼\nHero Gig\n· 캐주얼\nCog Factory\n· 전략\nDeep Drill\n· 캐주얼\n급식 월드컵\n· 캐주얼\nAcid Rain\n· 아케이드\nRope Puzzle\n· 퍼즐\n오목 한 판\n· 퍼즐\nMinefield\n· 퍼즐\nCrate Shift\n· 퍼즐\nBlock Burst\n· 퍼즐\n스도쿠\n· 퍼즐\n하루 한 판\n· 퍼즐\n네모로직\n· 퍼즐\n네 줄 잇기\n· 퍼즐\n낱말 다섯\n· 퍼즐\nRift\n· 전략\nDice Defense\n· 디펜스\nStorm Runner\n· 액션\nCrimson Ravine\n· 전략\nWall Breaker\n· 아케이드\nCave Glide\n· 아케이드\nRune Merge\n· 퍼즐\nGolden Forge\n· 캐주얼\nEcho Duel\n· 대전\nFrost Outpost\n· 디펜스\nEmber Temple\n· 아케이드\nIron Vanguard\n· 액션\nGear Bastion\n· 디펜스\nLast Gate\n· 디펜스\nOutlaw Frontier\n· 디펜스\nMonster Tamer\n· RPG\nDeep Dungeon\n· RPG\nOverworld\n· RPG\nSnake\n· 아케이드\n웹게임 고르고 시작하기\n장르별로 둘러보고 태그로 목록을 좁히거나 인기·신작·평점 순으로 정렬해 보세요. 뭐 하지 버튼은 현재 목록에서 게임 하나를 골라줍니다.\n게임 고르는 법 · 플레이 방식별 안내\n게임을 열어 소개와 플레이 인원, 모바일 지원 여부를 확인한 뒤 플레이 버튼을 누르세요. 앱 설치 없이 브라우저에서 실행되며, 조작법과 지원 기기는 게임마다 다릅니다.\n계정 없이 플레이를 시작할 수 있습니다. 로그인하면 개인 플레이 기록을 남길 수 있습니다. 게임을 평가하는 기능도 제공합니다. 진행 저장과 온라인 멀티플레이는 해당 기능을 지원하는 게임에서 이용할 수 있습니다.\n플레이 방식으로 골라보기\n목표·조작법·첫 플레이 팁을 정리해 둔 게임을 플레이 방식별로 모았습니다.\n이름 뽑고 순서 정하기\n구슬 레이스\n이름을 입력하고 코스를 골라 구슬이 도착하는 순서로 결과를 정하세요.\n차분하게 퍼즐 풀기\nBlock Burst\n조각을 배치하고 빈칸을 관리하는 퍼즐을 찾는다면. 8×8 보드에서 가로·세로줄을 채우고, 여러 줄을 함께 지우는 배치를 고민합니다.\nMinefield\n숫자를 읽고 안전한 칸을 추리하는 지뢰찾기를 찾는다면. 개척 모드는 목숨 3개로 여러 판을 돌파하며, 계속 진행할지 퇴각할지도 결정합니다.\n시간 감각과 정확도 겨루기\n7초를 맞춰라\n시작한 뒤 7초에 가깝게 멈춰 보세요. 혼자 연습하거나 파티에서 친구와 겨룰 수 있어요.\n원 그리기\n마우스나 손가락으로 목표 원을 따라 그리고 얼마나 정확한지 확인하세요.\n영웅을 움직여 전선 밀기\nRift\n영웅을 직접 움직이며 전선을 밀어가는 전략 액션을 찾는다면. 크립과 함께 진격하고, 두 스킬과 본진 회복을 활용해 수호탑을 공략합니다.\n아케이드\n액션\n퍼즐\nRPG\n전략\n디펜스\n대전\n캐주얼\n순서 정하기\n친구와 이름 뽑기·순서 정하기\n랜덤레이스 · 내기 게임\n핀볼 추첨 · 구슬 레이스\n순서 정하기 게임 더 보기\n1989v\n·\n무료 웹게임\n·\n한국 관광지 검색\n·\n블로그\n·\n랭킹 리더보드\n·\n혜택 링크 허브\n·\n개인정보처리방침\n·\n사이트 소개\n·\n연락처\n·\n데이터 출처",
+    "bytes": 32186
+  },
+  {
+    "url": "https://place.1989v.com/",
+    "observed_at": "2026-10-18T10:09:33.137425+00:00",
+    "curl": "200\thttps://place.1989v.com/\ttext/html\t1.579742",
+    "error": "",
+    "file": "place_1989v_com.body",
+    "sha256": "2500843b0d88bc158f005e6f15bbe67130ba498e3b6df3c2f7659a4cefb73d08",
+    "title": [
+      "한국 관광지 검색 — 지역별 가볼 만한 곳·여행지 지도 | K-관광"
+    ],
+    "meta": [
+      {
+        "charset": "UTF-8"
+      },
+      {
+        "name": "viewport",
+        "content": "width=device-width, initial-scale=1.0, viewport-fit=cover"
+      },
+      {
+        "name": "google-adsense-account",
+        "content": "ca-pub-4627924728297793"
+      },
+      {
+        "name": "theme-color",
+        "content": "#0a0a0a"
+      },
+      {
+        "name": "color-scheme",
+        "content": "only light"
+      },
+      {
+        "name": "description",
+        "content": "전국 가볼 만한 곳을 지역·테마·내 주변으로 검색합니다. 한국관광공사 공식 데이터로 주소·지도·사진과 가는 길을 함께 확인하세요."
+      },
+      {
+        "rel": "canonical",
+        "href": "https://place.1989v.com/"
+      },
+      {
+        "property": "og:type",
+        "content": "website"
+      },
+      {
+        "property": "og:site_name",
+        "content": "K-관광"
+      },
+      {
+        "property": "og:title",
+        "content": "한국 관광지 검색 — 지역별 가볼 만한 곳·여행지 지도 | K-관광"
+      },
+      {
+        "property": "og:description",
+        "content": "전국 가볼 만한 곳을 지역·테마·내 주변으로 검색합니다. 한국관광공사 공식 데이터로 주소·지도·사진과 가는 길을 함께 확인하세요."
+      },
+      {
+        "property": "og:url",
+        "content": "https://place.1989v.com/"
+      },
+      {
+        "property": "og:locale",
+        "content": "ko_KR"
+      },
+      {
+        "name": "twitter:card",
+        "content": "summary_large_image"
+      },
+      {
+        "name": "twitter:title",
+        "content": "한국 관광지 검색 — 지역별 가볼 만한 곳·여행지 지도 | K-관광"
+      },
+      {
+        "name": "twitter:description",
+        "content": "전국 가볼 만한 곳을 지역·테마·내 주변으로 검색합니다. 한국관광공사 공식 데이터로 주소·지도·사진과 가는 길을 함께 확인하세요."
+      },
+      {
+        "property": "og:image",
+        "content": "https://place.1989v.com/og/place.png"
+      },
+      {
+        "property": "og:image:secure_url",
+        "content": "https://place.1989v.com/og/place.png"
+      },
+      {
+        "property": "og:image:type",
+        "content": "image/png"
+      },
+      {
+        "property": "og:image:width",
+        "content": "1200"
+      },
+      {
+        "property": "og:image:height",
+        "content": "630"
+      },
+      {
+        "property": "og:image:alt",
+        "content": "한국 관광지 탐색"
+      },
+      {
+        "name": "twitter:image",
+        "content": "https://place.1989v.com/og/place.png"
+      },
+      {
+        "name": "twitter:image:alt",
+        "content": "한국 관광지 탐색"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "ko",
+        "href": "https://place.1989v.com/",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://place.1989v.com/en",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://place.1989v.com/en",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "type": "application/rss+xml",
+        "title": "K-관광 — 최근 바뀐 관광지",
+        "href": "https://place.1989v.com/feed.xml",
+        "data-seo-multi": null
+      }
+    ],
+    "links": [
+      "/regions/11",
+      "/regions/12",
+      "/regions/26",
+      "/regions/27",
+      "/regions/28",
+      "/regions/30",
+      "/regions/31",
+      "/regions/36",
+      "/regions/41",
+      "/regions/43",
+      "/regions/44",
+      "/regions/47",
+      "/regions/48",
+      "/regions/50",
+      "/regions/51",
+      "/regions/52",
+      "/markets",
+      "/attractions/1",
+      "/attractions/9",
+      "/attractions/12",
+      "/attractions/17",
+      "/attractions/32",
+      "/attractions/37",
+      "/attractions/39",
+      "/attractions/40",
+      "/attractions/41",
+      "/attractions/42",
+      "/attractions/43",
+      "/attractions/46",
+      "/attractions/49",
+      "/attractions/55",
+      "/attractions/58",
+      "/attractions/59",
+      "/attractions/60",
+      "/attractions/64",
+      "/attractions/65",
+      "/attractions/66",
+      "/attractions/67",
+      "/attractions/68",
+      "/attractions/69",
+      "/attractions/70",
+      "/attractions/72",
+      "/attractions/73",
+      "/attractions/74",
+      "/attractions/77",
+      "/attractions/78",
+      "/attractions/79",
+      "/attractions/81",
+      "/attractions/82",
+      "/attractions/84",
+      "/attractions/87",
+      "/attractions/89",
+      "/attractions/92",
+      "/attractions/93",
+      "/attractions/95",
+      "/attractions/99",
+      "/attractions/101",
+      "/attractions/103",
+      "/attractions/105",
+      "/attractions/108",
+      "/attractions/113",
+      "/attractions/114",
+      "/attractions/116",
+      "/attractions/117",
+      "/attractions/120",
+      "/attractions/121",
+      "/attractions/122",
+      "/attractions/127",
+      "/attractions/129",
+      "/attractions/2511",
+      "/attractions/2565",
+      "/attractions/2573",
+      "/attractions/2582",
+      "/attractions/2598",
+      "/attractions/2603",
+      "/attractions/2783",
+      "/attractions/2784",
+      "https://1989v.com",
+      "https://game.1989v.com",
+      "https://place.1989v.com",
+      "https://blog.1989v.com",
+      "https://rank.1989v.com",
+      "https://deal.1989v.com",
+      "https://1989v.com/privacy",
+      "https://1989v.com/about",
+      "https://1989v.com/contact",
+      "https://1989v.com/data-sources"
+    ],
+    "text": "한국 관광지 검색 — 지역별 가볼 만한 곳·여행지 지도 | K-관광\n한국 관광지 탐색\n한국 관광지 탐색에서 지역과 테마별로 가볼 만한 곳을 찾아보세요. 관광지 사진·주소·지도와 제공된 운영시간·방문 정보를 비교하고, 상세 페이지에서 가까운 역과 정류장을 확인할 수 있습니다.\n서울특별시\n전남광주통합특별시\n부산광역시\n대구광역시\n인천광역시\n대전광역시\n울산광역시\n세종특별자치시\n경기도\n충청북도\n충청남도\n경상북도\n경상남도\n제주특별자치도\n강원특별자치도\n전북특별자치도\n시장 가게 찾기\n경복궁\n남산공원\n사육신공원\n청계산\n관악산\n서대문독립공원\n충무공 이순신 동상\n세종대왕 동상\n북악산\n신당동 떡볶이타운\n삼천사\n장충동 족발 골목\n낙원동 아구찜 거리\n양천나눔누리타운\n강남 마이스 관광특구\n응암동 감자국 거리\n백범광장\n서울 암사동 유적\n세운상가\n조계사\n여의도한강공원\n위라이드 서울전차\n서울창포원\n계남근린공원\n중명전\n방화대교\n정선옹주 묘역\n서울 운현궁\n호암산성\n여의도샛강생태공원\n유관순동상\n우이동계곡\n성덕사\n보신각터\n반공순국용사 위령탑\n매헌시민의 숲\n봉화산\n내원사\n인사동\n윌리엄해밀턴쇼 동상\n국회의사당\n경국사\n난지한강공원\n중앙고등학교\n북촌한옥마을\n헌인릉 생태경관보전지역\n한강\n신기한놀이터 떼굴떼굴\n서울 삼각지 대구탕 골목\n당고개순교성지\n파크하비오 워터킹덤&스파\n옥천암\n서울퓨처랩\n생명보험교육문화센터\n을지로 노가리골목\n키자니아 서울\n서울 구 러시아공사관\n망우산\n코코리색채연구소(연희본점)\n코코리색채연구소(홍대점)\n1989v\n·\n무료 웹게임\n·\n한국 관광지 검색\n·\n블로그\n·\n랭킹 리더보드\n·\n혜택 링크 허브\n·\n개인정보처리방침\n·\n사이트 소개\n·\n연락처\n·\n데이터 출처",
+    "bytes": 16283
+  },
+  {
+    "url": "https://place.1989v.com/en",
+    "observed_at": "2026-10-18T10:09:32.103283+00:00",
+    "curl": "200\thttps://place.1989v.com/en\ttext/html\t0.370925",
+    "error": "",
+    "file": "place_1989v_com_en.body",
+    "sha256": "f7f8f1f65d5a414564a30d6ebfc4dbdab8cbd163f66b201d7a4d30c5568b060b",
+    "title": [
+      "Things to Do in Korea — Attractions by Region & Map | K-Tour"
+    ],
+    "meta": [
+      {
+        "charset": "UTF-8"
+      },
+      {
+        "name": "viewport",
+        "content": "width=device-width, initial-scale=1.0, viewport-fit=cover"
+      },
+      {
+        "name": "google-adsense-account",
+        "content": "ca-pub-4627924728297793"
+      },
+      {
+        "name": "theme-color",
+        "content": "#0a0a0a"
+      },
+      {
+        "name": "color-scheme",
+        "content": "only light"
+      },
+      {
+        "name": "description",
+        "content": "Find things to do across South Korea — search tourist attractions by region, theme, or your current location. Official Korea Tourism Organization data…"
+      },
+      {
+        "rel": "canonical",
+        "href": "https://place.1989v.com/en"
+      },
+      {
+        "property": "og:type",
+        "content": "website"
+      },
+      {
+        "property": "og:site_name",
+        "content": "K-Tour"
+      },
+      {
+        "property": "og:title",
+        "content": "Things to Do in Korea — Attractions by Region & Map | K-Tour"
+      },
+      {
+        "property": "og:description",
+        "content": "Find things to do across South Korea — search tourist attractions by region, theme, or your current location. Official Korea Tourism Organization data…"
+      },
+      {
+        "property": "og:url",
+        "content": "https://place.1989v.com/en"
+      },
+      {
+        "property": "og:locale",
+        "content": "en_US"
+      },
+      {
+        "name": "twitter:card",
+        "content": "summary_large_image"
+      },
+      {
+        "name": "twitter:title",
+        "content": "Things to Do in Korea — Attractions by Region & Map | K-Tour"
+      },
+      {
+        "name": "twitter:description",
+        "content": "Find things to do across South Korea — search tourist attractions by region, theme, or your current location. Official Korea Tourism Organization data…"
+      },
+      {
+        "property": "og:image",
+        "content": "https://place.1989v.com/og/place.png"
+      },
+      {
+        "property": "og:image:secure_url",
+        "content": "https://place.1989v.com/og/place.png"
+      },
+      {
+        "property": "og:image:type",
+        "content": "image/png"
+      },
+      {
+        "property": "og:image:width",
+        "content": "1200"
+      },
+      {
+        "property": "og:image:height",
+        "content": "630"
+      },
+      {
+        "property": "og:image:alt",
+        "content": "Explore Korea"
+      },
+      {
+        "name": "twitter:image",
+        "content": "https://place.1989v.com/og/place.png"
+      },
+      {
+        "name": "twitter:image:alt",
+        "content": "Explore Korea"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "ko",
+        "href": "https://place.1989v.com/",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://place.1989v.com/en",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://place.1989v.com/en",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "type": "application/rss+xml",
+        "title": "K-Tour — Recently Updated Attractions",
+        "href": "https://place.1989v.com/en/feed.xml",
+        "data-seo-multi": null
+      }
+    ],
+    "links": [
+      "/en/regions/11",
+      "/en/regions/12",
+      "/en/regions/26",
+      "/en/regions/27",
+      "/en/regions/28",
+      "/en/regions/30",
+      "/en/regions/31",
+      "/en/regions/36",
+      "/en/regions/41",
+      "/en/regions/43",
+      "/en/regions/44",
+      "/en/regions/47",
+      "/en/regions/48",
+      "/en/regions/50",
+      "/en/regions/51",
+      "/en/regions/52",
+      "/en/markets",
+      "/en/attractions/21",
+      "/en/attractions/24",
+      "/en/attractions/1625",
+      "/en/attractions/1651",
+      "/en/attractions/1652",
+      "/en/attractions/1656",
+      "/en/attractions/1658",
+      "/en/attractions/1662",
+      "/en/attractions/13425",
+      "/en/attractions/13452",
+      "/en/attractions/13453",
+      "/en/attractions/13454",
+      "/en/attractions/13455",
+      "/en/attractions/13471",
+      "/en/attractions/13488",
+      "/en/attractions/13686",
+      "/en/attractions/13696",
+      "/en/attractions/13698",
+      "/en/attractions/13703",
+      "/en/attractions/13712",
+      "/en/attractions/13713",
+      "/en/attractions/13715",
+      "/en/attractions/13716",
+      "/en/attractions/13770",
+      "/en/attractions/13785",
+      "/en/attractions/13793",
+      "/en/attractions/13797",
+      "/en/attractions/13816",
+      "/en/attractions/13848",
+      "/en/attractions/13849",
+      "/en/attractions/13863",
+      "/en/attractions/13864",
+      "/en/attractions/13865",
+      "/en/attractions/13866",
+      "/en/attractions/13944",
+      "/en/attractions/13949",
+      "/en/attractions/13953",
+      "/en/attractions/13962",
+      "/en/attractions/13963",
+      "/en/attractions/13964",
+      "/en/attractions/13965",
+      "/en/attractions/13966",
+      "/en/attractions/14119",
+      "/en/attractions/14147",
+      "/en/attractions/14148",
+      "/en/attractions/14154",
+      "/en/attractions/14160",
+      "/en/attractions/14176",
+      "/en/attractions/14181",
+      "/en/attractions/14193",
+      "/en/attractions/14197",
+      "/en/attractions/14203",
+      "/en/attractions/14206",
+      "/en/attractions/14209",
+      "/en/attractions/14223",
+      "/en/attractions/14238",
+      "/en/attractions/14241",
+      "/en/attractions/14255",
+      "/en/attractions/14262",
+      "/en/attractions/14264",
+      "https://1989v.com",
+      "https://game.1989v.com",
+      "https://place.1989v.com",
+      "https://blog.1989v.com",
+      "https://rank.1989v.com",
+      "https://deal.1989v.com",
+      "https://1989v.com/privacy",
+      "https://1989v.com/about",
+      "https://1989v.com/contact",
+      "https://1989v.com/data-sources"
+    ],
+    "text": "Things to Do in Korea — Attractions by Region & Map | K-Tour\nExplore Korea\nFind places to visit in South Korea by region and theme. Compare attraction photos, addresses, maps and available opening hours and visitor information, then check nearby stations and bus stops on each detail page.\nSeoul\nJeonnam-Gwangju Special Metropolitan City\nBusan\nDaegu\nIncheon\nDaejeon\nUlsan\nSejong\nGyeonggi-do\nChungcheongbuk-do\nChungcheongnam-do\nGyeongsangbuk-do\nGyeongsangnam-do\nJeju-do\nGangwon-do\nJeonbuk-do\nFind market shops & goods\nGyeongbokgung Palace\nInsa-dong\nSeoul Cruise\nSonghyeon Green Plaza\nYoungchive Seongsu\nSeongbuk-dong–Bukchon Hanok Village Course\nEuljiro Nogari Alley\nAlleys of Changsin-dong\nHanboknam - Gyeongbokgung Branch\nCocory Color Research Institute - Hongdae Branch (코코리색채연구소(홍대점))\nCocory Color Research Institute - Yeonhui Main Branch (코코리색채연구소(연희본점))\nCocory Color Research Institute - Gangnam Branch (코코리색채연구소(강남점))\nCocory Color Research Institute - Myeongdong Branch (코코리색채연구소(명동점))\nGarden of Gratitude\nBaek In-je House\nCheonho-dong Rose Village\nChoong Ang High School\nCulture Station Seoul 284\nNaksan Park\nMangwon Hangang Park (한강시민공원 망원지구 (망원한강공원))\nYeouido Hangang Park\nIchon Hangang Park\nBanpo Hangang Park\nLotte World\nSpa 1978 (SPA 1978)\nKorean Spa Yeo Yong Guk\nHeidi Haus\nDeoksugung Palace\nGwanghwamun Square\nJongno 3 (sam)-ga Pocha Street\nUnhyeongung Royal Residence\nJongmyo Shrine [UNESCO World Heritage]\nChanggyeonggung Palace\nChangdeokgung Palace Complex [UNESCO World Heritage Site]\nPicasso Mural\nNemamdaero Hongdae Branch\nWaple Wood Artwork Place\nPark Habio Water Kingdom Water Park & Jjimjil Spa\nHeunginjimun Gate - Dongdaemun Gate\nBanpo Bridge Rainbow Fountain\nSongpa Naru Park (Seokchonhosu Lake) (송파나루공원 (석촌호수))\nSsamzigil\nKkwonggogae Park\nGinkgo Tree at the Fortress Well Site\nThe Street in front of Cheongwadae (The Blue House)\nNamsangol Hanok Village\nJingwansa Temple (Seoul) [진관사(서울)]\nBukchon Hanok Village\nSeoul Botanic Park\nMangnidan Street\nBamseom Island (Ecosystem Conservation Area)\nItaewon Antiques Street\nKansong House\nJennyhouse\nSongnidan-gil Street\nOgeum Park\nWaterworks Museum\nChangdeokgung Injeongmun Gate\nHyosajeong Pavilion\nMemorial to the Loyal Dead\n1989v\n·\n무료 웹게임\n·\n한국 관광지 검색\n·\n블로그\n·\n랭킹 리더보드\n·\n혜택 링크 허브\n·\n개인정보처리방침\n·\n사이트 소개\n·\n연락처\n·\n데이터 출처",
+    "bytes": 17572
+  },
+  {
+    "url": "https://blog.1989v.com/",
+    "observed_at": "2026-10-18T10:09:32.793591+00:00",
+    "curl": "200\thttps://blog.1989v.com/\ttext/html\t0.916411",
+    "error": "",
+    "file": "blog_1989v_com.body",
+    "sha256": "201cebe03ea5ab5c3c2f5ac26b49417201c7aa97433822a4de99959f9c42bfc2",
+    "title": [
+      "1989v 블로그 — 기술과 일상의 기록"
+    ],
+    "meta": [
+      {
+        "charset": "UTF-8"
+      },
+      {
+        "name": "viewport",
+        "content": "width=device-width, initial-scale=1.0, viewport-fit=cover"
+      },
+      {
+        "name": "google-adsense-account",
+        "content": "ca-pub-4627924728297793"
+      },
+      {
+        "name": "theme-color",
+        "content": "#0a0a0a"
+      },
+      {
+        "name": "color-scheme",
+        "content": "only light"
+      },
+      {
+        "name": "description",
+        "content": "서버·검색·데이터부터 취미와 일상까지, 직접 만들고 겪은 것을 기록합니다. 글 15편을 분류별로 모아 봅니다."
+      },
+      {
+        "rel": "canonical",
+        "href": "https://blog.1989v.com/"
+      },
+      {
+        "property": "og:type",
+        "content": "website"
+      },
+      {
+        "property": "og:site_name",
+        "content": "1989v 블로그"
+      },
+      {
+        "property": "og:title",
+        "content": "1989v 블로그 — 기술과 일상의 기록"
+      },
+      {
+        "property": "og:description",
+        "content": "서버·검색·데이터부터 취미와 일상까지, 직접 만들고 겪은 것을 기록합니다. 글 15편을 분류별로 모아 봅니다."
+      },
+      {
+        "property": "og:url",
+        "content": "https://blog.1989v.com/"
+      },
+      {
+        "property": "og:locale",
+        "content": "ko_KR"
+      },
+      {
+        "name": "twitter:card",
+        "content": "summary_large_image"
+      },
+      {
+        "name": "twitter:title",
+        "content": "1989v 블로그 — 기술과 일상의 기록"
+      },
+      {
+        "name": "twitter:description",
+        "content": "서버·검색·데이터부터 취미와 일상까지, 직접 만들고 겪은 것을 기록합니다. 글 15편을 분류별로 모아 봅니다."
+      },
+      {
+        "property": "og:image",
+        "content": "https://blog.1989v.com/og/blog.png"
+      },
+      {
+        "property": "og:image:secure_url",
+        "content": "https://blog.1989v.com/og/blog.png"
+      },
+      {
+        "property": "og:image:type",
+        "content": "image/png"
+      },
+      {
+        "property": "og:image:width",
+        "content": "1200"
+      },
+      {
+        "property": "og:image:height",
+        "content": "630"
+      },
+      {
+        "property": "og:image:alt",
+        "content": "1989v 블로그"
+      },
+      {
+        "name": "twitter:image",
+        "content": "https://blog.1989v.com/og/blog.png"
+      },
+      {
+        "name": "twitter:image:alt",
+        "content": "1989v 블로그"
+      }
+    ],
+    "links": [
+      "/c/tech",
+      "/c/tech/server",
+      "/c/tech/server/search",
+      "/c/tech/data",
+      "/c/tech/frontend",
+      "/c/life",
+      "/c/life/hobby",
+      "/c/life/hobby/game",
+      "/c/life/note",
+      "/c/harness",
+      "/posts/claude-code-codex-weekly-limit-menubar-muxbar",
+      "/posts/claude-code-mods-session-artifact-links",
+      "/posts/opensearch-knn-lucene-vs-faiss-memory",
+      "/posts/opensearch-parent-join-has-child",
+      "/posts/nori-user-dictionary-three-custom-layers",
+      "/posts/search-system-concept-map",
+      "/posts/opensearch-cluster-sizing-prompt",
+      "/posts/search-cluster-capacity-sizing",
+      "/posts/search-architecture-keyword-layers",
+      "/posts/elasticsearch-opensearch-diagnosis-playbook",
+      "/posts/opensearch-hybrid-query-understanding",
+      "/posts/self-hosted-model-loading-path-risk",
+      "/posts/jvm-native-memory-glibc-malloc-arena",
+      "/posts/fencesvg-markdown-diagrams",
+      "/posts/claude-code-session-timestamp-and-usage",
+      "https://1989v.com",
+      "https://game.1989v.com",
+      "https://place.1989v.com",
+      "https://blog.1989v.com",
+      "https://rank.1989v.com",
+      "https://deal.1989v.com",
+      "https://1989v.com/privacy",
+      "https://1989v.com/about",
+      "https://1989v.com/contact",
+      "https://1989v.com/data-sources"
+    ],
+    "text": "1989v 블로그 — 기술과 일상의 기록\n1989v 블로그\n서버·검색·데이터부터 취미와 일상까지, 직접 만들고 겪은 것을 기록합니다. 글 15편을 분류별로 모아 봅니다.\n기술\n·\n서버\n·\n검색\n·\n데이터\n·\n프런트엔드\n·\n일상\n·\n취미\n·\n게임\n·\n기록\n·\nAI 하네스\nClaude Code · Codex 주간 남은 한도를 macOS 메뉴바에 띄우기 — tmux 메뉴바 앱 muxbar\nClaude Code 세션에서 만든 아티팩트 링크를 입력창 위에 고정하기 — Mods 플러그인 session-artifacts\nOpenSearch 벡터 검색 엔진 lucene vs faiss — 메모리가 모자랄 때 느려지나, 밀려나나\nElasticsearch · OpenSearch parent-join 실전 — has_child 쿼리, 자식 값 정렬, nested 와 비교\nElasticsearch nori 사용자 사전으로 되는 것과 안 되는 것 — 시스템 사전 · 비용 재학습까지, 한국어 형태소 분석기 커스텀의 세 층\n검색 시스템 개념 지도 — 역색인 · 쿼리 언더스탠딩 · BM25 · 덴스 벡터 · RRF · nDCG\nOpenSearch 클러스터 사이징 프롬프트 — AI 에 샤드 · 노드 수 산정을 시킬 때 주는 입력과 금지 규칙\nElasticsearch · OpenSearch 클러스터 사이징 — 검색 클러스터 리소스는 무엇으로 정해지는가\n검색 시스템 아키텍처를 키워드 계층으로 읽기 — 인제스트 · 쿼리 · 평가 세 축\nElasticsearch · OpenSearch 진단 플레이북 — 검색 품질은 _analyze, 샤드 장애는 _cluster/health 부터\nOpenSearch 하이브리드 검색에 쿼리 언더스탠딩 붙이기 — nori 가 쪼갠 조각이 순위를 먹을 때\n모델을 내 서버에 올릴 때 실제로 위험한 것\n힙은 정상인데 컨테이너가 OOMKilled 될 때 — JVM 네이티브 메모리 누수와 MALLOC_ARENA_MAX\nmermaid 없이 마크다운 다이어그램 그리기 — 사이트 디자인 톤을 따라가는 인라인 SVG (fencesvg)\nClaude Code statusLine 으로 사용량·컨텍스트·시각 상시 표시하기 — showMessageTimestamps 가 안 켜지는 이유\n1989v\n·\n무료 웹게임\n·\n한국 관광지 검색\n·\n블로그\n·\n랭킹 리더보드\n·\n혜택 링크 허브\n·\n개인정보처리방침\n·\n사이트 소개\n·\n연락처\n·\n데이터 출처",
+    "bytes": 10196
+  },
+  {
+    "url": "https://deal.1989v.com/",
+    "observed_at": "2026-10-18T10:09:32.863277+00:00",
+    "curl": "200\thttps://deal.1989v.com/\ttext/html\t0.739751",
+    "error": "",
+    "file": "deal_1989v_com.body",
+    "sha256": "991d9bcbd5bd5d213e09a776a1b7c11b2818c22f96643ae8990fdd4fe5ef0b55",
+    "title": [
+      "모든 혜택 — 1989v"
+    ],
+    "meta": [
+      {
+        "charset": "UTF-8"
+      },
+      {
+        "name": "viewport",
+        "content": "width=device-width, initial-scale=1.0, viewport-fit=cover"
+      },
+      {
+        "name": "google-adsense-account",
+        "content": "ca-pub-4627924728297793"
+      },
+      {
+        "name": "theme-color",
+        "content": "#0a0a0a"
+      },
+      {
+        "name": "color-scheme",
+        "content": "only light"
+      },
+      {
+        "name": "description",
+        "content": "여행 · 커머스 · 디지털구독 · 교육 · 생활 카테고리의 혜택 링크를 한곳에 모았습니다. 쿠폰·적립·신규가입 프로모션을 이름·제공처로 검색하세요."
+      },
+      {
+        "rel": "canonical",
+        "href": "https://deal.1989v.com/"
+      },
+      {
+        "property": "og:type",
+        "content": "website"
+      },
+      {
+        "property": "og:site_name",
+        "content": "1989v 혜택"
+      },
+      {
+        "property": "og:title",
+        "content": "모든 혜택 — 1989v"
+      },
+      {
+        "property": "og:description",
+        "content": "여행 · 커머스 · 디지털구독 · 교육 · 생활 카테고리의 혜택 링크를 한곳에 모았습니다. 쿠폰·적립·신규가입 프로모션을 이름·제공처로 검색하세요."
+      },
+      {
+        "property": "og:url",
+        "content": "https://deal.1989v.com/"
+      },
+      {
+        "property": "og:locale",
+        "content": "ko_KR"
+      },
+      {
+        "name": "twitter:card",
+        "content": "summary_large_image"
+      },
+      {
+        "name": "twitter:title",
+        "content": "모든 혜택 — 1989v"
+      },
+      {
+        "name": "twitter:description",
+        "content": "여행 · 커머스 · 디지털구독 · 교육 · 생활 카테고리의 혜택 링크를 한곳에 모았습니다. 쿠폰·적립·신규가입 프로모션을 이름·제공처로 검색하세요."
+      },
+      {
+        "property": "og:image",
+        "content": "https://deal.1989v.com/og/deal.png"
+      },
+      {
+        "property": "og:image:secure_url",
+        "content": "https://deal.1989v.com/og/deal.png"
+      },
+      {
+        "property": "og:image:type",
+        "content": "image/png"
+      },
+      {
+        "property": "og:image:width",
+        "content": "1200"
+      },
+      {
+        "property": "og:image:height",
+        "content": "630"
+      },
+      {
+        "property": "og:image:alt",
+        "content": "모든 혜택"
+      },
+      {
+        "name": "twitter:image",
+        "content": "https://deal.1989v.com/og/deal.png"
+      },
+      {
+        "name": "twitter:image:alt",
+        "content": "모든 혜택"
+      }
+    ],
+    "links": [
+      "https://1989v.com",
+      "https://game.1989v.com",
+      "https://place.1989v.com",
+      "https://blog.1989v.com",
+      "https://rank.1989v.com",
+      "https://deal.1989v.com",
+      "https://1989v.com/privacy",
+      "https://1989v.com/about",
+      "https://1989v.com/contact",
+      "https://1989v.com/data-sources"
+    ],
+    "text": "모든 혜택 — 1989v\n모든 혜택\n여행 · 커머스 · 디지털구독 · 교육 · 생활 카테고리의 혜택 링크를 한곳에 모았습니다. 쿠폰·적립·신규가입 프로모션을 이름·제공처로 검색하세요.\n여행\n마이리얼트립 · 기획전 · 특가 · 진행 중인 여행 혜택 모음 항공·숙소·투어 기획전과 쿠폰을 한곳에 모아 보여주는 상시 페이지입니다.\n여기어때 · 쿠폰팩 · 특가 · 숙소·항공 이벤트 전체보기 국내 숙소 쿠폰팩부터 해외여행 특가까지 진행 중인 이벤트 목록입니다.\n야놀자 NOL · 숙소 · 투어 특가 · 할인 특가 모음 국내 숙소, 해외 패키지, 티켓 특가를 묶어 보여주는 상시 페이지입니다.\n클룩 · 단독 쿠폰코드 · 프로모션 · 쿠폰코드 액티비티·티켓·eSIM 등에 쓰는 클룩 단독 쿠폰코드와 할인 모음입니다.\n커머스\n11번가 · 한정 수량 특가 · 타임딜 · 핫딜 시간 한정 타임딜과 카드 즉시할인·포인트 적립이 붙는 핫딜 목록입니다.\nSSG.COM · 카드 즉시할인 · 쿠폰 · 이벤트 · 쿠폰 카드사 즉시·청구할인, 멤버십 특전, 구매사은 이벤트를 모아둔 페이지입니다.\n삼성카드 · 링크하면 자동 할인 · LINK 자동 할인 카드에 혜택을 미리 링크해두면 해당 가맹점에서 결제할 때 자동으로 할인이 적용되는 상시 서비스입니다.\n생활·통신\n배달의민족 · 배달팁 무료 · 배민클럽 · B마트 혜택 배민클럽 배달팁 무료, B마트 초신속 배달, 배민페이 적립 등 상시 혜택 안내입니다.\n쿠팡이츠 · 무료배달 · 와우회원 무료배달 쿠팡 와우 멤버십 회원에게 적용되는 쿠팡이츠 무료배달 혜택 안내입니다.\n1989v\n·\n무료 웹게임\n·\n한국 관광지 검색\n·\n블로그\n·\n랭킹 리더보드\n·\n혜택 링크 허브\n·\n개인정보처리방침\n·\n사이트 소개\n·\n연락처\n·\n데이터 출처",
+    "bytes": 9592
+  },
+  {
+    "url": "https://rank.1989v.com/",
+    "observed_at": "2026-10-18T10:09:33.252189+00:00",
+    "curl": "200\thttps://rank.1989v.com/\ttext/html\t0.548916",
+    "error": "",
+    "file": "rank_1989v_com.body",
+    "sha256": "6f697f94f545aba05d9d03fd6b4c5e2008b41aca07712b2bf68ed6dc94a90f88",
+    "title": [
+      "모든 랭킹 — 1989v"
+    ],
+    "meta": [
+      {
+        "charset": "UTF-8"
+      },
+      {
+        "name": "viewport",
+        "content": "width=device-width, initial-scale=1.0, viewport-fit=cover"
+      },
+      {
+        "name": "google-adsense-account",
+        "content": "ca-pub-4627924728297793"
+      },
+      {
+        "name": "theme-color",
+        "content": "#0a0a0a"
+      },
+      {
+        "name": "color-scheme",
+        "content": "only light"
+      },
+      {
+        "name": "description",
+        "content": "지역별 최저가 주유소 리더보드. 시군구·유종별 순위를 어제 대비 등락과 함께 확인하고, 각 주유소로 바로 길찾기하세요."
+      },
+      {
+        "rel": "canonical",
+        "href": "https://rank.1989v.com/"
+      },
+      {
+        "property": "og:type",
+        "content": "website"
+      },
+      {
+        "property": "og:site_name",
+        "content": "1989v 랭킹"
+      },
+      {
+        "property": "og:title",
+        "content": "모든 랭킹 — 1989v"
+      },
+      {
+        "property": "og:description",
+        "content": "지역별 최저가 주유소 리더보드. 시군구·유종별 순위를 어제 대비 등락과 함께 확인하고, 각 주유소로 바로 길찾기하세요."
+      },
+      {
+        "property": "og:url",
+        "content": "https://rank.1989v.com/"
+      },
+      {
+        "property": "og:locale",
+        "content": "ko_KR"
+      },
+      {
+        "name": "twitter:card",
+        "content": "summary_large_image"
+      },
+      {
+        "name": "twitter:title",
+        "content": "모든 랭킹 — 1989v"
+      },
+      {
+        "name": "twitter:description",
+        "content": "지역별 최저가 주유소 리더보드. 시군구·유종별 순위를 어제 대비 등락과 함께 확인하고, 각 주유소로 바로 길찾기하세요."
+      },
+      {
+        "property": "og:image",
+        "content": "https://rank.1989v.com/og/rank.png"
+      },
+      {
+        "property": "og:image:secure_url",
+        "content": "https://rank.1989v.com/og/rank.png"
+      },
+      {
+        "property": "og:image:type",
+        "content": "image/png"
+      },
+      {
+        "property": "og:image:width",
+        "content": "1200"
+      },
+      {
+        "property": "og:image:height",
+        "content": "630"
+      },
+      {
+        "property": "og:image:alt",
+        "content": "모든 랭킹"
+      },
+      {
+        "name": "twitter:image",
+        "content": "https://rank.1989v.com/og/rank.png"
+      },
+      {
+        "name": "twitter:image:alt",
+        "content": "모든 랭킹"
+      }
+    ],
+    "links": [
+      "https://1989v.com",
+      "https://game.1989v.com",
+      "https://place.1989v.com",
+      "https://blog.1989v.com",
+      "https://rank.1989v.com",
+      "https://deal.1989v.com",
+      "https://1989v.com/privacy",
+      "https://1989v.com/about",
+      "https://1989v.com/contact",
+      "https://1989v.com/data-sources"
+    ],
+    "text": "모든 랭킹 — 1989v\n모든 랭킹\n지역별 최저가 주유소 리더보드. 시군구·유종별 순위를 어제 대비 등락과 함께 확인하고, 각 주유소로 바로 길찾기하세요.\n시군구별 최저가 상위 20곳을 매일 받아 보여줍니다 — 전국 모든 주유소를 포함하지는 않습니다. 출처: 한국석유공사 오피넷\n1989v\n·\n무료 웹게임\n·\n한국 관광지 검색\n·\n블로그\n·\n랭킹 리더보드\n·\n혜택 링크 허브\n·\n개인정보처리방침\n·\n사이트 소개\n·\n연락처\n·\n데이터 출처",
+    "bytes": 7402
+  },
+  {
+    "url": "https://1989v.com/robots.txt",
+    "observed_at": "2026-10-18T10:09:33.445070+00:00",
+    "curl": "200\thttps://1989v.com/robots.txt\ttext/plain\t0.630032",
+    "error": "",
+    "file": "1989v_com_robots_txt.body",
+    "sha256": "7281da706bab7dd2c047fb83acaec14aa231e1050018bf6c84eb31600822e073",
+    "title": [],
+    "meta": [],
+    "links": [],
+    "text": "User-agent: *\nAllow: /\nDisallow: /oauth/\nDisallow: /admin/\nDisallow: /shop/login\nDisallow: /shop/orders\n\n# /games/\n/index.html 은 상세 페이지가 iframe 으로 물고 있는 원시 게임 프레임이다.\n# nginx 가 X-Robots-Tag: noindex 를 붙이므로 크롤은 열어둬야 그 헤더를 읽을 수 있다.\n\nUser-agent: Yeti\nAllow: /\n\nUser-agent: Daumoa\nAllow: /\n\n# 답변형 검색(AEO) — 인용되는 쪽이 이득이라 명시적으로 연다.\n# llms.txt 가 각 호스트 루트에 있고, 전체 목록은 sitemap 이 갖는다.\nUser-agent: GPTBot\nAllow: /\n\nUser-agent: OAI-SearchBot\nAllow: /\n\nUser-agent: ChatGPT-User\nAllow: /\n\nUser-agent: ClaudeBot\nAllow: /\n\nUser-agent: Claude-User\nAllow: /\n\nUser-agent: PerplexityBot\nAllow: /\n\nUser-agent: Google-Extended\nAllow: /\n\nUser-agent: Applebot-Extended\nAllow: /\n\n# 메타의 AI 학습 크롤러 — 위 AEO 목록에 없던 것인데 부하의 대부분이었다.\n# 2026-09-16~17 ingress 로그: 관광지 상세 요청 1,465건 중 1,395건(95%)이 이 봇이었고\n# Googlebot 은 68건, 사람은 2건. 프리렌더 밖 페이지에서 JS 를 렌더해 API 를 3번씩 불러\n# 무료 단일 노드에서 사람 트래픽의 수백 배를 썼다. 답변형 검색이 아니라 학습용이라\n# 인용으로 돌아오는 것도 없다. facebookexternalhit(링크 미리보기)는 별개라 그대로 둔다.\n# robots 의 User-agent 매칭은 대소문자를 가리지 않는다(RFC 9309) — 한 벌이면 된다.\nUser-agent: meta-externalagent\nDisallow: /\n\nUser-agent: meta-externalfetcher\nDisallow: /\n\nSitemap: https://1989v.com/sitemap.xml",
+    "bytes": 1614
+  },
+  {
+    "url": "https://1989v.com/sitemap.xml",
+    "observed_at": "2026-10-18T10:09:33.273281+00:00",
+    "curl": "200\thttps://1989v.com/sitemap.xml\ttext/xml\t0.390565",
+    "error": "",
+    "file": "1989v_com_sitemap_xml.body",
+    "sha256": "3da8e959023a80a9bc359163b2980136f8279136d0f9492940c6ba20c5a231cf",
+    "title": [],
+    "meta": [],
+    "links": [],
+    "text": "https://1989v.com/\n1.0\nhttps://1989v.com/tech\n0.6\nhttps://1989v.com/tech/search\n0.6\nhttps://1989v.com/tech/recommendation\n0.6\nhttps://1989v.com/tech/order\n0.6\nhttps://1989v.com/tech/ads\n0.6\nhttps://1989v.com/tech/catalog\n0.6\nhttps://1989v.com/portfolio\n0.6\nhttps://1989v.com/shop\n0.6\nhttps://1989v.com/privacy\n0.6\nhttps://1989v.com/about\n0.6\nhttps://1989v.com/contact\n0.6\nhttps://1989v.com/data-sources\n0.6\nhttps://1989v.com/tech/basics\n0.7\nhttps://1989v.com/tech/data-structure\n0.7\nhttps://1989v.com/tech/algorithm\n0.7\nhttps://1989v.com/tech/design-pattern\n0.7\nhttps://1989v.com/tech/concurrency\n0.7\nhttps://1989v.com/tech/distributed-system\n0.7\nhttps://1989v.com/tech/architecture\n0.7\nhttps://1989v.com/tech/infrastructure\n0.7\nhttps://1989v.com/tech/data\n0.7\nhttps://1989v.com/tech/security\n0.7\nhttps://1989v.com/tech/network\n0.7\nhttps://1989v.com/tech/testing\n0.7\nhttps://1989v.com/tech/language-feature\n0.7",
+    "bytes": 2546
+  },
+  {
+    "url": "https://game.1989v.com/robots.txt",
+    "observed_at": "2026-10-18T10:09:33.698167+00:00",
+    "curl": "200\thttps://game.1989v.com/robots.txt\ttext/plain\t0.530411",
+    "error": "",
+    "file": "game_1989v_com_robots_txt.body",
+    "sha256": "176a138849f1f99998da644e26dc30074f9c716f3bc5e079e7f75cf107f168fa",
+    "title": [],
+    "meta": [],
+    "links": [],
+    "text": "User-agent: *\nAllow: /\nDisallow: /oauth/\nDisallow: /admin/\nDisallow: /shop/login\nDisallow: /shop/orders\n\n# /games/\n/index.html 은 상세 페이지가 iframe 으로 물고 있는 원시 게임 프레임이다.\n# nginx 가 X-Robots-Tag: noindex 를 붙이므로 크롤은 열어둬야 그 헤더를 읽을 수 있다.\n\nUser-agent: Yeti\nAllow: /\n\nUser-agent: Daumoa\nAllow: /\n\n# 답변형 검색(AEO) — 인용되는 쪽이 이득이라 명시적으로 연다.\n# llms.txt 가 각 호스트 루트에 있고, 전체 목록은 sitemap 이 갖는다.\nUser-agent: GPTBot\nAllow: /\n\nUser-agent: OAI-SearchBot\nAllow: /\n\nUser-agent: ChatGPT-User\nAllow: /\n\nUser-agent: ClaudeBot\nAllow: /\n\nUser-agent: Claude-User\nAllow: /\n\nUser-agent: PerplexityBot\nAllow: /\n\nUser-agent: Google-Extended\nAllow: /\n\nUser-agent: Applebot-Extended\nAllow: /\n\n# 메타의 AI 학습 크롤러 — 위 AEO 목록에 없던 것인데 부하의 대부분이었다.\n# 2026-09-16~17 ingress 로그: 관광지 상세 요청 1,465건 중 1,395건(95%)이 이 봇이었고\n# Googlebot 은 68건, 사람은 2건. 프리렌더 밖 페이지에서 JS 를 렌더해 API 를 3번씩 불러\n# 무료 단일 노드에서 사람 트래픽의 수백 배를 썼다. 답변형 검색이 아니라 학습용이라\n# 인용으로 돌아오는 것도 없다. facebookexternalhit(링크 미리보기)는 별개라 그대로 둔다.\n# robots 의 User-agent 매칭은 대소문자를 가리지 않는다(RFC 9309) — 한 벌이면 된다.\nUser-agent: meta-externalagent\nDisallow: /\n\nUser-agent: meta-externalfetcher\nDisallow: /\n\nSitemap: https://game.1989v.com/sitemap.xml",
+    "bytes": 1619
+  },
+  {
+    "url": "https://place.1989v.com/robots.txt",
+    "observed_at": "2026-10-18T10:09:33.828623+00:00",
+    "curl": "200\thttps://place.1989v.com/robots.txt\ttext/plain\t0.557790",
+    "error": "",
+    "file": "place_1989v_com_robots_txt.body",
+    "sha256": "2517821be4625edf473191e1eff422089af63fe546aae0f406be48c73c7bce8a",
+    "title": [],
+    "meta": [],
+    "links": [],
+    "text": "User-agent: *\nAllow: /\nDisallow: /oauth/\nDisallow: /admin/\nDisallow: /shop/login\nDisallow: /shop/orders\n\n# /games/\n/index.html 은 상세 페이지가 iframe 으로 물고 있는 원시 게임 프레임이다.\n# nginx 가 X-Robots-Tag: noindex 를 붙이므로 크롤은 열어둬야 그 헤더를 읽을 수 있다.\n\nUser-agent: Yeti\nAllow: /\n\nUser-agent: Daumoa\nAllow: /\n\n# 답변형 검색(AEO) — 인용되는 쪽이 이득이라 명시적으로 연다.\n# llms.txt 가 각 호스트 루트에 있고, 전체 목록은 sitemap 이 갖는다.\nUser-agent: GPTBot\nAllow: /\n\nUser-agent: OAI-SearchBot\nAllow: /\n\nUser-agent: ChatGPT-User\nAllow: /\n\nUser-agent: ClaudeBot\nAllow: /\n\nUser-agent: Claude-User\nAllow: /\n\nUser-agent: PerplexityBot\nAllow: /\n\nUser-agent: Google-Extended\nAllow: /\n\nUser-agent: Applebot-Extended\nAllow: /\n\n# 메타의 AI 학습 크롤러 — 위 AEO 목록에 없던 것인데 부하의 대부분이었다.\n# 2026-09-16~17 ingress 로그: 관광지 상세 요청 1,465건 중 1,395건(95%)이 이 봇이었고\n# Googlebot 은 68건, 사람은 2건. 프리렌더 밖 페이지에서 JS 를 렌더해 API 를 3번씩 불러\n# 무료 단일 노드에서 사람 트래픽의 수백 배를 썼다. 답변형 검색이 아니라 학습용이라\n# 인용으로 돌아오는 것도 없다. facebookexternalhit(링크 미리보기)는 별개라 그대로 둔다.\n# robots 의 User-agent 매칭은 대소문자를 가리지 않는다(RFC 9309) — 한 벌이면 된다.\nUser-agent: meta-externalagent\nDisallow: /\n\nUser-agent: meta-externalfetcher\nDisallow: /\n\nSitemap: https://place.1989v.com/sitemap.xml",
+    "bytes": 1620
+  },
+  {
+    "url": "https://1989v.com/api/v1/display/services",
+    "observed_at": "2026-10-18T10:09:33.773785+00:00",
+    "curl": "200\thttps://1989v.com/api/v1/display/services\tapplication/json\t0.480294",
+    "error": "",
+    "file": "1989v_com_api_v1_display_services.body",
+    "sha256": "db59cc74cbbe4af289538241f99e70d9cf819789c13d21dfbe5ac53d8194083a",
+    "title": [],
+    "meta": [],
+    "links": [],
+    "text": "{\"success\":true,\"data\":[{\"id\":1,\"code\":\"place\",\"label\":\"한국 관광 검색\",\"tagline\":\"관광지 · 지도 · 근처 검색\",\"href\":\"/place\",\"status\":\"OPEN\",\"orderNo\":10},{\"id\":2,\"code\":\"game\",\"label\":\"게임\",\"tagline\":\"웹 게임 카탈로그 · 바로 플레이\",\"href\":\"/games\",\"status\":\"OPEN\",\"orderNo\":20},{\"id\":8,\"code\":\"blog\",\"label\":\"블로그\",\"tagline\":\"기술 · 일상 · 기록\",\"href\":\"/blog\",\"status\":\"OPEN\",\"orderNo\":25},{\"id\":3,\"code\":\"tech\",\"label\":\"IT\",\"tagline\":\"코드에서 뽑은 개념 사전 · 그래프 · 트리맵\",\"href\":\"/tech\",\"status\":\"OPEN\",\"orderNo\":30},{\"id\":4,\"code\":\"commerce\",\"label\":\"커머스\",\"tagline\":\"상품 검색 → 주문 → 주문내역 (데모)\",\"href\":\"/shop\",\"status\":\"OPEN\",\"orderNo\":40},{\"id\":7,\"code\":\"deal\",\"label\":\"혜택 링크\",\"tagline\":\"여행 · 커머스 · 구독 혜택 모음\",\"href\":\"/deal\",\"status\":\"OPEN\",\"orderNo\":45},{\"id\":13,\"code\":\"ads\",\"label\":\"광고\",\"tagline\":\"광고주 콘솔 · 캠페인 · 소재 · 리포트\",\"href\":\"/ads\",\"status\":\"OPEN\",\"orderNo\":48},{\"id\":5,\"code\":\"portfolio\",\"label\":\"포트폴리오\",\"tagline\":\"만든 것들과 그때의 판단\",\"href\":\"/portfolio\",\"status\":\"OPEN\",\"orderNo\":50},{\"id\":9,\"code\":\"rank\",\"label\":\"랭킹\",\"tagline\":\"지역별 최저가 주유소 · 경로 위 주유소 찾기\",\"href\":\"/rank\",\"status\":\"PREOPEN\",\"orderNo\":55},{\"id\":6,\"code\":\"fulfillment\",\"label\":\"풀필먼트\",\"tagline\":\"재고 · 창고 · 출고\",\"href\":null,\"status\":\"PREOPEN\",\"orderNo\":60}],\"error\":null}",
+    "bytes": 1500
+  }
+]

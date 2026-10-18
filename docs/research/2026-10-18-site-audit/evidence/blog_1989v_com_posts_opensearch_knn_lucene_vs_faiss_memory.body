@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    
+    <script>
+      (function () {
+        var host = location.hostname;
+        // ê°ë° ì¤ í´ë¦­ì´ ì¤ì  ë¦¬í¬í¸ì ìì´ë©´ ì ì ë¶ìì´ íë ¤ì§ë¤
+        if (host === "localhost" || host === "127.0.0.1") return;
+        if (host.split(".")[0] === "resume") return;
+        if (/^\/shared\//.test(location.pathname) || /%2Fshared%2F/i.test(location.search) || /^[a-z][a-z0-9+.-]*:\/\/[^\/?#]+\/shared\//i.test(document.referrer)) return;
+        var id = "G-5EE8XW7JHN";
+        var tag = document.createElement("script");
+        tag.async = true;
+        tag.src = "https://www.googletagmanager.com/gtag/js?id=" + id;
+        document.head.appendChild(tag);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () {
+          window.dataLayer.push(arguments);
+        };
+        window.gtag("js", new Date());
+        window.gtag("config", id);
+      })();
+    </script>
+
+    
+
+    
+    <meta name="google-adsense-account" content="ca-pub-4627924728297793" />
+
+    
+    <meta name="theme-color" content="#0a0a0a" />
+
+    
+    <meta name="color-scheme" content="only light" />
+
+    
+    <script>
+      (function () {
+        var KEY = "kh-theme";
+        function stored() {
+          var hit = document.cookie.split("; ").find(function (c) {
+            return c.indexOf(KEY + "=") === 0;
+          });
+          var v = hit && hit.slice(KEY.length + 1);
+          if (v === "light" || v === "dark") return v;
+          try {
+            v = localStorage.getItem(KEY);
+          } catch (e) {
+            v = null;
+          }
+          return v === "light" || v === "dark" ? v : null;
+        }
+        var root = document.documentElement;
+        var theme;
+        // /tech ë§ ë¸ëë ë©´ì´ ìëë¤ â dark-trading íë í¸ë¥¼ ì ì ë¡ ê·¸ë ¤ì§ íë©´ì´ë¼ ë¤í¬ ê³ ì .
+        if (location.pathname === "/tech") {
+          theme = "dark";
+        } else {
+          theme =
+            stored() ||
+            (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light");
+          root.setAttribute("data-surface", "heritage");
+        }
+        root.setAttribute("data-theme", theme);
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute("content", theme === "dark" ? "#131313" : "#f9f8f2");
+        var scheme = document.querySelector('meta[name="color-scheme"]');
+        if (scheme) scheme.setAttribute("content", "only " + theme);
+      })();
+    </script>
+
+    
+    <!--seo:server-->
+    <title>OpenSearch 벡터 검색 엔진 lucene vs faiss — 메모리가 모자랄 때 느려지나, 밀려나나 | 1989v 블로그</title>
+    <meta name="description" content="lucene 과 faiss 는 knn_vector 의 같은 engine 자리에 들어가는 대안이다. 필요한 메모리 양은 비슷하고, 갈리는 것은 벡터를 OS 페이지 캐시에 두느냐 JVM 힙 밖 네이티브 메모리에 두느냐다. 작은 노드에서는 이 차이가 메모리 부족 시의 증상을 정한다." />
+    <link rel="canonical" href="https://blog.1989v.com/posts/opensearch-knn-lucene-vs-faiss-memory" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="1989v 블로그" />
+    <meta property="og:title" content="OpenSearch 벡터 검색 엔진 lucene vs faiss — 메모리가 모자랄 때 느려지나, 밀려나나 | 1989v 블로그" />
+    <meta property="og:description" content="lucene 과 faiss 는 knn_vector 의 같은 engine 자리에 들어가는 대안이다. 필요한 메모리 양은 비슷하고, 갈리는 것은 벡터를 OS 페이지 캐시에 두느냐 JVM 힙 밖 네이티브 메모리에 두느냐다. 작은 노드에서는 이 차이가 메모리 부족 시의 증상을 정한다." />
+    <meta property="og:url" content="https://blog.1989v.com/posts/opensearch-knn-lucene-vs-faiss-memory" />
+    <meta property="og:locale" content="ko_KR" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="OpenSearch 벡터 검색 엔진 lucene vs faiss — 메모리가 모자랄 때 느려지나, 밀려나나 | 1989v 블로그" />
+    <meta name="twitter:description" content="lucene 과 faiss 는 knn_vector 의 같은 engine 자리에 들어가는 대안이다. 필요한 메모리 양은 비슷하고, 갈리는 것은 벡터를 OS 페이지 캐시에 두느냐 JVM 힙 밖 네이티브 메모리에 두느냐다. 작은 노드에서는 이 차이가 메모리 부족 시의 증상을 정한다." />
+    <meta property="article:published_time" content="2026-10-06T13:21:27+09:00" />
+    <meta property="article:modified_time" content="2026-10-16T01:51:11+09:00" />
+    <meta property="og:image" content="https://blog.1989v.com/og/blog.png" />
+    <meta name="twitter:image" content="https://blog.1989v.com/og/blog.png" />
+    <script type="application/ld+json" data-seo-multi>{"@context":"https://schema.org","@type":"BlogPosting","headline":"OpenSearch 벡터 검색 엔진 lucene vs faiss — 메모리가 모자랄 때 느려지나, 밀려나나","description":"lucene 과 faiss 는 knn_vector 의 같은 engine 자리에 들어가는 대안이다. 필요한 메모리 양은 비슷하고, 갈리는 것은 벡터를 OS 페이지 캐시에 두느냐 JVM 힙 밖 네이티브 메모리에 두느냐다. 작은 노드에서는 이 차이가 메모리 부족 시의 증상을 정한다.","mainEntityOfPage":{"@type":"WebPage","@id":"https://blog.1989v.com/posts/opensearch-knn-lucene-vs-faiss-memory"},"url":"https://blog.1989v.com/posts/opensearch-knn-lucene-vs-faiss-memory","datePublished":"2026-10-06T13:21:27+09:00","dateModified":"2026-10-16T01:51:11+09:00","author":{"@type":"Person","@id":"https://1989v.com/#person","name":"권기덕"},"publisher":{"@type":"Organization","name":"1989v 블로그","url":"https://blog.1989v.com","founder":{"@type":"Person","@id":"https://1989v.com/#person","name":"권기덕"}},"articleSection":"검색","aggregateRating":{"@type":"AggregateRating","ratingValue":"5.0","ratingCount":1,"bestRating":5,"worstRating":1}}</script>
+    <script type="application/ld+json" data-seo-multi>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"기술","item":"https://blog.1989v.com/c/tech"},{"@type":"ListItem","position":2,"name":"서버","item":"https://blog.1989v.com/c/tech/server"},{"@type":"ListItem","position":3,"name":"검색","item":"https://blog.1989v.com/c/tech/server/search"}]}</script>
+    <script type="module" crossorigin src="/assets/index-CYqPQZ7Z.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/jsx-runtime-D-oznMWL.js">
+    <link rel="modulepreload" crossorigin href="/assets/preload-helper-DWTEM3RW.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-DcCgrBX5.js">
+    <link rel="modulepreload" crossorigin href="/assets/useQuery-Ck_Sa3Qn.js">
+    <link rel="modulepreload" crossorigin href="/assets/useMutation-ZbKdggdq.js">
+    <link rel="modulepreload" crossorigin href="/assets/useSeo-D_9uIxBL.js">
+    <link rel="modulepreload" crossorigin href="/assets/purify.es-2MU4SxTA.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-dom-DNNtxExO.js">
+    <link rel="modulepreload" crossorigin href="/assets/tracker-3r4219MP.js">
+    <link rel="modulepreload" crossorigin href="/assets/ServiceExplorer-9f9MNHU9.js">
+    <link rel="modulepreload" crossorigin href="/assets/auth-c5ts2mcW.js">
+    <link rel="modulepreload" crossorigin href="/assets/refresh-BNlEIik8.js">
+    <link rel="modulepreload" crossorigin href="/assets/gameApi-B7eq2LUm.js">
+    <link rel="modulepreload" crossorigin href="/assets/shopApi-Bfte-00h.js">
+    <link rel="modulepreload" crossorigin href="/assets/useAuth-BvXT1tfi.js">
+    <link rel="modulepreload" crossorigin href="/assets/useHeritageSurface-2ggg5XKW.js">
+    <link rel="stylesheet" crossorigin href="/assets/ServiceExplorer-D3NAtV-o.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-BkGIYVfC.css">
+  </head>
+  <body>
+    <div id="root"><div style="max-width:760px;margin:0 auto;padding:32px 20px"><nav><a href="/c/tech">기술</a> › <a href="/c/tech/server">서버</a> › <a href="/c/tech/server/search">검색</a></nav><h1>OpenSearch 벡터 검색 엔진 lucene vs faiss — 메모리가 모자랄 때 느려지나, 밀려나나</h1><p><a href="/authors/kgd">kgd</a> · 2026-10-06 · 9분</p><article><p>OpenSearch kNN 의 두 엔진 lucene 과 faiss 를 메모리 배치 기준으로 비교한다. OpenSearch 3.8 · k-NN 플러그인 문서 기준이다.</p>
+<p>| 항목 | lucene | faiss |
+|---|---|---|
+| 비교 층 | 엔진 (<code>method.engine</code>) | 엔진 (<code>method.engine</code>) |
+| 벡터·그래프 위치 | 세그먼트 파일 → OS 페이지 캐시 | JVM 힙 밖 네이티브 메모리 |
+| 상한 | 컨테이너·노드 메모리가 곧 상한 | <code>knn.memory.circuit_breaker.limit</code> (기본: 힙 뺀 나머지의 50%) |
+| 커널이 회수 | 가능 — 캐시라 버리고 다시 읽는다 | 불가 — 플러그인이 LRU 로 내린다 |
+| 모자랄 때 | 디스크를 다시 읽어 느려진다 | 오래 안 쓴 그래프를 내리고 다시 올린다 |
+| BM25 와의 관계 | 같은 페이지 캐시를 나눠 쓴다 | 페이지 캐시 밖에 따로 자리를 잡는다 |
+| 알맞은 곳 | 메모리가 빠듯한 단일 노드, 벡터와 키워드 검색 겸용 | 벡터 전용 몫을 떼어 줄 수 있는 노드 |</p>
+<h2>엔진은 어느 층의 선택인가</h2>
+<p><code>knn_vector</code> 매핑에는 성격이 다른 선택 세 개가 들어간다. 같은 층끼리만 비교가 성립한다.</p>
+<pre><code class="language-json">&quot;embedding&quot;: {
+  &quot;type&quot;: &quot;knn_vector&quot;,
+  &quot;dimension&quot;: 640,
+  &quot;method&quot;: {
+    &quot;name&quot;: &quot;hnsw&quot;,
+    &quot;engine&quot;: &quot;lucene&quot;,
+    &quot;parameters&quot;: { &quot;encoder&quot;: { &quot;name&quot;: &quot;sq&quot;, &quot;parameters&quot;: { &quot;bits&quot;: 1 } } }
+  }
+}
+</code></pre>
+<p>| 층 | 자리 | 값의 예 |
+|---|---|---|
+| 엔진 | <code>method.engine</code> | <code>lucene</code> · <code>faiss</code> (<code>nmslib</code> 은 폐기 예정) |
+| 알고리즘 | <code>method.name</code> | <code>hnsw</code> · <code>ivf</code>(faiss 만) |
+| 양자화 | <code>parameters.encoder</code> | <code>sq</code> · <code>pq</code> · 1비트 바이너리 |</p>
+<blockquote>
+<p>[!NOTE]
+「faiss vs HNSW」는 층이 어긋난 비교다. faiss 엔진 안에서도 HNSW 를 쓴다. 「lucene vs faiss」가 같은 층의 비교다.</p>
+</blockquote>
+<h2>두 엔진은 벡터를 어디에 두나</h2>
+<p>| | lucene | faiss |
+|---|---|---|
+| 구현 | Java, Lucene 세그먼트 안의 벡터 포맷 | C++ 네이티브 라이브러리 |
+| 적재 | 파일을 메모리 맵으로 읽는다 | 세그먼트별 그래프를 통째로 네이티브 메모리에 올린다 |
+| 회계 | 페이지 캐시 (k-NN 서킷 브레이커 밖) | k-NN 네이티브 메모리 캐시 |
+| 한도 초과 시 | OS 가 캐시를 버린다 | 플러그인이 가장 오래 안 쓴 그래프를 내린다 |</p>
+<p>faiss 상한은 노드 메모리에서 JVM 힙을 뺀 나머지의 50% 가 기본이다. 100 GB 노드에 힙 32 GB 면 34 GB 다.</p>
+<blockquote>
+<p>[!IMPORTANT]
+페이지 캐시도 같은 물리 RAM 이다. 차이는 커널이 언제든 버릴 수 있다는 점이다. 원본이 디스크에 있어서 버려도 데이터는 잃지 않는다.</p>
+</blockquote>
+<h2>컨테이너 한도 안에서 메모리는 어떻게 나뉘나</h2>
+<p>k8s 파드의 메모리 한도에는 페이지 캐시도 함께 계산된다. 한 컨테이너 안의 몫은 다음과 같다.</p>
+<pre><code class="language-text">컨테이너 한도 = JVM 힙 + JVM 네이티브(스레드·GC·malloc 아레나) + [faiss 그래프] + 남는 만큼 페이지 캐시
+</code></pre>
+<p>| 메모리 | 회수 가능 | 한도에 닿으면 |
+|---|---|---|
+| 힙·JVM 네이티브 (anon) | 불가 | OOMKilled |
+| faiss 그래프 (anon) | 불가 — 플러그인만 내린다 | OOMKilled 후보에 더해진다 |
+| 페이지 캐시 | 가능 | 커널이 먼저 버린다 → 디스크 읽기 |</p>
+<ul>
+<li>anon 이 늘면 커널은 OOM 전에 페이지 캐시부터 비운다.</li>
+<li>lucene 벡터는 이 「비워지는 칸」에 있다. 그래서 프로세스는 살아 있고 검색만 느려진다.</li>
+<li>faiss 상한을 높이면 그만큼 BM25 가 쓸 페이지 캐시가 고정으로 줄어든다.</li>
+</ul>
+<h2>메모리가 모자라면 각각 어떻게 되나</h2>
+<p>| 상황 | lucene | faiss |
+|---|---|---|
+| 그래프 일부만 메모리에 있음 | 나머지를 디스크에서 읽으며 검색 | 해당 세그먼트 그래프를 통째로 다시 올린다 |
+| 다른 인덱스가 메모리를 씀 | 캐시를 나눠 가져 같이 느려진다 | LRU 로 서로 내렸다 올렸다 한다 |
+| 컨테이너 한도 근접 | 캐시 0 → 지연이 급등 | 회수 불가 메모리가 늘어 OOM 위험 |
+| 드러나는 신호 | kNN 지연 | 캐시 축출 수 · 서킷 브레이커 상태 |</p>
+<blockquote>
+<p>[!WARNING]
+lucene 의 「동작은 한다」는 타임아웃을 막아 주지 않는다. 관광지 검색 노드(OpenSearch 한도 1.5 GiB, lucene HNSW 640차원 fp32)에서 kNN 한 번이 112초까지 걸렸다. 키워드 검색은 같은 시각에도 응답했다.</p>
+</blockquote>
+<p>한도를 2.5 GiB 로 올리고 1비트 양자화와 rescore ×3 을 함께 적용한 뒤 같은 kNN 은 0.6초다. 두 변경이 동시라 각자의 몫은 나뉘지 않는다.</p>
+<h2>벡터 메모리는 얼마나 필요한가</h2>
+<p>엔진과 무관하게 벡터 크기 계산식은 같다.</p>
+<pre><code class="language-text">원본(fp32)   = 벡터 수 × 차원 × 4 바이트
+1비트 양자화 = 벡터 수 × 차원 ÷ 8 바이트
+HNSW 0층 이웃 ≈ 벡터 수 × 2m × 4 바이트
+</code></pre>
+<p>| 약 6만 건 × 640차원, m=16 | 크기 |
+|---|---|
+| fp32 원본 | 약 154 MB |
+| 1비트 양자화 | 약 4.8 MB |
+| HNSW 0층 이웃 목록 | 약 7.7 MB |</p>
+<p>이 규모에서 1비트로 줄이면 어느 엔진이든 수십 MB 다. 엔진 선택을 가르는 것은 양이 아니라 배치 방식이다. lucene 의 1비트 인덱스는 원본 fp32 도 디스크에 남긴다(rescore 와 병합용, 추정).</p>
+<h2>faiss 를 페이지 캐시 방식으로 쓰는 법</h2>
+<p>OpenSearch 3.1 부터 memory-optimized search 가 있다. faiss 인덱스를 메모리 맵으로 열고 OS 파일 캐시로 검색한다.</p>
+<pre><code class="language-json">PUT /attractions-v2
+{
+  &quot;settings&quot;: {
+    &quot;index.knn&quot;: true,
+    &quot;index.knn.memory_optimized_search&quot;: true
+  }
+}
+</code></pre>
+<p>| 조건 | 내용 |
+|---|---|
+| 지원 | faiss 엔진 + HNSW 만 |
+| 미지원 | IVF · PQ (켜도 통째로 올린다) |
+| 2.19 이전 생성 인덱스 | 켜도 통째로 올린다 |
+| 설정 변경 | 정적 설정 — 기존 인덱스는 close → 설정 → open |
+| 범위 | 검색만 바뀐다. 색인 동작은 그대로다 |</p>
+<p><code>on_disk</code> 모드 + <code>1x</code> 압축 필드는 인덱스 설정 없이도 자동으로 켜진다.</p>
+<h2>어느 엔진을 고르나</h2>
+<p>| 노드 조건 | 엔진 |
+|---|---|
+| 메모리가 빠듯하고 BM25 와 벡터를 한 노드에서 같이 서빙 | lucene |
+| 벡터 전용 메모리를 떼어 줄 여유가 있고 지연 예측성이 중요 | faiss |
+| faiss 기능(IVF·PQ)이 필요하지만 메모리가 빠듯 | faiss + 양자화, 상한 조정 |
+| faiss HNSW 를 쓰되 페이지 캐시로 나눠 쓰고 싶음 | faiss + memory-optimized search |</p>
+<p>상한과 축출 상태는 다음으로 본다.</p>
+<pre><code class="language-bash">GET _cluster/settings?include_defaults=true&amp;filter_path=**.knn.memory*
+GET _plugins/_knn/stats?filter_path=nodes.*.graph_memory_usage*,nodes.*.cache_capacity_reached,nodes.*.eviction_count,circuit_breaker_triggered
+</code></pre>
+</article><p><a href="https://blog.1989v.com/posts/opensearch-knn-lucene-vs-faiss-memory">https://blog.1989v.com/posts/opensearch-knn-lucene-vs-faiss-memory</a></p></div></div>
+  </body>
+</html>

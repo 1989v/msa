@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    
+    <script>
+      (function () {
+        var host = location.hostname;
+        // 개발 중 클릭이 실제 리포트에 섞이면 유입 분석이 흐려진다
+        if (host === "localhost" || host === "127.0.0.1") return;
+        if (host.split(".")[0] === "resume") return;
+        if (/^\/shared\//.test(location.pathname) || /%2Fshared%2F/i.test(location.search) || /^[a-z][a-z0-9+.-]*:\/\/[^\/?#]+\/shared\//i.test(document.referrer)) return;
+        var id = "G-5EE8XW7JHN";
+        var tag = document.createElement("script");
+        tag.async = true;
+        tag.src = "https://www.googletagmanager.com/gtag/js?id=" + id;
+        document.head.appendChild(tag);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () {
+          window.dataLayer.push(arguments);
+        };
+        window.gtag("js", new Date());
+        window.gtag("config", id);
+      })();
+    </script>
+
+    
+
+    
+    <meta name="google-adsense-account" content="ca-pub-4627924728297793" />
+
+    
+    <meta name="theme-color" content="#0a0a0a" />
+
+    
+    <meta name="color-scheme" content="only light" />
+
+    
+    <script>
+      (function () {
+        var KEY = "kh-theme";
+        function stored() {
+          var hit = document.cookie.split("; ").find(function (c) {
+            return c.indexOf(KEY + "=") === 0;
+          });
+          var v = hit && hit.slice(KEY.length + 1);
+          if (v === "light" || v === "dark") return v;
+          try {
+            v = localStorage.getItem(KEY);
+          } catch (e) {
+            v = null;
+          }
+          return v === "light" || v === "dark" ? v : null;
+        }
+        var root = document.documentElement;
+        var theme;
+        // /tech 만 브랜드 면이 아니다 — dark-trading 팔레트를 전제로 그려진 화면이라 다크 고정.
+        if (location.pathname === "/tech") {
+          theme = "dark";
+        } else {
+          theme =
+            stored() ||
+            (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light");
+          root.setAttribute("data-surface", "heritage");
+        }
+        root.setAttribute("data-theme", theme);
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute("content", theme === "dark" ? "#131313" : "#f9f8f2");
+        var scheme = document.querySelector('meta[name="color-scheme"]');
+        if (scheme) scheme.setAttribute("content", "only " + theme);
+      })();
+    </script>
+
+    
+    <!--seo:prerendered-->
+    <title>사태 — 설치 없이 하는 대전 웹게임 | 1989v 게임</title>
+    <meta name="description" content="쏘면 파이고, 파인 것은 흘러내리고, 뜨거우면 바람이 솟는다. 흐르는 지형 위에서 삼국~조선의 무장이 순서대로 겨루는 턴제 포격 대전. 궁수는 기류를 읽고, 포수는 지형을 무너뜨리고, 검사는 검기로 땅을 갈라 산사태를 낸다. 화산재는 안식각까지 흘러내리고 용암은 굳으며,…" />
+    <link rel="canonical" href="https://game.1989v.com/games/landslide" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="1989v 게임" />
+    <meta property="og:title" content="사태 — 설치 없이 하는 대전 웹게임 | 1989v 게임" />
+    <meta property="og:description" content="쏘면 파이고, 파인 것은 흘러내리고, 뜨거우면 바람이 솟는다. 흐르는 지형 위에서 삼국~조선의 무장이 순서대로 겨루는 턴제 포격 대전. 궁수는 기류를 읽고, 포수는 지형을 무너뜨리고, 검사는 검기로 땅을 갈라 산사태를 낸다. 화산재는 안식각까지 흘러내리고 용암은 굳으며,…" />
+    <meta property="og:url" content="https://game.1989v.com/games/landslide" />
+    <meta property="og:locale" content="ko_KR" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="사태 — 설치 없이 하는 대전 웹게임 | 1989v 게임" />
+    <meta name="twitter:description" content="쏘면 파이고, 파인 것은 흘러내리고, 뜨거우면 바람이 솟는다. 흐르는 지형 위에서 삼국~조선의 무장이 순서대로 겨루는 턴제 포격 대전. 궁수는 기류를 읽고, 포수는 지형을 무너뜨리고, 검사는 검기로 땅을 갈라 산사태를 낸다. 화산재는 안식각까지 흘러내리고 용암은 굳으며,…" />
+    <meta property="og:image" content="https://game.1989v.com/games/thumbs/shots/landslide.jpg" />
+    <meta property="og:image:secure_url" content="https://game.1989v.com/games/thumbs/shots/landslide.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:alt" content="사태" />
+    <meta name="twitter:image" content="https://game.1989v.com/games/thumbs/shots/landslide.jpg" />
+    <meta name="twitter:image:alt" content="사태" />
+    <link rel="alternate" hreflang="ko" href="https://game.1989v.com/games/landslide" data-seo-multi />
+    <link rel="alternate" hreflang="en" href="https://game.1989v.com/en/games/landslide" data-seo-multi />
+    <link rel="alternate" hreflang="x-default" href="https://game.1989v.com/en/games/landslide" data-seo-multi />
+    <script type="application/ld+json" data-seo-multi>{"@context":"https://schema.org","@type":"VideoGame","name":"사태","description":"쏘면 파이고, 파인 것은 흘러내리고, 뜨거우면 바람이 솟는다. 흐르는 지형 위에서 삼국~조선의 무장이 순서대로 겨루는 턴제 포격 대전. 궁수는 기류를 읽고, 포수는 지형을 무너뜨리고, 검사는 검기로 땅을 갈라 산사태를 낸다. 화산재는 안식각까지 흘러내리고 용암은 굳으며, 산사태에 파묻히면 파내야 한다. 드래그로 조준해 놓으면 날아가고 직전 궤적이 점선으로 남는다. 봇과 연습하거나, 빠른 대전·코드 방·초대 링크로 사람과 1대1. 창병·방패병·팀전·아이템은 다음 단계.","url":"https://game.1989v.com/games/landslide","inLanguage":"ko","genre":"대전","keywords":"대전, versus, artillery, turn-based, physics, bot, 웹게임, 브라우저 게임","gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","author":{"@type":"Person","@id":"https://1989v.com/#person","name":"권기덕"},"publisher":{"@type":"Organization","name":"1989v 게임","url":"https://game.1989v.com","founder":{"@type":"Person","@id":"https://1989v.com/#person","name":"권기덕"}},"offers":{"@type":"Offer","price":"0","priceCurrency":"KRW","availability":"https://schema.org/InStock"},"image":"https://game.1989v.com/games/thumbs/shots/landslide.jpg"}</script>
+    <script type="application/ld+json" data-seo-multi>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"게임","item":"https://game.1989v.com/"},{"@type":"ListItem","position":2,"name":"대전","item":"https://game.1989v.com/games/genre/versus"},{"@type":"ListItem","position":3,"name":"사태","item":"https://game.1989v.com/games/landslide"}]}</script>
+    <script type="module" crossorigin src="/assets/index-CYqPQZ7Z.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/jsx-runtime-D-oznMWL.js">
+    <link rel="modulepreload" crossorigin href="/assets/preload-helper-DWTEM3RW.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-DcCgrBX5.js">
+    <link rel="modulepreload" crossorigin href="/assets/useQuery-Ck_Sa3Qn.js">
+    <link rel="modulepreload" crossorigin href="/assets/useMutation-ZbKdggdq.js">
+    <link rel="modulepreload" crossorigin href="/assets/useSeo-D_9uIxBL.js">
+    <link rel="modulepreload" crossorigin href="/assets/purify.es-2MU4SxTA.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-dom-DNNtxExO.js">
+    <link rel="modulepreload" crossorigin href="/assets/tracker-3r4219MP.js">
+    <link rel="modulepreload" crossorigin href="/assets/ServiceExplorer-9f9MNHU9.js">
+    <link rel="modulepreload" crossorigin href="/assets/auth-c5ts2mcW.js">
+    <link rel="modulepreload" crossorigin href="/assets/refresh-BNlEIik8.js">
+    <link rel="modulepreload" crossorigin href="/assets/gameApi-B7eq2LUm.js">
+    <link rel="modulepreload" crossorigin href="/assets/shopApi-Bfte-00h.js">
+    <link rel="modulepreload" crossorigin href="/assets/useAuth-BvXT1tfi.js">
+    <link rel="modulepreload" crossorigin href="/assets/useHeritageSurface-2ggg5XKW.js">
+    <link rel="stylesheet" crossorigin href="/assets/ServiceExplorer-D3NAtV-o.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-BkGIYVfC.css">
+  </head>
+  <body>
+    <div id="root"><div style="max-width:1080px;margin:0 auto;padding:32px 20px;color:#dce4f5;font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif"><nav><a href="/">게임</a> › <a href="/games/genre/versus">대전</a></nav><h1>사태</h1><p><img src="/games/thumbs/shots/landslide.jpg" width="320" height="180" alt="사태 게임 플레이 화면" /></p><p>쏘면 파이고, 파인 것은 흘러내리고, 뜨거우면 바람이 솟는다. 흐르는 지형 위에서 삼국~조선의 무장이 순서대로 겨루는 턴제 포격 대전. 궁수는 기류를 읽고, 포수는 지형을 무너뜨리고, 검사는 검기로 땅을 갈라 산사태를 낸다. 화산재는 안식각까지 흘러내리고 용암은 굳으며, 산사태에 파묻히면 파내야 한다. 드래그로 조준해 놓으면 날아가고 직전 궤적이 점선으로 남는다. 봇과 연습하거나, 빠른 대전·코드 방·초대 링크로 사람과 1대1. 창병·방패병·팀전·아이템은 다음 단계.</p><section aria-labelledby="game-about-heading"><h2 id="game-about-heading">소개</h2><dl class="game-play-guide"><div><dt>목표</dt><dd>차례마다 지형과 바람을 읽고 포격해 상대 부대를 쓰러뜨리세요.</dd></div><div><dt>조작법</dt><dd>내 유닛에서 뒤로 드래그해 조준하고 놓으면 발사합니다. 걷기는 ◀ ▶ 버튼을 사용합니다.</dd></div><div><dt>첫 플레이 팁</dt><dd>길게 당길수록 강하게 쏩니다. 조준 중 취소하려면 위쪽 ✕까지 끌고 가 놓으세요.</dd></div></dl></section><ul><li>1인</li><li>약 5분</li><li>모바일 지원</li></ul><p><a href="/games/landslide/index.html">사태 플레이하기</a></p><h2>비슷한 게임 더 보기</h2><ul><li><a href="/games/arena"><img src="/games/thumbs/shots/arena.jpg" width="160" height="90" loading="lazy" alt="AMP ARENA — 대전 웹게임 화면" /> AMP ARENA</a> · 대전</li><li><a href="/games/infinity-step"><img src="/games/thumbs/shots/infinity-step.jpg" width="160" height="90" loading="lazy" alt="인피니티 스탭 — 액션 웹게임 화면" /> 인피니티 스탭</a> · 액션</li><li><a href="/games/epoch-of-nations"><img src="/games/thumbs/shots/epoch-of-nations.jpg" width="160" height="90" loading="lazy" alt="EPOCH OF NATIONS — 전략 웹게임 화면" /> EPOCH OF NATIONS</a> · 전략</li><li><a href="/games/cliff-climber"><img src="/games/thumbs/art/cliff-climber.svg" width="160" height="90" loading="lazy" alt="Cliff Climb — 아케이드 웹게임 화면" /> Cliff Climb</a> · 아케이드</li><li><a href="/games/rope-works"><img src="/games/thumbs/art/rope-works.svg" width="160" height="90" loading="lazy" alt="Rope Puzzle — 퍼즐 웹게임 화면" /> Rope Puzzle</a> · 퍼즐</li><li><a href="/games/depth-delver"><img src="/games/thumbs/shots/depth-delver.jpg" width="160" height="90" loading="lazy" alt="Deep Dungeon — RPG 웹게임 화면" /> Deep Dungeon</a> · RPG</li></ul><footer><nav><a href="https://1989v.com">1989v</a> · <a href="https://game.1989v.com">무료 웹게임</a> · <a href="https://place.1989v.com">한국 관광지 검색</a> · <a href="https://blog.1989v.com">블로그</a> · <a href="https://rank.1989v.com">랭킹 리더보드</a> · <a href="https://deal.1989v.com">혜택 링크 허브</a> · <a href="https://1989v.com/privacy">개인정보처리방침</a> · <a href="https://1989v.com/about">사이트 소개</a> · <a href="https://1989v.com/contact">연락처</a> · <a href="https://1989v.com/data-sources">데이터 출처</a></nav></footer></div></div>
+  </body>
+</html>

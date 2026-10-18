@@ -1,0 +1,1008 @@
+[
+  {
+    "url": "https://place.1989v.com/attractions/1",
+    "observed_at": "2026-10-18T10:10:14.039564+00:00",
+    "curl": "200\thttps://place.1989v.com/attractions/1\ttext/html;charset=UTF-8\t0.509411",
+    "error": "",
+    "file": "place_1989v_com_attractions_1.body",
+    "sha256": "b0d74ea96072bd10be425d4488c5bc3177f0827ee3b88cbe14bf06e11bd573b2",
+    "title": [
+      "경복궁 (서울특별시 종로구) 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | K-관광"
+    ],
+    "meta": [
+      {
+        "charset": "UTF-8"
+      },
+      {
+        "name": "viewport",
+        "content": "width=device-width, initial-scale=1.0, viewport-fit=cover"
+      },
+      {
+        "name": "google-adsense-account",
+        "content": "ca-pub-4627924728297793"
+      },
+      {
+        "name": "theme-color",
+        "content": "#0a0a0a"
+      },
+      {
+        "name": "color-scheme",
+        "content": "only light"
+      },
+      {
+        "name": "description",
+        "content": "경복궁은 1392년 조선 건국 후 1395년(태조 4)에 창건한 조선왕조 제일의 법궁이다. 경복궁은 백악산(북악산)을 주산으로 넓은 지형에 건물을 배치하였고 정문인 광화문 앞으로 넓은 육조거리가 펼쳐진 한양의 중심이었다. ‘경복’의 이름은 ‘새 왕조가 큰 복을 누려 번영할…"
+      },
+      {
+        "rel": "canonical",
+        "href": "https://place.1989v.com/attractions/1"
+      },
+      {
+        "property": "og:type",
+        "content": "website"
+      },
+      {
+        "property": "og:site_name",
+        "content": "K-관광"
+      },
+      {
+        "property": "og:title",
+        "content": "경복궁 (서울특별시 종로구) 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | K-관광"
+      },
+      {
+        "property": "og:description",
+        "content": "경복궁은 1392년 조선 건국 후 1395년(태조 4)에 창건한 조선왕조 제일의 법궁이다. 경복궁은 백악산(북악산)을 주산으로 넓은 지형에 건물을 배치하였고 정문인 광화문 앞으로 넓은 육조거리가 펼쳐진 한양의 중심이었다. ‘경복’의 이름은 ‘새 왕조가 큰 복을 누려 번영할…"
+      },
+      {
+        "property": "og:url",
+        "content": "https://place.1989v.com/attractions/1"
+      },
+      {
+        "property": "og:locale",
+        "content": "ko_KR"
+      },
+      {
+        "name": "twitter:card",
+        "content": "summary_large_image"
+      },
+      {
+        "name": "twitter:title",
+        "content": "경복궁 (서울특별시 종로구) 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | K-관광"
+      },
+      {
+        "name": "twitter:description",
+        "content": "경복궁은 1392년 조선 건국 후 1395년(태조 4)에 창건한 조선왕조 제일의 법궁이다. 경복궁은 백악산(북악산)을 주산으로 넓은 지형에 건물을 배치하였고 정문인 광화문 앞으로 넓은 육조거리가 펼쳐진 한양의 중심이었다. ‘경복’의 이름은 ‘새 왕조가 큰 복을 누려 번영할…"
+      },
+      {
+        "property": "og:image",
+        "content": "https://tong.visitkorea.or.kr/cms/resource/98/3487598_image2_1.jpg"
+      },
+      {
+        "property": "og:image:secure_url",
+        "content": "https://tong.visitkorea.or.kr/cms/resource/98/3487598_image2_1.jpg"
+      },
+      {
+        "property": "og:image:type",
+        "content": "image/jpeg"
+      },
+      {
+        "property": "og:image:width",
+        "content": "1200"
+      },
+      {
+        "property": "og:image:height",
+        "content": "630"
+      },
+      {
+        "property": "og:image:alt",
+        "content": "경복궁"
+      },
+      {
+        "name": "twitter:image",
+        "content": "https://tong.visitkorea.or.kr/cms/resource/98/3487598_image2_1.jpg"
+      },
+      {
+        "name": "twitter:image:alt",
+        "content": "경복궁"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "ko",
+        "href": "https://place.1989v.com/attractions/1",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://place.1989v.com/en/attractions/21",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://place.1989v.com/en/attractions/21",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "type": "application/rss+xml",
+        "title": "K-관광 — 최근 바뀐 관광지",
+        "href": "https://place.1989v.com/feed.xml",
+        "data-seo-multi": null
+      }
+    ],
+    "links": [
+      "/",
+      "/regions/11",
+      "/regions/11110",
+      "tel:0237003900",
+      "/regions/11110",
+      "/attractions/8190",
+      "/attractions/77",
+      "/attractions/7861",
+      "/attractions/6253",
+      "/attractions/10745",
+      "/attractions/11199",
+      "/attractions/12933",
+      "/attractions/11295",
+      "/attractions/7545",
+      "/attractions/4811",
+      "/attractions/34550",
+      "/attractions/15943",
+      "/attractions/5201",
+      "https://1989v.com",
+      "https://game.1989v.com",
+      "https://place.1989v.com",
+      "https://blog.1989v.com",
+      "https://rank.1989v.com",
+      "https://deal.1989v.com",
+      "https://1989v.com/privacy",
+      "https://1989v.com/about",
+      "https://1989v.com/contact",
+      "https://1989v.com/data-sources"
+    ],
+    "text": "경복궁 (서울특별시 종로구) 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | K-관광\n한국 관광지 탐색\n›\n서울특별시\n›\n종로구\n경복궁\n역사 · 서울특별시 종로구 사직로 161 (세종로)\n02-3700-3900\n가까운 역·정류장\n경복궁(정부서울청사)역 (3호선) · 직선거리 278m\n광화문(세종문화회관)역 (5호선) · 직선거리 488m\n경복궁 버스정류장 · 직선거리 183m\n경복궁역(효자로입구) 버스정류장 · 직선거리 226m\n직선거리이며 실제 걷는 길은 더 깁니다 · 자료 기준일 2025-10-31\n출처: 국가철도공단 도시철도 역사정보 · 국토교통부 전국 버스정류장 위치정보\n요금\n- 개인 대인 3,000원\n- 단체(10인 이상) 대인 2,400원\n※ 무료 : 만 24세 이하 및 만 65세 이상 내국인(신분증 지참) / 만 18세 이하 및 만 65세 이상 외국인\n※ 그 외 무료관람 및 할인 대상의 자세한 사항은 홈페이지 참고\n이용시간\n[1월~2월/11월~12월]09:00~17:00 (입장마감 16:00)[3월~5월/9월~10월]09:00~18:00 (입장마감 17:00)[6월~8월] 09:00~18:30 (입장마감 17:30)\n쉬는 날\n매주 화요일 휴무\n매주 화요일 ※ 단, 정기휴일이 공휴일 및 대체공휴일과 겹칠 경우에는 개방하며, 그 다음의 첫 번째 비공휴일이 정기휴일임\n주차\n주차 가능\n가능 (승용차 240대 / 버스 50대)\n반려동물\n정보 없음\n무장애\n휠체어 · 장애인 화장실 · 장애인 주차 · 유모차 · 수유실\n확인 상태\n출처: 한국관광공사 TourAPI · 원천 갱신일: 2026-05-20 · 수집일: 정보 없음\n많이 클릭한 곳\n최근 14일 이 사이트에서 15명이 눌렀습니다(같은 사람은 한 번) · 2026-10-18 기준\n경복궁은 1392년 조선 건국 후 1395년(태조 4)에 창건한 조선왕조 제일의 법궁이다. 경복궁은 백악산(북악산)을 주산으로 넓은 지형에 건물을 배치하였고 정문인 광화문 앞으로 넓은 육조거리가 펼쳐진 한양의 중심이었다. ‘경복’의 이름은 ‘새 왕조가 큰 복을 누려 번영할 것’이라는 의미가 담겨있으며, 이곳에서 세종 대에 훈민정음이 창제되어 반포되기도 하였다. 또한, 동궐(창덕궁)이나 서궐(경희궁)에 비해 위치가 북쪽에 있어 ‘북궐’이라 불리기도 했다.\n경복궁 근정전에서 즉위식을 가진 왕들을 보면 제2대 정종, 제4대 세종, 제6대 단종, 제7대 세조, 제9대 성종, 제11대 중종, 제13대 명종 등이 있다.\n경복궁은 1592년(선조 25) 임진왜란으로 소실되었는데, 그 후 복구되지 못하였다가 270여 년이 지난 1867년(고종 4)에 다시 지어졌다. 고종 대에 들어 건청궁과 태원전, 집옥재 등이 조성되었으며, 특히 건청궁 옥호루는 1895년 을미사변으로 명성황후가 시해되는 비운의 장소이기도 하다.\n1910년 경술국치 후 경복궁은 계획적으로 훼손되기 시작하여 1915년 조선물산공진회를 개최한다는 명분으로 대부분의 전각들이 철거되었고, 1926년에는 조선총독부 청사를 지어 경복궁의 경관을 훼손하였다. 이후 1990년대부터 본격적으로 경복궁 복원공사가 진행되었고, 1995년부터 1997년까지 조선총독부 청사를 철거하였으며 흥례문 일원, 침전 권역, 건청궁과 태원전, 그리고 광화문 등이 복원되어 현재에 이르고 있다.\n경복궁에는 조선시대의 대표적인 건축물인 경회루와 향원정의 연못이 원형대로 남아 있으며, 근정전의 월대와 조각상들은 당시의 조각미술을 대표한다. 현재 흥례문 밖 서편에는 국립고궁 박물관이 위치하고 있고, 경복궁 내 향원정의 동편에는 국립민속 박물관이 위치하고 있다.\n경복궁의 주요 문화재로는 사적 경복궁, 국보 경복궁 근정전, 국보 경복궁 경회루, 보물 경복궁 자경전, 보물 경복궁 자경전 십장생 굴뚝, 보물 경복궁 아미산굴뚝, 보물 경복궁 근정문 및 행각, 보물 경복궁 풍기대 등이 있다.\n\n◎ 한류의 매력을 만나는 여행 정보\n미국의 국민 TV 쇼 ‘더 투나잇 쇼 스타링 지미 팰런’에서는 ‘BTS위크’라는 이름을 붙여 닷새간 BTS 특별 방송을 진행했는데, 그중 BTS가 ‘맵 오브 더 솔 : 페르소나’ 미니앨범 수록곡 ‘소우주’와 ‘IDOL’을 부른 장소가 화제다. 그 장소는 바로 조선시대의 궁궐 중 하나인 ‘경복궁’의 경회루와 근정전이다. 보랏빛 조명에 아름답게 빛나던 경복궁에서 한국의 과거를 체험해 보길 추천한다.\n접근성 정보\n휠체어\n장애인 화장실\n장애인 주차\n유모차\n수유실\n주차\n장애인 주차장 있음(광화문 우측 옥외 주차장에 9개)_무장애 편의시설\n휠체어\n대여가능\n출입통로\n주출입구는 경사로가 있어 휠체어 접근 가능함\n화장실\n장애인 화장실 있음\n오디오가이드\n음성안내 가이드 있음(티켓박스에서 음성안내기기와 PDA 대여가능)\n유모차\n대여가능\n수유실\n수유실 있음(흥례문, 주차장 여자화장실 내부)\n영유아 가족 기타\n기저귀교환대 있음(수유실, 일반화장실 내부)\n지역 안 위치\n종로구 관광지 151곳 중 고궁 10곳\n종로구 둘러보기\n같은 분류 가까운 곳\n경희궁 숭정전\n· 904m\n서울 운현궁\n· 920m\n경희궁\n· 959m\n청와대칠궁\n· 1.0km\n황학정\n· 1.0km\n다른 지역의 비슷한 곳\n사충서원\n· 경기도\n남한산성행궁\n· 경기도\n흥국사\n· 경기도\n안동 태사묘\n· 경상북도\n고양 서오릉 [유네스코 세계유산]\n· 경기도\n여기 온 사람들이 함께 간 곳\n남대문시장\n· 시장\n하이커 그라운드\n· 전시시설\n덕수궁\n· 역사유적지\n출처: 한국관광공사 TourAPI · 무장애 여행 정보 · 빅데이터 서비스(연관 관광지)\n1989v\n·\n무료 웹게임\n·\n한국 관광지 검색\n·\n블로그\n·\n랭킹 리더보드\n·\n혜택 링크 허브\n·\n개인정보처리방침\n·\n사이트 소개\n·\n연락처\n·\n데이터 출처",
+    "bytes": 40546
+  },
+  {
+    "url": "https://place.1989v.com/en/attractions/13686",
+    "observed_at": "2026-10-18T10:10:13.998377+00:00",
+    "curl": "200\thttps://place.1989v.com/en/attractions/13686\ttext/html;charset=UTF-8\t0.466603",
+    "error": "",
+    "file": "place_1989v_com_en_attractions_13686.body",
+    "sha256": "d04578b58b8133d7dbf1b5169f6ebaf3b91fa2bb68cb04e22095f148285d6d55",
+    "title": [
+      "Visit Cheonho-dong Rose Village (Seoul, Gangdong-gu) — Map, Photos & Things to Do Nearby | K-Tour"
+    ],
+    "meta": [
+      {
+        "charset": "UTF-8"
+      },
+      {
+        "name": "viewport",
+        "content": "width=device-width, initial-scale=1.0, viewport-fit=cover"
+      },
+      {
+        "name": "google-adsense-account",
+        "content": "ca-pub-4627924728297793"
+      },
+      {
+        "name": "theme-color",
+        "content": "#0a0a0a"
+      },
+      {
+        "name": "color-scheme",
+        "content": "only light"
+      },
+      {
+        "name": "description",
+        "content": "Cheonho-dong Rose Village is a place where visitors can see the old neighborhoods of Seoul and the roses that adorn every wall. The small old houses…"
+      },
+      {
+        "rel": "canonical",
+        "href": "https://place.1989v.com/en/attractions/13686"
+      },
+      {
+        "property": "og:type",
+        "content": "website"
+      },
+      {
+        "property": "og:site_name",
+        "content": "K-Tour"
+      },
+      {
+        "property": "og:title",
+        "content": "Visit Cheonho-dong Rose Village (Seoul, Gangdong-gu) — Map, Photos & Things to Do Nearby | K-Tour"
+      },
+      {
+        "property": "og:description",
+        "content": "Cheonho-dong Rose Village is a place where visitors can see the old neighborhoods of Seoul and the roses that adorn every wall. The small old houses…"
+      },
+      {
+        "property": "og:url",
+        "content": "https://place.1989v.com/en/attractions/13686"
+      },
+      {
+        "property": "og:locale",
+        "content": "en_US"
+      },
+      {
+        "name": "twitter:card",
+        "content": "summary_large_image"
+      },
+      {
+        "name": "twitter:title",
+        "content": "Visit Cheonho-dong Rose Village (Seoul, Gangdong-gu) — Map, Photos & Things to Do Nearby | K-Tour"
+      },
+      {
+        "name": "twitter:description",
+        "content": "Cheonho-dong Rose Village is a place where visitors can see the old neighborhoods of Seoul and the roses that adorn every wall. The small old houses…"
+      },
+      {
+        "property": "og:image",
+        "content": "https://tong.visitkorea.or.kr/cms/resource/14/3076614_image2_1.jpg"
+      },
+      {
+        "property": "og:image:secure_url",
+        "content": "https://tong.visitkorea.or.kr/cms/resource/14/3076614_image2_1.jpg"
+      },
+      {
+        "property": "og:image:type",
+        "content": "image/jpeg"
+      },
+      {
+        "property": "og:image:width",
+        "content": "1200"
+      },
+      {
+        "property": "og:image:height",
+        "content": "630"
+      },
+      {
+        "property": "og:image:alt",
+        "content": "Cheonho-dong Rose Village"
+      },
+      {
+        "name": "twitter:image",
+        "content": "https://tong.visitkorea.or.kr/cms/resource/14/3076614_image2_1.jpg"
+      },
+      {
+        "name": "twitter:image:alt",
+        "content": "Cheonho-dong Rose Village"
+      },
+      {
+        "rel": "alternate",
+        "type": "application/rss+xml",
+        "title": "K-Tour — Recently Updated Attractions",
+        "href": "https://place.1989v.com/en/feed.xml",
+        "data-seo-multi": null
+      }
+    ],
+    "links": [
+      "/en",
+      "/en/regions/11",
+      "/en/regions/11740",
+      "tel:+82234255250",
+      "/en/regions/11740",
+      "/en/attractions/14769",
+      "/en/attractions/1938",
+      "/en/attractions/14807",
+      "/en/attractions/14728",
+      "/en/attractions/14542",
+      "https://1989v.com",
+      "https://game.1989v.com",
+      "https://place.1989v.com",
+      "https://blog.1989v.com",
+      "https://rank.1989v.com",
+      "https://deal.1989v.com",
+      "https://1989v.com/privacy",
+      "https://1989v.com/about",
+      "https://1989v.com/contact",
+      "https://1989v.com/data-sources"
+    ],
+    "text": "Visit Cheonho-dong Rose Village (Seoul, Gangdong-gu) — Map, Photos & Things to Do Nearby | K-Tour\nExplore Korea\n›\nSeoul\n›\nGangdong-gu\nCheonho-dong Rose Village\n천호동 장미마을\nCulture · Cheonho-dong, Gangdong-gu, Seoul\nGangdong-gu Office +82-2-3425-5250\nNearby stations and stops\nCheonho (Pungnaptoseong) (Line 5·8) · straight-line 307m\nGangdong-gu Office (Line 8) · straight-line 1.1km\nBus stop 풍납토성.천호역10번출구 · straight-line 154m\nBus stop 천호역1번출구.문구거리 · straight-line 167m\nStraight-line distance; the actual walk is longer · Data as of 2025-10-31\nSource: Korea National Railway urban rail station information · Ministry of Land, Infrastructure and Transport nationwide bus stop locations\nAdmission\nNot provided\nHours\nOpen 24/7\nClosed\nOpen every day\nN/A (Open all year round)\nParking\nNo parking\nNot available\nPets\nNot provided\nAccessibility\nNot provided\nData status\nSource: Korea Tourism Organization TourAPI · Source updated: 2026-06-23 · Collected: Not provided\nCheonho-dong Rose Village is a place where visitors can see the old neighborhoods of Seoul and the roses that adorn every wall. The small old houses convey the nostalgia of 30 to 40 years ago, and the red and pink roses in full bloom in every house welcome travelers. The street is narrow, but thanks to the residents' careful maintenance, it has become a famous rose attraction and photo spot. The rose season peak from May to June, forming a tunnel of roses. There is also mural that recreates a scene from the novel “The Little Prince,” giving the area a poignant atmosphere. Rose Village is located about 250 meters from Cheonho Station (Seoul Subway Line 5), Exit 1. Visitors are advised to be respectful and to keep the noise level down while touring the area as it is a residential village.\nIn the area\nVillage Tourism Siteas 1 of 5 attractions in Gangdong-gu\nExplore Gangdong-gu\nSimilar places in other regions\nChangwon Rose Garden\n· Gyeongsangnam-do\nSuwon Jidong Mural Village\n· Gyeonggi-do\nSeogwipo Gasiri Village (Noksan-ro Canola Flower Road) (서귀포 가시리마을 (녹산로 유채꽃도로))\n· Jeju-do\nMunhak Rose Park\n· Incheon\nSamcheok Maengbang Yuchaekkot Village\n· Gangwon-do\nSource: Korea Tourism Organization TourAPI\n1989v\n·\n무료 웹게임\n·\n한국 관광지 검색\n·\n블로그\n·\n랭킹 리더보드\n·\n혜택 링크 허브\n·\n개인정보처리방침\n·\n사이트 소개\n·\n연락처\n·\n데이터 출처",
+    "bytes": 17680
+  },
+  {
+    "url": "https://place.1989v.com/regions/11",
+    "observed_at": "2026-10-18T10:10:14.069506+00:00",
+    "curl": "200\thttps://place.1989v.com/regions/11\ttext/html\t0.538406",
+    "error": "",
+    "file": "place_1989v_com_regions_11.body",
+    "sha256": "7d90ef5913ea562aae123f362f2e3a12ae83fe3d280a82b9c40a2cb2e24d6d30",
+    "title": [
+      "서울특별시 가볼 만한 곳 1,474곳 — 관광지 지도·여행 명소 | K-관광"
+    ],
+    "meta": [
+      {
+        "charset": "UTF-8"
+      },
+      {
+        "name": "viewport",
+        "content": "width=device-width, initial-scale=1.0, viewport-fit=cover"
+      },
+      {
+        "name": "google-adsense-account",
+        "content": "ca-pub-4627924728297793"
+      },
+      {
+        "name": "theme-color",
+        "content": "#0a0a0a"
+      },
+      {
+        "name": "color-scheme",
+        "content": "only light"
+      },
+      {
+        "name": "description",
+        "content": "서울특별시 여행에서 가볼 만한 자연·역사·문화·레포츠 관광지 1,474곳을 시·군·구별로 모았습니다. 한국관광공사 공식 데이터로 지도·사진과 가는 길을 확인하세요."
+      },
+      {
+        "rel": "canonical",
+        "href": "https://place.1989v.com/regions/11"
+      },
+      {
+        "property": "og:type",
+        "content": "website"
+      },
+      {
+        "property": "og:site_name",
+        "content": "K-관광"
+      },
+      {
+        "property": "og:title",
+        "content": "서울특별시 가볼 만한 곳 1,474곳 — 관광지 지도·여행 명소 | K-관광"
+      },
+      {
+        "property": "og:description",
+        "content": "서울특별시 여행에서 가볼 만한 자연·역사·문화·레포츠 관광지 1,474곳을 시·군·구별로 모았습니다. 한국관광공사 공식 데이터로 지도·사진과 가는 길을 확인하세요."
+      },
+      {
+        "property": "og:url",
+        "content": "https://place.1989v.com/regions/11"
+      },
+      {
+        "property": "og:locale",
+        "content": "ko_KR"
+      },
+      {
+        "name": "twitter:card",
+        "content": "summary_large_image"
+      },
+      {
+        "name": "twitter:title",
+        "content": "서울특별시 가볼 만한 곳 1,474곳 — 관광지 지도·여행 명소 | K-관광"
+      },
+      {
+        "name": "twitter:description",
+        "content": "서울특별시 여행에서 가볼 만한 자연·역사·문화·레포츠 관광지 1,474곳을 시·군·구별로 모았습니다. 한국관광공사 공식 데이터로 지도·사진과 가는 길을 확인하세요."
+      },
+      {
+        "property": "og:image",
+        "content": "https://place.1989v.com/og/place.png"
+      },
+      {
+        "property": "og:image:secure_url",
+        "content": "https://place.1989v.com/og/place.png"
+      },
+      {
+        "property": "og:image:type",
+        "content": "image/png"
+      },
+      {
+        "property": "og:image:width",
+        "content": "1200"
+      },
+      {
+        "property": "og:image:height",
+        "content": "630"
+      },
+      {
+        "property": "og:image:alt",
+        "content": "서울특별시 가볼 만한 곳"
+      },
+      {
+        "name": "twitter:image",
+        "content": "https://place.1989v.com/og/place.png"
+      },
+      {
+        "name": "twitter:image:alt",
+        "content": "서울특별시 가볼 만한 곳"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "ko",
+        "href": "https://place.1989v.com/regions/11",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://place.1989v.com/en/regions/11",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://place.1989v.com/en/regions/11",
+        "data-seo-multi": null
+      }
+    ],
+    "links": [
+      "/",
+      "/regions/11110",
+      "/regions/11140",
+      "/regions/11170",
+      "/regions/11200",
+      "/regions/11215",
+      "/regions/11230",
+      "/regions/11260",
+      "/regions/11290",
+      "/regions/11305",
+      "/regions/11320",
+      "/regions/11350",
+      "/regions/11380",
+      "/regions/11410",
+      "/regions/11440",
+      "/regions/11470",
+      "/regions/11500",
+      "/regions/11530",
+      "/regions/11545",
+      "/regions/11560",
+      "/regions/11590",
+      "/regions/11620",
+      "/regions/11650",
+      "/regions/11680",
+      "/regions/11710",
+      "/regions/11740",
+      "/attractions/1",
+      "/attractions/9",
+      "/attractions/12",
+      "/attractions/17",
+      "/attractions/32",
+      "/attractions/37",
+      "/attractions/39",
+      "/attractions/40",
+      "/attractions/41",
+      "/attractions/42",
+      "https://1989v.com",
+      "https://game.1989v.com",
+      "https://place.1989v.com",
+      "https://blog.1989v.com",
+      "https://rank.1989v.com",
+      "https://deal.1989v.com",
+      "https://1989v.com/privacy",
+      "https://1989v.com/about",
+      "https://1989v.com/contact",
+      "https://1989v.com/data-sources"
+    ],
+    "text": "서울특별시 가볼 만한 곳 1,474곳 — 관광지 지도·여행 명소 | K-관광\n한국 관광지 탐색\n서울특별시 가볼 만한 곳\n서울특별시 여행에서 가볼 만한 자연·역사·문화·레포츠 관광지 1,474곳을 시·군·구별로 모았습니다. 한국관광공사 공식 데이터로 지도·사진과 가는 길을 확인하세요.\n서울 여행은 궁궐·역사 명소, 박물관·문화 공간, 공원 등 관심 있는 테마부터 골라보세요. 자치구별 목록에서 방문지를 좁힌 뒤 상세 페이지의 운영시간과 가까운 역·정류장을 확인하면 이동 계획을 세우기 좋습니다.\n시·군·구별로 보기\n종로구\n중구\n용산구\n성동구\n광진구\n동대문구\n중랑구\n성북구\n강북구\n도봉구\n노원구\n은평구\n서대문구\n마포구\n양천구\n강서구\n구로구\n금천구\n영등포구\n동작구\n관악구\n서초구\n강남구\n송파구\n강동구\n대표 관광지\n경복궁\n남산공원\n사육신공원\n청계산\n관악산\n서대문독립공원\n충무공 이순신 동상\n세종대왕 동상\n북악산\n신당동 떡볶이타운\n1989v\n·\n무료 웹게임\n·\n한국 관광지 검색\n·\n블로그\n·\n랭킹 리더보드\n·\n혜택 링크 허브\n·\n개인정보처리방침\n·\n사이트 소개\n·\n연락처\n·\n데이터 출처",
+    "bytes": 11955
+  },
+  {
+    "url": "https://game.1989v.com/games/seven-seconds",
+    "observed_at": "2026-10-18T10:10:14.029580+00:00",
+    "curl": "200\thttps://game.1989v.com/games/seven-seconds\ttext/html\t0.495485",
+    "error": "",
+    "file": "game_1989v_com_games_seven_seconds.body",
+    "sha256": "f13a990a86353b946a103d9267e81129acc663735dd05fd116f91a6da5925925",
+    "title": [
+      "7초를 맞춰라 — 설치 없이 하는 캐주얼 웹게임 | 1989v 게임"
+    ],
+    "meta": [
+      {
+        "charset": "UTF-8"
+      },
+      {
+        "name": "viewport",
+        "content": "width=device-width, initial-scale=1.0, viewport-fit=cover"
+      },
+      {
+        "name": "google-adsense-account",
+        "content": "ca-pub-4627924728297793"
+      },
+      {
+        "name": "theme-color",
+        "content": "#0a0a0a"
+      },
+      {
+        "name": "color-scheme",
+        "content": "only light"
+      },
+      {
+        "name": "description",
+        "content": "여럿이 모여 각자 자기 폰으로 하는 시간 감각 겨루기. 화면을 누르면 시작하고, 7초라고 생각될 때 다시 누른다. 7초에 가까운 순서가 그대로 결과가 되어 커피 사는 사람이나 벌칙 대상을 정한다. 3초가 지나면 숫자가 가려지기 때문에 화면을 보고 맞추는 것이 아니라 정말…"
+      },
+      {
+        "rel": "canonical",
+        "href": "https://game.1989v.com/games/seven-seconds"
+      },
+      {
+        "property": "og:type",
+        "content": "website"
+      },
+      {
+        "property": "og:site_name",
+        "content": "1989v 게임"
+      },
+      {
+        "property": "og:title",
+        "content": "7초를 맞춰라 — 설치 없이 하는 캐주얼 웹게임 | 1989v 게임"
+      },
+      {
+        "property": "og:description",
+        "content": "여럿이 모여 각자 자기 폰으로 하는 시간 감각 겨루기. 화면을 누르면 시작하고, 7초라고 생각될 때 다시 누른다. 7초에 가까운 순서가 그대로 결과가 되어 커피 사는 사람이나 벌칙 대상을 정한다. 3초가 지나면 숫자가 가려지기 때문에 화면을 보고 맞추는 것이 아니라 정말…"
+      },
+      {
+        "property": "og:url",
+        "content": "https://game.1989v.com/games/seven-seconds"
+      },
+      {
+        "property": "og:locale",
+        "content": "ko_KR"
+      },
+      {
+        "name": "twitter:card",
+        "content": "summary_large_image"
+      },
+      {
+        "name": "twitter:title",
+        "content": "7초를 맞춰라 — 설치 없이 하는 캐주얼 웹게임 | 1989v 게임"
+      },
+      {
+        "name": "twitter:description",
+        "content": "여럿이 모여 각자 자기 폰으로 하는 시간 감각 겨루기. 화면을 누르면 시작하고, 7초라고 생각될 때 다시 누른다. 7초에 가까운 순서가 그대로 결과가 되어 커피 사는 사람이나 벌칙 대상을 정한다. 3초가 지나면 숫자가 가려지기 때문에 화면을 보고 맞추는 것이 아니라 정말…"
+      },
+      {
+        "property": "og:image",
+        "content": "https://game.1989v.com/og/games/seven-seconds.png"
+      },
+      {
+        "property": "og:image:secure_url",
+        "content": "https://game.1989v.com/og/games/seven-seconds.png"
+      },
+      {
+        "property": "og:image:type",
+        "content": "image/png"
+      },
+      {
+        "property": "og:image:width",
+        "content": "1200"
+      },
+      {
+        "property": "og:image:height",
+        "content": "630"
+      },
+      {
+        "property": "og:image:alt",
+        "content": "7초를 맞춰라"
+      },
+      {
+        "name": "twitter:image",
+        "content": "https://game.1989v.com/og/games/seven-seconds.png"
+      },
+      {
+        "name": "twitter:image:alt",
+        "content": "7초를 맞춰라"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "ko",
+        "href": "https://game.1989v.com/games/seven-seconds",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://game.1989v.com/en/games/seven-seconds",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://game.1989v.com/en/games/seven-seconds",
+        "data-seo-multi": null
+      }
+    ],
+    "links": [
+      "/",
+      "/games/genre/casual",
+      "/games/seven-seconds/index.html",
+      "/games/circle-trace",
+      "/games/card-flip",
+      "/games/marble-race",
+      "/games/ladder-draw",
+      "/games/relic-heir",
+      "/games/moon-angler",
+      "https://1989v.com",
+      "https://game.1989v.com",
+      "https://place.1989v.com",
+      "https://blog.1989v.com",
+      "https://rank.1989v.com",
+      "https://deal.1989v.com",
+      "https://1989v.com/privacy",
+      "https://1989v.com/about",
+      "https://1989v.com/contact",
+      "https://1989v.com/data-sources"
+    ],
+    "text": "7초를 맞춰라 — 설치 없이 하는 캐주얼 웹게임 | 1989v 게임\n게임\n›\n캐주얼\n7초를 맞춰라\n여럿이 모여 각자 자기 폰으로 하는 시간 감각 겨루기. 화면을 누르면 시작하고, 7초라고 생각될 때 다시 누른다. 7초에 가까운 순서가 그대로 결과가 되어 커피 사는 사람이나 벌칙 대상을 정한다. 3초가 지나면 숫자가 가려지기 때문에 화면을 보고 맞추는 것이 아니라 정말 감각으로 재게 된다. 시간은 각자의 기기가 아니라 서버가 잰다 — 판이 시작된 시각과 멈춤이 도착한 시각을 서버가 재므로, 기기 시계를 고치거나 개발자도구로 값을 바꿔서 이길 수 없다. 혼자서도 할 수 있고 그때는 기록 도전이 된다. 방을 열면 링크와 QR 이 나오고, 들어온 사람이 명부에서 자기 이름을 골라 앉는다. 앱 안에 돈이나 포인트는 없다.\n소개\n목표\n시작한 뒤 정확히 7초에 가깝게 멈추세요.\n조작법\n한 번 눌러 시작하고 7초가 되었다고 생각할 때 다시 누릅니다.\n첫 플레이 팁\n혼자 연습해 감각을 익힌 뒤 파티에서 각자 자기 기기로 도전해보세요.\n1인\n모바일 지원\n7초를 맞춰라 플레이하기\n비슷한 게임 더 보기\n원 그리기\n· 캐주얼\n카드 뒤집기\n· 순서 정하기\n구슬 레이스\n· 순서 정하기\n사다리타기\n· 순서 정하기\nRelic\n· 캐주얼\nMoon Fishing\n· 캐주얼\n1989v\n·\n무료 웹게임\n·\n한국 관광지 검색\n·\n블로그\n·\n랭킹 리더보드\n·\n혜택 링크 허브\n·\n개인정보처리방침\n·\n사이트 소개\n·\n연락처\n·\n데이터 출처",
+    "bytes": 12906
+  },
+  {
+    "url": "https://game.1989v.com/games/landslide",
+    "observed_at": "2026-10-18T10:10:14.510249+00:00",
+    "curl": "200\thttps://game.1989v.com/games/landslide\ttext/html\t0.484529",
+    "error": "",
+    "file": "game_1989v_com_games_landslide.body",
+    "sha256": "fc974c81d918844e4f619c1d3c767ddba92ae2d95b615e36cb3cc9f019926875",
+    "title": [
+      "사태 — 설치 없이 하는 대전 웹게임 | 1989v 게임"
+    ],
+    "meta": [
+      {
+        "charset": "UTF-8"
+      },
+      {
+        "name": "viewport",
+        "content": "width=device-width, initial-scale=1.0, viewport-fit=cover"
+      },
+      {
+        "name": "google-adsense-account",
+        "content": "ca-pub-4627924728297793"
+      },
+      {
+        "name": "theme-color",
+        "content": "#0a0a0a"
+      },
+      {
+        "name": "color-scheme",
+        "content": "only light"
+      },
+      {
+        "name": "description",
+        "content": "쏘면 파이고, 파인 것은 흘러내리고, 뜨거우면 바람이 솟는다. 흐르는 지형 위에서 삼국~조선의 무장이 순서대로 겨루는 턴제 포격 대전. 궁수는 기류를 읽고, 포수는 지형을 무너뜨리고, 검사는 검기로 땅을 갈라 산사태를 낸다. 화산재는 안식각까지 흘러내리고 용암은 굳으며,…"
+      },
+      {
+        "rel": "canonical",
+        "href": "https://game.1989v.com/games/landslide"
+      },
+      {
+        "property": "og:type",
+        "content": "website"
+      },
+      {
+        "property": "og:site_name",
+        "content": "1989v 게임"
+      },
+      {
+        "property": "og:title",
+        "content": "사태 — 설치 없이 하는 대전 웹게임 | 1989v 게임"
+      },
+      {
+        "property": "og:description",
+        "content": "쏘면 파이고, 파인 것은 흘러내리고, 뜨거우면 바람이 솟는다. 흐르는 지형 위에서 삼국~조선의 무장이 순서대로 겨루는 턴제 포격 대전. 궁수는 기류를 읽고, 포수는 지형을 무너뜨리고, 검사는 검기로 땅을 갈라 산사태를 낸다. 화산재는 안식각까지 흘러내리고 용암은 굳으며,…"
+      },
+      {
+        "property": "og:url",
+        "content": "https://game.1989v.com/games/landslide"
+      },
+      {
+        "property": "og:locale",
+        "content": "ko_KR"
+      },
+      {
+        "name": "twitter:card",
+        "content": "summary"
+      },
+      {
+        "name": "twitter:title",
+        "content": "사태 — 설치 없이 하는 대전 웹게임 | 1989v 게임"
+      },
+      {
+        "name": "twitter:description",
+        "content": "쏘면 파이고, 파인 것은 흘러내리고, 뜨거우면 바람이 솟는다. 흐르는 지형 위에서 삼국~조선의 무장이 순서대로 겨루는 턴제 포격 대전. 궁수는 기류를 읽고, 포수는 지형을 무너뜨리고, 검사는 검기로 땅을 갈라 산사태를 낸다. 화산재는 안식각까지 흘러내리고 용암은 굳으며,…"
+      },
+      {
+        "property": "og:image",
+        "content": "https://game.1989v.com/games/thumbs/shots/landslide.jpg"
+      },
+      {
+        "property": "og:image:secure_url",
+        "content": "https://game.1989v.com/games/thumbs/shots/landslide.jpg"
+      },
+      {
+        "property": "og:image:type",
+        "content": "image/jpeg"
+      },
+      {
+        "property": "og:image:alt",
+        "content": "사태"
+      },
+      {
+        "name": "twitter:image",
+        "content": "https://game.1989v.com/games/thumbs/shots/landslide.jpg"
+      },
+      {
+        "name": "twitter:image:alt",
+        "content": "사태"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "ko",
+        "href": "https://game.1989v.com/games/landslide",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://game.1989v.com/en/games/landslide",
+        "data-seo-multi": null
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://game.1989v.com/en/games/landslide",
+        "data-seo-multi": null
+      }
+    ],
+    "links": [
+      "/",
+      "/games/genre/versus",
+      "/games/landslide/index.html",
+      "/games/arena",
+      "/games/infinity-step",
+      "/games/epoch-of-nations",
+      "/games/cliff-climber",
+      "/games/rope-works",
+      "/games/depth-delver",
+      "https://1989v.com",
+      "https://game.1989v.com",
+      "https://place.1989v.com",
+      "https://blog.1989v.com",
+      "https://rank.1989v.com",
+      "https://deal.1989v.com",
+      "https://1989v.com/privacy",
+      "https://1989v.com/about",
+      "https://1989v.com/contact",
+      "https://1989v.com/data-sources"
+    ],
+    "text": "사태 — 설치 없이 하는 대전 웹게임 | 1989v 게임\n게임\n›\n대전\n사태\n쏘면 파이고, 파인 것은 흘러내리고, 뜨거우면 바람이 솟는다. 흐르는 지형 위에서 삼국~조선의 무장이 순서대로 겨루는 턴제 포격 대전. 궁수는 기류를 읽고, 포수는 지형을 무너뜨리고, 검사는 검기로 땅을 갈라 산사태를 낸다. 화산재는 안식각까지 흘러내리고 용암은 굳으며, 산사태에 파묻히면 파내야 한다. 드래그로 조준해 놓으면 날아가고 직전 궤적이 점선으로 남는다. 봇과 연습하거나, 빠른 대전·코드 방·초대 링크로 사람과 1대1. 창병·방패병·팀전·아이템은 다음 단계.\n소개\n목표\n차례마다 지형과 바람을 읽고 포격해 상대 부대를 쓰러뜨리세요.\n조작법\n내 유닛에서 뒤로 드래그해 조준하고 놓으면 발사합니다. 걷기는 ◀ ▶ 버튼을 사용합니다.\n첫 플레이 팁\n길게 당길수록 강하게 쏩니다. 조준 중 취소하려면 위쪽 ✕까지 끌고 가 놓으세요.\n1인\n약 5분\n모바일 지원\n사태 플레이하기\n비슷한 게임 더 보기\nAMP ARENA\n· 대전\n인피니티 스탭\n· 액션\nEPOCH OF NATIONS\n· 전략\nCliff Climb\n· 아케이드\nRope Puzzle\n· 퍼즐\nDeep Dungeon\n· RPG\n1989v\n·\n무료 웹게임\n·\n한국 관광지 검색\n·\n블로그\n·\n랭킹 리더보드\n·\n혜택 링크 허브\n·\n개인정보처리방침\n·\n사이트 소개\n·\n연락처\n·\n데이터 출처",
+    "bytes": 12591
+  },
+  {
+    "url": "https://blog.1989v.com/posts/opensearch-knn-lucene-vs-faiss-memory",
+    "observed_at": "2026-10-18T10:10:17.595379+00:00",
+    "curl": "200\thttps://blog.1989v.com/posts/opensearch-knn-lucene-vs-faiss-memory\ttext/html\t3.544217",
+    "error": "",
+    "file": "blog_1989v_com_posts_opensearch_knn_lucene_vs_faiss_memory.body",
+    "sha256": "baa3d83175fd840bbe172688d2e1e3c9e1f1602b443e7790e9b3006f5c216a8b",
+    "title": [
+      "OpenSearch 벡터 검색 엔진 lucene vs faiss — 메모리가 모자랄 때 느려지나, 밀려나나 | 1989v 블로그"
+    ],
+    "meta": [
+      {
+        "charset": "UTF-8"
+      },
+      {
+        "name": "viewport",
+        "content": "width=device-width, initial-scale=1.0, viewport-fit=cover"
+      },
+      {
+        "name": "google-adsense-account",
+        "content": "ca-pub-4627924728297793"
+      },
+      {
+        "name": "theme-color",
+        "content": "#0a0a0a"
+      },
+      {
+        "name": "color-scheme",
+        "content": "only light"
+      },
+      {
+        "name": "description",
+        "content": "lucene 과 faiss 는 knn_vector 의 같은 engine 자리에 들어가는 대안이다. 필요한 메모리 양은 비슷하고, 갈리는 것은 벡터를 OS 페이지 캐시에 두느냐 JVM 힙 밖 네이티브 메모리에 두느냐다. 작은 노드에서는 이 차이가 메모리 부족 시의 증상을 정한다."
+      },
+      {
+        "rel": "canonical",
+        "href": "https://blog.1989v.com/posts/opensearch-knn-lucene-vs-faiss-memory"
+      },
+      {
+        "property": "og:type",
+        "content": "article"
+      },
+      {
+        "property": "og:site_name",
+        "content": "1989v 블로그"
+      },
+      {
+        "property": "og:title",
+        "content": "OpenSearch 벡터 검색 엔진 lucene vs faiss — 메모리가 모자랄 때 느려지나, 밀려나나 | 1989v 블로그"
+      },
+      {
+        "property": "og:description",
+        "content": "lucene 과 faiss 는 knn_vector 의 같은 engine 자리에 들어가는 대안이다. 필요한 메모리 양은 비슷하고, 갈리는 것은 벡터를 OS 페이지 캐시에 두느냐 JVM 힙 밖 네이티브 메모리에 두느냐다. 작은 노드에서는 이 차이가 메모리 부족 시의 증상을 정한다."
+      },
+      {
+        "property": "og:url",
+        "content": "https://blog.1989v.com/posts/opensearch-knn-lucene-vs-faiss-memory"
+      },
+      {
+        "property": "og:locale",
+        "content": "ko_KR"
+      },
+      {
+        "name": "twitter:card",
+        "content": "summary_large_image"
+      },
+      {
+        "name": "twitter:title",
+        "content": "OpenSearch 벡터 검색 엔진 lucene vs faiss — 메모리가 모자랄 때 느려지나, 밀려나나 | 1989v 블로그"
+      },
+      {
+        "name": "twitter:description",
+        "content": "lucene 과 faiss 는 knn_vector 의 같은 engine 자리에 들어가는 대안이다. 필요한 메모리 양은 비슷하고, 갈리는 것은 벡터를 OS 페이지 캐시에 두느냐 JVM 힙 밖 네이티브 메모리에 두느냐다. 작은 노드에서는 이 차이가 메모리 부족 시의 증상을 정한다."
+      },
+      {
+        "property": "article:published_time",
+        "content": "2026-10-06T13:21:27+09:00"
+      },
+      {
+        "property": "article:modified_time",
+        "content": "2026-10-16T01:51:11+09:00"
+      },
+      {
+        "property": "og:image",
+        "content": "https://blog.1989v.com/og/blog.png"
+      },
+      {
+        "name": "twitter:image",
+        "content": "https://blog.1989v.com/og/blog.png"
+      }
+    ],
+    "links": [
+      "/c/tech",
+      "/c/tech/server",
+      "/c/tech/server/search",
+      "/authors/kgd",
+      "https://blog.1989v.com/posts/opensearch-knn-lucene-vs-faiss-memory"
+    ],
+    "text": "OpenSearch 벡터 검색 엔진 lucene vs faiss — 메모리가 모자랄 때 느려지나, 밀려나나 | 1989v 블로그\n기술\n›\n서버\n›\n검색\nOpenSearch 벡터 검색 엔진 lucene vs faiss — 메모리가 모자랄 때 느려지나, 밀려나나\nkgd\n· 2026-10-06 · 9분\nOpenSearch kNN 의 두 엔진 lucene 과 faiss 를 메모리 배치 기준으로 비교한다. OpenSearch 3.8 · k-NN 플러그인 문서 기준이다.\n| 항목 | lucene | faiss |\n|---|---|---|\n| 비교 층 | 엔진 (\nmethod.engine\n) | 엔진 (\nmethod.engine\n) |\n| 벡터·그래프 위치 | 세그먼트 파일 → OS 페이지 캐시 | JVM 힙 밖 네이티브 메모리 |\n| 상한 | 컨테이너·노드 메모리가 곧 상한 |\nknn.memory.circuit_breaker.limit\n(기본: 힙 뺀 나머지의 50%) |\n| 커널이 회수 | 가능 — 캐시라 버리고 다시 읽는다 | 불가 — 플러그인이 LRU 로 내린다 |\n| 모자랄 때 | 디스크를 다시 읽어 느려진다 | 오래 안 쓴 그래프를 내리고 다시 올린다 |\n| BM25 와의 관계 | 같은 페이지 캐시를 나눠 쓴다 | 페이지 캐시 밖에 따로 자리를 잡는다 |\n| 알맞은 곳 | 메모리가 빠듯한 단일 노드, 벡터와 키워드 검색 겸용 | 벡터 전용 몫을 떼어 줄 수 있는 노드 |\n엔진은 어느 층의 선택인가\nknn_vector\n매핑에는 성격이 다른 선택 세 개가 들어간다. 같은 층끼리만 비교가 성립한다.\n\"embedding\": {\n  \"type\": \"knn_vector\",\n  \"dimension\": 640,\n  \"method\": {\n    \"name\": \"hnsw\",\n    \"engine\": \"lucene\",\n    \"parameters\": { \"encoder\": { \"name\": \"sq\", \"parameters\": { \"bits\": 1 } } }\n  }\n}\n| 층 | 자리 | 값의 예 |\n|---|---|---|\n| 엔진 |\nmethod.engine\n|\nlucene\n·\nfaiss\n(\nnmslib\n은 폐기 예정) |\n| 알고리즘 |\nmethod.name\n|\nhnsw\n·\nivf\n(faiss 만) |\n| 양자화 |\nparameters.encoder\n|\nsq\n·\npq\n· 1비트 바이너리 |\n[!NOTE]\n「faiss vs HNSW」는 층이 어긋난 비교다. faiss 엔진 안에서도 HNSW 를 쓴다. 「lucene vs faiss」가 같은 층의 비교다.\n두 엔진은 벡터를 어디에 두나\n| | lucene | faiss |\n|---|---|---|\n| 구현 | Java, Lucene 세그먼트 안의 벡터 포맷 | C++ 네이티브 라이브러리 |\n| 적재 | 파일을 메모리 맵으로 읽는다 | 세그먼트별 그래프를 통째로 네이티브 메모리에 올린다 |\n| 회계 | 페이지 캐시 (k-NN 서킷 브레이커 밖) | k-NN 네이티브 메모리 캐시 |\n| 한도 초과 시 | OS 가 캐시를 버린다 | 플러그인이 가장 오래 안 쓴 그래프를 내린다 |\nfaiss 상한은 노드 메모리에서 JVM 힙을 뺀 나머지의 50% 가 기본이다. 100 GB 노드에 힙 32 GB 면 34 GB 다.\n[!IMPORTANT]\n페이지 캐시도 같은 물리 RAM 이다. 차이는 커널이 언제든 버릴 수 있다는 점이다. 원본이 디스크에 있어서 버려도 데이터는 잃지 않는다.\n컨테이너 한도 안에서 메모리는 어떻게 나뉘나\nk8s 파드의 메모리 한도에는 페이지 캐시도 함께 계산된다. 한 컨테이너 안의 몫은 다음과 같다.\n컨테이너 한도 = JVM 힙 + JVM 네이티브(스레드·GC·malloc 아레나) + [faiss 그래프] + 남는 만큼 페이지 캐시\n| 메모리 | 회수 가능 | 한도에 닿으면 |\n|---|---|---|\n| 힙·JVM 네이티브 (anon) | 불가 | OOMKilled |\n| faiss 그래프 (anon) | 불가 — 플러그인만 내린다 | OOMKilled 후보에 더해진다 |\n| 페이지 캐시 | 가능 | 커널이 먼저 버린다 → 디스크 읽기 |\nanon 이 늘면 커널은 OOM 전에 페이지 캐시부터 비운다.\nlucene 벡터는 이 「비워지는 칸」에 있다. 그래서 프로세스는 살아 있고 검색만 느려진다.\nfaiss 상한을 높이면 그만큼 BM25 가 쓸 페이지 캐시가 고정으로 줄어든다.\n메모리가 모자라면 각각 어떻게 되나\n| 상황 | lucene | faiss |\n|---|---|---|\n| 그래프 일부만 메모리에 있음 | 나머지를 디스크에서 읽으며 검색 | 해당 세그먼트 그래프를 통째로 다시 올린다 |\n| 다른 인덱스가 메모리를 씀 | 캐시를 나눠 가져 같이 느려진다 | LRU 로 서로 내렸다 올렸다 한다 |\n| 컨테이너 한도 근접 | 캐시 0 → 지연이 급등 | 회수 불가 메모리가 늘어 OOM 위험 |\n| 드러나는 신호 | kNN 지연 | 캐시 축출 수 · 서킷 브레이커 상태 |\n[!WARNING]\nlucene 의 「동작은 한다」는 타임아웃을 막아 주지 않는다. 관광지 검색 노드(OpenSearch 한도 1.5 GiB, lucene HNSW 640차원 fp32)에서 kNN 한 번이 112초까지 걸렸다. 키워드 검색은 같은 시각에도 응답했다.\n한도를 2.5 GiB 로 올리고 1비트 양자화와 rescore ×3 을 함께 적용한 뒤 같은 kNN 은 0.6초다. 두 변경이 동시라 각자의 몫은 나뉘지 않는다.\n벡터 메모리는 얼마나 필요한가\n엔진과 무관하게 벡터 크기 계산식은 같다.\n원본(fp32)   = 벡터 수 × 차원 × 4 바이트\n1비트 양자화 = 벡터 수 × 차원 ÷ 8 바이트\nHNSW 0층 이웃 ≈ 벡터 수 × 2m × 4 바이트\n| 약 6만 건 × 640차원, m=16 | 크기 |\n|---|---|\n| fp32 원본 | 약 154 MB |\n| 1비트 양자화 | 약 4.8 MB |\n| HNSW 0층 이웃 목록 | 약 7.7 MB |\n이 규모에서 1비트로 줄이면 어느 엔진이든 수십 MB 다. 엔진 선택을 가르는 것은 양이 아니라 배치 방식이다. lucene 의 1비트 인덱스는 원본 fp32 도 디스크에 남긴다(rescore 와 병합용, 추정).\nfaiss 를 페이지 캐시 방식으로 쓰는 법\nOpenSearch 3.1 부터 memory-optimized search 가 있다. faiss 인덱스를 메모리 맵으로 열고 OS 파일 캐시로 검색한다.\nPUT /attractions-v2\n{\n  \"settings\": {\n    \"index.knn\": true,\n    \"index.knn.memory_optimized_search\": true\n  }\n}\n| 조건 | 내용 |\n|---|---|\n| 지원 | faiss 엔진 + HNSW 만 |\n| 미지원 | IVF · PQ (켜도 통째로 올린다) |\n| 2.19 이전 생성 인덱스 | 켜도 통째로 올린다 |\n| 설정 변경 | 정적 설정 — 기존 인덱스는 close → 설정 → open |\n| 범위 | 검색만 바뀐다. 색인 동작은 그대로다 |\non_disk\n모드 +\n1x\n압축 필드는 인덱스 설정 없이도 자동으로 켜진다.\n어느 엔진을 고르나\n| 노드 조건 | 엔진 |\n|---|---|\n| 메모리가 빠듯하고 BM25 와 벡터를 한 노드에서 같이 서빙 | lucene |\n| 벡터 전용 메모리를 떼어 줄 여유가 있고 지연 예측성이 중요 | faiss |\n| faiss 기능(IVF·PQ)이 필요하지만 메모리가 빠듯 | faiss + 양자화, 상한 조정 |\n| faiss HNSW 를 쓰되 페이지 캐시로 나눠 쓰고 싶음 | faiss + memory-optimized search |\n상한과 축출 상태는 다음으로 본다.\nGET _cluster/settings?include_defaults=true&filter_path=**.knn.memory*\nGET _plugins/_knn/stats?filter_path=nodes.*.graph_memory_usage*,nodes.*.cache_capacity_reached,nodes.*.eviction_count,circuit_breaker_triggered\nhttps://blog.1989v.com/posts/opensearch-knn-lucene-vs-faiss-memory",
+    "bytes": 16692
+  },
+  {
+    "url": "https://1989v.com/tech/search",
+    "observed_at": "2026-10-18T10:10:14.450635+00:00",
+    "curl": "200\thttps://1989v.com/tech/search\ttext/html\t0.390543",
+    "error": "",
+    "file": "1989v_com_tech_search.body",
+    "sha256": "5d0d17b615c7a19e7b0c5048bcb6835307f38ee7548631f7c5bb62199772fe22",
+    "title": [
+      "검색 아키텍처 — 1989v"
+    ],
+    "meta": [
+      {
+        "charset": "UTF-8"
+      },
+      {
+        "name": "viewport",
+        "content": "width=device-width, initial-scale=1.0, viewport-fit=cover"
+      },
+      {
+        "name": "google-adsense-account",
+        "content": "ca-pub-4627924728297793"
+      },
+      {
+        "name": "theme-color",
+        "content": "#0a0a0a"
+      },
+      {
+        "name": "color-scheme",
+        "content": "only light"
+      },
+      {
+        "name": "description",
+        "content": "콘텐츠 이해, 색인·파이프라인, 쿼리 이해·리트리벌·랭킹, 평가·로그, 서빙·운영 — 검색 시스템 전체를 다이어그램으로 좁혀 가며 본다. 단계마다 일반 개념, 이 서비스의 적용 상태(적용·부분·미적용), 코드."
+      },
+      {
+        "rel": "canonical",
+        "href": "https://1989v.com/tech/search"
+      },
+      {
+        "property": "og:type",
+        "content": "website"
+      },
+      {
+        "property": "og:site_name",
+        "content": "1989v"
+      },
+      {
+        "property": "og:title",
+        "content": "검색 아키텍처 — 1989v"
+      },
+      {
+        "property": "og:description",
+        "content": "콘텐츠 이해, 색인·파이프라인, 쿼리 이해·리트리벌·랭킹, 평가·로그, 서빙·운영 — 검색 시스템 전체를 다이어그램으로 좁혀 가며 본다. 단계마다 일반 개념, 이 서비스의 적용 상태(적용·부분·미적용), 코드."
+      },
+      {
+        "property": "og:url",
+        "content": "https://1989v.com/tech/search"
+      },
+      {
+        "property": "og:locale",
+        "content": "ko_KR"
+      },
+      {
+        "name": "twitter:card",
+        "content": "summary_large_image"
+      },
+      {
+        "name": "twitter:title",
+        "content": "검색 아키텍처 — 1989v"
+      },
+      {
+        "name": "twitter:description",
+        "content": "콘텐츠 이해, 색인·파이프라인, 쿼리 이해·리트리벌·랭킹, 평가·로그, 서빙·운영 — 검색 시스템 전체를 다이어그램으로 좁혀 가며 본다. 단계마다 일반 개념, 이 서비스의 적용 상태(적용·부분·미적용), 코드."
+      },
+      {
+        "property": "og:image",
+        "content": "https://1989v.com/og/portal.png"
+      },
+      {
+        "property": "og:image:secure_url",
+        "content": "https://1989v.com/og/portal.png"
+      },
+      {
+        "property": "og:image:type",
+        "content": "image/png"
+      },
+      {
+        "property": "og:image:width",
+        "content": "1200"
+      },
+      {
+        "property": "og:image:height",
+        "content": "630"
+      },
+      {
+        "property": "og:image:alt",
+        "content": "1989v"
+      },
+      {
+        "name": "twitter:image",
+        "content": "https://1989v.com/og/portal.png"
+      },
+      {
+        "name": "twitter:image:alt",
+        "content": "1989v"
+      }
+    ],
+    "links": [
+      "https://1989v.com",
+      "https://game.1989v.com",
+      "https://place.1989v.com",
+      "https://blog.1989v.com",
+      "https://rank.1989v.com",
+      "https://deal.1989v.com",
+      "https://1989v.com/privacy",
+      "https://1989v.com/about",
+      "https://1989v.com/contact",
+      "https://1989v.com/data-sources"
+    ],
+    "text": "검색 아키텍처 — 1989v\n검색 아키텍처\n콘텐츠를 이해하고, 색인을 만들고, 검색어에 답하고, 결과를 재고, 그것을 떠받치는 서빙까지 — 콘텐츠 이해 · 색인 · 파이프라인 · 검색어 파이프라인 · 평가 · 로그 · 서빙 · 운영으로 읽는 검색 아키텍처. 색인 내부 구조와 용어는 곁에 둔다\n검색 시스템\n색인 · 파이프라인\n(적용)\n원천에서 색인까지. 문서 임베딩은 이 축에서 오프라인으로 일어난다\nplace DB 를 매일 전량 훑어 새 색인을 만들고 별칭을 한 번에 옮긴다. 상품은 Kafka 이벤트로 증분 색인한다\n검색어 파이프라인\n(부분)\n검색어가 결과가 되기까지 — 쿼리 재작성 · 쿼리 언더스탠딩 · 리트리벌(키워드 · 덴스) · 하이브리드 RRF · 랭킹을 거쳐 결과를 구성하고, 0건이면 대응한다. 싼 것으로 많이 거르고 비싼 것은 적게 쓴다\n쿼리 이해 · 리트리벌 · 하이브리드 RRF 는 적용이다. 랭킹은 규칙 기반 피처 결합 위에 관광지 국문만 Learning to Rank 재정렬이 붙고, 리랭킹 모델은 재 보고 보류했다\n평가 · 로그\n(부분)\n오프라인은 판정 세트가, 온라인은 트래픽이 필요하다. 어느 한쪽만 보면 각각의 맹점에 빠진다\n판정 세트 v3(228쿼리 · 9,692쌍)로 매일 nDCG 게이트가 돈다. 검색 → 노출 → 클릭 원장은 이어졌지만 사람이 직접 친 검색이 적고 온라인 A/B 는 없다\n서빙 · 운영\n(부분)\n색인을 샤드로 나눠 여러 노드에 두고, 질의를 흩뿌려 모으고, 캐시와 지연 예산으로 꼬리를 누르고, 수명 주기 · 백업으로 운영한다\nOpenSearch 3.8 단일 노드(샤드 1 · 레플리카 0)와 질의 인코더 사이드카로 서빙한다. 전용 모델 서빙 스택(Triton · vLLM)은 없다\n콘텐츠 이해\n(부분)\n문서가 무엇인지를 사람 대신 읽어 둔다 — 지식 그래프 · 구조화된 속성 · 임베딩 · LLM 추출. 색인에 들어갈 필드와 벡터의 질이 여기서 정해진다\n개념 온톨로지 · 분류 코드 사전 · 텍스트 임베딩 · LLM 실내 · 실외 판정이 있다. 멀티모달 임베딩과 검색 결과에 붙은 RAG 는 없다\n1989v\n·\n무료 웹게임\n·\n한국 관광지 검색\n·\n블로그\n·\n랭킹 리더보드\n·\n혜택 링크 허브\n·\n개인정보처리방침\n·\n사이트 소개\n·\n연락처\n·\n데이터 출처",
+    "bytes": 11283
+  },
+  {
+    "url": "https://1989v.com/api/v1/ranking/boards",
+    "observed_at": "2026-10-18T10:10:14.472659+00:00",
+    "curl": "200\thttps://1989v.com/api/v1/ranking/boards\tapplication/json\t0.388743",
+    "error": "",
+    "file": "1989v_com_api_v1_ranking_boards.body",
+    "sha256": "9c742575d97da5b8717324ab3ae8fe1b076d01a3558e11e29e7af029558444f2",
+    "title": [],
+    "meta": [],
+    "links": [],
+    "text": "{\"success\":true,\"data\":[],\"error\":null}",
+    "bytes": 39
+  }
+]

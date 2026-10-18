@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    
+    <script>
+      (function () {
+        var host = location.hostname;
+        // 개발 중 클릭이 실제 리포트에 섞이면 유입 분석이 흐려진다
+        if (host === "localhost" || host === "127.0.0.1") return;
+        if (host.split(".")[0] === "resume") return;
+        if (/^\/shared\//.test(location.pathname) || /%2Fshared%2F/i.test(location.search) || /^[a-z][a-z0-9+.-]*:\/\/[^\/?#]+\/shared\//i.test(document.referrer)) return;
+        var id = "G-5EE8XW7JHN";
+        var tag = document.createElement("script");
+        tag.async = true;
+        tag.src = "https://www.googletagmanager.com/gtag/js?id=" + id;
+        document.head.appendChild(tag);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () {
+          window.dataLayer.push(arguments);
+        };
+        window.gtag("js", new Date());
+        window.gtag("config", id);
+      })();
+    </script>
+
+    
+
+    
+    <meta name="google-adsense-account" content="ca-pub-4627924728297793" />
+
+    
+    <meta name="theme-color" content="#0a0a0a" />
+
+    
+    <meta name="color-scheme" content="only light" />
+
+    
+    <script>
+      (function () {
+        var KEY = "kh-theme";
+        function stored() {
+          var hit = document.cookie.split("; ").find(function (c) {
+            return c.indexOf(KEY + "=") === 0;
+          });
+          var v = hit && hit.slice(KEY.length + 1);
+          if (v === "light" || v === "dark") return v;
+          try {
+            v = localStorage.getItem(KEY);
+          } catch (e) {
+            v = null;
+          }
+          return v === "light" || v === "dark" ? v : null;
+        }
+        var root = document.documentElement;
+        var theme;
+        // /tech 만 브랜드 면이 아니다 — dark-trading 팔레트를 전제로 그려진 화면이라 다크 고정.
+        if (location.pathname === "/tech") {
+          theme = "dark";
+        } else {
+          theme =
+            stored() ||
+            (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light");
+          root.setAttribute("data-surface", "heritage");
+        }
+        root.setAttribute("data-theme", theme);
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute("content", theme === "dark" ? "#131313" : "#f9f8f2");
+        var scheme = document.querySelector('meta[name="color-scheme"]');
+        if (scheme) scheme.setAttribute("content", "only " + theme);
+      })();
+    </script>
+
+    
+    <!--seo:prerendered-->
+    <title>검색 아키텍처 — 1989v</title>
+    <meta name="description" content="콘텐츠 이해, 색인·파이프라인, 쿼리 이해·리트리벌·랭킹, 평가·로그, 서빙·운영 — 검색 시스템 전체를 다이어그램으로 좁혀 가며 본다. 단계마다 일반 개념, 이 서비스의 적용 상태(적용·부분·미적용), 코드." />
+    <link rel="canonical" href="https://1989v.com/tech/search" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="1989v" />
+    <meta property="og:title" content="검색 아키텍처 — 1989v" />
+    <meta property="og:description" content="콘텐츠 이해, 색인·파이프라인, 쿼리 이해·리트리벌·랭킹, 평가·로그, 서빙·운영 — 검색 시스템 전체를 다이어그램으로 좁혀 가며 본다. 단계마다 일반 개념, 이 서비스의 적용 상태(적용·부분·미적용), 코드." />
+    <meta property="og:url" content="https://1989v.com/tech/search" />
+    <meta property="og:locale" content="ko_KR" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="검색 아키텍처 — 1989v" />
+    <meta name="twitter:description" content="콘텐츠 이해, 색인·파이프라인, 쿼리 이해·리트리벌·랭킹, 평가·로그, 서빙·운영 — 검색 시스템 전체를 다이어그램으로 좁혀 가며 본다. 단계마다 일반 개념, 이 서비스의 적용 상태(적용·부분·미적용), 코드." />
+    <meta property="og:image" content="https://1989v.com/og/portal.png" />
+    <meta property="og:image:secure_url" content="https://1989v.com/og/portal.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="1989v" />
+    <meta name="twitter:image" content="https://1989v.com/og/portal.png" />
+    <meta name="twitter:image:alt" content="1989v" />
+    <script type="application/ld+json" data-seo-multi>{"@context":"https://schema.org","@type":"TechArticle","headline":"검색 아키텍처","description":"콘텐츠 이해, 색인·파이프라인, 쿼리 이해·리트리벌·랭킹, 평가·로그, 서빙·운영 — 검색 시스템 전체를 다이어그램으로 좁혀 가며 본다. 단계마다 일반 개념, 이 서비스의 적용 상태(적용·부분·미적용), 코드.","url":"https://1989v.com/tech/search","inLanguage":"ko","dateModified":"2026-10-13","author":{"@type":"Person","@id":"https://1989v.com/#person","name":"권기덕"},"publisher":{"@type":"Organization","name":"1989v","url":"https://1989v.com","founder":{"@type":"Person","@id":"https://1989v.com/#person","name":"권기덕"}}}</script>
+    <script type="application/ld+json" data-seo-multi>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"홈","item":"https://1989v.com/"},{"@type":"ListItem","position":2,"name":"IT","item":"https://1989v.com/tech"},{"@type":"ListItem","position":3,"name":"검색 아키텍처","item":"https://1989v.com/tech/search"}]}</script>
+    <script type="module" crossorigin src="/assets/index-CYqPQZ7Z.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/jsx-runtime-D-oznMWL.js">
+    <link rel="modulepreload" crossorigin href="/assets/preload-helper-DWTEM3RW.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-DcCgrBX5.js">
+    <link rel="modulepreload" crossorigin href="/assets/useQuery-Ck_Sa3Qn.js">
+    <link rel="modulepreload" crossorigin href="/assets/useMutation-ZbKdggdq.js">
+    <link rel="modulepreload" crossorigin href="/assets/useSeo-D_9uIxBL.js">
+    <link rel="modulepreload" crossorigin href="/assets/purify.es-2MU4SxTA.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-dom-DNNtxExO.js">
+    <link rel="modulepreload" crossorigin href="/assets/tracker-3r4219MP.js">
+    <link rel="modulepreload" crossorigin href="/assets/ServiceExplorer-9f9MNHU9.js">
+    <link rel="modulepreload" crossorigin href="/assets/auth-c5ts2mcW.js">
+    <link rel="modulepreload" crossorigin href="/assets/refresh-BNlEIik8.js">
+    <link rel="modulepreload" crossorigin href="/assets/gameApi-B7eq2LUm.js">
+    <link rel="modulepreload" crossorigin href="/assets/shopApi-Bfte-00h.js">
+    <link rel="modulepreload" crossorigin href="/assets/useAuth-BvXT1tfi.js">
+    <link rel="modulepreload" crossorigin href="/assets/useHeritageSurface-2ggg5XKW.js">
+    <link rel="stylesheet" crossorigin href="/assets/ServiceExplorer-D3NAtV-o.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-BkGIYVfC.css">
+  <link rel="modulepreload" crossorigin href="/assets/SearchArchitecturePage-DZYVWFxt.js"><link rel="modulepreload" crossorigin href="/assets/TechDrillPage-CetPOPcu.js"><link rel="modulepreload" crossorigin href="/assets/drillPages-rmNmI9WB.js"><link rel="preload" as="style" href="/assets/TechDrillPage-C07M3Xok.css"></head>
+  <body>
+    <div id="root"><div style="max-width:1080px;margin:0 auto;padding:32px 20px;color:#dce4f5;font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif"><div data-source-hash="83b755064ca2"><h1>검색 아키텍처</h1><p>콘텐츠를 이해하고, 색인을 만들고, 검색어에 답하고, 결과를 재고, 그것을 떠받치는 서빙까지 — 콘텐츠 이해 · 색인 · 파이프라인 · 검색어 파이프라인 · 평가 · 로그 · 서빙 · 운영으로 읽는 검색 아키텍처. 색인 내부 구조와 용어는 곁에 둔다</p><section aria-label="검색 시스템"><h2>검색 시스템</h2><ol><li><h3>색인 · 파이프라인 <span>(적용)</span></h3><p>원천에서 색인까지. 문서 임베딩은 이 축에서 오프라인으로 일어난다</p><p>place DB 를 매일 전량 훑어 새 색인을 만들고 별칭을 한 번에 옮긴다. 상품은 Kafka 이벤트로 증분 색인한다</p></li><li><h3>검색어 파이프라인 <span>(부분)</span></h3><p>검색어가 결과가 되기까지 — 쿼리 재작성 · 쿼리 언더스탠딩 · 리트리벌(키워드 · 덴스) · 하이브리드 RRF · 랭킹을 거쳐 결과를 구성하고, 0건이면 대응한다. 싼 것으로 많이 거르고 비싼 것은 적게 쓴다</p><p>쿼리 이해 · 리트리벌 · 하이브리드 RRF 는 적용이다. 랭킹은 규칙 기반 피처 결합 위에 관광지 국문만 Learning to Rank 재정렬이 붙고, 리랭킹 모델은 재 보고 보류했다</p></li><li><h3>평가 · 로그 <span>(부분)</span></h3><p>오프라인은 판정 세트가, 온라인은 트래픽이 필요하다. 어느 한쪽만 보면 각각의 맹점에 빠진다</p><p>판정 세트 v3(228쿼리 · 9,692쌍)로 매일 nDCG 게이트가 돈다. 검색 → 노출 → 클릭 원장은 이어졌지만 사람이 직접 친 검색이 적고 온라인 A/B 는 없다</p></li><li><h3>서빙 · 운영 <span>(부분)</span></h3><p>색인을 샤드로 나눠 여러 노드에 두고, 질의를 흩뿌려 모으고, 캐시와 지연 예산으로 꼬리를 누르고, 수명 주기 · 백업으로 운영한다</p><p>OpenSearch 3.8 단일 노드(샤드 1 · 레플리카 0)와 질의 인코더 사이드카로 서빙한다. 전용 모델 서빙 스택(Triton · vLLM)은 없다</p></li><li><h3>콘텐츠 이해 <span>(부분)</span></h3><p>문서가 무엇인지를 사람 대신 읽어 둔다 — 지식 그래프 · 구조화된 속성 · 임베딩 · LLM 추출. 색인에 들어갈 필드와 벡터의 질이 여기서 정해진다</p><p>개념 온톨로지 · 분류 코드 사전 · 텍스트 임베딩 · LLM 실내 · 실외 판정이 있다. 멀티모달 임베딩과 검색 결과에 붙은 RAG 는 없다</p></li></ol></section></div><footer><nav><a href="https://1989v.com">1989v</a> · <a href="https://game.1989v.com">무료 웹게임</a> · <a href="https://place.1989v.com">한국 관광지 검색</a> · <a href="https://blog.1989v.com">블로그</a> · <a href="https://rank.1989v.com">랭킹 리더보드</a> · <a href="https://deal.1989v.com">혜택 링크 허브</a> · <a href="https://1989v.com/privacy">개인정보처리방침</a> · <a href="https://1989v.com/about">사이트 소개</a> · <a href="https://1989v.com/contact">연락처</a> · <a href="https://1989v.com/data-sources">데이터 출처</a></nav></footer></div></div>
+  </body>
+</html>

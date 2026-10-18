@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    
+    <script>
+      (function () {
+        var host = location.hostname;
+        // ê°ë° ì¤ í´ë¦­ì´ ì¤ì  ë¦¬í¬í¸ì ìì´ë©´ ì ì ë¶ìì´ íë ¤ì§ë¤
+        if (host === "localhost" || host === "127.0.0.1") return;
+        if (host.split(".")[0] === "resume") return;
+        if (/^\/shared\//.test(location.pathname) || /%2Fshared%2F/i.test(location.search) || /^[a-z][a-z0-9+.-]*:\/\/[^\/?#]+\/shared\//i.test(document.referrer)) return;
+        var id = "G-5EE8XW7JHN";
+        var tag = document.createElement("script");
+        tag.async = true;
+        tag.src = "https://www.googletagmanager.com/gtag/js?id=" + id;
+        document.head.appendChild(tag);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () {
+          window.dataLayer.push(arguments);
+        };
+        window.gtag("js", new Date());
+        window.gtag("config", id);
+      })();
+    </script>
+
+    
+
+    
+    <meta name="google-adsense-account" content="ca-pub-4627924728297793" />
+
+    
+    <meta name="theme-color" content="#0a0a0a" />
+
+    
+    <meta name="color-scheme" content="only light" />
+
+    
+    <script>
+      (function () {
+        var KEY = "kh-theme";
+        function stored() {
+          var hit = document.cookie.split("; ").find(function (c) {
+            return c.indexOf(KEY + "=") === 0;
+          });
+          var v = hit && hit.slice(KEY.length + 1);
+          if (v === "light" || v === "dark") return v;
+          try {
+            v = localStorage.getItem(KEY);
+          } catch (e) {
+            v = null;
+          }
+          return v === "light" || v === "dark" ? v : null;
+        }
+        var root = document.documentElement;
+        var theme;
+        // /tech ë§ ë¸ëë ë©´ì´ ìëë¤ â dark-trading íë í¸ë¥¼ ì ì ë¡ ê·¸ë ¤ì§ íë©´ì´ë¼ ë¤í¬ ê³ ì .
+        if (location.pathname === "/tech") {
+          theme = "dark";
+        } else {
+          theme =
+            stored() ||
+            (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light");
+          root.setAttribute("data-surface", "heritage");
+        }
+        root.setAttribute("data-theme", theme);
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute("content", theme === "dark" ? "#131313" : "#f9f8f2");
+        var scheme = document.querySelector('meta[name="color-scheme"]');
+        if (scheme) scheme.setAttribute("content", "only " + theme);
+      })();
+    </script>
+
+    
+    <!--seo:server-->
+    <title>Visit Cheonho-dong Rose Village (Seoul, Gangdong-gu) — Map, Photos &amp; Things to Do Nearby | K-Tour</title>
+    <meta name="description" content="Cheonho-dong Rose Village is a place where visitors can see the old neighborhoods of Seoul and the roses that adorn every wall. The small old houses…" />
+    <link rel="canonical" href="https://place.1989v.com/en/attractions/13686" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="K-Tour" />
+    <meta property="og:title" content="Visit Cheonho-dong Rose Village (Seoul, Gangdong-gu) — Map, Photos &amp; Things to Do Nearby | K-Tour" />
+    <meta property="og:description" content="Cheonho-dong Rose Village is a place where visitors can see the old neighborhoods of Seoul and the roses that adorn every wall. The small old houses…" />
+    <meta property="og:url" content="https://place.1989v.com/en/attractions/13686" />
+    <meta property="og:locale" content="en_US" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Visit Cheonho-dong Rose Village (Seoul, Gangdong-gu) — Map, Photos &amp; Things to Do Nearby | K-Tour" />
+    <meta name="twitter:description" content="Cheonho-dong Rose Village is a place where visitors can see the old neighborhoods of Seoul and the roses that adorn every wall. The small old houses…" />
+    <meta property="og:image" content="https://tong.visitkorea.or.kr/cms/resource/14/3076614_image2_1.jpg" />
+    <meta property="og:image:secure_url" content="https://tong.visitkorea.or.kr/cms/resource/14/3076614_image2_1.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Cheonho-dong Rose Village" />
+    <meta name="twitter:image" content="https://tong.visitkorea.or.kr/cms/resource/14/3076614_image2_1.jpg" />
+    <meta name="twitter:image:alt" content="Cheonho-dong Rose Village" />
+    <link rel="alternate" type="application/rss+xml" title="K-Tour — Recently Updated Attractions" href="https://place.1989v.com/en/feed.xml" data-seo-multi />
+    <script type="application/ld+json" data-seo-multi>{"@context":"https://schema.org","@type":"TouristAttraction","name":"Cheonho-dong Rose Village","description":"Cheonho-dong Rose Village is a place where visitors can see the old neighborhoods of Seoul and the roses that adorn every wall. The small old houses convey the nostalgia of 30 to 40 years ago, and the red and pink roses in full bloom in every house welcome travelers. The street is narrow, but…","url":"https://place.1989v.com/en/attractions/13686","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"K-Tour","url":"https://place.1989v.com"},"alternateName":"천호동 장미마을","image":{"@type":"ImageObject","contentUrl":"https://tong.visitkorea.or.kr/cms/resource/14/3076614_image2_1.jpg","license":"https://www.kogl.or.kr/info/licenseType1.do","creditText":"한국관광공사"},"address":{"@type":"PostalAddress","streetAddress":"Cheonho-dong, Gangdong-gu, Seoul","addressCountry":"KR"},"geo":{"@type":"GeoCoordinates","latitude":37.5403065106,"longitude":127.120830535},"containedInPlace":{"@type":"AdministrativeArea","name":"Gangdong-gu","containedInPlace":{"@type":"AdministrativeArea","name":"Seoul"}},"openingHoursSpecification":{"@type":"OpeningHoursSpecification","dayOfWeek":["https://schema.org/Monday","https://schema.org/Tuesday","https://schema.org/Wednesday","https://schema.org/Thursday","https://schema.org/Friday","https://schema.org/Saturday","https://schema.org/Sunday"]}}</script>
+    <script type="application/ld+json" data-seo-multi>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Explore Korea","item":"https://place.1989v.com/en"},{"@type":"ListItem","position":2,"name":"Seoul","item":"https://place.1989v.com/en/regions/11"},{"@type":"ListItem","position":3,"name":"Gangdong-gu","item":"https://place.1989v.com/en/regions/11740"},{"@type":"ListItem","position":4,"name":"Cheonho-dong Rose Village","item":"https://place.1989v.com/en/attractions/13686"}]}</script>
+    <script type="module" crossorigin src="/assets/index-CYqPQZ7Z.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/jsx-runtime-D-oznMWL.js">
+    <link rel="modulepreload" crossorigin href="/assets/preload-helper-DWTEM3RW.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-DcCgrBX5.js">
+    <link rel="modulepreload" crossorigin href="/assets/useQuery-Ck_Sa3Qn.js">
+    <link rel="modulepreload" crossorigin href="/assets/useMutation-ZbKdggdq.js">
+    <link rel="modulepreload" crossorigin href="/assets/useSeo-D_9uIxBL.js">
+    <link rel="modulepreload" crossorigin href="/assets/purify.es-2MU4SxTA.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-dom-DNNtxExO.js">
+    <link rel="modulepreload" crossorigin href="/assets/tracker-3r4219MP.js">
+    <link rel="modulepreload" crossorigin href="/assets/ServiceExplorer-9f9MNHU9.js">
+    <link rel="modulepreload" crossorigin href="/assets/auth-c5ts2mcW.js">
+    <link rel="modulepreload" crossorigin href="/assets/refresh-BNlEIik8.js">
+    <link rel="modulepreload" crossorigin href="/assets/gameApi-B7eq2LUm.js">
+    <link rel="modulepreload" crossorigin href="/assets/shopApi-Bfte-00h.js">
+    <link rel="modulepreload" crossorigin href="/assets/useAuth-BvXT1tfi.js">
+    <link rel="modulepreload" crossorigin href="/assets/useHeritageSurface-2ggg5XKW.js">
+    <link rel="stylesheet" crossorigin href="/assets/ServiceExplorer-D3NAtV-o.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-BkGIYVfC.css">
+  </head>
+  <body>
+    <script type="application/json" id="attraction-data">{"id":"13686","contentId":"3082350","lang":"en","title":"Cheonho-dong Rose Village","titleLocal":"천호동 장미마을","category":"culture","contentTypeId":"76","areaCode":"1","sidoCode":"11","address":"Cheonho-dong, Gangdong-gu, Seoul","latitude":37.5403065106,"longitude":127.120830535,"imageUrl":"https://tong.visitkorea.or.kr/cms/resource/14/3076614_image2_1.jpg","thumbnailUrl":"https://tong.visitkorea.or.kr/cms/resource/14/3076614_image3_1.jpg","tel":null,"overview":"Cheonho-dong Rose Village is a place where visitors can see the old neighborhoods of Seoul and the roses that adorn every wall. The small old houses convey the nostalgia of 30 to 40 years ago, and the red and pink roses in full bloom in every house welcome travelers. The street is narrow, but thanks to the residents' careful maintenance, it has become a famous rose attraction and photo spot. The rose season peak from May to June, forming a tunnel of roses. There is also mural that recreates a scene from the novel “The Little Prince,” giving the area a poignant atmosphere. Rose Village is located about 250 meters from Cheonho Station (Seoul Subway Line 5), Exit 1. Visitors are advised to be respectful and to keep the noise level down while touring the area as it is a residential village.","useTime":"Open 24/7","restDate":"N/A (Open all year round)","useFee":null,"parking":"Not available","parkingFee":null,"infoCenter":"Gangdong-gu Office +82-2-3425-5250","introRaw":"{\"parking\": \"Not available\", \"usetime\": \"Open 24/7\", \"expguide\": \"\", \"opendate\": \"\", \"restdate\": \"N/A (Open all year round)\", \"contentid\": \"3082350\", \"heritage1\": \"0\", \"useseason\": \"\", \"accomcount\": \"\", \"infocenter\": \"Gangdong-gu Office +82-2-3425-5250\", \"expagerange\": \"\", \"contenttypeid\": \"76\"}","imagesRaw":"[{\"imgname\": \"천호동 장미마을 (3)\", \"contentid\": \"3082350\", \"serialnum\": \"3076613_1\", \"cpyrhtDivCd\": \"Type1\", \"originimgurl\": \"https://tong.visitkorea.or.kr/cms/resource/13/3076613_image2_1.jpg\", \"smallimageurl\": \"https://tong.visitkorea.or.kr/cms/resource/13/3076613_image2_1.jpg\"}]","infoRaw":null,"sidoName":"Seoul","links":"{\"collected\":[],\"deepLinks\":[{\"provider\":\"INSTAGRAM\",\"kind\":\"SOCIAL\",\"url\":\"https://www.instagram.com/explore/tags/cheonhodongrosevillage/\",\"revenueType\":\"PLAIN\"},{\"provider\":\"YOUTUBE\",\"kind\":\"SOCIAL\",\"url\":\"https://www.youtube.com/results?search_query=Cheonho-dong+Rose+Village\",\"revenueType\":\"PLAIN\"},{\"provider\":\"MYREALTRIP\",\"kind\":\"TOUR_PRODUCT\",\"url\":\"https://www.myrealtrip.com/search?q=Cheonho-dong+Rose+Village\",\"revenueType\":\"PLAIN\"},{\"provider\":\"KLOOK\",\"kind\":\"TOUR_PRODUCT\",\"url\":\"https://www.klook.com/search/?query=Cheonho-dong+Rose+Village\",\"revenueType\":\"PLAIN\"}]}","camping":null,"googlePlaceId":"ChIJA2tiaaylfDURgIPLwMuN1wU","distanceKm":null,"position":0,"modifiedAt":"2026-06-23T11:37:49","contentUpdatedAt":null,"source":"TOURAPI","copyrightDivCd":"Type1","feeText":null,"petAcmpyType":null,"closureState":"ALWAYS_OPEN","closedWeekdays":null,"attrParking":"NO","attrCreditCard":"UNKNOWN","attrStrollerRental":"UNKNOWN","petPolicy":"UNKNOWN","attrAdmission":"UNKNOWN","sigunguName":"Gangdong-gu","region":{"ldongSignguCd":"740","sigunguName":"Gangdong-gu","typeCount":5,"categoryCount":1,"categoryName":"Village Tourism Siteas","sameCategoryNearby":[]},"similarElsewhere":[{"id":"14769","title":"Changwon Rose Garden","sidoName":"Gyeongsangnam-do","eventEndEffective":null},{"id":"1938","title":"Suwon Jidong Mural Village","sidoName":"Gyeonggi-do","eventEndEffective":null},{"id":"14807","title":"Seogwipo Gasiri Village (Noksan-ro Canola Flower Road) (서귀포 가시리마을 (녹산로 유채꽃도로))","sidoName":"Jeju-do","eventEndEffective":null},{"id":"14728","title":"Munhak Rose Park","sidoName":"Incheon","eventEndEffective":null},{"id":"14542","title":"Samcheok Maengbang Yuchaekkot Village","sidoName":"Gangwon-do","eventEndEffective":null}],"uniqueClickers14d":0,"savedCount":null,"signalsAsOf":"2026-10-18","eventStart":null,"eventEnd":null,"courseStops":null,"barrierFree":null,"barrierFreeDetail":null,"wellnessTheme":null,"wellnessThemeName":null,"congestion":null,"relatedPlaces":null,"samePlace":null,"access":{"stops":[{"kind":"RAIL","rank":1,"name":"천호(풍납토성)","nameEn":"Cheonho (Pungnaptoseong)","lines":"5·8호선","distanceM":307,"baseDate":"2024-12-31"},{"kind":"RAIL","rank":2,"name":"강동구청","nameEn":"Gangdong-gu Office","lines":"8호선","distanceM":1108,"baseDate":"2024-12-31"},{"kind":"BUS","rank":1,"name":"풍납토성.천호역10번출구","nameEn":null,"lines":null,"distanceM":154,"baseDate":"2025-10-31"},{"kind":"BUS","rank":2,"name":"천호역1번출구.문구거리","nameEn":null,"lines":null,"distanceM":167,"baseDate":"2025-10-31"}],"busCovered":true},"alternateId":null,"shortUrl":"https://1989v.com/p/HoQ1OnL"}</script><div id="root"><div style="max-width:1080px;margin:0 auto;padding:32px 20px;color:#dce4f5;font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif"><main><nav><a href="/en">Explore Korea</a> › <a href="/en/regions/11">Seoul</a> › <a href="/en/regions/11740">Gangdong-gu</a></nav><h1>Cheonho-dong Rose Village</h1><p>천호동 장미마을</p><p>Culture · Cheonho-dong, Gangdong-gu, Seoul</p><p data-place-section="actions"><a href="tel:+82234255250">Gangdong-gu Office +82-2-3425-5250</a></p><section data-place-section="access"><h2>Nearby stations and stops</h2><ul><li>Cheonho (Pungnaptoseong) (Line 5·8) · straight-line 307m</li><li>Gangdong-gu Office (Line 8) · straight-line 1.1km</li><li>Bus stop 풍납토성.천호역10번출구 · straight-line 154m</li><li>Bus stop 천호역1번출구.문구거리 · straight-line 167m</li></ul><p data-access="note">Straight-line distance; the actual walk is longer · Data as of 2025-10-31</p><p data-access="source">Source: Korea National Railway urban rail station information · Ministry of Land, Infrastructure and Transport nationwide bus stop locations</p></section><dl data-place-section="visit-summary"><dt>Admission</dt><dd>Not provided</dd><dt>Hours</dt><dd>Open 24/7</dd><dt>Closed</dt><dd>Open every day
+N/A (Open all year round)</dd><dt>Parking</dt><dd>No parking
+Not available</dd><dt>Pets</dt><dd>Not provided</dd><dt>Accessibility</dt><dd>Not provided</dd><dt>Data status</dt><dd>Source: Korea Tourism Organization TourAPI · Source updated: 2026-06-23 · Collected: Not provided</dd></dl><p>Cheonho-dong Rose Village is a place where visitors can see the old neighborhoods of Seoul and the roses that adorn every wall. The small old houses convey the nostalgia of 30 to 40 years ago, and the red and pink roses in full bloom in every house welcome travelers. The street is narrow, but thanks to the residents' careful maintenance, it has become a famous rose attraction and photo spot. The rose season peak from May to June, forming a tunnel of roses. There is also mural that recreates a scene from the novel “The Little Prince,” giving the area a poignant atmosphere. Rose Village is located about 250 meters from Cheonho Station (Seoul Subway Line 5), Exit 1. Visitors are advised to be respectful and to keep the noise level down while touring the area as it is a residential village.</p><img src="https://tong.visitkorea.or.kr/cms/resource/14/3076614_image2_1.jpg" alt="Cheonho-dong Rose Village"><h2>In the area</h2><p>Village Tourism Siteas 1 of 5 attractions in Gangdong-gu</p><p><a href="/en/regions/11740">Explore Gangdong-gu</a></p><h2>Similar places in other regions</h2><ul><li><a href="/en/attractions/14769">Changwon Rose Garden</a> · Gyeongsangnam-do</li><li><a href="/en/attractions/1938">Suwon Jidong Mural Village</a> · Gyeonggi-do</li><li><a href="/en/attractions/14807">Seogwipo Gasiri Village (Noksan-ro Canola Flower Road) (서귀포 가시리마을 (녹산로 유채꽃도로))</a> · Jeju-do</li><li><a href="/en/attractions/14728">Munhak Rose Park</a> · Incheon</li><li><a href="/en/attractions/14542">Samcheok Maengbang Yuchaekkot Village</a> · Gangwon-do</li></ul><p data-place-section="source">Source: Korea Tourism Organization TourAPI</p></main><footer><nav><a href="https://1989v.com">1989v</a> · <a href="https://game.1989v.com">무료 웹게임</a> · <a href="https://place.1989v.com">한국 관광지 검색</a> · <a href="https://blog.1989v.com">블로그</a> · <a href="https://rank.1989v.com">랭킹 리더보드</a> · <a href="https://deal.1989v.com">혜택 링크 허브</a> · <a href="https://1989v.com/privacy">개인정보처리방침</a> · <a href="https://1989v.com/about">사이트 소개</a> · <a href="https://1989v.com/contact">연락처</a> · <a href="https://1989v.com/data-sources">데이터 출처</a></nav></footer></div></div>
+  </body>
+</html>

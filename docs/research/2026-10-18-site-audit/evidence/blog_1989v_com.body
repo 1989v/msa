@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    
+    <script>
+      (function () {
+        var host = location.hostname;
+        // 개발 중 클릭이 실제 리포트에 섞이면 유입 분석이 흐려진다
+        if (host === "localhost" || host === "127.0.0.1") return;
+        if (host.split(".")[0] === "resume") return;
+        if (/^\/shared\//.test(location.pathname) || /%2Fshared%2F/i.test(location.search) || /^[a-z][a-z0-9+.-]*:\/\/[^\/?#]+\/shared\//i.test(document.referrer)) return;
+        var id = "G-5EE8XW7JHN";
+        var tag = document.createElement("script");
+        tag.async = true;
+        tag.src = "https://www.googletagmanager.com/gtag/js?id=" + id;
+        document.head.appendChild(tag);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () {
+          window.dataLayer.push(arguments);
+        };
+        window.gtag("js", new Date());
+        window.gtag("config", id);
+      })();
+    </script>
+
+    
+
+    
+    <meta name="google-adsense-account" content="ca-pub-4627924728297793" />
+
+    
+    <meta name="theme-color" content="#0a0a0a" />
+
+    
+    <meta name="color-scheme" content="only light" />
+
+    
+    <script>
+      (function () {
+        var KEY = "kh-theme";
+        function stored() {
+          var hit = document.cookie.split("; ").find(function (c) {
+            return c.indexOf(KEY + "=") === 0;
+          });
+          var v = hit && hit.slice(KEY.length + 1);
+          if (v === "light" || v === "dark") return v;
+          try {
+            v = localStorage.getItem(KEY);
+          } catch (e) {
+            v = null;
+          }
+          return v === "light" || v === "dark" ? v : null;
+        }
+        var root = document.documentElement;
+        var theme;
+        // /tech 만 브랜드 면이 아니다 — dark-trading 팔레트를 전제로 그려진 화면이라 다크 고정.
+        if (location.pathname === "/tech") {
+          theme = "dark";
+        } else {
+          theme =
+            stored() ||
+            (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light");
+          root.setAttribute("data-surface", "heritage");
+        }
+        root.setAttribute("data-theme", theme);
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute("content", theme === "dark" ? "#131313" : "#f9f8f2");
+        var scheme = document.querySelector('meta[name="color-scheme"]');
+        if (scheme) scheme.setAttribute("content", "only " + theme);
+      })();
+    </script>
+
+    
+    <!--seo:prerendered-->
+    <title>1989v 블로그 — 기술과 일상의 기록</title>
+    <meta name="description" content="서버·검색·데이터부터 취미와 일상까지, 직접 만들고 겪은 것을 기록합니다. 글 15편을 분류별로 모아 봅니다." />
+    <link rel="canonical" href="https://blog.1989v.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="1989v 블로그" />
+    <meta property="og:title" content="1989v 블로그 — 기술과 일상의 기록" />
+    <meta property="og:description" content="서버·검색·데이터부터 취미와 일상까지, 직접 만들고 겪은 것을 기록합니다. 글 15편을 분류별로 모아 봅니다." />
+    <meta property="og:url" content="https://blog.1989v.com/" />
+    <meta property="og:locale" content="ko_KR" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="1989v 블로그 — 기술과 일상의 기록" />
+    <meta name="twitter:description" content="서버·검색·데이터부터 취미와 일상까지, 직접 만들고 겪은 것을 기록합니다. 글 15편을 분류별로 모아 봅니다." />
+    <meta property="og:image" content="https://blog.1989v.com/og/blog.png" />
+    <meta property="og:image:secure_url" content="https://blog.1989v.com/og/blog.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="1989v 블로그" />
+    <meta name="twitter:image" content="https://blog.1989v.com/og/blog.png" />
+    <meta name="twitter:image:alt" content="1989v 블로그" />
+    <script type="module" crossorigin src="/assets/index-CYqPQZ7Z.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/jsx-runtime-D-oznMWL.js">
+    <link rel="modulepreload" crossorigin href="/assets/preload-helper-DWTEM3RW.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-DcCgrBX5.js">
+    <link rel="modulepreload" crossorigin href="/assets/useQuery-Ck_Sa3Qn.js">
+    <link rel="modulepreload" crossorigin href="/assets/useMutation-ZbKdggdq.js">
+    <link rel="modulepreload" crossorigin href="/assets/useSeo-D_9uIxBL.js">
+    <link rel="modulepreload" crossorigin href="/assets/purify.es-2MU4SxTA.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-dom-DNNtxExO.js">
+    <link rel="modulepreload" crossorigin href="/assets/tracker-3r4219MP.js">
+    <link rel="modulepreload" crossorigin href="/assets/ServiceExplorer-9f9MNHU9.js">
+    <link rel="modulepreload" crossorigin href="/assets/auth-c5ts2mcW.js">
+    <link rel="modulepreload" crossorigin href="/assets/refresh-BNlEIik8.js">
+    <link rel="modulepreload" crossorigin href="/assets/gameApi-B7eq2LUm.js">
+    <link rel="modulepreload" crossorigin href="/assets/shopApi-Bfte-00h.js">
+    <link rel="modulepreload" crossorigin href="/assets/useAuth-BvXT1tfi.js">
+    <link rel="modulepreload" crossorigin href="/assets/useHeritageSurface-2ggg5XKW.js">
+    <link rel="stylesheet" crossorigin href="/assets/ServiceExplorer-D3NAtV-o.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-BkGIYVfC.css">
+  </head>
+  <body>
+    <div id="root"><div style="max-width:1080px;margin:0 auto;padding:32px 20px;color:#dce4f5;font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif"><h1>1989v 블로그</h1><p>서버·검색·데이터부터 취미와 일상까지, 직접 만들고 겪은 것을 기록합니다. 글 15편을 분류별로 모아 봅니다.</p><nav><a href="/c/tech">기술</a> · <a href="/c/tech/server">서버</a> · <a href="/c/tech/server/search">검색</a> · <a href="/c/tech/data">데이터</a> · <a href="/c/tech/frontend">프런트엔드</a> · <a href="/c/life">일상</a> · <a href="/c/life/hobby">취미</a> · <a href="/c/life/hobby/game">게임</a> · <a href="/c/life/note">기록</a> · <a href="/c/harness">AI 하네스</a></nav><ul><li><a href="/posts/claude-code-codex-weekly-limit-menubar-muxbar">Claude Code · Codex 주간 남은 한도를 macOS 메뉴바에 띄우기 — tmux 메뉴바 앱 muxbar</a></li><li><a href="/posts/claude-code-mods-session-artifact-links">Claude Code 세션에서 만든 아티팩트 링크를 입력창 위에 고정하기 — Mods 플러그인 session-artifacts</a></li><li><a href="/posts/opensearch-knn-lucene-vs-faiss-memory">OpenSearch 벡터 검색 엔진 lucene vs faiss — 메모리가 모자랄 때 느려지나, 밀려나나</a></li><li><a href="/posts/opensearch-parent-join-has-child">Elasticsearch · OpenSearch parent-join 실전 — has_child 쿼리, 자식 값 정렬, nested 와 비교</a></li><li><a href="/posts/nori-user-dictionary-three-custom-layers">Elasticsearch nori 사용자 사전으로 되는 것과 안 되는 것 — 시스템 사전 · 비용 재학습까지, 한국어 형태소 분석기 커스텀의 세 층</a></li><li><a href="/posts/search-system-concept-map">검색 시스템 개념 지도 — 역색인 · 쿼리 언더스탠딩 · BM25 · 덴스 벡터 · RRF · nDCG</a></li><li><a href="/posts/opensearch-cluster-sizing-prompt">OpenSearch 클러스터 사이징 프롬프트 — AI 에 샤드 · 노드 수 산정을 시킬 때 주는 입력과 금지 규칙</a></li><li><a href="/posts/search-cluster-capacity-sizing">Elasticsearch · OpenSearch 클러스터 사이징 — 검색 클러스터 리소스는 무엇으로 정해지는가</a></li><li><a href="/posts/search-architecture-keyword-layers">검색 시스템 아키텍처를 키워드 계층으로 읽기 — 인제스트 · 쿼리 · 평가 세 축</a></li><li><a href="/posts/elasticsearch-opensearch-diagnosis-playbook">Elasticsearch · OpenSearch 진단 플레이북 — 검색 품질은 _analyze, 샤드 장애는 _cluster/health 부터</a></li><li><a href="/posts/opensearch-hybrid-query-understanding">OpenSearch 하이브리드 검색에 쿼리 언더스탠딩 붙이기 — nori 가 쪼갠 조각이 순위를 먹을 때</a></li><li><a href="/posts/self-hosted-model-loading-path-risk">모델을 내 서버에 올릴 때 실제로 위험한 것</a></li><li><a href="/posts/jvm-native-memory-glibc-malloc-arena">힙은 정상인데 컨테이너가 OOMKilled 될 때 — JVM 네이티브 메모리 누수와 MALLOC_ARENA_MAX</a></li><li><a href="/posts/fencesvg-markdown-diagrams">mermaid 없이 마크다운 다이어그램 그리기 — 사이트 디자인 톤을 따라가는 인라인 SVG (fencesvg)</a></li><li><a href="/posts/claude-code-session-timestamp-and-usage">Claude Code statusLine 으로 사용량·컨텍스트·시각 상시 표시하기 — showMessageTimestamps 가 안 켜지는 이유</a></li></ul><footer><nav><a href="https://1989v.com">1989v</a> · <a href="https://game.1989v.com">무료 웹게임</a> · <a href="https://place.1989v.com">한국 관광지 검색</a> · <a href="https://blog.1989v.com">블로그</a> · <a href="https://rank.1989v.com">랭킹 리더보드</a> · <a href="https://deal.1989v.com">혜택 링크 허브</a> · <a href="https://1989v.com/privacy">개인정보처리방침</a> · <a href="https://1989v.com/about">사이트 소개</a> · <a href="https://1989v.com/contact">연락처</a> · <a href="https://1989v.com/data-sources">데이터 출처</a></nav></footer></div></div>
+  </body>
+</html>

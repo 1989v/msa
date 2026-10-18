@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    
+    <script>
+      (function () {
+        var host = location.hostname;
+        // 개발 중 클릭이 실제 리포트에 섞이면 유입 분석이 흐려진다
+        if (host === "localhost" || host === "127.0.0.1") return;
+        if (host.split(".")[0] === "resume") return;
+        if (/^\/shared\//.test(location.pathname) || /%2Fshared%2F/i.test(location.search) || /^[a-z][a-z0-9+.-]*:\/\/[^\/?#]+\/shared\//i.test(document.referrer)) return;
+        var id = "G-5EE8XW7JHN";
+        var tag = document.createElement("script");
+        tag.async = true;
+        tag.src = "https://www.googletagmanager.com/gtag/js?id=" + id;
+        document.head.appendChild(tag);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () {
+          window.dataLayer.push(arguments);
+        };
+        window.gtag("js", new Date());
+        window.gtag("config", id);
+      })();
+    </script>
+
+    
+
+    
+    <meta name="google-adsense-account" content="ca-pub-4627924728297793" />
+
+    
+    <meta name="theme-color" content="#0a0a0a" />
+
+    
+    <meta name="color-scheme" content="only light" />
+
+    
+    <script>
+      (function () {
+        var KEY = "kh-theme";
+        function stored() {
+          var hit = document.cookie.split("; ").find(function (c) {
+            return c.indexOf(KEY + "=") === 0;
+          });
+          var v = hit && hit.slice(KEY.length + 1);
+          if (v === "light" || v === "dark") return v;
+          try {
+            v = localStorage.getItem(KEY);
+          } catch (e) {
+            v = null;
+          }
+          return v === "light" || v === "dark" ? v : null;
+        }
+        var root = document.documentElement;
+        var theme;
+        // /tech 만 브랜드 면이 아니다 — dark-trading 팔레트를 전제로 그려진 화면이라 다크 고정.
+        if (location.pathname === "/tech") {
+          theme = "dark";
+        } else {
+          theme =
+            stored() ||
+            (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light");
+          root.setAttribute("data-surface", "heritage");
+        }
+        root.setAttribute("data-theme", theme);
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute("content", theme === "dark" ? "#131313" : "#f9f8f2");
+        var scheme = document.querySelector('meta[name="color-scheme"]');
+        if (scheme) scheme.setAttribute("content", "only " + theme);
+      })();
+    </script>
+
+    
+    <!--seo:prerendered-->
+    <title>모든 혜택 — 1989v</title>
+    <meta name="description" content="여행 · 커머스 · 디지털구독 · 교육 · 생활 카테고리의 혜택 링크를 한곳에 모았습니다. 쿠폰·적립·신규가입 프로모션을 이름·제공처로 검색하세요." />
+    <link rel="canonical" href="https://deal.1989v.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="1989v 혜택" />
+    <meta property="og:title" content="모든 혜택 — 1989v" />
+    <meta property="og:description" content="여행 · 커머스 · 디지털구독 · 교육 · 생활 카테고리의 혜택 링크를 한곳에 모았습니다. 쿠폰·적립·신규가입 프로모션을 이름·제공처로 검색하세요." />
+    <meta property="og:url" content="https://deal.1989v.com/" />
+    <meta property="og:locale" content="ko_KR" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="모든 혜택 — 1989v" />
+    <meta name="twitter:description" content="여행 · 커머스 · 디지털구독 · 교육 · 생활 카테고리의 혜택 링크를 한곳에 모았습니다. 쿠폰·적립·신규가입 프로모션을 이름·제공처로 검색하세요." />
+    <meta property="og:image" content="https://deal.1989v.com/og/deal.png" />
+    <meta property="og:image:secure_url" content="https://deal.1989v.com/og/deal.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="모든 혜택" />
+    <meta name="twitter:image" content="https://deal.1989v.com/og/deal.png" />
+    <meta name="twitter:image:alt" content="모든 혜택" />
+    <script type="application/ld+json" data-seo-multi>{"@context":"https://schema.org","@type":"CollectionPage","name":"모든 혜택 — 1989v","description":"여행 · 커머스 · 디지털구독 · 교육 · 생활 카테고리의 혜택 링크를 한곳에 모았습니다. 쿠폰·적립·신규가입 프로모션을 이름·제공처로 검색하세요.","url":"https://deal.1989v.com/","inLanguage":"ko","isPartOf":{"@type":"WebSite","name":"1989v 혜택","url":"https://deal.1989v.com"}}</script>
+    <script type="application/ld+json" data-seo-multi>{"@context":"https://schema.org","@type":"WebSite","name":"1989v 혜택","url":"https://deal.1989v.com","inLanguage":"ko"}</script>
+    <script type="module" crossorigin src="/assets/index-CYqPQZ7Z.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/jsx-runtime-D-oznMWL.js">
+    <link rel="modulepreload" crossorigin href="/assets/preload-helper-DWTEM3RW.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-DcCgrBX5.js">
+    <link rel="modulepreload" crossorigin href="/assets/useQuery-Ck_Sa3Qn.js">
+    <link rel="modulepreload" crossorigin href="/assets/useMutation-ZbKdggdq.js">
+    <link rel="modulepreload" crossorigin href="/assets/useSeo-D_9uIxBL.js">
+    <link rel="modulepreload" crossorigin href="/assets/purify.es-2MU4SxTA.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-dom-DNNtxExO.js">
+    <link rel="modulepreload" crossorigin href="/assets/tracker-3r4219MP.js">
+    <link rel="modulepreload" crossorigin href="/assets/ServiceExplorer-9f9MNHU9.js">
+    <link rel="modulepreload" crossorigin href="/assets/auth-c5ts2mcW.js">
+    <link rel="modulepreload" crossorigin href="/assets/refresh-BNlEIik8.js">
+    <link rel="modulepreload" crossorigin href="/assets/gameApi-B7eq2LUm.js">
+    <link rel="modulepreload" crossorigin href="/assets/shopApi-Bfte-00h.js">
+    <link rel="modulepreload" crossorigin href="/assets/useAuth-BvXT1tfi.js">
+    <link rel="modulepreload" crossorigin href="/assets/useHeritageSurface-2ggg5XKW.js">
+    <link rel="stylesheet" crossorigin href="/assets/ServiceExplorer-D3NAtV-o.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-BkGIYVfC.css">
+  </head>
+  <body>
+    <div id="root"><div style="max-width:1080px;margin:0 auto;padding:32px 20px;color:#dce4f5;font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif"><h1>모든 혜택</h1><p>여행 · 커머스 · 디지털구독 · 교육 · 생활 카테고리의 혜택 링크를 한곳에 모았습니다. 쿠폰·적립·신규가입 프로모션을 이름·제공처로 검색하세요.</p><h2>여행</h2><ul><li>마이리얼트립 · 기획전 · 특가 · 진행 중인 여행 혜택 모음 항공·숙소·투어 기획전과 쿠폰을 한곳에 모아 보여주는 상시 페이지입니다.</li><li>여기어때 · 쿠폰팩 · 특가 · 숙소·항공 이벤트 전체보기 국내 숙소 쿠폰팩부터 해외여행 특가까지 진행 중인 이벤트 목록입니다.</li><li>야놀자 NOL · 숙소 · 투어 특가 · 할인 특가 모음 국내 숙소, 해외 패키지, 티켓 특가를 묶어 보여주는 상시 페이지입니다.</li><li>클룩 · 단독 쿠폰코드 · 프로모션 · 쿠폰코드 액티비티·티켓·eSIM 등에 쓰는 클룩 단독 쿠폰코드와 할인 모음입니다.</li></ul><h2>커머스</h2><ul><li>11번가 · 한정 수량 특가 · 타임딜 · 핫딜 시간 한정 타임딜과 카드 즉시할인·포인트 적립이 붙는 핫딜 목록입니다.</li><li>SSG.COM · 카드 즉시할인 · 쿠폰 · 이벤트 · 쿠폰 카드사 즉시·청구할인, 멤버십 특전, 구매사은 이벤트를 모아둔 페이지입니다.</li><li>삼성카드 · 링크하면 자동 할인 · LINK 자동 할인 카드에 혜택을 미리 링크해두면 해당 가맹점에서 결제할 때 자동으로 할인이 적용되는 상시 서비스입니다.</li></ul><h2>생활·통신</h2><ul><li>배달의민족 · 배달팁 무료 · 배민클럽 · B마트 혜택 배민클럽 배달팁 무료, B마트 초신속 배달, 배민페이 적립 등 상시 혜택 안내입니다.</li><li>쿠팡이츠 · 무료배달 · 와우회원 무료배달 쿠팡 와우 멤버십 회원에게 적용되는 쿠팡이츠 무료배달 혜택 안내입니다.</li></ul><footer><nav><a href="https://1989v.com">1989v</a> · <a href="https://game.1989v.com">무료 웹게임</a> · <a href="https://place.1989v.com">한국 관광지 검색</a> · <a href="https://blog.1989v.com">블로그</a> · <a href="https://rank.1989v.com">랭킹 리더보드</a> · <a href="https://deal.1989v.com">혜택 링크 허브</a> · <a href="https://1989v.com/privacy">개인정보처리방침</a> · <a href="https://1989v.com/about">사이트 소개</a> · <a href="https://1989v.com/contact">연락처</a> · <a href="https://1989v.com/data-sources">데이터 출처</a></nav></footer></div></div>
+  </body>
+</html>
