@@ -3,7 +3,7 @@
 대형 웹게임 포털 모델의 게임 플랫폼 — 게임 카탈로그(태그/큐레이션/평점) + 플레이 세션.
 광고는 ads 서비스가 갖는다 — game 의 HOUSE 배너·보상형 광고 코드와 표(`ad_placement`·`ad_policy`·`reward_grant`)는
 그쪽으로 흡수된 뒤 제거됐다(V94, ADR-0098).
-신규 JVM 없이 **`code-dictionary:app` 에 폴드**된 모듈러 모놀리스 라이브러리다 (ADR-0059, ADR-0058 컨벤션).
+신규 JVM 없이 **`content:app` 에 폴드**된 모듈러 모놀리스 라이브러리다 (ADR-0093 — 처음엔 `code-dictionary:app` 에 붙었다가 2026-09 에 옮겨 갔다, ADR-0059·ADR-0058 컨벤션).
 
 ## 게임 계정 닉네임 (ADR-0102, 2026-09-27)
 
@@ -43,7 +43,7 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
 ./gradlew :game:domain:test              # 도메인 테스트 (Spring context 없음)
 ./gradlew :game:feature:test             # 서비스 단위(MockK) + 스키마 통합(Testcontainers MySQL)
 ./gradlew :game:feature:build            # feature 라이브러리 빌드
-./gradlew :code-dictionary:app:build     # 호스트 앱 빌드 (game 포함)
+./gradlew :content:app:build             # 호스트 앱 빌드 (game 포함)
 ```
 
 > `GameSchemaIntegrationSpec` 은 실제 MySQL 로 Flyway 적용 + `ddl-auto=validate` 매핑 검증 +
@@ -51,15 +51,15 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
 
 ## Architecture (ADR-0059)
 
-- 배치: `game:feature` → `code-dictionary:app` 마운트. 재분리는 ADR-0058 체크리스트 4단계 (feature·DB·토픽 무변경)
+- 배치: `game:feature` → `content:app` 마운트(파드 `content`, place·blog·ranking 과 한 JVM). `game_db` 스키마는 옮기지 않아 code-dictionary MySQL 인스턴스에 그대로 있다. 재분리는 ADR-0058 체크리스트 4단계 (feature·DB·토픽 무변경)
 - 영속성: MySQL `game_db` 스키마 격리 + **전용 Flyway** (`ScopedFlywayMigrator`(common), `classpath:gamedb/migration` — 호스트 기본 Flyway 의 `db/migration` 재귀 스캔과 충돌 방지). 토글은 `game.flyway.enabled`, EMF 는 `@DependsOn("gameFlyway")` 로 마이그레이션 선행을 보장
-- 트랜잭션: `@Transactional(transactionManager = "gameTransactionManager")` 필수 (기본 TM 은 code-dictionary 소유)
-- Querydsl: `@Qualifier("gameJpaQueryFactory")` (기본 `jpaQueryFactory` 는 code-dictionary EMF 바인딩)
+- 트랜잭션: `@Transactional(transactionManager = "gameTransactionManager")` 필수 (기본 TM 은 `@Primary` 인 place 소유)
+- Querydsl: `@Qualifier("gameJpaQueryFactory")` (기본 `jpaQueryFactory` 는 place EMF 바인딩)
 - Kafka: `game.session.started` / `game.session.ended` 발행 (수신: analytics, fire-and-forget). 발행은 트랜잭션 밖 (GamePlayService 파사드 / GamePlayCommand 분리)
 - FE: portal-fe `/games/*` lazy route. 게임은 전부 IFRAME 으로 entry_url 임베드 — INTERNAL_ROUTE 매핑(`internalGames.ts`)은 남아 있지만 등록된 게임이 없다 (V76 에서 퀴즈 4종 제거)
 - SEO (ADR-0062): 게임 페이지는 `portal-fe/scripts/prerender-seo.mjs` 가 빌드 후 공개 카탈로그 API 를 읽어 정적 HTML·sitemap 을 찍는다. **어드민으로 게임을 추가해도 portal-fe 재배포 전까지 프리렌더에 안 잡힌다.** `title_en`/`description_en`/래스터 썸네일(`thumbs/shots/*.png`)이 비면 영문 색인·소셜 카드가 비어버리므로 시드에서 채울 것.
   **문구를 고치는 마이그레이션과 FE 를 같은 푸시로 올리면 그 FE 는 옛 문구를 담은 채로 굳는다** — 프리렌더가 읽는 것은
-  빌드 시점의 운영 API 인데, 그때 마이그레이션은 아직 배포 중이다(두 이미지가 같이 굽히고 code-dictionary 가 나중에 뜬다).
+  빌드 시점의 운영 API 인데, 그때 마이그레이션은 아직 배포 중이다(두 이미지가 같이 굽히고 content 가 나중에 뜬다).
   실제로 2026-09-05 인피니티 스탭 재테마에서 API 는 새 설명, 페이지 meta 는 옛 설명이 됐다. **마이그레이션이 적용된 것을
   확인한 뒤 portal-fe 를 한 번 더 굽는다**
 - **`released_at` 은 노출 시점이고, 노출 상태(BETA·PUBLISHED)면 비어 있을 수 없다.** 홈의 「새로 나온
@@ -156,8 +156,9 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
   방 코드 sticky routing 또는 Redis pub/sub 을 넣는다 (지금 넣으면 구독자가 자기 자신뿐)
 - 다른 게임 온라인화: 서버 변경 0 — 클라이언트가 `/ws/games/<slug>` 로 붙어 `d` 스키마만 정하면 된다
 
-> CI 주의: game 모듈 변경은 `code-dictionary` 이미지 리빌드로 이어져야 한다 —
-> `.github/workflows/images.yml` 의 `game/*` 경로 매핑 (ADR-0059 폴드).
+> CI 주의: game 모듈 변경은 `content` 이미지 리빌드로 이어진다 — 경로 → 파드 매핑은
+> `scripts/ci/topology.sh`(생성물, `./gradlew generateTopology`)가 원본이다. images 를 손으로 다시
+> 돌릴 때 `services=` 에 넣을 키도 `content` 다(`code-dictionary` 는 `알 수 없는 서비스` 로 실패한다).
 
 ## 비밀 게임 (ADR-0089)
 
@@ -188,8 +189,8 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
 
 `GAME_HMAC_SECRET` (Secret `game-hmac`, 키 `secret`). **없으면 파드가 뜨지 않는다** — 아케이드
 세션 토큰의 서명 키다. 전에는 공개 레포에 적힌 기본값으로 폴백했는데, 그러면 서명을 누구나 만들 수
-있어 **검사가 도는 채로 아무것도 막지 않는다**(ADR-0092). 호스트가 `code-dictionary` 라
-이 Secret 이 없으면 blog·ranking·deal 도 함께 안 뜬다 — **파드를 올리기 전에 만든다.**
+있어 **검사가 도는 채로 아무것도 막지 않는다**(ADR-0092). 호스트가 `content` 라
+이 Secret 이 없으면 place·blog·ranking 도 함께 안 뜬다 — **파드를 올리기 전에 만든다.**
 
 ```bash
 kubectl -n commerce create secret generic game-hmac \
@@ -274,7 +275,7 @@ kubectl -n commerce create secret generic game-hmac \
   72 를 만나면 validate 가 막는다. **커밋했다고 적용된 것이 아니다**: 2026-09-03 에 V72(인피니티
   스탭)가 커밋만 되고 이미지가 안 구워진 사이 V73(마지막 한 사람)이 먼저 배포돼, V72 는 영영
   적용될 수 없는 상태가 됐다(V74 로 옮겨 풀었다). **배포 확인은 `flyway_schema_history` 조회까지다**
-  — 게임 파일(portal-fe)이 떠 있어도 시드(code-dictionary)는 안 갔을 수 있다. 둘은 다른 이미지다
+  — 게임 파일(portal-fe)이 떠 있어도 시드(content)는 안 갔을 수 있다. 둘은 다른 이미지다
 - **`DECIDER`(순서 정하기) 장르는 분류가 아니라 기능이다.** 허브의 「랜덤으로 돌리기」가
   `GET /api/v1/games?genre=DECIDER` 로 뽑기 대상을 만들기 때문에, 이 장르로 등록하면 새 게임이
   **코드 수정 없이** 뽑기에 들어간다. 대신 등록 전에 둘을 지켜야 한다 — ① `lib/party.js` 인계를
