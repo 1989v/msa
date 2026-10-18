@@ -66,15 +66,18 @@ function registerAuthFailure(callback: () => void) {
 const PIN_BOX = 44;
 /** 정보 창에 이름을 늘어놓는 상한. 더 많으면 목록으로 보낸다. */
 const INFO_LIMIT = 3;
-/** Info window body: up to three shops with a detail button each, then a "N more · show list" button. Text only — merchants write the names. */
-function infoContent(stores: MarketStore[], lang: 'ko' | 'en', on: { close: () => void; open: (id: number) => void; list: () => void }): HTMLElement {
+/** Info window body: up to three shops (list order, with their list numbers) with a detail button each, then a "N more · show list" button. Text only — merchants write the names. */
+function infoContent(stores: MarketStore[], numbers: ReadonlyMap<number, number> | undefined, lang: 'ko' | 'en', on: { close: () => void; open: (id: number) => void; list: () => void }): HTMLElement {
   const en = lang === 'en';
   const root = document.createElement('div'); root.className = 'place-market-naver-info'; root.setAttribute('role', 'dialog'); root.setAttribute('aria-label', en ? 'Selected shops' : '선택한 가게');
   const close = document.createElement('button'); close.type = 'button'; close.className = 'place-market-naver-info-close'; close.setAttribute('aria-label', en ? 'Close' : '닫기'); close.textContent = '×'; close.onclick = on.close; root.appendChild(close);
   for (const store of stores.slice(0, INFO_LIMIT)) {
     const name = marketDisplayName(store, lang);
     const row = document.createElement('div'); row.className = 'place-market-naver-info-row';
-    const title = document.createElement('strong'); title.textContent = name; row.appendChild(title);
+    const title = document.createElement('strong');
+    const number = store.id == null ? undefined : numbers?.get(store.id);
+    if (number != null) { const badge = document.createElement('span'); badge.className = 'market-list-no'; badge.textContent = String(number); title.appendChild(badge); }
+    title.appendChild(document.createTextNode(name)); row.appendChild(title);
     const type = MARKET_STORE_TYPES.find((candidate) => candidate.key === marketStoreType(store));
     const meta = document.createElement('p'); meta.textContent = [type?.[lang], store.roadAddress || store.jibunAddress].filter(Boolean).join(' · '); row.appendChild(meta);
     if (store.id != null) { const id = store.id; const detail = document.createElement('button'); detail.type = 'button'; detail.textContent = en ? 'Details' : '상세보기'; detail.setAttribute('aria-label', `${en ? 'Details' : '상세보기'}: ${name}`); detail.onclick = () => on.open(id); row.appendChild(detail); }
@@ -148,13 +151,26 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
     const remove = (entry: { object: any; listener?: any }) => { if (entry.listener != null) sdk.Event.removeListener(entry.listener); entry.object.setMap(null); };
     // 핀 클릭·목록 포커스 때 핀 자리에 간단 정보. 위치 기준으로 열어 핀이 다시 그려져도 남고, 지도 빈 곳·×·선택 해제로 닫힌다.
     const info = interactive && sdk.InfoWindow ? new sdk.InfoWindow({ content: document.createElement('div'), borderWidth: 0, backgroundColor: 'transparent', disableAnchor: true, pixelOffset: { x: 0, y: -(PIN_BOX / 2 + 4) } }) : null;
+    // 열린 창의 가게들과 그때 쓴 번호 Map. 번호는 클릭 뒤 페이지가 다시 그릴 때 오므로, Map 이 바뀌면 같은 창을 목록 순서·번호로 다시 채운다.
+    let shown: { storeIds: (number | null)[]; at: { latitude: number; longitude: number } } | null = null; let shownNumbers: ReadonlyMap<number, number> | undefined;
+    const fillInfo = () => {
+      if (!info || !shown) return false;
+      const current = latest.current; const numbers = current.selection?.numbers;
+      const stores = shown.storeIds.flatMap((id) => { const store = current.data.stores.find((s) => s.id === id); return store ? [store] : []; });
+      if (!stores.length) return false;
+      const rank = (store: MarketStore) => (store.id == null ? undefined : numbers?.get(store.id)) ?? Number.MAX_SAFE_INTEGER;
+      shownNumbers = numbers;
+      info.setContent(infoContent([...stores].sort((a, b) => rank(a) - rank(b)), numbers, current.lang, { close: () => info.close(), open: (id) => latest.current.onOpenStore?.(id), list: () => latest.current.onShowList?.() }));
+      return true;
+    };
     const openInfo = (storeIds: (number | null)[], at: { latitude: number; longitude: number }) => {
       if (!info) return;
-      const current = latest.current;
-      const stores = storeIds.flatMap((id) => { const store = current.data.stores.find((s) => s.id === id); return store ? [store] : []; });
-      if (!stores.length) return;
-      info.setContent(infoContent(stores, current.lang, { close: () => info.close(), open: (id) => latest.current.onOpenStore?.(id), list: () => latest.current.onShowList?.() }));
+      shown = { storeIds, at };
+      if (!fillInfo()) { shown = null; return; }
       info.open(map, coord(at));
+      // 창이 지도 위로 넘치면 그만큼 지도를 내린다(네이버 InfoWindow 는 스스로 비켜 주지 않는다).
+      const point = map.getProjection?.()?.fromCoordToOffset?.(coord(at)); const content = info.getContent?.() as HTMLElement | undefined;
+      if (point && content) { const overflow = content.offsetHeight + PIN_BOX / 2 + 16 - point.y; if (overflow > 0) map.panBy?.(sdk.Point ? new sdk.Point(0, -overflow) : { x: 0, y: -overflow }); }
     };
     const mapClick = info ? sdk.Event.addListener(map, 'click', () => info.close()) : undefined;
     redraw.current = (reportViewport = false) => {
@@ -164,7 +180,8 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
       const zoom = Math.round(map.getZoom?.() ?? initialZoom);
       const model = buildMarketOverlay({ ...input, zoom, bounds: frame });
       if (interactive && reportViewport && frame) input.onViewportChange?.({ bounds: frame, zoom });
-      if (!input.selection?.selectedKey) info?.close();
+      if (!input.selection?.selectedKey) { info?.close(); shown = null; }
+      else if (shown && info?.getMap?.() && input.selection.numbers !== shownNumbers) fillInfo();
       const wanted = new Set<string>();
       const sync = (key: string, value: unknown, create: () => any, click?: () => void) => {
         wanted.add(key); const signature = JSON.stringify(value); const old = overlays.get(key);

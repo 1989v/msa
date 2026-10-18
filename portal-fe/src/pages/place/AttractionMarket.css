@@ -130,10 +130,12 @@
 .place-market-naver-info button { font: inherit; min-height: 2rem; padding: 0 var(--ko-space-2); background: var(--ko-surface-1); color: var(--ko-accent-text); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius); cursor: pointer; }
 .place-market-naver-info button:focus-visible { outline: var(--ko-focus-ring); outline-offset: 2px; }
 .place-market-naver-info-close { position: absolute; top: var(--ko-space-1); right: var(--ko-space-1); width: 2rem; color: var(--ko-text-secondary); background: transparent !important; border-color: transparent !important; }
-.place-market-naver-info-row { padding-block: var(--ko-space-2); padding-inline-end: 2rem; }
+.place-market-naver-info-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--ko-space-2); align-items: center; padding-block: var(--ko-space-2); }
+.place-market-naver-info-row:first-of-type { padding-inline-end: 1.75rem; }
 .place-market-naver-info-row + .place-market-naver-info-row { border-top: 1px solid var(--ko-border-subtle); }
-.place-market-naver-info-row strong { display: block; overflow-wrap: anywhere; }
-.place-market-naver-info-row p { margin: var(--ko-space-1) 0 var(--ko-space-2); color: var(--ko-text-secondary); overflow-wrap: anywhere; }
+.place-market-naver-info-row strong { display: flex; align-items: center; gap: var(--ko-space-1); overflow-wrap: anywhere; }
+.place-market-naver-info-row p { grid-column: 1; margin: var(--ko-space-1) 0 0; color: var(--ko-text-secondary); font-size: var(--ko-text-xs); overflow-wrap: anywhere; }
+.place-market-naver-info-row button { grid-column: 2; grid-row: 1 / span 2; }
 .place-market-naver-info-more { display: block; width: 100%; margin-top: var(--ko-space-2); }
 
 .place-market-summary { padding: var(--ko-space-4); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius-asym); background: var(--ko-surface-1); }

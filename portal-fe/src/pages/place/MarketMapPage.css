@@ -19,7 +19,8 @@
 .market-map-types button { flex-shrink: 0; }
 .market-map-types button[aria-pressed='true'] { color: var(--ko-accent-text); border-color: var(--ko-accent-primary); background: var(--ko-accent-primary-bg); }
 .market-map-workspace { flex: 1; min-height: 0; position: relative; }
-.market-map-stage { position: absolute; inset: 0; min-width: 0; overflow: hidden; }
+/* z-index: 0 으로 지도 SDK 의 컨트롤(높은 z-index)을 무대 안에 가둔다 — 안 그러면 목록 시트·상세 패널 위로 올라온다. */
+.market-map-stage { position: absolute; inset: 0; min-width: 0; overflow: hidden; z-index: 0; }
 /* Only the SDK host and our SVG canvas are sized here; SDK overlay SVGs are untouched. */
 .market-map-stage > .place-market-canvas-layout,
 .market-map-stage > .place-market-canvas-layout > div,

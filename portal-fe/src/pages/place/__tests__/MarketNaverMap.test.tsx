@@ -11,7 +11,7 @@ function sdk() {
   const overlay = () => { const object = { setMap: vi.fn() }; objects.push(object); return object; };
   const destroy = vi.fn(); const panTo = vi.fn(); const setZoom = vi.fn((z: number) => { zoom = z; });
   const map = { destroy, panTo, setZoom, getZoom: () => zoom, getBounds: () => ({ getNE: () => ({ lat: () => north, lng: () => 128 }), getSW: () => ({ lat: () => 37, lng: () => 126 }) }) };
-  const infoWindow = { content: null as HTMLElement | null, open: vi.fn(), close: vi.fn(), setContent: vi.fn((element: HTMLElement) => { infoWindow.content = element; }) };
+  const infoWindow = { content: null as HTMLElement | null, opened: false, open: vi.fn(() => { infoWindow.opened = true; }), close: vi.fn(() => { infoWindow.opened = false; }), setContent: vi.fn((element: HTMLElement) => { infoWindow.content = element; }), getContent: () => infoWindow.content, getMap: () => (infoWindow.opened ? map : null) };
   return { objects, destroy, panTo, setZoom, listeners, infoWindow, zoom: (z: number) => { zoom = z; }, north: (n: number) => { north = n; },
     InfoWindow: vi.fn(function (_options: unknown) { return infoWindow; }),
     Map: vi.fn(function (_host: HTMLElement, options: { zoom: number }) { zoom = options.zoom; return map; }), LatLng: vi.fn(function (latitude: number, longitude: number) { return { latitude, longitude }; }),
@@ -121,6 +121,18 @@ describe('MarketNaverMap', () => {
     before = closes(); act(() => maps.listeners.get('click')!()); expect(closes()).toBe(before + 1);
     before = closes(); rerender(<MarketNaverMap {...props} data={{ ...data, stores }} selection={{ selectedKey: null }} onSelect={onSelect} onOpenStore={onOpenStore} onShowList={onShowList} />); expect(closes()).toBe(before + 1);
     content.remove();
+  });
+  it('refills an open info window in list order with the numbers the page assigns after the click', async () => {
+    install(); const onSelect = vi.fn();
+    const { rerender } = render(<MarketNaverMap {...props} selection={{ selectedKey: 'x' }} onSelect={onSelect} />);
+    await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce());
+    fireEvent.click(maps.Marker.mock.calls[0][0].icon.content);
+    const names = () => [...maps.infoWindow.content!.querySelectorAll('.place-market-naver-info-row strong')].map((node) => node.textContent);
+    expect(names()).toEqual(['<Shop 1>', '<Shop 2>', '<Shop 3>']); const fills = maps.infoWindow.setContent.mock.calls.length;
+    rerender(<MarketNaverMap {...props} selection={{ selectedKey: 'x', numbers: new Map([[3, 1], [2, 2]]) }} onSelect={onSelect} />);
+    expect(maps.infoWindow.setContent).toHaveBeenCalledTimes(fills + 1); expect(names()).toEqual(['1<Shop 3>', '2<Shop 2>', '<Shop 1>']);
+    expect(maps.infoWindow.content!.querySelectorAll('.market-list-no')).toHaveLength(2);
+    act(() => maps.listeners.get('bounds_changed')!()); expect(maps.infoWindow.setContent).toHaveBeenCalledTimes(fills + 1);
   });
   it('opens the info window for the focused shop only and never for a noninteractive preview', async () => {
     install(); const { rerender } = render(<MarketNaverMap {...props} selection={{ storeId: 2 }} />);

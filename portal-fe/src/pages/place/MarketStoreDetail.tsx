@@ -11,7 +11,8 @@ export default function MarketStoreDetail({ store, number, lang, onClose, onFocu
 }) {
   const en = lang === 'en';
   const panel = useRef<HTMLElement>(null);
-  useEffect(() => { panel.current?.focus(); }, [store.id]);
+  // 들어오는 애니메이션 중에 포커스하면 브라우저가 패널을 보이려고 overflow:hidden 인 화면을 가로로 밀어 버린다.
+  useEffect(() => { panel.current?.focus({ preventScroll: true }); }, [store.id]);
   const type = MARKET_STORE_TYPES.find(candidate => candidate.key === marketStoreType(store))!;
   const categories = [store.categoryMajor, store.categoryMid, store.categorySub].map(value => value?.trim()).filter(Boolean).join(' › ');
   const address = [store.roadAddress || store.jibunAddress, store.buildingName, store.dong, formatMarketFloor(store.floor, lang), store.ho].filter(Boolean).join(' · ');
