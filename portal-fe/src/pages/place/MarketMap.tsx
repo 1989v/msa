@@ -7,8 +7,6 @@ import MarketLocate from './MarketLocate';
 import { buildMarketOverlay } from './marketOverlay';
 import { matchesMarketStore, type MarketUserPosition } from './marketView';
 
-const PREFERENCE = 'market-map-provider';
-
 /** Selection keys are shared across live engines, the SVG view and the dedicated list. */
 export default function MarketMap(props: ComponentProps<typeof MarketCanvas> & {
   onViewportChange?: (viewport: MarketViewport | null) => void;
@@ -19,13 +17,10 @@ export default function MarketMap(props: ComponentProps<typeof MarketCanvas> & {
   onShowList?: () => void;
 }) {
   const { contentId, data, lang, points, query, dishes, selectedKey, focusStoreId, onSelect, numbers, onOpenStore, onShowList } = props;
-  const [provider, setProvider] = useState(() => {
-    try { return typeof window !== 'undefined' && window.localStorage.getItem(PREFERENCE) === 'canvas' ? 'canvas' : 'naver'; }
-    catch { return 'naver'; }
-  });
   const [failed, setFailed] = useState<'naver' | 'google' | null>(null);
   const [position, setPosition] = useState<MarketUserPosition | null>(null);
-  const live = typeof window !== 'undefined' && provider !== 'canvas' && failed !== 'google';
+  // 네이버 → 구글 → SVG 순으로 내려간다. SVG 는 지도 SDK 가 둘 다 실패할 때만 쓴다.
+  const live = typeof window !== 'undefined' && failed !== 'google';
   const naver = Boolean(NAVER_MAP_KEY_ID) && failed !== 'naver';
   const storeIds = useMemo(() => points.flatMap((p) => p.stores.map((s) => s.id)), [points]);
   const selection = useMemo(() => ({ storeId: focusStoreId, selectedKey, numbers,
@@ -34,16 +29,8 @@ export default function MarketMap(props: ComponentProps<typeof MarketCanvas> & {
   // 중심만 필요하지만 모델 전체(묶음 포함)를 계산하므로 응답이 바뀔 때만 다시 센다.
   const centre = useMemo(() => buildMarketOverlay({ data, zoom: 17 }).centre, [data]);
   useEffect(() => { if (!live || !centre) props.onViewportChange?.(null); }, [live, centre, props.onViewportChange]);
-  const toggle = () => {
-    const next = live ? 'canvas' : 'naver';
-    setProvider(next); setFailed(null);
-    try { window.localStorage.setItem(PREFERENCE, next); } catch { /* Storage is optional. */ }
-  };
   const liveProps = { contentId, data, lang, selection, storeIds, userPosition: position, onSelect, onOpenStore, onShowList, onViewportChange: props.onViewportChange };
   return <>
-    {typeof window !== 'undefined' && <button type="button" className="place-market-provider" onClick={toggle}>{live
-      ? (lang === 'en' ? 'Use our map' : '우리 지도로 보기')
-      : (lang === 'en' ? 'Use Naver Map' : '네이버 지도로 보기')}</button>}
     {live && centre ? <div className="place-market-canvas-layout">
       <div>
         {naver ? <MarketNaverMap {...liveProps} keyId={NAVER_MAP_KEY_ID} onError={() => setFailed('naver')} />

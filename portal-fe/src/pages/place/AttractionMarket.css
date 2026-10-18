@@ -100,7 +100,6 @@
 
 .place-market-badges span[data-related] { color: var(--ko-text-secondary); background: var(--ko-surface-1); }
 
-.place-market-provider { margin-block-end: var(--ko-space-2, 8px); }
 /* The pin is a round icon; neither the section's button surface nor the browser's default button
  * may paint a square behind it — the dedicated map screen has no .place-market ancestor.
  * Size and centring come from the marker icon box (MarketNaverMap), not from here. */

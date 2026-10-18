@@ -29,9 +29,8 @@
 .market-map-stage > .place-market-canvas-layout > div > [role='group'] > div:first-child { aspect-ratio: auto !important; min-height: 0 !important; }
 .market-map-stage .place-market-zoom { position: absolute; top: 4rem; left: var(--ko-space-2); z-index: 2; }
 .market-map-stage .place-market-canvas > svg { height: 100%; width: 100%; border: 0; border-radius: 0; }
-/* 왼쪽 위는 네이버 줌 컨트롤 자리 — 우리 버튼은 오른쪽에 세로로 쌓는다. */
-.market-map-stage .place-market-provider { position: absolute; top: var(--ko-space-2); right: var(--ko-space-3); left: auto; z-index: 2; }
-.market-map-stage .place-market-locate { position: absolute; top: 4rem; right: var(--ko-space-3); width: auto; max-width: min(18rem, 70%); margin: 0; z-index: 2; padding: 0; }
+/* 왼쪽 위는 네이버 줌 컨트롤 자리 — 「내 위치」는 오른쪽 위. */
+.market-map-stage .place-market-locate { position: absolute; top: var(--ko-space-2); right: var(--ko-space-3); width: auto; max-width: min(18rem, 70%); margin: 0; z-index: 2; padding: 0; }
 .market-map-stage .place-market-locate [role='status']:empty { display: none; }
 .market-map-stage .place-market-locate p { padding-inline: var(--ko-space-2); }
 .market-map-list { position: absolute; inset: auto 0 0; height: 30%; display: flex; flex-direction: column; overflow: hidden; background: var(--ko-surface-0); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius-asym); padding: 0 var(--ko-space-4) env(safe-area-inset-bottom); z-index: 3; }

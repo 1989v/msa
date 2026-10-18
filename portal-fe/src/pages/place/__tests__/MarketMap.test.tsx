@@ -55,8 +55,9 @@ beforeEach(() => { maps = sdk(); window.localStorage.clear(); google.load.mockRe
 afterEach(() => { vi.unstubAllGlobals(); cleanup(); scripts().forEach((script) => script.remove()); Reflect.deleteProperty(window, 'naver'); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 describe('market map provider', () => {
   it.each(['naver', 'canvas'])('reports viewport and selection in %s mode', async provider => {
-    if (provider === 'canvas') window.localStorage.setItem('market-map-provider', 'canvas');
-    install(); const onViewportChange = vi.fn(); const View = view(data, 'ko', onViewportChange); const { container } = render(<View />);
+    if (provider === 'naver') install();
+    const onViewportChange = vi.fn(); const View = view(data, 'ko', onViewportChange); const { container } = render(<View />);
+    if (provider === 'canvas') { await act(async () => fireEvent.error(scripts()[0])); await waitFor(() => expect(container.querySelector('svg')).toBeInTheDocument()); }
     if (provider === 'naver') {
       await waitFor(() => expect(container.querySelector('.place-market-naver-pin')).not.toBeNull());
       expect(onViewportChange).toHaveBeenCalledWith({ bounds: { north: 38, east: 128, south: 37, west: 126 }, zoom: 17 });
@@ -102,20 +103,17 @@ describe('market map provider', () => {
     expect(maps.Circle).toHaveBeenCalledWith(expect.objectContaining({ radius: 12, center: { latitude: 37.5, longitude: 127 } }));
     expect(maps.Marker).toHaveBeenCalledWith(expect.objectContaining({ title: '내 위치' }));
   });
-  it('persists manual Canvas choice, switches back and reuses one SDK script', async () => {
-    const View = view(); const first = render(<View />); expect(scripts()).toHaveLength(1); install();
-    await act(async () => fireEvent.load(scripts()[0])); fireEvent.click(screen.getByText('우리 지도로 보기'));
-    expect(first.container.querySelector('svg')).toBeInTheDocument();
-    expect(window.localStorage.getItem('market-map-provider')).toBe('canvas'); first.unmount();
-    const second = render(<View />); expect(second.container.querySelector('svg')).toBeInTheDocument(); fireEvent.click(screen.getByText('네이버 지도로 보기'));
-    await waitFor(() => expect(maps.Map).toHaveBeenCalledTimes(2)); expect(scripts()).toHaveLength(1);
+  it('has no map switch and ignores a stored SVG preference from the removed switch', async () => {
+    window.localStorage.setItem('market-map-provider', 'canvas');
+    const View = view(); const { container } = render(<View />); install(); await act(async () => fireEvent.load(scripts()[0]));
+    await waitFor(() => expect(maps.Map).toHaveBeenCalledOnce()); expect(container.querySelector('svg')).not.toBeInTheDocument();
+    expect(screen.queryByText('우리 지도로 보기')).toBeNull(); expect(screen.queryByText('네이버 지도로 보기')).toBeNull();
   });
-  it('falls back automatically after SDK failure and retries with a fresh script', async () => {
+  it('falls back automatically after SDK failure', async () => {
     const View = view(); const { container } = render(<View />); await act(async () => fireEvent.error(scripts()[0]));
     await waitFor(() => expect(container.querySelector('svg')).toBeInTheDocument()); expect(screen.queryByRole('group', { name: '네이버 가게 위치 지도' })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('네이버 지도로 보기')); expect(scripts()).toHaveLength(1); install(); await act(async () => fireEvent.load(scripts()[0])); expect(maps.Map).toHaveBeenCalledOnce();
   });
-  it('loads Google only after Naver authentication fails, keeping focus and manual toggle', async () => {
+  it('loads Google only after Naver authentication fails, keeping focus', async () => {
     const googleMaps = {
       Map: vi.fn(function () { return { getZoom: () => 17, panTo: vi.fn(), setZoom: vi.fn(), unbindAll: vi.fn() }; }),
       Polygon: vi.fn(function () { return { setMap: vi.fn() }; }),
@@ -131,7 +129,6 @@ describe('market map provider', () => {
     fireEvent.click(screen.getByText('Focus shop'));
     // The fallback retains the same focus input.
     expect(screen.getByTestId('selection').textContent).not.toBe('');
-    fireEvent.click(screen.getByText('우리 지도로 보기')); expect(container.querySelector('svg')).toBeInTheDocument();
   });
   it('uses SVG after Naver load failure followed by Google authentication failure', async () => {
     const googleMaps = {
@@ -144,19 +141,12 @@ describe('market map provider', () => {
     act(() => (window as unknown as { gm_authFailure: () => void }).gm_authFailure());
     expect(container.querySelector('.place-market-canvas svg')).toBeInTheDocument(); expect(googleMaps.Map.mock.results[0].value.unbindAll).toHaveBeenCalledOnce();
   });
-  it('falls back when the loaded SDK is missing and allows a fresh retry', async () => {
+  it('falls back when the loaded SDK is missing', async () => {
     const View = view(); const { container } = render(<View />); await act(async () => fireEvent.load(scripts()[0])); await waitFor(() => expect(container.querySelector('svg')).toBeInTheDocument());
-    fireEvent.click(screen.getByText('네이버 지도로 보기')); expect(scripts()).toHaveLength(1);
-    install(); await act(async () => fireEvent.load(scripts()[0])); expect(maps.Map).toHaveBeenCalledOnce();
   });
   it('renders Canvas for SSR without window even with a key', () => {
     const View = view(); vi.stubGlobal('window', undefined); const html = renderToStaticMarkup(<View />);
     expect(html).toContain('<svg'); expect(html).not.toContain('네이버 가게 위치 지도'); expect(maps.Map).not.toHaveBeenCalled();
-  });
-  it('still switches maps when localStorage is denied', async () => {
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('denied'); }); vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('denied'); });
-    install(); const View = view(); const { container } = render(<View />); await waitFor(() => expect(maps.Map).toHaveBeenCalledOnce());
-    fireEvent.click(screen.getByText('우리 지도로 보기')); expect(container.querySelector('svg')).toBeInTheDocument();
   });
   it('supports paths-only projections with zero coordinate shops', async () => {
     install(); const View = view({ ...data, stores: [], boundary: null, paths: [{ id: 1, name: '시장길', named: true, source: 'OSM', geometry: [[37.5, 127], [37.501, 127.001]] }] });
@@ -171,10 +161,10 @@ describe('market map provider', () => {
 });
 
 it.each(['naver', 'canvas'])('uses engine IDs without browser-match unions in %s mode', async provider => {
-  if (provider === 'canvas') window.localStorage.setItem('market-map-provider', 'canvas');
-  install();
+  if (provider === 'naver') install();
   const market = { ...data, stores: [shop(), shop({ id: 2, name: '엔진 결과', items: null, longitude: 127.005 })] };
   const View = view(market, 'ko', vi.fn(), [2]); const { container } = render(<View />);
+  if (provider === 'canvas') { await act(async () => fireEvent.error(scripts()[0])); await waitFor(() => expect(container.querySelector('svg')).toBeInTheDocument()); }
   if (provider === 'naver') {
     await waitFor(() => expect(container.querySelector('.place-market-naver-pin')).not.toBeNull());
     const pins = Array.from(container.querySelectorAll('.place-market-naver-pin'));
