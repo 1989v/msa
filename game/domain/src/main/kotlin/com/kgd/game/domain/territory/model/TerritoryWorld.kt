@@ -4,6 +4,8 @@ import kotlin.math.*
 import kotlin.random.Random
 import java.util.BitSet
 
+private val BOT_DIRECTIONS = listOf(1 to 0, 0 to 1, -1 to 0, 0 to -1)
+
 class TerritoryWorld(val size: Int = 4096, seed: Int = 1, val botTarget: Int = 30) {
     init { require(size in 16..4096) }
     val land = TerritoryLand(size)
@@ -50,6 +52,8 @@ class TerritoryWorld(val size: Int = 4096, seed: Int = 1, val botTarget: Int = 3
         private set
     var lastTickCaptureCells = 0
         private set
+    var lastTickBotPlanningCells = 0
+        private set
     val humanCount get() = identities.size
     val botCount get() = players.values.count { it.bot && it.alive }
 
@@ -68,10 +72,11 @@ class TerritoryWorld(val size: Int = 4096, seed: Int = 1, val botTarget: Int = 3
             val x = random.nextInt(4, size - 4); val y = random.nextInt(4, size - 4)
             val clear = (-3..3).all { dy -> (-3..3).all { dx -> land.owner(x + dx, y + dy) == 0 && trails[cellId(x + dx, y + dy)] !in activeTrails } }
             if (clear && players.values.none { it !== player && it.alive && hypot(it.x - x, it.y - y) < 6 }) {
-                player.x = x + .23; player.y = y + .23; player.botOriginX = player.x; player.botOriginY = player.y
+                player.x = x + .23; player.y = y + .23
                 land.living.add(player.id)
                 land.patch((-3..3).flatMap { dy -> (-3..3).map { dx -> cellId(x + dx, y + dy) } }, player.id)
                 player.area = 49
+                if (player.bot) rememberBotAnchor(player, TerritoryPoint(player.x, player.y))
                 return true
             }
         }
@@ -152,35 +157,108 @@ class TerritoryWorld(val size: Int = 4096, seed: Int = 1, val botTarget: Int = 3
         }
     }
 
+    private fun rememberBotAnchor(player: TerritoryPlayer, point: TerritoryPoint) {
+        if (player.botAnchors.lastOrNull()?.let { hypot(it.x - point.x, it.y - point.y) < 2 } == true) return
+        player.botAnchors.addLast(point)
+        while (player.botAnchors.size > 8) player.botAnchors.removeFirst()
+    }
+
+    private fun steerBot(player: TerritoryPlayer, point: TerritoryPoint) {
+        val desired = atan2(point.y - player.y, point.x - player.x)
+        val turn = wrapped(desired - player.heading)
+        // Exposed instant reverse is forbidden for everyone. Bots request an
+        // intermediate curve heading instead of repeatedly asking for a stopped reverse.
+        player.angle = if (player.started && land.owner(player.x.toInt(), player.y.toInt()) != player.id && abs(turn) > PI * .9)
+            wrapped(player.heading + sign(turn) * PI * .75) else desired
+        player.moving = true
+    }
+
+    private fun botWalk(player: TerritoryPlayer, ownedOnly: Boolean): TerritoryPoint {
+        val direction = ((player.heading / (PI / 2)).roundToInt() % 4 + 4) % 4
+        for (offset in 0..3) {
+            val angle = (direction + offset) * PI / 2
+            val dx = cos(angle).roundToInt(); val dy = sin(angle).roundToInt()
+            val x = player.x + dx * 8; val y = player.y + dy * 8
+            if (x !in 4.0..(size - 5.0) || y !in 4.0..(size - 5.0)) continue
+            if (!ownedOnly || (1..8).all { land.owner((player.x + dx * it).toInt(), (player.y + dy * it).toInt()) == player.id })
+                return TerritoryPoint(x, y)
+        }
+        return TerritoryPoint(player.x, player.y)
+    }
+
     private fun planBot(player: TerritoryPlayer) {
         if (player.capturePending) return
-        // Query every actual cell in a bounded 25×25 neighborhood; sparse probes miss thin trails.
         var target: Int? = null; var distance = Double.POSITIVE_INFINITY
+        var frontier: List<TerritoryPoint>? = null; var frontierDistance = Double.POSITIVE_INFINITY
+        var nearbyOwned: TerritoryPoint? = null; var ownedDistance = Double.POSITIVE_INFINITY
+        // A previously owned closure point may have been captured by another player.
+        if (player.botOwnedTarget && player.botRoute.isNotEmpty() && player.botRoute.last().let { land.owner(it.x.toInt(), it.y.toInt()) != player.id }) {
+            player.botRoute = emptyList(); player.botLeg = 0
+        }
+        val needsRoute = player.botRoute.isEmpty()
+        // Attack and frontier discovery share the existing bounded 25×25 scan.
+        // There is no viewer proximity gate, larger-radius retry or whole-map search.
         for (dy in -12..12) for (dx in -12..12) {
             val x = floor(player.x).toInt() + dx; val y = floor(player.y).toInt() + dy
-            val owner = activeTrails[trails[cellId(x.coerceIn(0, size - 1), y.coerceIn(0, size - 1))]]
-            if (owner != null && owner != player.id && dx * dx + dy * dy < distance) {
-                target = cellId(x, y); distance = (dx * dx + dy * dy).toDouble()
+            if (x !in 0 until size || y !in 0 until size) continue
+            lastTickBotPlanningCells++
+            val d = (dx * dx + dy * dy).toDouble()
+            val owner = activeTrails[trails[cellId(x, y)]]
+            if (owner != null && owner != player.id && d < distance) { target = cellId(x, y); distance = d }
+            if (!needsRoute || land.owner(x, y) != player.id) continue
+            if (d < ownedDistance) { nearbyOwned = TerritoryPoint(x + .5, y + .5); ownedDistance = d }
+            // At 5 Hz a turn can overshoot a waypoint by up to one planning step.
+            // Keep the whole expansion rectangle clear of the lethal world edge.
+            if (d >= frontierDistance || x !in 4 until size - 4 || y !in 4 until size - 4) continue
+            for ((nx, ny) in BOT_DIRECTIONS) {
+                if (x + nx !in 0 until size || y + ny !in 0 until size || land.owner(x + nx, y + ny) == player.id) continue
+                val ax = x + .5; val ay = y + .5
+                val outward = minOf(12.0, if (nx > 0) size - 4.5 - ax else if (nx < 0) ax - 4.5 else if (ny > 0) size - 4.5 - ay else ay - 4.5)
+                if (outward < 3) continue
+                for (side in 1 downTo -1 step 2) {
+                    val tx = -ny * side; val ty = nx * side
+                    val across = minOf(12.0, if (tx > 0) size - 4.5 - ax else if (tx < 0) ax - 4.5 else if (ty > 0) size - 4.5 - ay else ay - 4.5)
+                    if (across < 3) continue
+                    frontier = listOf(TerritoryPoint(ax, ay), TerritoryPoint(ax + nx * outward, ay + ny * outward),
+                        TerritoryPoint(ax + nx * outward + tx * across, ay + ny * outward + ty * across),
+                        TerritoryPoint(ax + tx * across, ay + ty * across), TerritoryPoint(ax, ay))
+                    frontierDistance = d
+                    break
+                }
+                if (frontierDistance == d) break
             }
         }
         if (target != null) {
-            player.angle = atan2(cellY(target) + .5 - player.y, cellX(target) + .5 - player.x)
-            player.moving = true; player.status = "HUNTING"; return
+            player.botRoute = emptyList(); player.botLeg = 0
+            steerBot(player, TerritoryPoint(cellX(target) + .5, cellY(target) + .5))
+            player.status = "HUNTING"; return
         }
-        val targets = arrayOf(
-            TerritoryPoint(player.botOriginX + 12, player.botOriginY),
-            TerritoryPoint(player.botOriginX + 12, player.botOriginY + 12),
-            TerritoryPoint(player.botOriginX, player.botOriginY + 12),
-            TerritoryPoint(player.botOriginX, player.botOriginY),
-        )
-        val point = targets[player.botLeg % 4]
-        if (hypot(point.x - player.x, point.y - player.y) < 1) player.botLeg++
-        player.angle = atan2(point.y.coerceIn(1.0, size - 1.0) - player.y, point.x.coerceIn(1.0, size - 1.0) - player.x)
-        player.moving = true
+        if (needsRoute) {
+            val onOwn = land.owner(player.x.toInt(), player.y.toInt()) == player.id
+            val remembered = player.botAnchors.filter { land.owner(it.x.toInt(), it.y.toInt()) == player.id }
+                .minByOrNull { hypot(it.x - player.x, it.y - player.y) }
+            player.botOwnedTarget = onOwn || nearbyOwned != null || remembered != null
+            player.botRoute = (if (onOwn) frontier else null) ?: listOf(when {
+                onOwn -> botWalk(player, true) // Walk through owned interior until a local frontier is visible.
+                nearbyOwned != null -> nearbyOwned
+                remembered != null -> remembered // The last anchor may have been stolen; validate every remembered anchor.
+                else -> botWalk(player, false) // No known surviving anchor: bounded physical recovery, never idle at a stolen point.
+            })
+            player.botLeg = 0
+            player.status = if (onOwn && frontier != null) "EXPANDING" else if (onOwn) "SEEKING_FRONTIER" else "RETURNING"
+        }
+        while (player.botLeg < player.botRoute.lastIndex && hypot(player.botRoute[player.botLeg].x - player.x, player.botRoute[player.botLeg].y - player.y) < 2)
+            player.botLeg++
+        val point = player.botRoute[player.botLeg]
+        if (hypot(point.x - player.x, point.y - player.y) < 2 && player.botLeg == player.botRoute.lastIndex && (player.botRoute.size == 1 || player.trail.isEmpty())) {
+            player.botRoute = emptyList() // Interior travel and completed loops must also re-plan instead of orbiting forever.
+        }
+        steerBot(player, point)
     }
 
     fun advance() {
         tick++
+        lastTickBotPlanningCells = 0
         if (tick % 8 == 1L) for (player in players.values) if (player.bot && player.alive) planBot(player)
         val closures = LinkedHashSet<TerritoryPlayer>()
         repeat(3) { substep(closures, it) }
@@ -202,7 +280,17 @@ class TerritoryWorld(val size: Int = 4096, seed: Int = 1, val botTarget: Int = 3
                 lastCaptureWork = job.work; lastCaptureLatency = tick - job.startedAt
                 for (player in job.players) if (player.alive) {
                     player.capturePending = false; player.status = if (job.valid) "CAPTURED" else job.failure ?: "CAPTURE_CHANGED_RETRY"
-                    if (job.valid) clearTrail(player)
+                    if (player.bot && !job.valid) {
+                        player.botRoute = emptyList(); player.botLeg = 0
+                    }
+                    if (job.valid) {
+                        if (player.bot) {
+                            for (point in player.botRoute + TerritoryPoint(player.x, player.y))
+                                if (land.owner(point.x.toInt(), point.y.toInt()) == player.id) rememberBotAnchor(player, point)
+                            player.botRoute = emptyList(); player.botLeg = 0
+                        }
+                        clearTrail(player)
+                    }
                 }
                 capture = null
             }

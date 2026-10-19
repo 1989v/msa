@@ -54,5 +54,8 @@ class TerritoryPlayer(val id: Int, val identity: String, val name: String, val b
     var trailChunks = BitSet(4096)
     var capturePending = false
     var status = "READY"
-    var botTurnAt = 0L; var botLeg = 0; var botOriginX = 0.0; var botOriginY = 0.0
+    var botLeg = 0
+    var botRoute: List<TerritoryPoint> = emptyList()
+    var botOwnedTarget = true
+    val botAnchors = ArrayDeque<TerritoryPoint>()
 }

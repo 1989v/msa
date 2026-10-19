@@ -1,6 +1,7 @@
 package com.kgd.game.application.territory.service
 
 import com.kgd.game.domain.territory.model.*
+import com.kgd.game.application.territory.usecase.TerritoryFrame
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 
@@ -27,6 +28,32 @@ class TerritoryWorldServiceTest : BehaviorSpec({
             val cleared = service.snapshot(viewer, known, false)
             (enemy in cleared.living) shouldBe false
             cleared.dangerChunks.any { it.chunk.cells.any { handle -> cleared.trailOwners[handle] == enemy } } shouldBe false
+        }
+    }
+    given("a distant autonomous bot outside a viewer's area of interest") {
+        then("keeps growing before it becomes visible and is revealed without restarting its simulation") {
+            val service = TerritoryWorldService()
+            val field = TerritoryWorldService::class.java.getDeclaredField("world").apply { isAccessible = true }
+            val world = field.get(service) as TerritoryWorld
+            val viewer = service.join("viewer", "viewer")
+            repeat(40 * 30) { service.advance() }
+            val self = world.players.getValue(viewer)
+            val bot = world.players.values.filter { it.bot && it.alive && kotlin.math.hypot(it.x - self.x, it.y - self.y) > 1000 }
+                .maxBy { it.area }
+            val before = bot.area
+            @Suppress("UNCHECKED_CAST")
+            fun rows(frame: TerritoryFrame, name: String) = frame.fields[name] as List<Map<String, Any?>>
+            val distant = service.snapshot(viewer, emptyMap(), false)
+            rows(distant, "players").none { it["id"] == bot.id } shouldBe true
+            rows(distant, "top10").any { it["id"] == bot.id } shouldBe true
+            repeat(40 * 30) { service.advance() }
+            bot.alive shouldBe true
+            (bot.area > before) shouldBe true
+            self.x = bot.x + 20; self.y = bot.y + 20
+            val near = service.snapshot(viewer, emptyMap(), false)
+            rows(near, "players").any { it["id"] == bot.id } shouldBe true
+            near.fields["tick"] shouldBe world.tick
+            println("TERRITORY_BOT_AOI before=$before after=${bot.area} tick=${world.tick}")
         }
     }
 })
