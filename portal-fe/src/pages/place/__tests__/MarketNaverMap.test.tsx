@@ -17,6 +17,7 @@ function sdk() {
     Map: vi.fn(function (_host: HTMLElement, options: { zoom: number }) { zoom = options.zoom; return map; }), LatLng: vi.fn(function (latitude: number, longitude: number) { return { latitude, longitude }; }),
     Marker: vi.fn(function (_options: { icon: { content: HTMLElement }; title?: string }) { return overlay(); }),
     Polygon: vi.fn(function (_options: unknown) { return overlay(); }), Polyline: vi.fn(function (_options: unknown) { return overlay(); }), Circle: vi.fn(function (_options: unknown) { return overlay(); }),
+    Position: { RIGHT_BOTTOM: 'RB' }, ZoomControlStyle: { SMALL: 'S' },
     Event: { addListener: vi.fn((target: unknown, event: string, callback: () => void) => { if (target === map) listeners.set(event, callback); return { target, event, callback }; }), removeListener: vi.fn() },
   };
 }
@@ -32,6 +33,7 @@ describe('MarketNaverMap', () => {
     await waitFor(() => expect(maps.Map).toHaveBeenCalledOnce());
     // 세 가게가 십여 m 안에 있다 — 가장 가까운 줌으로 연다
     expect(maps.Map).toHaveBeenCalledWith(expect.any(HTMLElement), expect.objectContaining({ zoom: 19 }));
+    expect(maps.Map.mock.calls[0][1]).not.toHaveProperty('zoomControlOptions');
     vi.restoreAllMocks();
   });
   it('disables gestures and controls for a zoom-16 preview, activates pins and polygons without selection or viewport reports', async () => {
@@ -45,6 +47,11 @@ describe('MarketNaverMap', () => {
     const click = maps.Event.addListener.mock.calls.find(([, event]) => event === 'click')![2]; act(() => click());
     act(() => maps.listeners.get('idle')!());
     expect(onActivate).toHaveBeenCalledTimes(2); expect(onSelect).not.toHaveBeenCalled(); expect(onViewportChange).not.toHaveBeenCalled();
+  });
+  it('puts small zoom buttons at the bottom right of an interactive map', async () => {
+    install(); render(<MarketNaverMap {...props} />);
+    await waitFor(() => expect(maps.Map).toHaveBeenCalledOnce());
+    expect(maps.Map).toHaveBeenCalledWith(expect.any(HTMLElement), expect.objectContaining({ zoomControl: true, zoomControlOptions: { position: 'RB', style: 'S' } }));
   });
   it('reports first viewport and idle bounds with the rendered zoom', async () => {
     const onViewportChange = vi.fn(); install();

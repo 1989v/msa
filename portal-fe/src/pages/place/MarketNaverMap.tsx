@@ -131,7 +131,8 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
         // 상자 크기가 0 인 채로 만들면 기본 크기로 굳는다 — 크기가 잡힌 뒤에 만들고 그 크기를 넘긴다(크기를 지켜볼 수 없는 환경에선 바로 만든다).
         const sized = r.width >= 1 && r.height >= 1;
         if (!sized && canObserve) return;
-        map = new sdk.Map(host.current, { center: new sdk.LatLng(centre.latitude, centre.longitude), zoom: initialZoom ?? marketFitZoom(latest.current.data, r.width, r.height), ...(sized && sdk.Size ? { size: new sdk.Size(Math.round(r.width), Math.round(r.height)) } : {}), scaleControl: interactive, mapTypeControl: false, zoomControl: interactive, ...(!interactive ? { draggable: false, scrollWheel: false, pinchZoom: false, keyboardShortcuts: false, disableDoubleClickZoom: true } : {}) });
+        // 기본 줌 막대는 왼쪽 위 50×238px 라 모바일 지도(높이 약 460px)의 절반 높이를 덮고, 왼쪽 가장자리로 비킨 정보 창을 가렸다. +/- 버튼만 오른쪽 아래에 둔다 — 오른쪽 위는 내 위치 버튼 자리다.
+        map = new sdk.Map(host.current, { center: new sdk.LatLng(centre.latitude, centre.longitude), zoom: initialZoom ?? marketFitZoom(latest.current.data, r.width, r.height), ...(sized && sdk.Size ? { size: new sdk.Size(Math.round(r.width), Math.round(r.height)) } : {}), scaleControl: interactive, mapTypeControl: false, zoomControl: interactive, ...(interactive && sdk.Position ? { zoomControlOptions: { position: sdk.Position.RIGHT_BOTTOM, style: sdk.ZoomControlStyle?.SMALL } } : {}), ...(!interactive ? { draggable: false, scrollWheel: false, pinchZoom: false, keyboardShortcuts: false, disableDoubleClickZoom: true } : {}) });
         setReady({ identity, map, sdk });
       };
       // 카드·시트·회전으로 상자가 바뀌면 지도에 새 크기를 알린다. 아직 못 만들었으면 그때 만든다.
