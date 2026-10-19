@@ -57,5 +57,6 @@ class TerritoryPlayer(val id: Int, val identity: String, val name: String, val b
     var botLeg = 0
     var botRoute: List<TerritoryPoint> = emptyList()
     var botOwnedTarget = true
+    var botExpansion = 48
     val botAnchors = ArrayDeque<TerritoryPoint>()
 }

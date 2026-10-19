@@ -54,6 +54,10 @@ class TerritoryWorld(val size: Int = 4096, seed: Int = 1, val botTarget: Int = 3
         private set
     var lastTickBotPlanningCells = 0
         private set
+    var lastTickBotRouteCells = 0
+        private set
+    var lastTickBotHeadChecks = 0
+        private set
     val humanCount get() = identities.size
     val botCount get() = players.values.count { it.bot && it.alive }
 
@@ -186,6 +190,41 @@ class TerritoryWorld(val size: Int = 4096, seed: Int = 1, val botTarget: Int = 3
         return TerritoryPoint(player.x, player.y)
     }
 
+    private fun botRectangle(player: TerritoryPlayer, x: Int, y: Int, nx: Int, ny: Int, side: Int): List<TerritoryPoint>? {
+        // Start/close inside owned land. Closing at the frontier itself can hit
+        // the curved outgoing trail before reaching land (especially at 48/96).
+        val inset = if (x - nx * 4 in 4 until size - 4 && y - ny * 4 in 4 until size - 4) 4 else 3
+        if ((1..inset).any { land.owner(x - nx * it, y - ny * it) != player.id }) return null
+        val ax = x + .5 - nx * inset; val ay = y + .5 - ny * inset
+        if (ax !in 4.5..(size - 4.5) || ay !in 4.5..(size - 4.5)) return null
+        val outward = minOf(side.toDouble(), if (nx > 0) size - 4.5 - ax else if (nx < 0) ax - 4.5 else if (ny > 0) size - 4.5 - ay else ay - 4.5)
+        if (outward < 8) return null
+        for (sign in 1 downTo -1 step 2) {
+            val tx = -ny * sign; val ty = nx * sign
+            val across = minOf(side.toDouble(), if (tx > 0) size - 4.5 - ax else if (tx < 0) ax - 4.5 else if (ty > 0) size - 4.5 - ay else ay - 4.5)
+            if (across < 8) continue
+            return listOf(TerritoryPoint(ax, ay), TerritoryPoint(ax + nx * outward, ay + ny * outward),
+                TerritoryPoint(ax + nx * outward + tx * across, ay + ny * outward + ty * across),
+                TerritoryPoint(ax + tx * across, ay + ty * across), TerritoryPoint(ax, ay))
+        }
+        return null
+    }
+
+    private fun botRouteClear(player: TerritoryPlayer, route: List<TerritoryPoint>, remaining: IntArray): Boolean {
+        for (index in 1..route.lastIndex) {
+            val a = route[index - 1]; val b = route[index]
+            val steps = ceil(hypot(b.x - a.x, b.y - a.y)).toInt()
+            for (step in 0 until steps) {
+                if (remaining[0]-- <= 0) return false
+                lastTickBotRouteCells++
+                val x = (a.x + (b.x - a.x) * step / steps).toInt()
+                val y = (a.y + (b.y - a.y) * step / steps).toInt()
+                if (activeTrails[trails[cellId(x, y)]] == player.id) return false
+            }
+        }
+        return true
+    }
+
     private fun planBot(player: TerritoryPlayer) {
         if (player.capturePending) return
         var target: Int? = null; var distance = Double.POSITIVE_INFINITY
@@ -196,6 +235,14 @@ class TerritoryWorld(val size: Int = 4096, seed: Int = 1, val botTarget: Int = 3
             player.botRoute = emptyList(); player.botLeg = 0
         }
         val needsRoute = player.botRoute.isEmpty()
+        // With bots present the fill target bounds this population check to 30.
+        // Only new plans use it; human/bot motion and combat rules are identical.
+        val threatened = needsRoute && players.values.any {
+            lastTickBotHeadChecks++
+            it !== player && it.alive && hypot(it.x - player.x, it.y - player.y) < 48
+        }
+        val side = if (threatened) 48 else player.botExpansion
+        var frontierX = 0; var frontierY = 0; var frontierNX = 0; var frontierNY = 0
         // Attack and frontier discovery share the existing bounded 25×25 scan.
         // There is no viewer proximity gate, larger-radius retry or whole-map search.
         for (dy in -12..12) for (dx in -12..12) {
@@ -212,19 +259,9 @@ class TerritoryWorld(val size: Int = 4096, seed: Int = 1, val botTarget: Int = 3
             if (d >= frontierDistance || x !in 4 until size - 4 || y !in 4 until size - 4) continue
             for ((nx, ny) in BOT_DIRECTIONS) {
                 if (x + nx !in 0 until size || y + ny !in 0 until size || land.owner(x + nx, y + ny) == player.id) continue
-                val ax = x + .5; val ay = y + .5
-                val outward = minOf(12.0, if (nx > 0) size - 4.5 - ax else if (nx < 0) ax - 4.5 else if (ny > 0) size - 4.5 - ay else ay - 4.5)
-                if (outward < 3) continue
-                for (side in 1 downTo -1 step 2) {
-                    val tx = -ny * side; val ty = nx * side
-                    val across = minOf(12.0, if (tx > 0) size - 4.5 - ax else if (tx < 0) ax - 4.5 else if (ty > 0) size - 4.5 - ay else ay - 4.5)
-                    if (across < 3) continue
-                    frontier = listOf(TerritoryPoint(ax, ay), TerritoryPoint(ax + nx * outward, ay + ny * outward),
-                        TerritoryPoint(ax + nx * outward + tx * across, ay + ny * outward + ty * across),
-                        TerritoryPoint(ax + tx * across, ay + ty * across), TerritoryPoint(ax, ay))
-                    frontierDistance = d
-                    break
-                }
+                val candidate = botRectangle(player, x, y, nx, ny, side) ?: continue
+                frontier = candidate; frontierDistance = d
+                frontierX = x; frontierY = y; frontierNX = nx; frontierNY = ny
                 if (frontierDistance == d) break
             }
         }
@@ -234,6 +271,14 @@ class TerritoryWorld(val size: Int = 4096, seed: Int = 1, val botTarget: Int = 3
             player.status = "HUNTING"; return
         }
         if (needsRoute) {
+            // At most 768 perimeter probes across all size retries, only when
+            // choosing a new route. Enemy trails remain attack opportunities.
+            val remaining = intArrayOf(768)
+            var candidateSide = side
+            while (frontier != null && !botRouteClear(player, frontier, remaining)) {
+                candidateSide /= 2
+                frontier = if (candidateSide >= 48) botRectangle(player, frontierX, frontierY, frontierNX, frontierNY, candidateSide) else null
+            }
             val onOwn = land.owner(player.x.toInt(), player.y.toInt()) == player.id
             val remembered = player.botAnchors.filter { land.owner(it.x.toInt(), it.y.toInt()) == player.id }
                 .minByOrNull { hypot(it.x - player.x, it.y - player.y) }
@@ -259,6 +304,8 @@ class TerritoryWorld(val size: Int = 4096, seed: Int = 1, val botTarget: Int = 3
     fun advance() {
         tick++
         lastTickBotPlanningCells = 0
+        lastTickBotRouteCells = 0
+        lastTickBotHeadChecks = 0
         if (tick % 8 == 1L) for (player in players.values) if (player.bot && player.alive) planBot(player)
         val closures = LinkedHashSet<TerritoryPlayer>()
         repeat(3) { substep(closures, it) }
@@ -281,10 +328,12 @@ class TerritoryWorld(val size: Int = 4096, seed: Int = 1, val botTarget: Int = 3
                 for (player in job.players) if (player.alive) {
                     player.capturePending = false; player.status = if (job.valid) "CAPTURED" else job.failure ?: "CAPTURE_CHANGED_RETRY"
                     if (player.bot && !job.valid) {
+                        player.botExpansion = max(48, player.botExpansion / 2)
                         player.botRoute = emptyList(); player.botLeg = 0
                     }
                     if (job.valid) {
                         if (player.bot) {
+                            if (land.area(player.id) > player.area) player.botExpansion = min(192, player.botExpansion * 2)
                             for (point in player.botRoute + TerritoryPoint(player.x, player.y))
                                 if (land.owner(point.x.toInt(), point.y.toInt()) == player.id) rememberBotAnchor(player, point)
                             player.botRoute = emptyList(); player.botLeg = 0

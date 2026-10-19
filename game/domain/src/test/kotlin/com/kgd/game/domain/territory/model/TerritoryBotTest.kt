@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.ints.shouldBeLessThanOrEqual
 import java.lang.management.ManagementFactory
+import kotlin.math.hypot
 
 class TerritoryBotTest : BehaviorSpec({
     given("thirty autonomous bots without any human or viewer") {
@@ -15,6 +16,8 @@ class TerritoryBotTest : BehaviorSpec({
             val tickNanos = LongArray(40 * 180)
             var maxCaptureCells = 0
             var maxPlanningCells = 0
+            var maxRouteCells = 0
+            var maxHeadChecks = 0
             val samples = mutableListOf<String>()
             val first = mutableMapOf<Int, Int>()
             var previousMax = 0
@@ -24,6 +27,10 @@ class TerritoryBotTest : BehaviorSpec({
                 tickNanos[frame] = System.nanoTime() - before
                 maxCaptureCells = maxOf(maxCaptureCells, world.lastTickCaptureCells)
                 maxPlanningCells = maxOf(maxPlanningCells, world.lastTickBotPlanningCells)
+                maxRouteCells = maxOf(maxRouteCells, world.lastTickBotRouteCells)
+                maxHeadChecks = maxOf(maxHeadChecks, world.lastTickBotHeadChecks)
+                world.lastTickBotRouteCells.shouldBeLessThanOrEqual(30 * 768)
+                world.lastTickBotHeadChecks.shouldBeLessThanOrEqual(30 * 30)
                 world.lastTickBotPlanningCells.shouldBeLessThanOrEqual(30 * 625)
                 world.lastTickCaptureCells.shouldBeLessThanOrEqual(262144)
                 if ((frame + 1) % (40 * 30) == 0) {
@@ -36,10 +43,42 @@ class TerritoryBotTest : BehaviorSpec({
                 }
             }
             tickNanos.sort()
-            println("TERRITORY_BOT_AUTONOMY ${samples.joinToString(" | ")} wallMs=${(System.nanoTime() - start) / 1e6} cpuMs=${(cpu.currentThreadCpuTime - cpuStart) / 1e6} tickP95Ms=${tickNanos[(tickNanos.size * .95).toInt()] / 1e6} tickMaxMs=${tickNanos.last() / 1e6} maxCaptureCells=$maxCaptureCells maxPlanningCells=$maxPlanningCells")
+            println("TERRITORY_BOT_AUTONOMY ${samples.joinToString(" | ")} wallMs=${(System.nanoTime() - start) / 1e6} cpuMs=${(cpu.currentThreadCpuTime - cpuStart) / 1e6} tickP95Ms=${tickNanos[(tickNanos.size * .95).toInt()] / 1e6} tickMaxMs=${tickNanos.last() / 1e6} maxCaptureCells=$maxCaptureCells maxPlanningCells=$maxPlanningCells maxRouteCells=$maxRouteCells maxHeadChecks=$maxHeadChecks")
             world.humanCount shouldBe 0
             world.botCount shouldBe 30
             (world.players.values.count { it.bot && it.alive && it.area > 264 && it.area > (first[it.id] ?: Int.MAX_VALUE) } >= 20) shouldBe true
+        }
+    }
+    given("the previously self-crossing 48-unit rectangle geometry") {
+        then("closes inside owned land and keeps growing past the repeated outgoing trail") {
+            val world = TerritoryWorld(seed = 1, botTarget = 1)
+            repeat(40) { world.advance() }
+            val bot = world.players.values.single()
+            repeat(40 * 120) {
+                bot.botExpansion = 48
+                world.advance()
+            }
+            bot.alive shouldBe true
+            (bot.area > 16000) shouldBe true
+            println("TERRITORY_BOT_INSET area=${bot.area}")
+        }
+    }
+    given("a bot that has earned a large route") {
+        then("temporarily plans short near a head and recovers its large plan when the threat leaves") {
+            val world = TerritoryWorld(seed = 1, botTarget = 2)
+            val enemy = world.join("enemy", "enemy")
+            val bot = world.players.values.single { it.bot }
+            bot.botExpansion = 192
+            enemy.x = bot.x + 20; enemy.y = bot.y
+            world.advance()
+            val short = bot.botRoute
+            (hypot(short[1].x - short[0].x, short[1].y - short[0].y) <= 48) shouldBe true
+            enemy.x += 1000; enemy.y += 1000
+            bot.botRoute = emptyList()
+            repeat(8) { world.advance() }
+            val large = bot.botRoute
+            (hypot(large[1].x - large[0].x, large[1].y - large[0].y) > 96) shouldBe true
+            bot.botExpansion shouldBe 192
         }
     }
     given("a bot deep inside owned land") {

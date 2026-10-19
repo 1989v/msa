@@ -1,5 +1,8 @@
 # Key decisions — 2026-10-18
 
+- 2026-10-19 approved aggressive AI strategy:48→96→192-unit expansion sides after positive captures, bounded192 maximum. Nearby heads temporarily select48; capture failures halve the earned size. Preserve nearby exposed-trail hunting priority, equal motion/collision/capture rules and all previous anchor/recovery fixes. Stage and close3–4 units inside own land: fixed frontier closure at larger scales crossed the curved outgoing trail before reaching land. New-route own-trail perimeter checks share768 probes across retries; local discovery remains625 cells/5Hz, no full-map planning. Same-seed30-AI10-minute comparison and two additional seeds must assess median/total live territory, deaths, pending time and CPU rather than only maximum area.
+
+
 - 2026-10-19 approved autonomous bot correction: replace the fixed spawn-relative 12-unit loop after each capture with a bounded nearby-frontier rectangle. Reuse the 25×25 scan at 5Hz, keep hunting first, traverse owned interior using stable 8-unit waypoints, and validate up to eight remembered return anchors after theft. No global search, viewer activation, speed/rule/world/API change or capture-budget increase. Give every rectangle vertex the same 4.5-unit world-edge margin for existing turn rate/cadence. Fresh review identified selected single-point anchor invalidation and exposed recovery waypoint completion; retain and fix both with regressions.
 
 

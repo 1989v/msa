@@ -58,3 +58,25 @@ Scoped command: `./gradlew -Pkotlin.compiler.execution.strategy=in-process :game
 `verifyArchitecture` plus the27 domain tests also completed **BUILD SUCCESSFUL** on the current release base; the historical transaction-qualifier failure above no longer reproduces. `git diff --check` passed.
 
 Fresh-context review retained two recovery defects: selected one-point return anchors needed revalidation, and exposed physical-recovery waypoints needed completion independent of trail emptiness. Both were fixed with targeted regressions; rereview found no further issues. No browser or production traffic was used for this correction. A separate optional60-second one-client ranked-area observer is prepared outside the repository for the deployment owner; it has not been executed.
+
+## Aggressive expansion strategy — 2026-10-19
+
+A12×12 square limits nominal capture throughput to144 cells per three seconds before turns/overlap/pending. Enlarging that constant alone was unsafe:48-unit scratch routes produced407 self-cross deaths in10 simulated minutes. Failure traces showed bots on the last leg intersecting their curved outgoing trail1.6 units before reaching the same frontier closure point. Moving the staging/closing side into owned land removed that repeated geometry failure; an inset48 scratch candidate had only3 self-cross deaths over the same duration. Static48/96/192 inset candidates were compared before selecting the adaptive strategy.
+
+Final strategy starts48, earns96/192 after positive captures, halves after capture failure and temporarily selects48 near another head. Earned size recovers when that head leaves. Frontiers without a safe3–4-unit inward owned approach use existing bounded walking/recovery. Every vertex retains the4.5-unit world-edge margin; the3-unit inset is used only when a4-unit inset cannot keep that margin. Own-trail obstruction retries share768 perimeter probes per new plan; discovery remains625 positions and new-plan head checks are bounded by the30-player population while bots are present. No extra perimeter scan each tick, map-wide planning, target commitment change, movement bonus or capture-budget increase.
+
+Standalone same-process-source comparisons used4096 world,30AI/no humans, seed1/2/3 and600 simulated seconds each (24000 ticks). Baseline is4c87d73; adaptive is the source in this change. Each variant ran in its own Java25 JVM with `-Xmx1g` on the same development machine. Scratch instrumentation counted deaths/completed captures and pending ticks without changing gameplay. The wall-clock capture deadline can change exact outcomes between runs. No production traffic or UI was used.
+
+| Seed | Baseline median / total live area | Adaptive median / total live area | Median gain | Deaths baseline → adaptive | CPU seconds baseline → adaptive |
+|---|---:|---:|---:|---:|---:|
+|1|10,342 /383,537|126,644 /5,985,485|12.2×|44 →41|10.75 →9.68|
+|2|9,859 /282,573|94,046 /4,255,712|9.5×|60 →42|9.88 →10.46|
+|3|11,017 /340,037|182,257 /5,049,654|16.5×|54 →40|9.95 →11.15|
+
+Adaptive maxima were513,773 /564,688 /485,782. Self-cross deaths fell43/59/52 →10/6/5; trail-cut deaths25/32/31 remain an intended risk of longer exposed paths. Capture failures were0 in these runs. Pending ticks increased1321/839/872 →2533/2992/3578, and maximum individual capture latency increased8/6/7 →42/52/34 ticks (up to1.3 simulated seconds). All runs retained30 bots and the262144-cell/tick capture bound. Larger captures improve throughput while legitimately increasing exposure and pending time; bots do not receive free territory or immunity.
+
+Wall seconds baseline11.19/9.96/10.03 versus adaptive12.72/10.58/15.02. Adaptive tick p95 approximately4.03–4.05ms; maxima72.10/10.15/61.06ms include observed shared-machine/JVM outliers. The existing4ms cooperative capture deadline is not a hard total-tick guarantee. Observed Java heap peaks591–621MB under a1GB test heap include transient allocations and are not content-host RSS or a production memory guarantee. This simulation-only sample excludes snapshots/network and does not establish production CPU utilization or player capacity.
+
+Focused regression coverage retains population/hunting/owned-interior/world-edge/stolen-anchor/recovery/AOI cases and adds the formerly failing48-unit closing geometry plus temporary threat shrink/large-plan recovery. Work counters assert per tick at most30×625 discovery positions,30×768 perimeter probes,30×30 new-plan head checks and262144 capture cells. Fresh-context review returned SHIP with no actionable findings; reviewer did not duplicate owner test execution.
+
+Final command: `./gradlew -Pkotlin.compiler.execution.strategy=in-process verifyArchitecture :game:domain:test --tests '*TerritoryBotTest' --tests '*TerritoryWorldTest' :game:feature:test --tests '*TerritoryWorldServiceTest' --console=plain` → **BUILD SUCCESSFUL in1m9s**,31 tests/0 failures (bot9,world20,service2), all architecture gates passed. `git diff --check` passed. Detailed local evidence: `/private/tmp/zone-war-aggression-final.log` and `/private/tmp/zone-war-aggression-probe/final-seed-{1,2,3}-length-{12,192}.log`.
