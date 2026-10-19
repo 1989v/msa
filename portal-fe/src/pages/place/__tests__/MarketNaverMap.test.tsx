@@ -75,7 +75,8 @@ describe('MarketNaverMap', () => {
     install(); render(<MarketNaverMap {...props} />); await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce());
     act(() => maps.listeners.get('idle')!()); expect(maps.Marker).toHaveBeenCalledOnce(); expect(maps.Polygon).toHaveBeenCalledTimes(1);
     maps.zoom(16); act(() => maps.listeners.get('zoom_changed')!()); expect(maps.Marker).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Market' }));
-    maps.zoom(19); act(() => maps.listeners.get('zoom_changed')!()); expect(maps.Marker.mock.calls.slice(-4).filter(([o]) => o.title?.startsWith('<Shop'))).toHaveLength(3);
+    // 줌 19 — 1m 남짓 떨어진 1·2번은 한 핀, 3번은 혼자 핀
+    maps.zoom(19); act(() => maps.listeners.get('zoom_changed')!()); expect(maps.Marker.mock.calls.slice(-3).filter(([o]) => o.title?.startsWith('<Shop')).map(([o]) => o.title)).toEqual(['<Shop 1>, <Shop 2>', '<Shop 3>']);
     const count = maps.Marker.mock.calls.length; maps.north(37.50002); act(() => maps.listeners.get('bounds_changed')!());
     expect(maps.Marker).toHaveBeenCalledTimes(count); expect(maps.Polygon).toHaveBeenCalledTimes(1);
   });
@@ -111,24 +112,53 @@ describe('MarketNaverMap', () => {
     const click = maps.Event.addListener.mock.calls.find(([target, event]) => target === object && event === 'click')![2]; act(() => click());
     expect(onSelect).toHaveBeenCalledTimes(2); expect(onSelect.mock.calls[1][0]).toBe(onSelect.mock.calls[0][0]);
   });
-  it('opens an info window at the pin with three shops, detail and list actions, and closes it on ×, map click or cleared selection', async () => {
+  it('opens an info window at the pin with three shops and detail toggles, counts the rest beside a list, and clears the selection on × or map click', async () => {
     const stores = [store(1, 37.5, 127), store(2, 37.50001, 127.00001), store(3, 37.5001, 127), store(4, 37.50002, 127.00002)];
-    install(); const onSelect = vi.fn(); const onOpenStore = vi.fn(); const onShowList = vi.fn();
-    const { rerender } = render(<MarketNaverMap {...props} data={{ ...data, stores }} selection={{ selectedKey: 'x' }} onSelect={onSelect} onOpenStore={onOpenStore} onShowList={onShowList} />);
+    install(); const onSelect = vi.fn(); const onOpenStore = vi.fn(); const onDeselect = vi.fn();
+    const view = (extra: Partial<Parameters<typeof MarketNaverMap>[0]>) => <MarketNaverMap {...props} data={{ ...data, stores }} selection={{ selectedKey: 'x' }} onSelect={onSelect} onOpenStore={onOpenStore} onDeselect={onDeselect} {...extra} />;
+    const { rerender } = render(view({}));
     await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce());
     expect(maps.InfoWindow).toHaveBeenCalledOnce(); expect(maps.infoWindow.open).not.toHaveBeenCalled();
     fireEvent.click(maps.Marker.mock.calls[0][0].icon.content);
     expect(onSelect).toHaveBeenCalledOnce(); expect(maps.infoWindow.open).toHaveBeenCalledWith(expect.anything(), { latitude: expect.any(Number), longitude: expect.any(Number) });
-    const content = maps.infoWindow.content!; document.body.appendChild(content);
-    expect(content.querySelectorAll('.place-market-naver-info-row')).toHaveLength(3); expect(content.textContent).toContain('<Shop 1>'); expect(content.querySelector('shop')).toBeNull();
-    expect(content.textContent).toContain('음식점');
-    fireEvent.click(within(content).getByRole('button', { name: '상세보기: <Shop 2>' })); expect(onOpenStore).toHaveBeenCalledWith(2);
-    fireEvent.click(within(content).getByRole('button', { name: '외 1곳 · 목록 보기' })); expect(onShowList).toHaveBeenCalledOnce();
+    const content = () => maps.infoWindow.content!;
+    expect(content().querySelectorAll('.place-market-naver-info-row')).toHaveLength(3); expect(content().textContent).toContain('<Shop 1>'); expect(content().querySelector('shop')).toBeNull();
+    expect(content().textContent).toContain('음식점');
+    // 지도 옆에 목록이 있으면 나머지는 세기만 한다 — 같은 가게가 목록에 이미 있다.
+    expect(within(content()).queryByRole('button', { name: /목록 보기/ })).toBeNull(); expect(content().textContent).toContain('외 1곳은 목록에');
+    fireEvent.click(within(content()).getByRole('button', { name: '상세보기: <Shop 2>' })); expect(onOpenStore).toHaveBeenCalledWith(2);
+    rerender(view({ openStoreId: 2 }));
+    expect(within(content()).getByRole('button', { name: '상세 닫기: <Shop 2>' })).toHaveAttribute('aria-expanded', 'true');
     const closes = () => maps.infoWindow.close.mock.calls.length; let before = closes();
-    fireEvent.click(within(content).getByRole('button', { name: '닫기' })); expect(closes()).toBe(before + 1);
-    before = closes(); act(() => maps.listeners.get('click')!()); expect(closes()).toBe(before + 1);
-    before = closes(); rerender(<MarketNaverMap {...props} data={{ ...data, stores }} selection={{ selectedKey: null }} onSelect={onSelect} onOpenStore={onOpenStore} onShowList={onShowList} />); expect(closes()).toBe(before + 1);
-    content.remove();
+    fireEvent.click(within(content()).getByRole('button', { name: '닫기' })); expect(closes()).toBe(before + 1); expect(onDeselect).toHaveBeenCalledTimes(1);
+    fireEvent.click(maps.Marker.mock.calls[0][0].icon.content);
+    before = closes(); act(() => maps.listeners.get('click')!()); expect(closes()).toBe(before + 1); expect(onDeselect).toHaveBeenCalledTimes(2);
+    // 창이 닫혀 있으면 지도 빈 곳을 눌러도 선택을 건드리지 않는다
+    act(() => maps.listeners.get('click')!()); expect(onDeselect).toHaveBeenCalledTimes(2);
+    fireEvent.click(maps.Marker.mock.calls[0][0].icon.content);
+    before = closes(); rerender(view({ selection: { selectedKey: null } })); expect(closes()).toBe(before + 1);
+  });
+  it('links the rest of a group to the list on a map with no list beside it', async () => {
+    const stores = [store(1, 37.5, 127), store(2, 37.50001, 127.00001), store(3, 37.5001, 127), store(4, 37.50002, 127.00002)];
+    install(); const onShowList = vi.fn();
+    render(<MarketNaverMap {...props} data={{ ...data, stores }} selection={{ selectedKey: 'x' }} onSelect={vi.fn()} onShowList={onShowList} />);
+    await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce());
+    fireEvent.click(maps.Marker.mock.calls[0][0].icon.content);
+    fireEvent.click(within(maps.infoWindow.content!).getByRole('button', { name: '외 1곳 · 목록 보기' })); expect(onShowList).toHaveBeenCalledOnce();
+  });
+  it('moves the map so an info window opened at the screen edge is not cut off', async () => {
+    install(); const panBy = vi.fn(); let at = { x: 30, y: 300 };
+    render(<MarketNaverMap {...props} selection={{ selectedKey: 'x' }} onSelect={vi.fn()} />);
+    await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce());
+    const map = maps.Map.mock.results[0].value as Record<string, unknown>;
+    Object.assign(map, { panBy, getSize: () => ({ width: 390, height: 600 }), getProjection: () => ({ fromCoordToOffset: () => at }) });
+    const sized = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(200); vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(100);
+    const open = () => fireEvent.click(maps.Marker.mock.calls[0][0].icon.content);
+    open(); expect(panBy).toHaveBeenLastCalledWith({ x: -78, y: -0 });
+    at = { x: 380, y: 300 }; open(); expect(panBy).toHaveBeenLastCalledWith({ x: 98, y: -0 });
+    at = { x: 195, y: 60 }; open(); expect(panBy).toHaveBeenLastCalledWith({ x: 0, y: -78 });
+    panBy.mockClear(); at = { x: 195, y: 300 }; open(); expect(panBy).not.toHaveBeenCalled();
+    sized.mockRestore(); vi.restoreAllMocks();
   });
   it('keeps a just-opened info window through map events that redraw before the page selects, then refills it in list order with the page numbers', async () => {
     install(); const onSelect = vi.fn();

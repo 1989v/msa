@@ -13,8 +13,9 @@ export type MarketLiveMapProps = {
   userPosition?: { latitude: number; longitude: number; accuracy: number } | null;
   onViewportChange?: (viewport: MarketViewport) => void;
   onSelect?: (key: string) => void; onError?: () => void;
-  /** Info window actions: open one shop's detail panel; show the list (mobile sheet) for the rest of a group. */
-  onOpenStore?: (id: number) => void; onShowList?: () => void;
+  /** Info window actions: open or close one shop's detail panel (`openStoreId` is the one open); closing the window clears the selection.
+   * `onShowList` is for maps with no list beside them — the rest of a group then links to one. */
+  onOpenStore?: (id: number) => void; openStoreId?: number | null; onDeselect?: () => void; onShowList?: () => void;
 };
 export type MarketNaverMapProps = MarketLiveMapProps & { keyId: string };
 const currentSdk = () => typeof window === 'undefined' ? undefined : (window as Window & { naver?: { maps?: any } }).naver?.maps;
@@ -66,8 +67,9 @@ function registerAuthFailure(callback: () => void) {
 const PIN_BOX = 44;
 /** 정보 창에 이름을 늘어놓는 상한. 더 많으면 목록으로 보낸다. */
 const INFO_LIMIT = 3;
-/** Info window body: up to three shops (list order, with their list numbers) with a detail button each, then a "N more · show list" button. Text only — merchants write the names. */
-function infoContent(stores: MarketStore[], numbers: ReadonlyMap<number, number> | undefined, lang: 'ko' | 'en', on: { close: () => void; open: (id: number) => void; list: () => void }): HTMLElement {
+/** Info window body: up to three shops (list order, with their list numbers) with a detail toggle each, then how many more.
+ * Beside a list the rest are already there, so the window only counts them; without one it links to the list. Text only — merchants write the names. */
+function infoContent(stores: MarketStore[], numbers: ReadonlyMap<number, number> | undefined, openStoreId: number | null | undefined, lang: 'ko' | 'en', on: { close: () => void; open: (id: number) => void; list?: () => void }): HTMLElement {
   const en = lang === 'en';
   const root = document.createElement('div'); root.className = 'place-market-naver-info'; root.setAttribute('role', 'dialog'); root.setAttribute('aria-label', en ? 'Selected shops' : '선택한 가게');
   const close = document.createElement('button'); close.type = 'button'; close.className = 'place-market-naver-info-close'; close.setAttribute('aria-label', en ? 'Close' : '닫기'); close.textContent = '×'; close.onclick = on.close; root.appendChild(close);
@@ -82,10 +84,12 @@ function infoContent(stores: MarketStore[], numbers: ReadonlyMap<number, number>
     row.appendChild(title);
     const type = MARKET_STORE_TYPES.find((candidate) => candidate.key === marketStoreType(store));
     const meta = document.createElement('p'); meta.textContent = [type?.[lang], store.roadAddress || store.jibunAddress].filter(Boolean).join(' · '); row.appendChild(meta);
-    if (store.id != null) { const id = store.id; const detail = document.createElement('button'); detail.type = 'button'; detail.textContent = en ? 'Details' : '상세보기'; detail.setAttribute('aria-label', `${en ? 'Details' : '상세보기'}: ${name}`); detail.onclick = () => on.open(id); row.appendChild(detail); }
+    if (store.id != null) { const id = store.id; const open = id === openStoreId; const detail = document.createElement('button'); detail.type = 'button'; detail.textContent = open ? (en ? 'Close' : '상세 닫기') : (en ? 'Details' : '상세보기'); detail.setAttribute('aria-expanded', String(open)); detail.setAttribute('aria-label', `${detail.textContent}: ${name}`); detail.onclick = () => on.open(id); row.appendChild(detail); }
     root.appendChild(row);
   }
-  if (stores.length > INFO_LIMIT) { const more = document.createElement('button'); more.type = 'button'; more.className = 'place-market-naver-info-more'; more.textContent = en ? `${stores.length - INFO_LIMIT} more · Show list` : `외 ${stores.length - INFO_LIMIT}곳 · 목록 보기`; more.onclick = on.list; root.appendChild(more); }
+  const rest = stores.length - INFO_LIMIT;
+  if (rest > 0 && on.list) { const more = document.createElement('button'); more.type = 'button'; more.className = 'place-market-naver-info-more'; more.textContent = en ? `${rest} more · Show list` : `외 ${rest}곳 · 목록 보기`; more.onclick = on.list; root.appendChild(more); }
+  else if (rest > 0) { const more = document.createElement('p'); more.className = 'place-market-naver-info-more'; more.textContent = en ? `${rest} more in the list` : `외 ${rest}곳은 목록에`; root.appendChild(more); }
   return root;
 }
 const pinHtmlIcon = (content: HTMLElement) => ({ content, size: { width: PIN_BOX, height: PIN_BOX }, anchor: { x: PIN_BOX / 2, y: PIN_BOX / 2 } });
@@ -94,13 +98,13 @@ function pinIcon(marker: OverlayMarker): HTMLElement {
   const button = document.createElement('button'); button.type = 'button';
   button.className = 'place-market-naver-pin'; button.setAttribute('aria-label', marker.title);
   button.style.width = button.style.height = `${PIN_BOX}px`;
-  const icon = document.createElement('span'); icon.textContent = marker.label ? '' : marker.text;
+  const icon = document.createElement('span'); icon.textContent = marker.text;
   Object.assign(icon.style, { display: 'grid', placeItems: 'center', boxSizing: 'border-box',
     width: `${marker.size}px`, height: `${marker.size}px`, borderRadius: '50%', borderStyle: 'solid',
     borderWidth: `${marker.strokeWeight}px`, borderColor: marker.strokeColor, background: marker.color,
     color: marker.textColor, fontSize: marker.fontSize, fontWeight: '700' });
   button.appendChild(icon);
-  if (marker.label) { const label = document.createElement('span'); label.textContent = marker.text; label.className = 'place-market-naver-label'; label.style.color = marker.textColor; Object.assign(label.style, { position: 'absolute', left: '50%', top: '50%', transform: `translate(calc(-50% + ${marker.labelOffset.x}px), calc(-50% + ${marker.labelOffset.y}px))` }); button.appendChild(label); }
+  if (marker.label && marker.labelText) { const label = document.createElement('span'); label.textContent = marker.labelText; label.className = 'place-market-naver-label'; label.style.color = marker.labelColor ?? marker.textColor; Object.assign(label.style, { position: 'absolute', left: '50%', top: '50%', transform: `translate(calc(-50% + ${marker.labelOffset.x}px), calc(-50% + ${marker.labelOffset.y}px))` }); button.appendChild(label); }
   return button;
 }
 
@@ -153,18 +157,20 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
     const remove = (entry: { object: any; listener?: any }) => { if (entry.listener != null) sdk.Event.removeListener(entry.listener); entry.object.setMap(null); };
     // 핀 클릭·목록 포커스 때 핀 자리에 간단 정보. 위치 기준으로 열어 핀이 다시 그려져도 남고, 지도 빈 곳·×·선택 해제로 닫힌다.
     const info = interactive && sdk.InfoWindow ? new sdk.InfoWindow({ content: document.createElement('div'), borderWidth: 0, backgroundColor: 'transparent', disableAnchor: true, pixelOffset: { x: 0, y: -(PIN_BOX / 2 + 4) } }) : null;
-    // 열린 창의 가게들과 그때 쓴 번호 Map. 번호는 클릭 뒤 페이지가 다시 그릴 때 오므로, Map 이 바뀌면 같은 창을 목록 순서·번호로 다시 채운다.
-    let shown: { storeIds: (number | null)[]; at: { latitude: number; longitude: number } } | null = null; let shownNumbers: ReadonlyMap<number, number> | undefined;
+    // 열린 창의 가게들과 그때 쓴 번호 Map·열린 상세. 번호는 클릭 뒤 페이지가 다시 그릴 때 오므로, 둘 중 하나가 바뀌면 같은 창을 목록 순서·번호로 다시 채운다.
+    let shown: { storeIds: (number | null)[]; at: { latitude: number; longitude: number } } | null = null; let shownNumbers: ReadonlyMap<number, number> | undefined; let shownOpen: number | null | undefined;
     // 선택 해제는 「있다가 없어질 때」만 본다. 클릭 직후 지도 이벤트(panBy 의 bounds_changed 등)가 페이지보다 먼저 다시 그리면 선택 키가 아직 옛 값(null)이라, 값만 보면 방금 연 창을 닫아 버린다.
     let lastSelectedKey: string | null = latest.current.selection?.selectedKey ?? null;
+    // 창을 닫으면 선택도 푼다 — 목록이 선택한 곳만 보이다가 시장 전체로 돌아간다.
+    const closeInfo = () => { info?.close(); shown = null; latest.current.onDeselect?.(); };
     const fillInfo = () => {
       if (!info || !shown) return false;
       const current = latest.current; const numbers = current.selection?.numbers;
       const stores = shown.storeIds.flatMap((id) => { const store = current.data.stores.find((s) => s.id === id); return store ? [store] : []; });
       if (!stores.length) return false;
       const rank = (store: MarketStore) => (store.id == null ? undefined : numbers?.get(store.id)) ?? Number.MAX_SAFE_INTEGER;
-      shownNumbers = numbers;
-      info.setContent(infoContent([...stores].sort((a, b) => rank(a) - rank(b)), numbers, current.lang, { close: () => info.close(), open: (id) => latest.current.onOpenStore?.(id), list: () => latest.current.onShowList?.() }));
+      shownNumbers = numbers; shownOpen = current.openStoreId;
+      info.setContent(infoContent([...stores].sort((a, b) => rank(a) - rank(b)), numbers, current.openStoreId, current.lang, { close: closeInfo, open: (id) => latest.current.onOpenStore?.(id), list: current.onShowList && (() => latest.current.onShowList?.()) }));
       return true;
     };
     const openInfo = (storeIds: (number | null)[], at: { latitude: number; longitude: number }) => {
@@ -172,11 +178,16 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
       shown = { storeIds, at };
       if (!fillInfo()) { shown = null; return; }
       info.open(map, coord(at));
-      // 창이 지도 위로 넘치면 그만큼 지도를 내린다(네이버 InfoWindow 는 스스로 비켜 주지 않는다).
-      const point = map.getProjection?.()?.fromCoordToOffset?.(coord(at)); const content = info.getContent?.() as HTMLElement | undefined;
-      if (point && content) { const overflow = content.offsetHeight + PIN_BOX / 2 + 16 - point.y; if (overflow > 0) map.panBy?.(sdk.Point ? new sdk.Point(0, -overflow) : { x: 0, y: -overflow }); }
+      // 창이 지도 위·옆으로 넘치면 그만큼 지도를 옮긴다(네이버 InfoWindow 는 스스로 비켜 주지 않는다). 핀이 화면 가장자리에 있으면 창이 잘려 닫기·상세 버튼이 안 보인다.
+      const point = map.getProjection?.()?.fromCoordToOffset?.(coord(at)); const content = info.getContent?.() as HTMLElement | undefined; const box = map.getSize?.();
+      if (point && content) {
+        const up = Math.max(0, content.offsetHeight + PIN_BOX / 2 + 16 - point.y);
+        const left = point.x - content.offsetWidth / 2 - 8; const right = box ? point.x + content.offsetWidth / 2 + 8 - box.width : 0;
+        const side = left < 0 ? left : right > 0 ? right : 0;
+        if (up > 0 || side !== 0) map.panBy?.(sdk.Point ? new sdk.Point(side, -up) : { x: side, y: -up });
+      }
     };
-    const mapClick = info ? sdk.Event.addListener(map, 'click', () => info.close()) : undefined;
+    const mapClick = info ? sdk.Event.addListener(map, 'click', () => { if (info.getMap?.()) closeInfo(); }) : undefined;
     redraw.current = (reportViewport = false) => {
       const bounds = map.getBounds?.(); const ne = bounds?.getNE(); const sw = bounds?.getSW();
       const frame: MarketBounds | undefined = ne && sw ? { north: ne.lat(), east: ne.lng(), south: sw.lat(), west: sw.lng() } : undefined;
@@ -186,7 +197,7 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
       if (interactive && reportViewport && frame) input.onViewportChange?.({ bounds: frame, zoom });
       const selectedKey = input.selection?.selectedKey ?? null;
       if (selectedKey == null && lastSelectedKey != null) { info?.close(); shown = null; }
-      else if (selectedKey != null && shown && info?.getMap?.() && input.selection?.numbers !== shownNumbers) fillInfo();
+      else if (selectedKey != null && shown && info?.getMap?.() && (input.selection?.numbers !== shownNumbers || input.openStoreId !== shownOpen)) fillInfo();
       lastSelectedKey = selectedKey;
       const wanted = new Set<string>();
       const sync = (key: string, value: unknown, create: () => any, click?: () => void) => {
@@ -226,7 +237,7 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
     const listeners = ['zoom_changed', 'idle', 'bounds_changed'].map((event) => sdk.Event.addListener(map, event, () => redraw.current(event === 'idle')));
     return () => { redraw.current = () => {}; listeners.forEach((listener) => sdk.Event.removeListener(listener)); if (mapClick != null) sdk.Event.removeListener(mapClick); info?.close(); overlays.forEach(remove); };
   }, [ready, identity, keyId, initialZoom, interactive]);
-  useEffect(() => { redraw.current(); }, [props.data, props.selection, props.storeIds, props.userPosition]);
+  useEffect(() => { redraw.current(); }, [props.data, props.selection, props.storeIds, props.userPosition, props.openStoreId]);
   if (!keyId) return null;
   return <div role="group" aria-label={lang === 'en' ? 'Naver shop location map' : '네이버 가게 위치 지도'}>
     <div ref={host} style={{ width: '100%', aspectRatio: interactive ? '600 / 440' : '16 / 9', minHeight: interactive ? '20rem' : undefined }} />

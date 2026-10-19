@@ -48,7 +48,7 @@ describe('MarketGoogleMap', () => {
     render(<MarketGoogleMap contentId="1" lang="ko" data={data} />); await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce());
     act(() => maps.listeners.get('idle')!()); expect(maps.Marker).toHaveBeenCalledOnce();
     maps.zoom(16); act(() => maps.listeners.get('zoom_changed')!()); expect(maps.Marker).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Market' }));
-    maps.zoom(19); act(() => maps.listeners.get('zoom_changed')!()); expect(maps.Marker).toHaveBeenCalledTimes(6); expect(maps.Polygon).toHaveBeenCalledTimes(1);
+    maps.zoom(19); act(() => maps.listeners.get('zoom_changed')!()); expect(maps.Marker).toHaveBeenCalledTimes(5); expect(maps.Polygon).toHaveBeenCalledTimes(1);
   });
   it('shares focus, selection and location callbacks and tears down overlays', async () => {
     const onSelect = vi.fn(); const { unmount } = render(<MarketGoogleMap contentId="1" lang="en" data={data} selection={{ storeId: 1 }} onSelect={onSelect} userPosition={{ latitude: 37.5, longitude: 127, accuracy: 12 }} />);

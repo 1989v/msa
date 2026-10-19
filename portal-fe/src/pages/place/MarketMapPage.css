@@ -50,6 +50,8 @@
 .market-list-row-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--ko-space-2); }
 .market-list-row-head > button:first-of-type { flex: 1; min-width: 0; text-align: left; }
 .market-list-detail { flex-shrink: 0; color: var(--ko-accent-text); }
+.market-list-detail[aria-expanded="true"] { background: var(--ko-surface-2); }
+.market-list-show-all { margin-block-end: var(--ko-space-2); color: var(--ko-accent-text); }
 /* 목록 순번 — 검색 결과·선택한 필지의 행과 같은 번호를 지도 핀이 쓴다. */
 .market-list-no { display: inline-grid; place-items: center; min-width: 1.5rem; height: 1.5rem; padding-inline: var(--ko-space-1); margin-inline-end: var(--ko-space-1); border-radius: 999px; background: var(--ko-text-primary); color: var(--ko-surface-0); font-size: var(--ko-text-xs); font-weight: 700; font-variant-numeric: tabular-nums; flex-shrink: 0; }
 /* 가게 상세 — 지도 오른쪽에서 들어온다. 모바일에서는 작업 영역 전체를 덮는다. */

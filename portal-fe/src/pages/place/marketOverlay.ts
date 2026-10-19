@@ -8,7 +8,8 @@ export type MarketBounds = { north: number; south: number; east: number; west: n
 export type OverlaySelection = { storeId?: number | null; searchStoreIds?: number[]; selectedKey?: string | null; numbers?: ReadonlyMap<number, number> };
 type Position = { latitude: number; longitude: number };
 type Shape = { key: string; coordinates: MarketCoordinate[]; color: string; strokeWeight: number; strokeOpacity: number };
-export type OverlayMarker = Position & { key: string; selectionKey?: string; storeIds: (number | null)[]; text: string; title: string; color: string; strokeColor: string; strokeWeight: number; size: number; fontSize: string; labelOffset: { x: number; y: number }; iconPath: string; textColor: string; highlighted: boolean; searchMatch: boolean; label: boolean };
+/** `text` 는 원 안 글자(가게 수·목록 순번), `labelText` 는 원 옆 이름표(이름과 시장이 붙인 번호) — 둘을 한 칸에 섞지 않는다. */
+export type OverlayMarker = Position & { key: string; selectionKey?: string; storeIds: (number | null)[]; text: string; labelText?: string; labelColor?: string; title: string; color: string; strokeColor: string; strokeWeight: number; size: number; fontSize: string; labelOffset: { x: number; y: number }; iconPath: string; textColor: string; highlighted: boolean; searchMatch: boolean; label: boolean };
 export type MarketOverlay = {
   centre: Position | null;
   marketPolygon: (Shape & { fillOpacity: number }) | null;
@@ -56,7 +57,7 @@ export function marketFitZoom(data: MarketResponse, width: number, height: numbe
   const fit = Math.floor(Math.log2(Math.min(width * .8 / span('x'), height * .8 / span('y'))));
   return Math.max(MARKET_DETAIL_ZOOM, Math.min(19, fit));
 }
-/** 화면 안 가게가 이보다 많으면 줌 19 이상이어도 묶음을 유지한다 — 남대문은 줌 19 한 화면에 790곳이 들어온다. */
+/** 화면 안 가게가 이보다 많으면 줌 19 이상이어도 이름표를 달지 않는다 — 남대문은 줌 19 한 화면에 790곳이 들어온다. */
 const INDIVIDUAL_LIMIT = 150;
 const inside = (store: Position, bounds?: MarketBounds) => !bounds || (store.latitude >= bounds.south && store.latitude <= bounds.north && (bounds.west <= bounds.east ? store.longitude >= bounds.west && store.longitude <= bounds.east : store.longitude >= bounds.west || store.longitude <= bounds.east));
 
@@ -86,38 +87,38 @@ export function buildMarketOverlay({ data, zoom, bounds, selection = {}, lang = 
   model.labels = [...names].map(([text, { midpoint }]) => ({ key: `label:${text}`, text, ...midpoint, color: muted }));
   const stores = all.filter((s) => storeIds == null || storeIds.includes(s.id));
   const parcels = groupMarketPins(stores); const parcelFor = (store: MarketStore) => parcels.find((p) => p.stores.includes(store))!;
-  // A group pin shows how many shops share the spot only when there are two or more; a lone pin shows its list number or nothing,
-  // and a named pin puts the market's own stall number (or else the list number) before the name. Counts are never stall numbers.
+  // 원 안 숫자는 두 가지뿐이다 — 2곳 이상 묶음이면 가게 수, 1곳이면 목록 순번(검색·선택 중일 때). 시장이 붙인 가게 번호는 이름표에만 쓴다.
   const numberOf = (store: MarketStore) => store.id == null ? undefined : selection.numbers?.get(store.id);
   const marker = (key: string, latitude: number, longitude: number, members: MarketStore[], selectionKey: string, label: boolean): OverlayMarker => {
     const highlighted = members.some((s) => selection.searchStoreIds?.includes(s.id!) || selection.storeId != null && selection.storeId === s.id) || selection.selectedKey === selectionKey;
     const color = members.every((s) => s.membership === 'OUT') ? muted : marketStoreTypeColor(majorityMarketStoreType(members));
-    const size = label ? 12 : members.length < 10 ? 20 : members.length < 100 ? 26 : 32;
-    const fontSize = `var(--ko-text-${label || size === 32 ? 'base' : size === 20 ? 'xs' : 'sm'})`;
     const number = members.length === 1 ? numberOf(members[0]) : undefined;
-    const text = label ? [members[0].storeNo || number, marketDisplayName(members[0], lang)].filter((part) => part != null).join(' · ') : members.length >= 2 ? String(members.length) : number != null ? String(number) : '';
-    return { key, latitude, longitude, selectionKey, storeIds: members.map((s) => s.id), text, title: members.map((s) => marketDisplayName(s, lang)).join(', '), color, strokeColor: highlighted ? 'var(--ko-accent-primary)' : 'var(--ko-surface-0)', strokeWeight: highlighted ? 4 : 2, size, fontSize, iconPath: circlePath(size), labelOffset: { x: 0, y: 0 }, highlighted, searchMatch: members.some((s) => selection.searchStoreIds?.includes(s.id!)), textColor: label ? highlighted ? 'var(--ko-accent-text)' : color : 'var(--ko-surface-0)', label };
+    const size = label && number == null ? 12 : members.length < 10 ? 20 : members.length < 100 ? 26 : 32;
+    const fontSize = `var(--ko-text-${size === 32 ? 'base' : size <= 20 ? 'xs' : 'sm'})`;
+    const text = members.length >= 2 ? String(members.length) : number != null ? String(number) : '';
+    const labelText = label ? [marketDisplayName(members[0], lang), members[0].storeNo].filter(Boolean).join(' ') : undefined;
+    return { key, latitude, longitude, selectionKey, storeIds: members.map((s) => s.id), text, labelText, title: members.map((s) => marketDisplayName(s, lang)).join(', '), color, strokeColor: highlighted ? 'var(--ko-accent-primary)' : 'var(--ko-surface-0)', strokeWeight: highlighted ? 4 : 2, size, fontSize, iconPath: circlePath(size), labelOffset: { x: 0, y: label ? size / 2 + 14 : 0 }, highlighted, searchMatch: members.some((s) => selection.searchStoreIds?.includes(s.id!)), textColor: 'var(--ko-surface-0)', labelColor: label ? highlighted ? 'var(--ko-accent-text)' : color : undefined, label };
   };
   const visibleStores = stores.filter((s) => inside(s, bounds));
-  if (zoom < MARKET_DETAIL_ZOOM && centre) model.markers.push({ key: 'market-name', ...centre, storeIds: [], text: `${data.market.name} · ${data.stores.length}`, title: data.market.name, color: muted, strokeColor: 'var(--ko-surface-0)', strokeWeight: 2, size: 32, fontSize: 'var(--ko-text-base)', iconPath: circlePath(32), labelOffset: { x: 0, y: 20 }, textColor: muted, highlighted: false, searchMatch: false, label: true });
-  else if (zoom >= 19 && visibleStores.length <= INDIVIDUAL_LIMIT) model.markers = visibleStores.map((s, index) => marker(`store:${s.id ?? index}`, s.latitude, s.longitude, [s], parcelFor(s).key, true));
+  if (zoom < MARKET_DETAIL_ZOOM && centre) model.markers.push({ key: 'market-name', ...centre, storeIds: [], text: '', labelText: `${data.market.name} · ${data.stores.length}`, title: data.market.name, color: muted, strokeColor: 'var(--ko-surface-0)', strokeWeight: 2, size: 32, fontSize: 'var(--ko-text-base)', iconPath: circlePath(32), labelOffset: { x: 0, y: 20 }, textColor: 'var(--ko-surface-0)', labelColor: muted, highlighted: false, searchMatch: false, label: true });
   else {
+    // 같은 건물(필지)·화면에서 겹치는 가게는 줌과 관계없이 한 핀으로 묶는다. 이름표는 줌 19 이상에서 1곳짜리 핀에만,
+    // 다른 이름표와 겹치지 않을 때만 단다 — 겹친 이름을 아래로 쌓으면 이름이 지도를 덮어 지도를 끌 수 없게 된다.
+    const named = zoom >= 19 && visibleStores.length <= INDIVIDUAL_LIMIT;
     const visible = groupMarketPins(visibleStores).map((p) => ({ ...p, ...screen([p.latitude, p.longitude], zoom) }));
-    model.markers = clusterByScreenDistance(visible, 1, 24).map((p) => marker(`pin:${p.key}`, p.latitude, p.longitude, p.stores, p.key, false));
+    const boxes: { x: number; y: number; width: number }[] = [];
+    model.markers = clusterByScreenDistance(visible, 1, 24).map((p) => {
+      let pin = marker(`pin:${p.key}`, p.latitude, p.longitude, p.stores, p.key, named && p.stores.length === 1);
+      if (pin.label) {
+        const box = { x: p.x, y: p.y + pin.labelOffset.y, width: Math.max(32, [...pin.labelText!].length * 14 + 16) };
+        if (boxes.some((b) => Math.abs(box.x - b.x) < (box.width + b.width) / 2 && Math.abs(box.y - b.y) < 24)) pin = marker(`pin:${p.key}`, p.latitude, p.longitude, p.stores, p.key, false);
+        else boxes.push(box);
+      }
+      return pin;
+    });
   }
   const focused = stores.find((s) => selection.storeId != null && s.id === selection.storeId);
   if (focused) model.focus = { latitude: focused.latitude, longitude: focused.longitude, selectionKey: parcelFor(focused).key, zoom: 19 };
   if (userPosition) model.userPosition = { ...userPosition, text: lang === 'en' ? 'Your location' : '내 위치', color: 'var(--ko-accent-primary)', fillOpacity: .15, strokeWeight: 1, size: 12, iconPath: circlePath(12), strokeColor: 'var(--ko-surface-0)' };
-  // Deterministic screen-space label boxes keep coincident individual pins' names readable.
-  // The adapters consume pixel offsets; they never decide which names to show or group.
-  const boxes: { x: number; y: number; width: number }[] = [];
-  for (const marker of model.markers.filter((m) => m.label)) {
-    const point = screen([marker.latitude, marker.longitude], zoom);
-    const width = Math.max(32, [...marker.text].length * 14 + 16);
-    let y = 20;
-    while (boxes.some((b) => Math.abs(point.x - b.x) < (width + b.width) / 2 && Math.abs(point.y + y - b.y) < 24)) y += 24;
-    marker.labelOffset = { x: 0, y };
-    boxes.push({ x: point.x, y: point.y + y, width });
-  }
   return model;
 }

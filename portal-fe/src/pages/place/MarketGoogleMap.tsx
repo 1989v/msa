@@ -82,7 +82,8 @@ export default function MarketGoogleMap(props: MarketLiveMapProps) {
       for (const line of model.alleys) sync(line.key, line, () => new sdk.Polyline({ map, path: line.coordinates.map(([lat, lng]) => ({ lat, lng })), strokeColor: token(line.color), strokeWeight: line.strokeWeight, strokeOpacity: line.strokeOpacity }), !interactive ? () => latest.current.onActivate?.() : undefined);
       for (const marker of model.markers) sync(marker.key, marker, () => new sdk.Marker({ map, position: coord(marker), title: marker.title,
         icon: { path: marker.iconPath, scale: 1, labelOrigin: new sdk.Point(marker.labelOffset.x, marker.labelOffset.y), fillColor: token(marker.color), fillOpacity: 1, strokeColor: token(marker.strokeColor), strokeWeight: marker.strokeWeight },
-        label: { text: marker.text, color: token(marker.textColor), fontWeight: '700', fontSize: token(marker.fontSize) },
+        // 구글 마커는 글자를 하나만 단다 — 이름표가 있으면 이름표를, 없으면 원 안 숫자를.
+        label: marker.labelText ? { text: marker.labelText, color: token(marker.labelColor ?? marker.textColor), fontWeight: '700', fontSize: token(marker.fontSize) } : { text: marker.text, color: token(marker.textColor), fontWeight: '700', fontSize: token(marker.fontSize) },
       }), !interactive ? () => latest.current.onActivate?.() : marker.selectionKey ? () => latest.current.onSelect?.(marker.selectionKey!) : undefined);
       for (const label of model.labels) sync(label.key, label, () => new sdk.Marker({ map, position: coord(label), title: label.text,
         icon: { path: sdk.SymbolPath.CIRCLE, scale: 0 }, label: { text: label.text, color: token(label.color) },

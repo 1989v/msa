@@ -67,7 +67,7 @@ function MarketMapScreen() {
   const types = marketStoreTypeCounts(visibleMarketStores(data.stores, includeOutside));
   const stores = visibleMarketStores(data.stores, includeOutside, storeType);
   const projection = projectMarketPins(groupMarketPins(stores), data);
-  const listing = marketListStores(data, query, storeType, viewport, selectedKey, includeOutside, dishes, storeSearch);
+  const listing = marketListStores(data, query, storeType, viewport, selectedKey, includeOutside, dishes, storeSearch, focusStoreId == null);
   const resetKey = JSON.stringify([data.market.contentId, query, storeType, viewport, includeOutside, selectedKey]);
   const limit = page.key === resetKey ? page.limit : 50;
   // 번호는 검색 중이면 보이는 결과에, 아니면 선택한 필지(또는 포커스한 가게)에 1부터. 같은 Map 이 목록과 지도에 간다.
@@ -76,6 +76,11 @@ function MarketMapScreen() {
   const detailStore = detailId == null ? null : data.stores.find(store => store.id === detailId) ?? null;
   const clear = () => { setSelectedKey(null); setFocusStoreId(null); setDetailId(null); };
   const focusStore = (id: number) => { flushSync(() => setFocusStoreId(null)); setFocusStoreId(id); };
+  const deselect = () => { setSelectedKey(null); setFocusStoreId(null); };
+  // 지도에서 다른 핀을 고르면 목록에서 맞춘 가게는 놓는다 — 그때부터 목록은 그 핀의 가게만 보인다.
+  const selectPin = (key: string | null) => { if (key == null) { deselect(); return; } setSelectedKey(key); setFocusStoreId(current => current != null && groupMarketPins(stores).find(pin => pin.stores.some(store => store.id === current))?.key === key ? current : null); };
+  // 같은 가게의 상세보기를 다시 누르면 닫는다.
+  const toggleDetail = (id: number) => setDetailId(current => current === id ? null : id);
   const setQuery = (value: string) => { const next = new URLSearchParams(params); if (value) next.set('marketQuery', value); else next.delete('marketQuery'); setParams(next, { replace: true }); clear(); };
   // 품목을 고르면 검색창에 넣는다 — 입력은 제어하지 않으므로 값을 직접 쓴다.
   const pickItem = (item: string) => { if (searchInput.current) searchInput.current.value = item; setQuery(item); setSnap('half'); };
@@ -95,14 +100,14 @@ function MarketMapScreen() {
     </nav>
     <div className="market-map-workspace">
       <div className="market-map-stage">
-        {projection ? <MarketMap contentId={attraction.data.contentId} data={data} lang={lang} projection={projection} points={projection.points} hasGeometry={!!data.boundary?.polygon.length || !!data.paths?.some(path => path.geometry.length)} query={query} searchStoreIds={storeSearch.status === 'engine' ? storeSearch.storeIds : undefined} dishes={dishes} selectedKey={selectedKey} focusStoreId={focusStoreId} color={color} numbers={numbers} onViewportChange={setViewport} onSelect={setSelectedKey} onOpenStore={setDetailId} onShowList={() => setSnap('half')} /> : <p>{en ? 'No shop coordinates available.' : '좌표가 있는 가게가 없습니다.'}</p>}
+        {projection ? <MarketMap contentId={attraction.data.contentId} data={data} lang={lang} projection={projection} points={projection.points} hasGeometry={!!data.boundary?.polygon.length || !!data.paths?.some(path => path.geometry.length)} query={query} searchStoreIds={storeSearch.status === 'engine' ? storeSearch.storeIds : undefined} dishes={dishes} selectedKey={selectedKey} focusStoreId={focusStoreId} color={color} numbers={numbers} onViewportChange={setViewport} onSelect={selectPin} onDeselect={deselect} onOpenStore={toggleDetail} openStoreId={detailId} /> : <p>{en ? 'No shop coordinates available.' : '좌표가 있는 가게가 없습니다.'}</p>}
       </div>
       <aside className="market-map-list" aria-label={en ? 'Shop list' : '가게 목록'}>
         <button type="button" className="market-map-handle" aria-label={en ? 'Resize shop list' : '가게 목록 크기 조절'} aria-valuetext={snap} onPointerDown={event => { pointerStart.current = event.clientY; dragged.current = false; event.currentTarget.setPointerCapture?.(event.pointerId); }} onPointerUp={event => {
           const delta = (pointerStart.current ?? event.clientY) - event.clientY; pointerStart.current = null;
           if (Math.abs(delta) >= 60) { dragged.current = true; setSnap(SNAPS[Math.max(0, Math.min(2, SNAPS.indexOf(snap) + (delta > 0 ? 1 : -1)))]); }
         }} onPointerCancel={() => { pointerStart.current = null; }} onClick={() => { if (dragged.current) { dragged.current = false; return; } setSnap(SNAPS[(SNAPS.indexOf(snap) + 1) % 3]); }}><span aria-hidden="true">━</span></button>
-        <MarketList search={storeSearch} market={data} listing={listing} limit={limit} numbers={numbers} query={query} focusStore={focusStoreId} lang={lang} dishes={dishes} topItems={topMarketItems(stores, lang)} onPickItem={pickItem} onFocusStore={focusStore} onOpenStore={setDetailId} onMore={() => setPage({ key: resetKey, limit: limit + 50 })} />
+        <MarketList search={storeSearch} market={data} listing={listing} limit={limit} numbers={numbers} query={query} focusStore={focusStoreId} openStore={detailId} lang={lang} dishes={dishes} topItems={topMarketItems(stores, lang)} onPickItem={pickItem} onShowAll={deselect} onFocusStore={focusStore} onOpenStore={toggleDetail} onMore={() => setPage({ key: resetKey, limit: limit + 50 })} />
       </aside>
       {detailStore && <MarketStoreDetail store={detailStore} number={detailStore.id == null ? undefined : numbers.get(detailStore.id)} lang={lang} onClose={() => setDetailId(null)} onFocus={focusStore} />}
     </div>

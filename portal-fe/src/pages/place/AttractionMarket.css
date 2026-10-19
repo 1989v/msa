@@ -141,6 +141,7 @@
 .place-market-naver-info-row p { grid-column: 1; margin: var(--ko-space-1) 0 0; color: var(--ko-text-secondary); font-size: var(--ko-text-xs); overflow-wrap: anywhere; }
 .place-market-naver-info-row button { grid-column: 2; grid-row: 1 / span 2; }
 .place-market-naver-info-more { display: block; width: 100%; margin-top: var(--ko-space-2); }
+p.place-market-naver-info-more { margin-bottom: 0; color: var(--ko-text-secondary); font-size: var(--ko-text-xs); }
 
 .place-market-summary { padding: var(--ko-space-4); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius-asym); background: var(--ko-surface-1); }
 .place-market-types a { display: inline-flex; align-items: center; min-height: 2.75rem; padding: var(--ko-space-2) var(--ko-space-3); border: 1px solid var(--ko-border-default); border-radius: var(--kh-radius); color: var(--ko-accent-text); }

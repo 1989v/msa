@@ -6,39 +6,44 @@ import type { MarketStoreSearch } from './useMarketStoreSearch';
 import type { MarketStoreTypeKey } from './marketStoreType';
 import MarketMenuDetails from './MarketMenuDetails';
 
-export function marketListStores(market: MarketResponse, query: string, storeType: MarketStoreTypeKey | null, viewport: MarketViewport | null, selectedKey: string | null, includeOutside: boolean, dishes: MarketDish[] = [], search?: MarketStoreSearch) {
+/** `pinned` — 지도에서 핀을 눌러 고른 동안은 그 핀의 가게만 보인다. 목록에서 가게를 눌러 지도를 맞춘 경우는 목록을 그대로 둔다. */
+export function marketListStores(market: MarketResponse, query: string, storeType: MarketStoreTypeKey | null, viewport: MarketViewport | null, selectedKey: string | null, includeOutside: boolean, dishes: MarketDish[] = [], search?: MarketStoreSearch, pinned = false) {
   const stores = visibleMarketStores(market.stores, includeOutside, storeType);
   const searching = normalizeMarketName(query).length > 0;
   const keys: string[] = selectedKey?.startsWith('cluster:') ? JSON.parse(selectedKey.slice(8)) : selectedKey ? [selectedKey] : [];
   const selected = new Set(groupMarketPins(stores).filter(pin => keys.includes(pin.key)).flatMap(pin => pin.stores));
   const bounds = viewport?.bounds;
   const engine = search?.status === 'engine';
-  const rows = stores.filter(store => searching ? engine ? store.id != null && search.storeIds.includes(store.id) : matchesMarketStore(store, query, dishes) != null : !bounds || !hasMarketCoordinate(store) || (store.latitude >= bounds.south && store.latitude <= bounds.north && store.longitude >= bounds.west && store.longitude <= bounds.east));
+  const only = pinned && !searching && selected.size > 0;
+  const rows = stores.filter(store => only ? selected.has(store) : searching ? engine ? store.id != null && search.storeIds.includes(store.id) : matchesMarketStore(store, query, dishes) != null : !bounds || !hasMarketCoordinate(store) || (store.latitude >= bounds.south && store.latitude <= bounds.north && store.longitude >= bounds.west && store.longitude <= bounds.east));
   rows.sort((a, b) => engine ? search.storeIds.indexOf(a.id!) - search.storeIds.indexOf(b.id!) : Number(hasMarketCoordinate(b)) - Number(hasMarketCoordinate(a)) || Number(selected.has(b)) - Number(selected.has(a)) || (matchesMarketStore(a, query, dishes)?.rank ?? 5) - (matchesMarketStore(b, query, dishes)?.rank ?? 5) || a.name.localeCompare(b.name, 'ko') || (a.id ?? 0) - (b.id ?? 0));
-  return { rows, selected, searching };
+  return { rows, selected, searching, pinned: only };
 }
 export type MarketListing = ReturnType<typeof marketListStores>;
 
 /** The same list instance serves the mobile sheet and desktop panel. The page owns the rows, the page size and the
  * numbers so the map can show the same ordinals next to its pins. */
-export default function MarketList({ market, listing, limit, numbers, query, focusStore, lang, dishes = [], search, topItems = [], onFocusStore, onOpenStore, onMore, onPickItem }: {
-  market: MarketResponse; listing: MarketListing; limit: number; numbers: ReadonlyMap<number, number>; query: string; focusStore?: number | null;
+export default function MarketList({ market, listing, limit, numbers, query, focusStore, openStore, lang, dishes = [], search, topItems = [], onFocusStore, onOpenStore, onMore, onPickItem, onShowAll }: {
+  market: MarketResponse; listing: MarketListing; limit: number; numbers: ReadonlyMap<number, number>; query: string; focusStore?: number | null; openStore?: number | null;
   lang: PlaceLang; dishes?: MarketDish[]; search?: MarketStoreSearch; topItems?: { item: string; count: number }[];
-  onFocusStore: (id: number) => void; onOpenStore: (id: number) => void; onMore: () => void; onPickItem?: (item: string) => void;
+  onFocusStore: (id: number) => void; onOpenStore: (id: number) => void; onMore: () => void; onPickItem?: (item: string) => void; onShowAll?: () => void;
 }) {
   const en = lang === 'en';
-  const { rows, selected, searching } = listing;
+  const { rows, selected, searching, pinned } = listing;
   const match = (store: MarketResponse['stores'][number]) => search?.status === 'engine' ? search.matchedBy.get(store.id!) ?? null : matchesMarketStore(store, query, dishes);
   // 좌표 없는 가게는 목록 끝에 남기되 「현 지도에서」 수에는 넣지 않는다 — 지도에 없는 것을 지도 안이라 세지 않는다.
   const unplaced = rows.filter(store => !hasMarketCoordinate(store)).length;
   const placed = rows.length - unplaced;
-  const heading = searching
+  const heading = pinned
+    ? (en ? `${rows.length} shops at this pin` : `고른 곳의 가게 ${rows.length}곳`)
+    : searching
     ? (en ? `Found ${rows.length} shops` : `찾은 가게 ${rows.length}곳`)
     : (en ? `${placed} shops in current map` : `현 지도에서 ${placed}곳`) + (unplaced ? (en ? ` · ${unplaced} without map location` : ` · 지도 위치 없음 ${unplaced}곳`) : '');
   return <>
     <header className="market-list-header">
       <h2>{heading}</h2>
-      {!searching && topItems.length > 0 && onPickItem && <nav className="market-top-items" aria-label={en ? 'Popular goods' : '많이 파는 품목'}><span>{en ? 'Popular goods' : '많이 파는 품목'}</span>{topItems.map(({ item, count }) => <button key={item} type="button" onClick={() => onPickItem(item)}>{item} <span aria-hidden="true">{count}</span></button>)}</nav>}
+      {pinned && onShowAll && <button type="button" className="market-list-show-all" onClick={onShowAll}>{en ? 'Show all shops' : '시장 전체 보기'}</button>}
+      {!searching && !pinned && topItems.length > 0 && onPickItem && <nav className="market-top-items" aria-label={en ? 'Popular goods' : '많이 파는 품목'}><span>{en ? 'Popular goods' : '많이 파는 품목'}</span>{topItems.map(({ item, count }) => <button key={item} type="button" onClick={() => onPickItem(item)}>{item} <span aria-hidden="true">{count}</span></button>)}</nav>}
       {market.market.goodPrice && <p className="place-market-source">{formatGoodPriceSummary(market.market.goodPrice, lang)} · <a href={market.market.goodPrice.attribution.url} target="_blank" rel="noreferrer">{market.market.goodPrice.attribution.name}</a></p>}
       {market.market.attribution && <p className="place-market-source"><a href={market.market.attribution.url} target="_blank" rel="noreferrer">{market.market.attribution.name}</a> · {market.market.attribution.license}</p>}
       {(market.attribution ?? []).map(credit => <p className="place-market-source" key={credit}>{credit}</p>)}
@@ -49,11 +54,13 @@ export default function MarketList({ market, listing, limit, numbers, query, foc
         {rows.slice(0, limit).map((store, index) => {
           const number = store.id == null ? undefined : numbers.get(store.id);
           const name = marketDisplayName(store, lang);
+          const detailOpen = store.id != null && store.id === openStore;
+          const detailLabel = detailOpen ? (en ? 'Close' : '상세 닫기') : (en ? 'Details' : '상세보기');
           return <li key={store.id ?? `${store.name}-${index}`} data-selected={selected.has(store) || store.id === focusStore || undefined} data-found={searching || undefined} data-outside={store.membership === 'OUT' || undefined}>
             <div className="market-list-row-head">
               {number != null && <span className="market-list-no">{number}</span>}
               {hasMarketCoordinate(store) && store.id != null ? <button type="button" aria-pressed={store.id === focusStore} aria-label={`${en ? 'Show on map' : '지도에서 보기'}: ${name}`} onClick={() => onFocusStore(store.id!)}><strong>{name}</strong>{store.storeNo && <span className="market-store-no">{store.storeNo}</span>}</button> : <strong>{name}{store.storeNo && <span className="market-store-no">{store.storeNo}</span>}</strong>}
-              {store.id != null && <button type="button" className="market-list-detail" aria-label={`${en ? 'Details' : '상세보기'}: ${name}`} onClick={() => onOpenStore(store.id!)}>{en ? 'Details' : '상세보기'}</button>}
+              {store.id != null && <button type="button" className="market-list-detail" aria-expanded={detailOpen} aria-label={`${detailLabel}: ${name}`} onClick={() => onOpenStore(store.id!)}>{detailLabel}</button>}
             </div>
             <div className="place-market-badges">
               {selected.has(store) && <span>{en ? 'Selected parcel' : '선택한 필지'}</span>}
