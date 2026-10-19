@@ -17,7 +17,7 @@ function sdk() {
     Map: vi.fn(function (_host: HTMLElement, options: { zoom: number }) { zoom = options.zoom; return map; }), LatLng: vi.fn(function (latitude: number, longitude: number) { return { latitude, longitude }; }),
     Marker: vi.fn(function (_options: { icon: { content: HTMLElement }; title?: string }) { return overlay(); }),
     Polygon: vi.fn(function (_options: unknown) { return overlay(); }), Polyline: vi.fn(function (_options: unknown) { return overlay(); }), Circle: vi.fn(function (_options: unknown) { return overlay(); }),
-    Position: { RIGHT_BOTTOM: 'RB' }, ZoomControlStyle: { SMALL: 'S' },
+    Position: { BOTTOM_RIGHT: 'BR', RIGHT_BOTTOM: 'RB' }, ZoomControlStyle: { SMALL: 'S' },
     Event: { addListener: vi.fn((target: unknown, event: string, callback: () => void) => { if (target === map) listeners.set(event, callback); return { target, event, callback }; }), removeListener: vi.fn() },
   };
 }
@@ -51,7 +51,7 @@ describe('MarketNaverMap', () => {
   it('puts small zoom buttons at the bottom right of an interactive map', async () => {
     install(); render(<MarketNaverMap {...props} />);
     await waitFor(() => expect(maps.Map).toHaveBeenCalledOnce());
-    expect(maps.Map).toHaveBeenCalledWith(expect.any(HTMLElement), expect.objectContaining({ zoomControl: true, zoomControlOptions: { position: 'RB', style: 'S' } }));
+    expect(maps.Map).toHaveBeenCalledWith(expect.any(HTMLElement), expect.objectContaining({ zoomControl: true, zoomControlOptions: { position: 'BR', style: 'S' } }));
   });
   it('reports first viewport and idle bounds with the rendered zoom', async () => {
     const onViewportChange = vi.fn(); install();
