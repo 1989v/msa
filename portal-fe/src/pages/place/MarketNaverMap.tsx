@@ -179,11 +179,11 @@ export default function MarketNaverMap(props: MarketNaverMapProps) {
       if (!fillInfo()) { shown = null; return; }
       info.open(map, coord(at));
       // 창이 지도 위·옆으로 넘치면 그만큼 지도를 옮긴다(네이버 InfoWindow 는 스스로 비켜 주지 않는다). 핀이 화면 가장자리에 있으면 창이 잘려 닫기·상세 버튼이 안 보인다.
-      const point = map.getProjection?.()?.fromCoordToOffset?.(coord(at)); const content = info.getContent?.() as HTMLElement | undefined; const box = map.getSize?.();
-      if (point && content) {
-        const up = Math.max(0, content.offsetHeight + PIN_BOX / 2 + 16 - point.y);
-        const left = point.x - content.offsetWidth / 2 - 8; const right = box ? point.x + content.offsetWidth / 2 + 8 - box.width : 0;
-        const side = left < 0 ? left : right > 0 ? right : 0;
+      // 그려진 창과 지도 상자를 화면 좌표로 비교한다 — 투영의 픽셀 오프셋은 지도 상자 기준이 아니어서 옆으로 옮길 양이 크게 틀렸다(지도가 가게 밖으로 날아갔다).
+      const content = info.getContent?.() as HTMLElement | undefined; const frame = host.current?.getBoundingClientRect(); const box = content?.getBoundingClientRect();
+      if (frame && box && box.width > 0) {
+        const up = Math.max(0, frame.top + 8 - box.top);
+        const side = box.left < frame.left + 8 ? box.left - frame.left - 8 : box.right > frame.right - 8 ? box.right - frame.right + 8 : 0;
         if (up > 0 || side !== 0) map.panBy?.(sdk.Point ? new sdk.Point(side, -up) : { x: side, y: -up });
       }
     };

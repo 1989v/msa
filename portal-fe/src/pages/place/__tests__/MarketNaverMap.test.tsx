@@ -146,19 +146,22 @@ describe('MarketNaverMap', () => {
     fireEvent.click(maps.Marker.mock.calls[0][0].icon.content);
     fireEvent.click(within(maps.infoWindow.content!).getByRole('button', { name: '외 1곳 · 목록 보기' })); expect(onShowList).toHaveBeenCalledOnce();
   });
-  it('moves the map so an info window opened at the screen edge is not cut off', async () => {
-    install(); const panBy = vi.fn(); let at = { x: 30, y: 300 };
+  it('moves the map by how far the drawn info window sticks out of the map box', async () => {
+    install(); const panBy = vi.fn(); let window_ = { left: -60, top: 300, width: 200, height: 100 };
+    const rect = (r: { left: number; top: number; width: number; height: number }) => ({ ...r, right: r.left + r.width, bottom: r.top + r.height, x: r.left, y: r.top, toJSON: () => ({}) }) as DOMRect;
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains('place-market-naver-info') ? rect(window_) : rect({ left: 0, top: 100, width: 390, height: 600 });
+    });
     render(<MarketNaverMap {...props} selection={{ selectedKey: 'x' }} onSelect={vi.fn()} />);
-    await waitFor(() => expect(maps.Marker).toHaveBeenCalledOnce());
-    const map = maps.Map.mock.results[0].value as Record<string, unknown>;
-    Object.assign(map, { panBy, getSize: () => ({ width: 390, height: 600 }), getProjection: () => ({ fromCoordToOffset: () => at }) });
-    const sized = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(200); vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(100);
+    // 상자 크기가 잡혀 시장 줌(19)으로 열리므로 핀 수는 이 시험의 관심이 아니다
+    await waitFor(() => expect(maps.Marker).toHaveBeenCalled());
+    Object.assign(maps.Map.mock.results[0].value as Record<string, unknown>, { panBy });
     const open = () => fireEvent.click(maps.Marker.mock.calls[0][0].icon.content);
-    open(); expect(panBy).toHaveBeenLastCalledWith({ x: -78, y: -0 });
-    at = { x: 380, y: 300 }; open(); expect(panBy).toHaveBeenLastCalledWith({ x: 98, y: -0 });
-    at = { x: 195, y: 60 }; open(); expect(panBy).toHaveBeenLastCalledWith({ x: 0, y: -78 });
-    panBy.mockClear(); at = { x: 195, y: 300 }; open(); expect(panBy).not.toHaveBeenCalled();
-    sized.mockRestore(); vi.restoreAllMocks();
+    open(); expect(panBy).toHaveBeenLastCalledWith({ x: -68, y: -0 });
+    window_ = { left: 300, top: 300, width: 200, height: 100 }; open(); expect(panBy).toHaveBeenLastCalledWith({ x: 118, y: -0 });
+    window_ = { left: 100, top: 60, width: 200, height: 100 }; open(); expect(panBy).toHaveBeenLastCalledWith({ x: 0, y: -48 });
+    panBy.mockClear(); window_ = { left: 100, top: 300, width: 200, height: 100 }; open(); expect(panBy).not.toHaveBeenCalled();
+    vi.restoreAllMocks();
   });
   it('keeps a just-opened info window through map events that redraw before the page selects, then refills it in list order with the page numbers', async () => {
     install(); const onSelect = vi.fn();
