@@ -31,6 +31,7 @@ class UnifiedSourceApiClient(
     @Qualifier("placeWebClient") private val contentWebClient: WebClient,
     @Qualifier("atlasWebClient") private val atlasWebClient: WebClient,
     @Qualifier("productWebClient") private val commerceWebClient: WebClient,
+    private val cafeSource: CafeSearchSourceClient,
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -42,6 +43,7 @@ class UnifiedSourceApiClient(
         SERVICE -> services()
         DEAL_OFFER -> dealOffers()
         PRODUCT -> products()
+        CAFE_DRINK -> cafeSource.fetch()
         else -> error("unknown unified type: $type")
     }
 
@@ -83,20 +85,29 @@ class UnifiedSourceApiClient(
     private suspend fun games(): List<UnifiedIndexDocument> {
         val docs = mutableListOf<UnifiedIndexDocument>()
         var page = 0
+        var expected: Long? = null
+        val seen = mutableSetOf<String>()
         do {
-            val data = contentWebClient.getData("/api/v1/games?page=$page&size=$PAGE")
-            for (game in data.list("content")) {
-                val slug = game.str("slug") ?: continue
+            val data = contentWebClient.getData("/api/v1/games?page=$page&size=$PAGE&sort=new")
+            check(data["content"] is List<*>) { "Missing game catalogue content" }
+            val items = data.list("content")
+            val total = (data["totalElements"] as? Number)?.toLong() ?: error("Missing game catalogue total")
+            check(total > 0 && (expected == null || expected == total) && items.isNotEmpty()) { "Empty/changing game catalogue" }
+            expected = total
+            for (game in items) {
+                val slug = requireNotNull(game.str("slug"))
+                val sourceId = requireNotNull(game.str("id"))
+                check(seen.add(sourceId) && game.str("status") in setOf("PUBLISHED", "BETA")) { "Duplicate/private game in public source" }
                 val detail = runCatching { contentWebClient.getData("/api/v1/games/$slug") }
                     .getOrElse { log.warn { "게임 상세를 못 받았다 — 목록 필드만 색인: $slug (${it.message})" }; emptyMap() }
                 val tags = game.strList("tags")
                 docs += UnifiedIndexDocument(
-                    id = "$GAME:${game.str("id")}",
+                    id = "$GAME:$sourceId",
                     type = GAME,
-                    sourceId = game.str("id") ?: slug,
+                    sourceId = sourceId,
                     slug = slug,
                     lang = KO,
-                    title = game.str("title") ?: continue,
+                    title = requireNotNull(game.str("title")),
                     titleEn = game.str("titleEn"),
                     summary = detail.str("description"),
                     body = detail.str("descriptionEn"),
@@ -108,9 +119,9 @@ class UnifiedSourceApiClient(
                     thumbnailUrl = game.str("thumbnailUrl"),
                 )
             }
-            val totalPages = data.num("totalPages").toInt()
-            page++
-        } while (page < totalPages)
+            check(docs.size <= total && (docs.size.toLong() == total || items.size == PAGE)) { "Truncated game catalogue" }
+            check(++page <= 10000) { "Game catalogue exceeds scan bound" }
+        } while (docs.size.toLong() < requireNotNull(expected))
         return docs
     }
 
@@ -247,7 +258,8 @@ class UnifiedSourceApiClient(
         const val SERVICE = "service"
         const val DEAL_OFFER = "deal_offer"
         const val PRODUCT = "product"
-        val TYPES = listOf(BLOG_POST, GAME, CONCEPT, SERVICE, DEAL_OFFER, PRODUCT)
+        const val CAFE_DRINK = "cafe_drink"
+        val TYPES = listOf(BLOG_POST, GAME, CONCEPT, SERVICE, DEAL_OFFER, PRODUCT, CAFE_DRINK)
 
         private const val KO = "ko"
         private const val PAGE = 100

@@ -49,7 +49,8 @@ class UnifiedSearchAdapterTest : BehaviorSpec({
         then("match_all + 인기순 정렬") {
             val bool = requireNotNull(request.query()!!.functionScore().query()).bool()
             bool.must().single().isMatchAll shouldBe true
-            request.sort().single().field().field() shouldBe "popularity"
+            request.sort().first().field().field() shouldBe "popularity"
+            request.sort().last().field().field() shouldBe "id"
         }
     }
 

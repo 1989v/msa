@@ -119,6 +119,13 @@ class IndexAliasManager(private val osClient: OpenSearchClient) {
         log.info { "Alias '$alias' 교체 검사 통과 — 새 $newCount 건 / 라이브 $liveCount 건" }
     }
 
+    /** Exact generation coverage, in addition to the existing live-count safety floor. */
+    fun verifyDocumentCount(index: String, expected: Long) {
+        osClient.indices().refresh { it.index(index) }
+        val actual = countDocs(index)
+        check(expected > 0 && actual == expected) { "Incomplete generation $index: $actual != $expected; alias preserved" }
+    }
+
     private fun countDocs(index: String): Long =
         osClient.count(CountRequest.of { it.index(index) }).count()
 

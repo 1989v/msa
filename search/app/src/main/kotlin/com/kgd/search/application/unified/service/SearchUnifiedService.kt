@@ -1,5 +1,7 @@
 package com.kgd.search.application.unified.service
 
+import com.kgd.common.exception.BusinessException
+import com.kgd.common.exception.ErrorCode
 import com.kgd.search.application.attraction.usecase.CategoryLexiconUseCase
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.unified.port.UnifiedSearchPort
@@ -19,6 +21,9 @@ class SearchUnifiedService(
     private val log = KotlinLogging.logger {}
 
     override fun execute(query: SearchUnifiedUseCase.Query): SearchUnifiedUseCase.Result {
+        if (query.q.length > 120 || query.page !in 0..199 || (query.type != null && query.type !in ALL_TYPES)) {
+            throw BusinessException(ErrorCode.INVALID_INPUT, "Invalid search query/type/page/size")
+        }
         val q = query.q.trim()
         if (q.isBlank()) {
             return SearchUnifiedUseCase.Result(q, SearchUnifiedUseCase.Understood(null, null), emptyList())
@@ -40,7 +45,7 @@ class SearchUnifiedService(
 
         val groups = targetTypes.mapNotNull { type ->
             runCatching {
-                if (type == QueryIntent.Types.ATTRACTION) attractions(q, query.lang, size) else others(type, understood, size)
+                if (type == QueryIntent.Types.ATTRACTION) attractions(q, query.lang, size, query.page) else others(type, understood, size, query.page)
             }.getOrElse {
                 // 한 타입의 장애가 통합 검색 전체를 죽이지 않는다 — 그 묶음만 빠진다
                 log.warn { "통합 검색 $type 실패 — 그 묶음을 뺀다: ${it.message}" }
@@ -61,12 +66,13 @@ class SearchUnifiedService(
      * 끝난 행사는 뺀다(목록 키워드 검색과 같은 기준). 오늘은 관광지 서비스가 자기 시계로 KST 로 센다.
      * 조건어 해석은 끈다 — 통합 검색에는 해석을 보여 주고 풀 화면이 없다.
      */
-    private fun attractions(q: String, lang: String?, size: Int): SearchUnifiedUseCase.Group {
+    private fun attractions(q: String, lang: String?, size: Int, page: Int): SearchUnifiedUseCase.Group {
         val result = searchAttraction.execute(
             SearchAttractionUseCase.Query(
                 keyword = q,
                 lang = lang,
                 size = size,
+                page = page,
                 eventStatus = EventStatusFilter.NOT_ENDED.name,
                 keepConditionWords = true,
             ),
@@ -88,9 +94,9 @@ class SearchUnifiedService(
         )
     }
 
-    private fun others(type: String, understood: QueryIntent.Understood, size: Int): SearchUnifiedUseCase.Group {
+    private fun others(type: String, understood: QueryIntent.Understood, size: Int, page: Int): SearchUnifiedUseCase.Group {
         val page = unifiedSearchPort.search(
-            UnifiedSearchPort.Query(keyword = understood.residual, type = type, size = size),
+            UnifiedSearchPort.Query(keyword = understood.residual, type = type, size = size, page = page),
         )
         return SearchUnifiedUseCase.Group(
             type = type,
@@ -127,7 +133,7 @@ class SearchUnifiedService(
         private const val MAX_SIZE = 20
         val ALL_TYPES = listOf(
             QueryIntent.Types.ATTRACTION, QueryIntent.Types.BLOG_POST, QueryIntent.Types.GAME, QueryIntent.Types.CONCEPT,
-            QueryIntent.Types.DEAL_OFFER, QueryIntent.Types.SERVICE, QueryIntent.Types.PRODUCT,
+            QueryIntent.Types.DEAL_OFFER, QueryIntent.Types.SERVICE, QueryIntent.Types.PRODUCT, "cafe_drink",
         )
     }
 }

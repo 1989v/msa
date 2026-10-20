@@ -39,6 +39,7 @@ class UnifiedReindexTasklet(
         log.info { "Starting unified reindex (API) → $newIndexName" }
         aliasManager.createIndex(newIndexName, IndexAliasManager.UNIFIED_INDEX_DEFINITION)
 
+        val startingErrors = bulkProcessor.errorCount.get()
         val counts = linkedMapOf<String, Int>()
         val failed = linkedMapOf<String, String>()
         for (type in UnifiedSourceApiClient.TYPES) {
@@ -52,6 +53,8 @@ class UnifiedReindexTasklet(
         if (failed.isNotEmpty()) {
             error("unified reindex 중단 — 못 받은 타입 ${failed.keys} (${failed.values.joinToString(" · ")}). alias 는 그대로 둔다")
         }
+        check(bulkProcessor.errorCount.get() == startingErrors) { "unified bulk errors; alias preserved" }
+        aliasManager.verifyDocumentCount(newIndexName, counts.values.sum().toLong())
         aliasManager.updateAliasAndCleanup(indexAlias, newIndexName)
         log.info { "Unified reindex complete: ${counts.values.sum()} docs $counts, ${bulkProcessor.errorCount.get()} errors" }
         RepeatStatus.FINISHED

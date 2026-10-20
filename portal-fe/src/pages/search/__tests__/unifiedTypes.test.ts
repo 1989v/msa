@@ -23,6 +23,7 @@ describe('통합 검색 타입 표', () => {
       deal_offer: 'DEAL_OFFER',
       product: 'PRODUCT',
       service: 'SERVICE',
+      cafe_drink: 'PAGE',
     });
   });
 });

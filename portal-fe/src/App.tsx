@@ -68,7 +68,7 @@ const RecommendationArchitecturePage = lazy(() => import('./pages/tech/Recommend
 const OrderArchitecturePage = lazy(() => import('./pages/tech/OrderArchitecturePage'));
 const AdsArchitecturePage = lazy(() => import('./pages/tech/AdsArchitecturePage'));
 const CatalogArchitecturePage = lazy(() => import('./pages/tech/CatalogArchitecturePage'));
-const UnifiedSearchPage = lazy(() => import('./pages/search/UnifiedSearchPage'));
+const UnifiedSearchPage = lazy(() => import('./pages/UnifiedSearchPage'));
 // ADR-0074 — 내 찜 모아보기 (호스트 인식: game=GAME, place=ATTRACTION, blog=BLOG_POST, apex=탭)
 const FavoritesPage = lazy(() => import('./components/favorite/FavoritesPage'));
 const SharedCollectionPage = lazy(() => import('./components/favorite/SharedCollectionPage'));
@@ -254,6 +254,7 @@ function App() {
           <Route path="/tech/c/:conceptId" element={<ConceptAtlasPage />} />
           {/* 통합 검색 (ADR-0090 D6) — 모든 호스트에서 열리되 정규 주소는 apex 하나다(unifiedSearchHref) */}
           <Route path="/search" element={<UnifiedSearchPage />} />
+          <Route path="/s" element={<Navigate to={`/search${window.location.search}`} replace />} />
           <Route path="/tech/search" element={<SearchArchitecturePage />} />
           <Route path="/tech/recommendation" element={<RecommendationArchitecturePage />} />
           <Route path="/tech/order" element={<OrderArchitecturePage />} />

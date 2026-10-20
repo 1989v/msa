@@ -24,5 +24,6 @@ export default function AppShellChrome() {
         : 'push';
   }, [pathname, navType]);
 
+  if (/^\/(search|s)\/?$/.test(pathname)) return null;
   return <><KhTabBar /><GameProfileHost /></>;
 }

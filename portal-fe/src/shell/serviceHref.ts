@@ -79,22 +79,28 @@ export function unifiedSearchHref(q: string, type?: string): string {
  * 통합 검색 결과 한 건의 주소. 인덱스는 URL 을 굽지 않는다 — `type` + `slug` 로 여기서 조립한다.
  * 프로덕션은 각 서비스의 정규 origin 으로, 로컬/k3d 는 App.tsx 의 apex 경로로 간다.
  */
-export function unifiedHitHref(type: string, slug: string): string {
-  const prod = isProd1989vHost;
+export function unifiedHitHref(type: string, slug: string, details?: { title?: string; group?: string; lang?: string }, hostname = window.location.hostname): string {
+  const prod = hostname === '1989v.com' || hostname.endsWith('.1989v.com');
+  const segment = encodeURIComponent(slug);
   switch (type) {
     case 'attraction':
-      return prod ? `${PLACE_ORIGIN}/attractions/${slug}` : `/place/attractions/${slug}`;
+      return prod ? `${PLACE_ORIGIN}${details?.lang === 'en' ? '/en' : ''}/attractions/${segment}` : `${details?.lang === 'en' ? '/en' : ''}/place/attractions/${segment}`;
+    case 'cafe_drink': {
+      const params = new URLSearchParams({ q: details?.title ?? '' });
+      if (details?.group) params.set('group', details.group);
+      return `${prod ? RANK_ORIGIN : ''}/cafe?${params}`;
+    }
     case 'blog_post':
-      return prod ? `${BLOG_ORIGIN}/posts/${slug}` : `/posts/${slug}`;
+      return prod ? `${BLOG_ORIGIN}/posts/${segment}` : `/posts/${segment}`;
     case 'game':
-      return prod ? `${GAME_ORIGIN}/games/${slug}` : `/games/${slug}`;
+      return prod ? `${GAME_ORIGIN}/games/${segment}` : `/games/${segment}`;
     case 'concept':
       return conceptHref(slug);
     case 'deal_offer':
       // 카드와 같은 문 — /go/ 를 거쳐야 클릭 계측이 남는다 (ADR-0069)
-      return prod ? `${DEAL_ORIGIN}/go/${slug}` : `/go/${slug}`;
+      return prod ? `${DEAL_ORIGIN}/go/${segment}` : `/go/${segment}`;
     case 'product':
-      return `${prod ? PORTAL_ORIGIN : ''}/shop/products/${slug}`;
+      return `${prod ? PORTAL_ORIGIN : ''}/shop/products/${segment}`;
     case 'service':
       return resolveExplorerHref(slug, `/${slug}`);
     default:

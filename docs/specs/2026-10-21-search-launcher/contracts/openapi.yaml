@@ -1,0 +1,29 @@
+openapi: 3.0.3
+info: {title: Compatible unified search launcher, version: 1.1.0}
+paths:
+  /api/search/unified:
+    get:
+      description: Existing grouped contract and attraction hybrid are preserved; page is additive.
+      parameters:
+        - {name: q, in: query, required: true, schema: {type: string, maxLength: 120}}
+        - {$ref: '#/components/parameters/type'}
+        - {name: lang, in: query, schema: {type: string}}
+        - {name: size, in: query, schema: {type: integer, default: 5}, description: Legacy clamping to 1..20 retained}
+        - {name: page, in: query, schema: {type: integer, minimum: 0, maximum: 199, default: 0}}
+      responses:
+        '200': {description: 'ApiResponse data: {query, understood: {type,residual}, groups: [{type,total,hits}]} — existing source IDs/slugs/facets preserved'}
+        '400': {description: Invalid query/type/page}
+  /api/search/unified/suggest:
+    get:
+      description: Name exact/prefix/BM25 only; no query vectors. Place suggestions reuse attractions index.
+      parameters:
+        - {name: q, in: query, required: true, schema: {type: string, minLength: 1, maxLength: 120}, description: Trimmed nonblank name}
+        - {$ref: '#/components/parameters/type'}
+        - {name: size, in: query, schema: {type: integer, minimum: 1, maximum: 20, default: 8}}
+      responses:
+        '200': {description: 'ApiResponse data: {hits:[{id,type,title,summary,sourceId,lang?,group?,brand?}], total, page:0, size, mode:bm25}. sourceId is destination slug or attraction ID, never URL.'}
+        '400': {description: Invalid query/type/size}
+        '503': {description: Suggest engine unavailable or partial engine response}
+components:
+  parameters:
+    type: {name: type, in: query, schema: {type: string, enum: [attraction, game, blog_post, concept, deal_offer, service, product, cafe_drink]}}

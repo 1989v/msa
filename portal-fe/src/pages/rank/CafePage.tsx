@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { fetchCafeBrands, fetchCafeDrinks, fetchCafeGroups } from '../../api/rankingApi';
 import type { CafeDrink, CafeFilters } from '../../api/rankingApi';
@@ -7,6 +6,7 @@ import ThemeToggle from '../../components/ThemeToggle';
 import Footer from '../../components/Footer';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import { caffeineLabel, isCaffeineNone } from './cafeView';
+import { readCafeFilters, writeCafeFilters } from './cafeUrl';
 import './RankPage.css';
 import './CafePage.css';
 
@@ -27,7 +27,9 @@ function DrinkTable({ drinks }: { drinks: CafeDrink[] }) {
 
 export default function CafePage() {
   useHeritageSurface();
-  const [filters, setFilters] = useState<CafeFilters>({ sort: 'sugar', page: 0, size: 50 });
+  const [params, setParams] = useSearchParams();
+  const filters = readCafeFilters(params);
+  const setFilters = (change: (previous: CafeFilters) => CafeFilters) => setParams(writeCafeFilters(change(filters)));
   const update = (patch: Partial<CafeFilters>) => setFilters(previous => ({ ...previous, ...patch, page: 0 }));
   const brands = useQuery({ queryKey: ['cafe', 'brands'], queryFn: fetchCafeBrands });
   const groups = useQuery({ queryKey: ['cafe', 'groups'], queryFn: fetchCafeGroups });

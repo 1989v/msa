@@ -66,9 +66,9 @@ class SearchUnifiedServiceTest : BehaviorSpec({
         `when`("검색하면") {
             val result = service.execute(SearchUnifiedUseCase.Query(q = "하이브리드 검색"))
 
-            then("관광지 + 여섯 타입을 다 묻고, 결과가 있는 묶음만 낸다") {
+            then("관광지 + 기존 여섯 타입과 음료를 다 묻고, 결과가 있는 묶음만 낸다") {
                 verify(exactly = 1) { attraction.execute(any()) }
-                verify(exactly = 6) { port.search(any()) }
+                verify(exactly = 7) { port.search(any()) }
                 result.groups.map { it.type } shouldContainExactly listOf("blog_post")
                 result.understood.type shouldBe null
                 result.understood.residual shouldBe "하이브리드 검색"

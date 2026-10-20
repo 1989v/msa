@@ -40,7 +40,8 @@ export type UnifiedType =
   | 'concept'
   | 'deal_offer'
   | 'service'
-  | 'product';
+  | 'product'
+  | 'cafe_drink';
 
 export interface UnifiedHit {
   type: UnifiedType;

@@ -17,6 +17,7 @@ interface SearchUnifiedUseCase {
         val lang: String? = null,
         /** 타입별 상위 몇 건 */
         val size: Int = 5,
+        val page: Int = 0,
     )
 
     data class Hit(

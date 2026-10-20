@@ -1,0 +1,26 @@
+{
+  "id": "/search",
+  "name": "1989v 검색",
+  "short_name": "검색",
+  "description": "게임, 장소, 카페 음료를 찾고 바로 이동",
+  "lang": "ko",
+  "start_url": "/search",
+  "scope": "/search",
+  "display": "standalone",
+  "background_color": "#f9f8f2",
+  "theme_color": "#f9f8f2",
+  "icons": [
+    {
+      "src": "/search-icons/search-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/search-icons/search-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

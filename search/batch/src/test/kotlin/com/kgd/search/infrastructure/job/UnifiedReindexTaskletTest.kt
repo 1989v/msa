@@ -33,6 +33,7 @@ class UnifiedReindexTaskletTest : BehaviorSpec({
     fun aliasManager(): IndexAliasManager = mockk<IndexAliasManager>().also {
         every { it.createTimestampedIndexName("unified") } returns "unified_20260913"
         every { it.createIndex("unified_20260913", IndexAliasManager.UNIFIED_INDEX_DEFINITION) } just runs
+        every { it.verifyDocumentCount(any(), any()) } just runs
         every { it.updateAliasAndCleanup("unified", "unified_20260913", any()) } just runs
     }
 
@@ -92,4 +93,25 @@ class UnifiedReindexTaskletTest : BehaviorSpec({
             }
         }
     }
+    given("bulk or exact generation coverage failure") {
+        then("bulk failures preserve the alias even if the buffered writer swallowed its exception") {
+            val client = mockk<UnifiedSourceApiClient>()
+            coEvery { client.fetch(any()) } answers { listOf(doc(firstArg(), "1")) }
+            val alias = aliasManager(); val bulk = bulk()
+            val errors = java.util.concurrent.atomic.AtomicLong(0)
+            every { bulk.errorCount } returns errors
+            every { bulk.flush() } answers { errors.incrementAndGet(); Unit }
+            shouldThrow<IllegalStateException> { tasklet(client, alias, bulk).execute(mockk(), mockk()) }
+            verify(exactly = 0) { alias.updateAliasAndCleanup(any(), any(), any()) }
+        }
+        then("count mismatch preserves alias after otherwise successful source collection") {
+            val client = mockk<UnifiedSourceApiClient>()
+            coEvery { client.fetch(any()) } answers { listOf(doc(firstArg(), "1")) }
+            val alias = aliasManager(); val bulk = bulk()
+            every { alias.verifyDocumentCount(any(), any()) } throws IllegalStateException("count mismatch")
+            shouldThrow<IllegalStateException> { tasklet(client, alias, bulk).execute(mockk(), mockk()) }
+            verify(exactly = 0) { alias.updateAliasAndCleanup(any(), any(), any()) }
+        }
+    }
+
 })

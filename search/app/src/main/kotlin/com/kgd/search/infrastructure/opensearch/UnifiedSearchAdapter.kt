@@ -41,7 +41,12 @@ class UnifiedSearchAdapter(
             .query(withPopularity(matched))
             .source { s -> s.filter { f -> f.excludes(BODY_FIELD) } }
             .size(query.size)
-            .apply { if (keyword == null) sort { s -> s.field { f -> f.field("popularity").order(SortOrder.Desc) } } }
+            .from(query.page * query.size)
+            .apply {
+                if (keyword == null) sort { s -> s.field { f -> f.field("popularity").order(SortOrder.Desc) } }
+                else sort { s -> s.score { it.order(SortOrder.Desc) } }
+            }
+            .sort { s -> s.field { it.field("id").order(SortOrder.Asc) } }
             .build()
         val response = client.search(request, UnifiedSearchDocument::class.java)
         val hits = response.hits().hits().mapNotNull { hit ->
@@ -54,6 +59,24 @@ class UnifiedSearchAdapter(
             }
         }
         return UnifiedSearchPort.Page(hits = hits, total = response.hits().total()?.value() ?: 0L)
+    }
+
+    override fun suggest(prefix: String, type: String?, size: Int): List<UnifiedSearchPort.Hit> {
+        val request = SearchRequest.Builder().index(INDEX).size(size)
+            .source { s -> s.filter { it.excludes(BODY_FIELD) } }
+            .query { q -> q.bool { b ->
+                type?.let { value -> b.filter { f -> f.term { it.field("type").value(FieldValue.of(value)) } } }
+                b.should { s -> s.constantScore { c -> c.filter { f -> f.term { it.field("title.keyword").value(FieldValue.of(prefix)).caseInsensitive(true) } }.boost(1000f) } }
+                b.should { s -> s.constantScore { c -> c.filter { f -> f.prefix { it.field("title.keyword").value(prefix).caseInsensitive(true) } }.boost(100f) } }
+                b.should { s -> s.multiMatch { it.query(prefix).fields("title^4", "titleEn^3") } }
+                b.minimumShouldMatch("1")
+            } }
+            .sort { it.score { s -> s.order(SortOrder.Desc) } }.sort { it.field { f -> f.field("id").order(SortOrder.Asc) } }.build()
+        val response = client.search(request, UnifiedSearchDocument::class.java)
+        check(!response.timedOut() && response.shards().failed().toInt() == 0) { "Incomplete name search" }
+        return response.hits().hits().mapNotNull { hit -> hit.source()?.let { d ->
+            UnifiedSearchPort.Hit(d.id, d.type, d.sourceId, d.slug, d.title, d.summary, d.category, d.thumbnailUrl, d.facets, hit.score() ?: 0.0)
+        } }
     }
 
     private fun withPopularity(matched: Query): Query = Query.of { q ->
