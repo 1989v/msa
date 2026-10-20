@@ -90,5 +90,40 @@ class ExperimentAssignmentFilterTest : BehaviorSpec({
             }
         }
     }
-})
 
+    given("백엔드 호출이 실패한 요청") {
+        `when`("필터 뒤 체인이 에러로 끝나면") {
+            then("에러를 그대로 올리고 체인을 다시 돌리지 않는다 — 다시 돌리면 이미 라우팅된 요청이라 빈 200 이 나간다") {
+                var calls = 0
+                val upstreamDown = RuntimeException("Connection refused")
+                val request = MockServerHttpRequest.get("/api/v1/games")
+                    .header(VisitorIdFilter.VISITOR_HEADER, visitorId)
+                    .build()
+                val result = runCatching {
+                    filter.filter(MockServerWebExchange.from(request)) { _ -> calls++; Mono.error(upstreamDown) }.block()
+                }
+                result.exceptionOrNull() shouldBe upstreamDown
+                calls shouldBe 1
+            }
+        }
+    }
+
+    given("Redis 조회가 실패한 요청") {
+        `when`("필터를 지나면") {
+            then("배정 없이 한 번만 넘긴다") {
+                val broken = mockk<ReactiveStringRedisTemplate>()
+                every { broken.opsForValue().get(ExperimentAssignmentFilter.ACTIVE_EXPERIMENTS_KEY) } returns
+                    Mono.error(RuntimeException("redis down"))
+                val f = ExperimentAssignmentFilter(broken, JsonMapper.builder().addModule(kotlinModule()).build())
+                var calls = 0
+                var forwarded: ServerWebExchange? = null
+                val request = MockServerHttpRequest.get("/api/v1/products")
+                    .header(VisitorIdFilter.VISITOR_HEADER, visitorId)
+                    .build()
+                f.filter(MockServerWebExchange.from(request)) { ex -> calls++; forwarded = ex; Mono.empty() }.block()
+                calls shouldBe 1
+                forwarded!!.request.headers.getFirst("X-Experiment-$experimentId") shouldBe null
+            }
+        }
+    }
+})

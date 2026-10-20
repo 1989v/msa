@@ -38,7 +38,13 @@ class ExperimentAssignmentFilter(
         val visitorId = exchange.request.headers[VisitorIdFilter.VISITOR_HEADER]?.firstOrNull()
             ?: return chain.filter(exchange)
 
+        // 실패를 삼키는 범위는 Redis 조회까지다. 체인 전체를 감싸면 업스트림 실패에서 체인을 한 번 더
+        // 돌리고, 라우팅 필터는 이미 라우팅된 요청이라 건너뛰어 본문 없는 200 이 나간다.
         return getActiveExperiments()
+            .onErrorResume { e ->
+                log.warn(e) { "Experiment assignment failed, proceeding without assignments" }
+                Mono.just(emptyList())
+            }
             .flatMap { experiments ->
                 if (experiments.isEmpty()) {
                     return@flatMap chain.filter(exchange)
@@ -51,10 +57,6 @@ class ExperimentAssignmentFilter(
                 }
 
                 chain.filter(exchange.mutate().request(mutatedRequest.build()).build())
-            }
-            .onErrorResume { e ->
-                log.warn(e) { "Experiment assignment failed, proceeding without assignments" }
-                chain.filter(exchange)
             }
     }
 
