@@ -102,9 +102,10 @@ spec:
             requests:
               cpu: 100m
               memory: 1Gi
-            # fp32 268M = 가중치 1.1GB + 활성화. 실측 RSS 는 1.6~2.0GB 였다.
+            # 단어 임베딩 표(어휘 26만 × 640)를 bf16 파일 매핑으로 두고 적재 후 malloc_trim 한다(server.py).
+            # 그 전 실측 RSS 1.6~2.0GB → 이후 기동 최고점 1.34GB · 상주 1.09GB(2026-10-20). 최고점 위 약 190MB 여유.
             limits:
-              memory: 2Gi
+              memory: 1536Mi
       volumes:
         - name: encoder-tmp
           emptyDir: { sizeLimit: 256Mi }

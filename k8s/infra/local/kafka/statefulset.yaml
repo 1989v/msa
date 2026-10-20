@@ -81,8 +81,9 @@ spec:
             requests:
               cpu: 200m
               memory: 768Mi
+            # 힙 640Mi 고정 + 힙 밖 약 220MB → RSS 831Mi(2026-10-20). 페이지 캐시는 회수 가능한 몫이다
             limits:
-              memory: 1536Mi
+              memory: 1280Mi
           volumeMounts:
             - name: data
               mountPath: /bitnami/kafka

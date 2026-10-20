@@ -38,6 +38,12 @@ spec:
             # 공유 단일 인스턴스에 서비스 ~15개의 커넥션풀이 붙는다 — 기본 151로는
             # 재배포(신구 파드 풀 공존) 시 고갈되므로 상향 (game 폴드 롤아웃에서 실측)
             - --max-connections=500
+            # 성능 계측 테이블이 268MiB 를 상주시켰다 — InnoDB 전체(255MiB, 버퍼 풀 131MiB 포함)보다 크고,
+            # 한도 1Gi 에 RSS 917Mi 로 붙어 있었다(2026-10-20 sys.memory_global_by_current_bytes 실측).
+            # 이 단일 인스턴스가 죽으면 전 서비스가 죽는데, 이 계측을 읽는 곳(exporter·스크립트)은 없다.
+            - --performance-schema=OFF
+            # 계측이 쓰던 몫을 데이터 캐시로 돌린다 — 기본 128MB 는 서비스 열 개 남짓의 스키마를 담기에 작았다
+            - --innodb-buffer-pool-size=384M
           readinessProbe:
             exec:
               command:
@@ -60,8 +66,9 @@ spec:
             requests:
               cpu: 100m
               memory: 512Mi
+            # 버퍼 풀 384MB + 연결별 버퍼(max-connections 500) + 서버 기본 몫. 1Gi 에 RSS 940Mi(92%) 였다
             limits:
-              memory: 1Gi
+              memory: 1280Mi
           volumeMounts:
             - name: data
               mountPath: /var/lib/mysql
