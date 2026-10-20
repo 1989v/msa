@@ -164,24 +164,20 @@ patches:
     target:
       kind: Job
       labelSelector: "app.kubernetes.io/part-of=commerce-platform"
-  # ─── Tier XL (1.2Gi) — analytics: Kafka Streams + RocksDB state store ────
-  - path: patches/resources-xl-1200mi.yaml
-    target:
-      kind: Deployment
-      name: analytics
+  # analytics 는 Tier M(768Mi, 글로벌 기본값). XL 이던 시절 실사용은 RSS 364Mi · 힙 75MB ·
+  # RocksDB 상태 44K 였다(2026-10-20) — Kafka Streams 창 집계가 작아 1.2Gi 를 쓸 일이 없다.
   # atlas 는 k3s-lite 베이스 패치에서 이미 1Gi 로 설정됨.
-  # ─── Tier L (1Gi) — content: place + game 2-도메인 ───────────────────────
-  # 전역 resources-reduce(k3s-lite 상속)가 base 값을 절반으로 깎아 768Mi 가 되는데,
-  # place(단독 512Mi) + game(code-dictionary 안에서 1Gi 파드의 일부) 을 한 JVM 에
-  # 담기엔 EMF 둘 + OpenSearch 클라이언트가 그 안에 안 들어간다.
-  - path: patches/resources-l-1gi.yaml
+  # ─── Tier XL (1.2Gi) — content: place + game + blog + ranking 4-도메인 ─────
+  # 힙은 content-malloc-arena.yaml 이 -Xmx512m 로 묶고, 한도는 힙 밖(클래스 2.9만 개 →
+  # 메타스페이스 등 217MB)이 자랄 몫이다. 1Gi 에서는 그 여유가 약 230MB 뿐이었다(2026-10-20).
+  - path: patches/resources-xl-1200mi.yaml
     target:
       kind: Deployment
       name: content
-  # ─── Tier XL (1.2Gi) — sideapp: quant(트레이딩) + chatbot + gifticon 3-도메인 ──
-  # 폴드 전 셋의 limit 합은 1Gi+512Mi+768Mi = 2.28Gi 였다. 한 JVM 이 되면서
-  # 힙 밖(메타스페이스·스레드·코드캐시)이 한 벌로 줄어 1.2Gi 로 잡는다.
-  - path: patches/resources-xl-1200mi.yaml
+  # ─── Tier L (1Gi) — sideapp: quant(트레이딩) + chatbot + gifticon 3-도메인 ──
+  # 폴드 전 셋의 limit 합은 1Gi+512Mi+768Mi = 2.28Gi 였다. 1.2Gi 로 시작했고, 힙 60% 가
+  # 실제로 적용된 뒤 RSS 506Mi · 힙 사용 148MB 라 1Gi 로 내린다(2026-10-20).
+  - path: patches/resources-l-1gi.yaml
     target:
       kind: Deployment
       name: sideapp
@@ -213,6 +209,34 @@ patches:
     target: {kind: Deployment, name: quant-fe}
   - path: patches/resources-fe-96mi.yaml
     target: {kind: Deployment, name: gifticon-fe}
+  # ─── 실측 재배분 (2026-10-20, 힙 60% 가 실제로 적용된 뒤) ─────────────────
+  # atlas: RSS 432Mi · 힙 사용 132MB 라 1Gi 는 남았다
+  - target: {kind: Deployment, name: atlas}
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 768Mi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 384Mi
+  # gateway: RSS 293Mi · 힙 사용 71MB. 요청 경로 첫 홉이라 절반까지는 내리지 않는다
+  - target: {kind: Deployment, name: gateway}
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 640Mi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 320Mi
+  # auth: 512Mi 에 RSS 396Mi(77%) — 힙 밖 173MB 라 여유가 적었다
+  - target: {kind: Deployment, name: auth}
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 640Mi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 320Mi
   # ─── CPU 상한 (tier memory 패치 뒤에 적용 — limits 맵 병합) ────────────────
   - path: patches/cpu-cap.yaml
     target:
