@@ -1036,7 +1036,7 @@ concepts:
     questions: ["-Xmx 대신 MaxRAMPercentage 를 쓰는 이유는 무엇인가"]
     code:
       - { path: k8s/overlays/oci-arm/patches/java-tool-options.yaml, symbol: "value: \"-XX:MaxRAMPercentage=60.0\"", note: "512Mi 이하 파드에서 기본 25% 로는 힙이 모자라 60% 로 올린다" }
-      - { path: buildSrc/src/main/kotlin/commerce.jib-convention.gradle.kts, symbol: "\"-XX:MaxRAMPercentage=75.0\",", note: "이미지 기본값은 75% 로 굽는다" }
+      - { path: buildSrc/src/main/kotlin/commerce.jib-convention.gradle.kts, symbol: "environment = mapOf(\"JAVA_TOOL_OPTIONS\" to \"-XX:MaxRAMPercentage=75.0\")", note: "이미지 기본값 75% 는 env 로 굽는다 — 명령줄 플래그로 두면 JAVA_TOOL_OPTIONS 보다 나중에 읽혀 오버레이 값이 무시된다" }
     uses: [rt-container-awareness]
     alternative_to:
       - { to: rt-heap-sizing, reason: "고정 -Xmx 대신 한도 비율로 잡아 파드 한도를 바꿔도 힙이 함께 움직인다" }
