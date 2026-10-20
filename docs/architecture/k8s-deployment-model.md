@@ -177,8 +177,10 @@ Convention이 자동 결정하는 것:
   Java 25 환경에서 Jib 3.4.4의 ASM이 bytecode를 못 읽어 자동 탐색이 실패하는
   것에 대한 우회 (FAQ-정의 workaround).
 - **Base image**: `eclipse-temurin:25-jre-alpine`
-- **JVM flags**: `-XX:+UseContainerSupport`, `-XX:MaxRAMPercentage=75.0`,
-  `-Djava.security.egd=file:/dev/./urandom`
+- **JVM flags**: `-XX:+UseContainerSupport`, `-Djava.security.egd=file:/dev/./urandom`
+- **힙 비율 기본값**: 이미지 env `JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=75.0`.
+  명령줄(jvmFlags)에 두면 `JAVA_TOOL_OPTIONS` 보다 나중에 읽혀 이기므로 오버레이가 덮을 수 없다
+  (oci-arm 은 60% 를 주입한다). 2026-10-20 까지는 jvmFlags 에 있어 oci-arm 의 60% 가 적용되지 않았다.
 - **Non-root user**: `1000:1000`
 - **OCI labels**: source, vendor, title
 - **Library 모듈(`common`) 자동 skip**: `bootJar` 비활성 모듈은 Jib 태스크도

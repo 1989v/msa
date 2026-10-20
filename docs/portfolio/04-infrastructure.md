@@ -130,9 +130,10 @@ jib {
     container {
         jvmFlags = listOf(
             "-XX:+UseContainerSupport",
-            "-XX:MaxRAMPercentage=75.0",
             "-Djava.security.egd=file:/dev/./urandom"
         )
+        // 힙 비율은 env 기본값 — 배포 오버레이의 JAVA_TOOL_OPTIONS 가 덮을 수 있게
+        environment = mapOf("JAVA_TOOL_OPTIONS" to "-XX:MaxRAMPercentage=75.0")
         user = "1000:1000"  // non-root
     }
 }

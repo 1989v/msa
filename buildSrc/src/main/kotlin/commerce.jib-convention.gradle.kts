@@ -102,9 +102,12 @@ if (resolvedMainClass == null) {
             mainClass = resolvedMainClass
             jvmFlags = listOf(
                 "-XX:+UseContainerSupport",
-                "-XX:MaxRAMPercentage=75.0",
                 "-Djava.security.egd=file:/dev/./urandom"
             )
+            // 힙 비율은 명령줄이 아니라 이미지 기본 env 로 둔다. 명령줄 플래그는 JAVA_TOOL_OPTIONS 보다
+            // 나중에 읽혀 이기므로, jvmFlags 에 두면 오버레이가 주는 값(oci-arm 60%)이 무시된다.
+            // env 는 배포 매니페스트의 같은 이름 env 가 통째로 덮는다.
+            environment = mapOf("JAVA_TOOL_OPTIONS" to "-XX:MaxRAMPercentage=75.0")
             user = "1000:1000"
             creationTime.set("USE_CURRENT_TIMESTAMP")
             labels.set(

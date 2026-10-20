@@ -4,6 +4,9 @@
 # 이 128Mi 미만이 되어 Spring Boot 4 + outbox poller 가 OOM. 60% 로 올려서
 # 512Mi → ~300Mi heap, 384Mi → ~230Mi heap 확보.
 #
+# 이미지에는 기본값 75% 가 env 로 들어 있고(commerce.jib-convention), 이 env 가 그것을 통째로 덮는다.
+# 이미지 명령줄(jvmFlags)에 퍼센트를 두면 명령줄이 이겨 이 패치가 무시된다 — 2026-10-20 까지 그랬다.
+#
 # 코어 수는 여기서 만지지 않는다 — cpu-cap.yaml 의 cgroup 상한만으로 충분하다.
 # Java 10+ 는 컨테이너 인식이 기본이라 cpu quota 에서 availableProcessors 를 도출하므로,
 # -XX:ActiveProcessorCount 로 다른 값을 강제하면 상한과 스레드 수가 어긋나기만 한다.
