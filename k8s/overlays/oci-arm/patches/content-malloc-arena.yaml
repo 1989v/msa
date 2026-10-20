@@ -1,9 +1,16 @@
-# content 만 glibc malloc 아레나를 2개로 묶는다.
+# content 만 메모리 설정을 따로 둔다 — glibc 아레나 상한 + 힙 비율 50%.
 #
 # content(1Gi limit, MaxRAMPercentage=60 → heap 614Mi)는 2026-10-16~17 에 세 번 OOMKilled 됐다.
 # 재시작 4분 뒤 RSS 가 878Mi 라 힙 밖(메타스페이스·스레드·네이티브 버퍼·glibc 아레나)이 260Mi 를 넘고,
 # 시장 상세 같은 큰 할당 한 번에 한도를 넘는다. 아레나는 free 한 메모리를 OS 에 잘 돌려주지 않는다 —
 # opensearch 에서 같은 값으로 효과를 봤다(k8s/infra/local/opensearch/statefulset.yaml).
+#
+# 아레나 상한만으로는 부족했다(2026-10-19~20 CrashLoopBackOff, 재시작 136회). CPU 상한 1 이라
+# JVM 이 Serial GC 를 고르고, 폴드 도메인 넷의 클래스 2.9만 개로 힙 밖이 217MB 다. 힙 60% 를 더하면
+# 첫 Full GC 전에 Tenured 가 차오르는 동안 RSS 가 1Gi 를 넘어 커널이 먼저 죽인다(실측: 기동 6분,
+# Tenured 397MB·RSS 887Mi 에서 OOMKilled). 힙을 50%(≈512Mi)로 낮춰 GC 가 한도 안에서 돌게 한다.
+# JAVA_TOOL_OPTIONS 는 java-tool-options.yaml 이 먼저 넣고, 이 패치가 같은 이름으로 덮는다.
+#
 # 다른 JVM 파드는 한 번에 전부 재시작시키지 않으려고 여기서 건드리지 않는다. 필요하면 하나씩 넓힌다.
 apiVersion: apps/v1
 kind: Deployment
@@ -17,3 +24,5 @@ spec:
           env:
             - name: MALLOC_ARENA_MAX
               value: "2"
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage=50.0"
