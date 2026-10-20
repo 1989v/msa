@@ -68,6 +68,12 @@ test 와 jib 빌드는 images.yml 이 main push 시 수행 (중복 방지).
 
 `workflow_dispatch` → `Run workflow` → `rebuild_all = true` 입력.
 
+## uptime.yml — 운영 API 외부 점검 (10분마다)
+
+파드마다 대표 공개 API 를 밖에서 찔러 **본문에 `"success":true` 가 있는지**로 판정한다. 상태 코드만 보면
+업스트림 장애 때 나가던 200 + 빈 본문을 정상으로 읽는다. 한 번 튀면 30초 뒤 한 번 더 보고, 그래도 이상하면
+잡이 실패해 GitHub 가 스케줄을 마지막으로 고친 계정에 메일을 보낸다. 새 파드나 폴드 도메인을 올리면 `targets` 에 한 줄.
+
 ## submodule-bump.yml — 수동 트리거
 
 `msa-auth`, `msa-gifticon` 의 main HEAD 까지 msa 포인터 갱신 + commit-back.
