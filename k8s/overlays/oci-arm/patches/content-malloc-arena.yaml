@@ -1,15 +1,17 @@
-# content 만 메모리 설정을 따로 둔다 — glibc 아레나 상한 + 힙 비율 50%.
+# content 만 메모리 설정을 따로 둔다 — glibc 아레나 상한 + 힙 상한 512Mi.
 #
 # content(1Gi limit, MaxRAMPercentage=60 → heap 614Mi)는 2026-10-16~17 에 세 번 OOMKilled 됐다.
 # 재시작 4분 뒤 RSS 가 878Mi 라 힙 밖(메타스페이스·스레드·네이티브 버퍼·glibc 아레나)이 260Mi 를 넘고,
 # 시장 상세 같은 큰 할당 한 번에 한도를 넘는다. 아레나는 free 한 메모리를 OS 에 잘 돌려주지 않는다 —
 # opensearch 에서 같은 값으로 효과를 봤다(k8s/infra/local/opensearch/statefulset.yaml).
 #
-# 아레나 상한만으로는 부족했다(2026-10-19~20 CrashLoopBackOff, 재시작 136회). CPU 상한 1 이라
-# JVM 이 Serial GC 를 고르고, 폴드 도메인 넷의 클래스 2.9만 개로 힙 밖이 217MB 다. 힙 60% 를 더하면
-# 첫 Full GC 전에 Tenured 가 차오르는 동안 RSS 가 1Gi 를 넘어 커널이 먼저 죽인다(실측: 기동 6분,
-# Tenured 397MB·RSS 887Mi 에서 OOMKilled). 힙을 50%(≈512Mi)로 낮춰 GC 가 한도 안에서 돌게 한다.
-# JAVA_TOOL_OPTIONS 는 java-tool-options.yaml 이 먼저 넣고, 이 패치가 같은 이름으로 덮는다.
+# 아레나 상한만으로는 부족했다(2026-10-19~20 CrashLoopBackOff, 재시작 136회). 힙이 생각보다 컸다 —
+# Jib 의 jvmFlags(commerce.jib-convention) 가 명령줄에 -XX:MaxRAMPercentage=75.0 을 넣고, 명령줄은
+# JAVA_TOOL_OPTIONS 보다 나중에 읽혀 이긴다. 그래서 java-tool-options.yaml 의 60% 는 적용된 적이 없고
+# 실제 힙 상한은 768Mi 였다. 여기에 힙 밖 217MB(폴드 도메인 넷의 클래스 2.9만 개)가 더해져, CPU 1 이라
+# 고른 Serial GC 가 첫 Full GC 를 하기 전에 RSS 가 1Gi 를 넘는다(실측: 기동 6분, RSS 887Mi 에서 OOMKilled).
+# 퍼센트 값은 명령줄에 지므로 -Xmx 로 상한을 직접 준다 — 힙 크기가 명령줄에서 정해지지 않았을 때만
+# 퍼센트 계산이 돌기 때문에 -Xmx 는 어느 쪽에서 오든 이긴다.
 #
 # 다른 JVM 파드는 한 번에 전부 재시작시키지 않으려고 여기서 건드리지 않는다. 필요하면 하나씩 넓힌다.
 apiVersion: apps/v1
@@ -25,4 +27,4 @@ spec:
             - name: MALLOC_ARENA_MAX
               value: "2"
             - name: JAVA_TOOL_OPTIONS
-              value: "-XX:MaxRAMPercentage=50.0"
+              value: "-Xmx512m"
