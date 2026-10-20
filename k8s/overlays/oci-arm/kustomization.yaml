@@ -453,7 +453,7 @@ images:
     newTag: 489138a
   - name: commerce/search-embed
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-embed
-    newTag: 8f325ca
+    newTag: 6738dee
   - name: commerce/sideapp
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/sideapp
     newTag: e2d04a5
