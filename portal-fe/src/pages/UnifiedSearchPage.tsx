@@ -7,9 +7,8 @@ import { useHeritageSurface } from '../hooks/useHeritageSurface';
 import { useSeo } from '../seo/useSeo';
 import './UnifiedSearchPage.css';
 
-const TYPES = [{ value: '', label: '전체' }, { value: 'game', label: '게임' }, { value: 'attraction', label: '장소' }, { value: 'cafe_drink', label: '카페 음료' }, { value: 'blog_post', label: '블로그 글' }, { value: 'concept', label: '개념' }, { value: 'deal_offer', label: '혜택' }, { value: 'product', label: '상품' }, { value: 'service', label: '서비스' }];
-const typeLabel = (type: string) => TYPES.find(item => item.value === type)?.label ?? type;
-const validType = (value: string | null) => TYPES.some(item => item.value === value) ? value ?? '' : '';
+const TYPE_LABELS: Record<string, string> = { game: '게임', attraction: '장소', cafe_drink: '카페 음료', blog_post: '블로그 글', concept: '개념', deal_offer: '혜택', product: '상품', service: '서비스' };
+const typeLabel = (type: string) => TYPE_LABELS[type] ?? type;
 const validPage = (value: string | null) => /^\d+$/.test(value ?? '') ? Math.min(199, Number(value)) : 0;
 
 export default function UnifiedSearchPage({ navigate = (href: string) => window.location.assign(href) }: { navigate?: (href: string) => void }) {
@@ -17,7 +16,6 @@ export default function UnifiedSearchPage({ navigate = (href: string) => window.
   useSeo({ title: '검색 | 1989v', description: '게임, 장소, 카페 음료를 검색하고 바로 이동하세요.', canonical: 'https://1989v.com/search', noindex: true });
   const [params, setParams] = useSearchParams();
   const [q, setQ] = useState(params.get('q') ?? '');
-  const [type, setType] = useState(validType(params.get('type')));
   const [all, setAll] = useState(params.get('all') === '1');
   const [page, setPage] = useState(validPage(params.get('page')));
   const [result, setResult] = useState<UnifiedResult | null>(null);
@@ -30,7 +28,7 @@ export default function UnifiedSearchPage({ navigate = (href: string) => window.
   const queryString = params.toString();
   useEffect(() => {
     generation.current++;
-    setQ(params.get('q') ?? ''); setType(validType(params.get('type')));
+    setQ(params.get('q') ?? '');
     setAll(params.get('all') === '1'); setPage(validPage(params.get('page')));
     setResult(null); setStatus('idle'); setSelected(0);
     // URL changes, including Back/Forward, restore the complete search state.
@@ -43,7 +41,8 @@ export default function UnifiedSearchPage({ navigate = (href: string) => window.
     if (!q.trim()) { setStatus('idle'); return () => abort.abort(); }
     setStatus('loading');
     const timer = window.setTimeout(() => {
-      searchUnified(q.trim(), type, page, all, abort.signal).then(data => {
+      // Legacy type query parameters must never narrow this all-service launcher.
+      searchUnified(q.trim(), '', page, all, abort.signal).then(data => {
         if (version !== generation.current || abort.signal.aborted) return;
         setResult(data); setSelected(0); setStatus('ready');
       }).catch(() => {
@@ -52,26 +51,26 @@ export default function UnifiedSearchPage({ navigate = (href: string) => window.
       });
     }, all ? 0 : 180);
     return () => { window.clearTimeout(timer); abort.abort(); };
-  }, [q, type, page, all, queryString, requestNonce]);
+  }, [q, page, all, queryString, requestNonce]);
   useEffect(() => {
     const manifest = document.createElement('link'); manifest.rel = 'manifest'; manifest.href = '/search.webmanifest';
     document.head.append(manifest); return () => manifest.remove();
   }, []);
   const invalidate = () => { generation.current++; setResult(null); setSelected(0); setStatus('loading'); };
-  const fullResults = (nextPage = 0, nextType = type) => {
+  const fullResults = (nextPage = 0) => {
     if (!q.trim()) return;
-    invalidate(); setRequestNonce(previous => previous + 1); setAll(true); setPage(nextPage); setType(nextType);
-    setParams({ q: q.trim(), ...(nextType ? { type: nextType } : {}), all: '1', ...(nextPage ? { page: String(nextPage) } : {}) });
+    invalidate(); setRequestNonce(previous => previous + 1); setAll(true); setPage(nextPage);
+    setParams({ q: q.trim(), all: '1', ...(nextPage ? { page: String(nextPage) } : {}) });
   };
   const open = (hit: UnifiedHit) => navigate(unifiedHref(hit));
   const activeId = result?.hits[selected] ? `unified-hit-${selected}` : undefined;
   return <main className="unified-search">
-    <header><a href="/" aria-label="1989v 홈">1989v</a><ThemeToggle /></header>
+    <header><a className="unified-brand" href="/" aria-label="1989v 홈">1989v<span className="kh-mono"> / SEARCH</span></a><ThemeToggle /></header>
     <section aria-labelledby="unified-title">
-      <p className="unified-eyebrow">찾고, 바로 가기</p><h1 id="unified-title">무엇을 찾으세요?</h1>
-      <p>게임 · 장소 · 카페 음료 · 블로그 · 개념 · 혜택 · 상품 · 서비스</p>
+      <p className="unified-eyebrow">찾고, 바로 가기</p><h1 className="kh-display" id="unified-title">무엇을 찾으세요?</h1>
+      <p className="unified-intro">게임, 장소, 카페 음료까지 한 번에 찾아보세요.</p>
       <label className="unified-input-label" htmlFor="unified-query">검색어</label>
-      <input id="unified-query" role="combobox" aria-autocomplete="list" aria-expanded={!!result?.hits.length} aria-controls="unified-results" aria-activedescendant={activeId}
+      <input className="kh-field" id="unified-query" role="combobox" aria-autocomplete="list" aria-expanded={!!result?.hits.length} aria-controls="unified-results" aria-activedescendant={activeId}
         autoComplete="off" placeholder="게임명, 장소명, 음료명" maxLength={120} value={q}
         onCompositionStart={() => { composing.current = true; }} onCompositionEnd={() => { composing.current = false; compositionEnded.current = Date.now(); }}
         onChange={event => { invalidate(); setQ(event.target.value); setAll(false); setPage(0); }}
@@ -87,11 +86,7 @@ export default function UnifiedSearchPage({ navigate = (href: string) => window.
           }
           if (event.key === 'Escape') { invalidate(); setQ(''); }
         }} />
-      <div className="unified-toolbar"><label>종류 <select aria-label="검색 종류" value={type} onChange={event => {
-        invalidate(); setType(event.target.value); setPage(0);
-        if (all) fullResults(0, event.target.value);
-      }}>{TYPES.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
-        <button type="button" disabled={!q.trim()} onClick={() => fullResults()}>전체 결과 보기</button></div>
+      <div className="unified-toolbar"><button className="kh-button kh-button-ghost" type="button" disabled={!q.trim()} onClick={() => fullResults()}>전체 결과 보기</button></div>
       <div role="status" aria-live="polite">
         {status === 'idle' && '이름을 입력하면 바로 갈 수 있는 결과를 보여드립니다.'}
         {status === 'loading' && '검색 중…'}
@@ -101,11 +96,11 @@ export default function UnifiedSearchPage({ navigate = (href: string) => window.
       <ul id="unified-results" role="listbox" aria-label="검색 결과" aria-busy={status === 'loading'}>
         {result?.hits.map((hit, index) => <li id={`unified-hit-${index}`} key={hit.id} role="option" aria-selected={selected === index}>
           <a href={unifiedHref(hit)} onClick={event => { event.preventDefault(); open(hit); }} onMouseEnter={() => setSelected(index)}>
-            <span>{typeLabel(hit.type)}</span><strong>{hit.title}</strong><small>{hit.summary}</small><span aria-hidden="true">↗</span>
+            <span className="unified-hit-type">{typeLabel(hit.type)}</span><strong>{hit.title}</strong><small>{hit.summary}</small><span aria-hidden="true">↗</span>
           </a>
         </li>)}
       </ul>
-      {all && result && <nav aria-label="검색 결과 페이지"><button disabled={page === 0} onClick={() => fullResults(page - 1)}>이전</button><span>{page + 1} 페이지</span><button disabled={(result.totalPages !== undefined ? page + 1 >= result.totalPages : (page + 1) * result.size >= result.total) || page >= 199} onClick={() => fullResults(page + 1)}>다음</button></nav>}
+      {all && result && <nav aria-label="검색 결과 페이지"><button className="kh-button kh-button-ghost" disabled={page === 0} onClick={() => fullResults(page - 1)}>이전</button><span>{page + 1} 페이지</span><button className="kh-button kh-button-ghost" disabled={(result.totalPages !== undefined ? page + 1 >= result.totalPages : (page + 1) * result.size >= result.total) || page >= 199} onClick={() => fullResults(page + 1)}>다음</button></nav>}
       <p className="unified-install">브라우저의 ‘홈 화면에 추가’ 또는 ‘앱 설치’로 검색을 바로 여세요. 검색에는 인터넷 연결이 필요합니다.</p>
     </section>
   </main>;

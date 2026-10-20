@@ -242,7 +242,7 @@ flat 디자인 지향. 카드 사이에 그림자 남발 금지.
 
 | 화면 | 아키타입 |
 |---|---|
-| `/`, `/portfolio`, `resume.1989v.com` | `k-heritage` |
+| `/`, `/portfolio`, `/search` (검색 런처), `resume.1989v.com` | `k-heritage` |
 | `/shop/**`, `place.1989v.com` | `k-heritage` |
 | `/games/**` · `game.1989v.com` | `k-heritage` + `.kh-arcade` (액션이 연지) |
 | `/tech` (개념 아틀라스) | `k-heritage` — 2026-09-24 전환. 옛 트리맵·3D·히트맵 뷰는 걷어냈다 |

@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import UnifiedSearchPage from '../UnifiedSearchPage';
 import { searchUnified, unifiedHref } from '../../api/unifiedSearchApi';
@@ -11,7 +11,8 @@ const second: UnifiedHit = { id: 'attraction:2', type: 'attraction', title: '정
 const result = (hits = [first, second]): UnifiedResult => ({ hits, total: hits.length, page: 0, size: 8, mode: 'bm25' });
 const mocked = vi.mocked(searchUnified);
 const pause = () => act(async () => { await new Promise(resolve => setTimeout(resolve, 220)); });
-function mount(entry = '/search') { const navigate = vi.fn(); render(<MemoryRouter initialEntries={[entry]}><UnifiedSearchPage navigate={navigate} /></MemoryRouter>); return navigate; }
+function LocationProbe() { return <div data-testid="location">{useLocation().search}</div>; }
+function mount(entry = '/search') { const navigate = vi.fn(); render(<MemoryRouter initialEntries={[entry]}><UnifiedSearchPage navigate={navigate} /><LocationProbe /></MemoryRouter>); return navigate; }
 beforeEach(() => { mocked.mockReset(); mocked.mockResolvedValue(result()); });
 afterEach(cleanup);
 
@@ -19,7 +20,7 @@ describe('unified search launcher', () => {
   it('selects first result by default; arrow selects another and Enter opens the direct detail', async () => {
     const navigate = mount(); const input = screen.getByRole('combobox', { name: '검색어' });
     fireEvent.change(input, { target: { value: '정원' } }); await pause();
-    expect(await screen.findAllByRole('option')).toHaveLength(11); // 9 type choices + 2 results
+    expect(await screen.findAllByRole('option')).toHaveLength(2);
     expect(screen.getByRole('option', { name: /정원 게임/ })).toHaveAttribute('aria-selected', 'true');
     fireEvent.keyDown(input, { key: 'Enter' }); expect(navigate).toHaveBeenLastCalledWith('/games/garden');
     fireEvent.keyDown(input, { key: 'ArrowDown' }); fireEvent.keyDown(input, { key: 'Enter' });
@@ -43,12 +44,25 @@ describe('unified search launcher', () => {
     fireEvent.keyDown(input, { key: 'Enter' }); expect(navigate).toHaveBeenCalledWith('/place/attractions/2');
     expect(screen.queryByText('정원 게임')).not.toBeInTheDocument();
   });
-  it('restores full results/filter/page from URL and allows explicit repeated full search', async () => {
+  it('ignores legacy type restrictions while restoring full results/page from URL and allows explicit repeated full search', async () => {
     mount('/search?q=coffee&type=cafe_drink&all=1&page=2');
-    await waitFor(() => expect(mocked).toHaveBeenCalledWith('coffee', 'cafe_drink', 2, true, expect.any(AbortSignal)));
+    await waitFor(() => expect(mocked).toHaveBeenCalledWith('coffee', '', 2, true, expect.any(AbortSignal)));
     expect(screen.getByRole('combobox', { name: '검색어' })).toHaveValue('coffee');
+    expect(screen.queryByRole('combobox', { name: '검색 종류' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '이전' }));
+    await waitFor(() => expect(mocked).toHaveBeenLastCalledWith('coffee', '', 1, true, expect.any(AbortSignal)));
+    expect(screen.getByTestId('location')).toHaveTextContent('?q=coffee&all=1&page=1');
     fireEvent.click(screen.getByText('전체 결과 보기'));
-    await waitFor(() => expect(mocked).toHaveBeenLastCalledWith('coffee', 'cafe_drink', 0, true, expect.any(AbortSignal)));
+    await waitFor(() => expect(mocked).toHaveBeenLastCalledWith('coffee', '', 0, true, expect.any(AbortSignal)));
+  });
+  it('searches every service in autocomplete even with a legacy game-only URL', async () => {
+    mount('/search?q=정원&type=game');
+    await pause();
+    expect(mocked).toHaveBeenLastCalledWith('정원', '', 0, false, expect.any(AbortSignal));
+    expect(screen.getAllByRole('option')).toHaveLength(2);
+    expect(screen.getByText('게임', { selector: '.unified-hit-type' })).toBeInTheDocument();
+    expect(screen.getByText('장소')).toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: '검색 종류' })).not.toBeInTheDocument();
   });
   it('distinguishes empty, loading, zero results and errors', async () => {
     mount(); const input = screen.getByRole('combobox', { name: '검색어' }); expect(screen.getByRole('status')).toHaveTextContent('이름을 입력');
