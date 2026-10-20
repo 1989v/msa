@@ -5,14 +5,19 @@
 
 세 가지가 이 파일의 계약이다.
 
-1. **fp32 로 적재한다.** 체크포인트가 bf16 인데 Ampere A1(Neoverse-N1)에 bf16 명령이 없어
+1. **연산은 fp32 로 한다.** 체크포인트가 bf16 인데 Ampere A1(Neoverse-N1)에 bf16 명령이 없어
    그대로 두면 mkldnn 이 BLAS 폴백에 떨어져 수십 배 느려진다. 하드웨어 한계가 아니라 적재 옵션이다.
+   단 **단어 임베딩 표는 bf16 파일을 매핑한 채 둔다.** 표는 행을 꺼내기만 하고 연산하지 않으며,
+   어휘 26만 × 640 이라 fp32 로 올리면 671MB 가 상주한다. 꺼낸 행만 fp32 로 바꿔 배율을 곱하므로
+   fp32 로 전부 올렸을 때와 벡터가 비트 단위로 같다(판정 세트 질의 235개 대조, 2026-10-20).
 2. **스레드를 1로 고정한다.** 실측에서 1코어 150ms · 2코어 143ms 로 차이가 거의 없다.
    코어를 더 받아도 안 빨라지므로 남은 코어는 클러스터에 남긴다.
 3. **safetensors 만 읽는다.** pickle 은 역직렬화가 곧 코드 실행이다. 커스텀 코드도 거부한다.
 """
 from __future__ import annotations
 
+import ctypes
+import gc
 import json
 import logging
 import os
@@ -22,6 +27,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 THREADS = int(os.environ.get("ENCODER_THREADS", "1"))
 os.environ.setdefault("OMP_NUM_THREADS", str(THREADS))
 
+import numpy as np  # noqa: E402
 import torch  # noqa: E402  — 스레드 수를 먼저 정하고 불러야 한다
 from sentence_transformers import SentenceTransformer  # noqa: E402
 
@@ -45,12 +51,63 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 _lock = threading.Lock()
 
 
+class MappedScaledEmbedding(torch.nn.Module):
+    """bf16 임베딩 표를 파일 매핑으로 두고, 꺼낸 행만 fp32 로 바꾼 뒤 배율을 곱한다.
+
+    Gemma3 원본은 가중치 dtype 으로 배율을 곱한다 — 표를 bf16 으로 둔 채 원본 모듈을 쓰면
+    곱셈이 bf16 이 되어 벡터가 달라진다. 표는 파라미터가 아니라 `.float()` 가 건드리지 않는다.
+    """
+
+    def __init__(self, table: torch.Tensor, scale: float, padding_idx):
+        super().__init__()
+        self.table = table
+        self.embed_scale = torch.tensor(scale, dtype=torch.float32)
+        self.padding_idx = padding_idx
+        self.num_embeddings, self.embedding_dim = table.shape
+
+    def forward(self, input_ids: torch.Tensor) -> torch.Tensor:
+        rows = torch.nn.functional.embedding(input_ids, self.table).to(torch.float32)
+        return rows * self.embed_scale
+
+
+def mapped_table(model_dir: str, suffix: str = "embed_tokens.weight") -> torch.Tensor:
+    """safetensors 안의 bf16 표를 복사 없이 매핑한다 — 읽은 페이지만 파일 캐시로 올라온다."""
+    path = os.path.join(model_dir, "model.safetensors")
+    with open(path, "rb") as f:
+        n = int.from_bytes(f.read(8), "little")
+        header = json.loads(f.read(n))
+    key = next(k for k in header if k.endswith(suffix))
+    meta = header[key]
+    if meta["dtype"] != "BF16":
+        raise SystemExit(f"임베딩 표가 bf16 이 아니다: {meta['dtype']}")
+    start, end = meta["data_offsets"]
+    raw = np.memmap(path, dtype=np.uint16, mode="r", offset=8 + n + start, shape=((end - start) // 2,))
+    return torch.from_numpy(raw).view(torch.bfloat16).view(*meta["shape"])
+
+
+def release_freed_memory() -> None:
+    """적재 중 해제한 bf16 버퍼를 OS 에 돌려준다 — glibc 는 해제한 메모리를 쥐고 있는다."""
+    gc.collect()
+    try:
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
+    except OSError:
+        pass  # glibc 가 아닌 곳(로컬 macOS)에서는 할 일이 없다
+
+
 def load() -> tuple[SentenceTransformer, str, int]:
-    kwargs = {"torch_dtype": torch.float32, "use_safetensors": True}
+    # bf16 으로 읽어 최고점을 낮추고, 표를 매핑으로 바꾼 뒤 나머지만 fp32 로 올린다.
+    # 처음부터 fp32 로 읽으면 bf16 원본과 fp32 사본이 잠깐 함께 있어 기동 최고점이 2.0GB 였다.
+    kwargs = {"torch_dtype": torch.bfloat16, "use_safetensors": True}
     model = SentenceTransformer(
         MODEL_PATH, device="cpu", trust_remote_code=False,
         revision=REVISION or None, model_kwargs=kwargs,
     )
+    base = model[0].auto_model
+    emb = base.embed_tokens
+    base.embed_tokens = MappedScaledEmbedding(mapped_table(MODEL_PATH), float(emb.scalar_embed_scale), emb.padding_idx)
+    del emb
+    model.float()
+    release_freed_memory()
     dim = model.get_sentence_embedding_dimension()
     if not REVISION:
         # 스탬프에 리비전이 없으면 어느 가중치인지 특정할 수 없다 — 조용히 도는 것보다 낫다.

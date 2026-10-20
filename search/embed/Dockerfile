@@ -24,6 +24,8 @@ RUN pip install --no-cache-dir \
 COPY --from=weights /weights /opt/model
 COPY server.py /opt/encoder/server.py
 ENV ENCODER_MODEL=/opt/model ENCODER_THREADS=1 ENCODER_PORT=8099
+# glibc 아레나를 2개로 묶는다 — 호스트 코어 수(cgroup 상한이 아니라)만큼 아레나를 만들고 해제분을 쥐고 있어 RSS 가 부푼다
+ENV MALLOC_ARENA_MAX=2
 # 스탬프는 허브 id + 리비전이다 — 도구가 만든 문서 벡터와 같은 공간이어야 한다
 ENV ENCODER_MODEL_ID=${MODEL} ENCODER_REVISION=${REVISION}
 RUN useradd -u 10001 -m encoder && chown -R encoder /opt
