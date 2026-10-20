@@ -53,6 +53,7 @@ export default function RankPage() {
         </p>
       </header>
 
+      <Link to="/cafe" className="rank-cta kh-button-ghost">카페 음료 영양정보 비교</Link>
       <div className="rank-toolbar">
         <label className="rank-field">
           <span className="kh-section-label">지역</span>

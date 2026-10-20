@@ -74,3 +74,35 @@ export const fetchGasAreas = async (): Promise<RankingScope[]> => {
   return res.data.data;
 };
 
+
+export type CaffeineStatus = 'DISCLOSED' | 'ZERO' | 'DECAF' | 'UNDISCLOSED';
+export interface CafeDrink {
+  brandSlug: string; brandName: string; menuName: string; menuNameEn: string | null;
+  sourceCategory: string | null; temperature: string | null; sizeLabel: string | null;
+  volumeMl: number | null; servingBasis: string | null; kcal: number | null; sugarG: number | null;
+  sodiumMg: number | null; carbsG: number | null; fatG: number | null; satFatG: number | null;
+  proteinG: number | null; caffeineMg: number | null; caffeineStatus: CaffeineStatus;
+  rawNutrition: Record<string, string>; priceKrw: number | null; priceNote: string | null;
+  allergens: string | null; sourceUrl: string; checkedAt: string; notes: string | null;
+  drinkGroup: string; sugarPer100ml: number | null; caffeinePer100ml: number | null;
+}
+export interface CafeDrinkPage { content: CafeDrink[]; totalElements: number; page: number; size: number }
+export interface CafeBrand { brandSlug: string; brandName: string; count: number; sourceUrls: string[]; checkedAt: string }
+export interface CafeGroup { group: string; count: number }
+export interface CafeFilters {
+  q?: string; brand?: string[]; group?: string; temperature?: string;
+  maxSugar?: number; maxCaffeine?: number; caffeine?: 'none';
+  sort?: 'sugar' | 'caffeine' | 'kcal' | 'sugarPer100ml'; page?: number; size?: number;
+}
+export const fetchCafeDrinks = async (filters: CafeFilters): Promise<CafeDrinkPage> => {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (Array.isArray(value)) value.forEach(item => params.append(key, item));
+    else if (value !== undefined && value !== '') params.set(key, String(value));
+  });
+  return (await api.get<ApiResponse<CafeDrinkPage>>('/api/v1/ranking/cafe/drinks', { params })).data.data;
+};
+export const fetchCafeBrands = async (): Promise<CafeBrand[]> =>
+  (await api.get<ApiResponse<CafeBrand[]>>('/api/v1/ranking/cafe/brands')).data.data;
+export const fetchCafeGroups = async (): Promise<CafeGroup[]> =>
+  (await api.get<ApiResponse<CafeGroup[]>>('/api/v1/ranking/cafe/groups')).data.data;

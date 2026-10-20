@@ -1,7 +1,7 @@
 # Ranking Service — 랭킹 리더보드 (ADR-0081)
 
-"아무거로나 순위를 매겨 보여주는 곳." P1 은 **주유소**다.
-`rank.1989v.com` — code-dictionary:app 에 폴드된 라이브러리 + 별도 수집 CronJob.
+"아무거로나 순위를 매겨 보여주는 곳." **주유소·카페 음료**를 비교한다.
+`rank.1989v.com` — content:app 에 폴드된 라이브러리 + 별도 수집기.
 
 ## Modules
 
@@ -11,8 +11,8 @@
 | `:ranking:feature` | Spring 라이브러리(비-bootable) — 조회 API · 스냅샷 배치 |
 | `ranking/ingest` | Python CronJob — 오피넷 유가 API 수집 → 좌표 변환 → 내부 API 적재 |
 
-스키마·마이그레이션은 **호스트(code-dictionary)가 소유**한다 (`V20__ranking.sql`).
-deal/blog 과 같은 형태 — 전용 datasource 를 두지 않는다.
+ADR-0093 이후 전용 `ranking_db` 및 `rankingdb/migration` 을 사용한다.
+`RankingDataSourceConfig` 가 EMF·Repository·`rankingTransactionManager` 를 배선한다.
 
 ## 구조 상태 (ADR-0083)
 
@@ -79,9 +79,42 @@ cd ranking/ingest && python3 -m tests.test_katec && python3 -m tests.smoke_test
 | GET | `/api/v1/ranking/gas/areas` | 보드가 있는 지역만 |
 | POST | `/internal/ranking/gas/stations/bulk` | 수집기 전용. ingress 미노출 |
 | POST | `/internal/ranking/gas/boards/rebuild` | 〃 |
+| GET | `/api/v1/ranking/cafe/drinks` | 메뉴 부분검색·복수 brand·group·temperature·maxSugar·maxCaffeine·caffeine=none·sort·page/size |
+| GET | `/api/v1/ranking/cafe/groups` | 유형별 행 수 |
+| GET | `/api/v1/ranking/cafe/brands` | 브랜드별 행 수·공식 출처 URL들·확인일 |
+| POST | `/internal/ranking/cafe/drinks/bulk` | 요청에 등장한 브랜드만 트랜잭션으로 교체. ingress 미노출 |
 
 게이트웨이 라우트는 `/api/v1/ranking/**` 만 연다. 라우트를 빠뜨리면 배포는 성공하고
 화면만 404 다.
+
+
+## 카페 음료 슬라이스
+
+공식 영양정보 9브랜드 **1,922행**(2026-10-20). `application/cafe/{usecase,port,service,dto}` →
+Querydsl 조회 저장소·JPA Adapter 구조다. 원천 25필드는 개별 컬럼에 남기고 `raw_nutrition` JSON 텍스트와
+`notes` 원문을 보존한다. `drink_group` 은 `ranking:domain` 메뉴명 규칙 한 곳에서 파생하며,
+`volume_ml > 0`인 경우에만 당류·카페인 100ml당 값을 산출한다. g을 ml로 환산하지 않는다.
+
+유일키는 `(brand_slug, menu_name, temperature, size_label, caffeine_status)`다.
+온도·사이즈 null은 DB에서 빈 문자열로 정규화한다. 이디야 70쌍은 이름이 같아도 일반/디카페인의
+영양이 달라 `caffeine_status`로 서로 다른 판을 보존한다. 동기화는 요청 브랜드만 삭제·재적재하며
+빈 요청은 삭제하지 않는다. 서비스는 반드시 `rankingTransactionManager`를 사용한다.
+
+카페인 `DISCLOSED/ZERO/DECAF/UNDISCLOSED`를 STRING으로 저장한다. `caffeine=none`은
+**ZERO+DECAF만** 포함한다. 미공개를 0으로 바꾸지 않고, 수치 상한 조건은 null을 제외한다.
+정렬은 `sugar`(기본)/`caffeine`/`kcal`/`sugarPer100ml` 오름차순, null 마지막, 페이지 size 1~200이다.
+`/cafe`는 rank 호스트 화면이며 유형을 고르면 현재 페이지 결과를 브랜드별로 나란히 표시한다.
+
+```bash
+cd ranking/ingest
+python3 -m src.cafe_load --base-url http://localhost:8097
+python3 -m tests.test_cafe_load
+```
+
+적재기는 `data/cafe/drinks.*.jsonl`을 읽어 camelCase API 필드로 보내되 raw 키·값은 바꾸지 않는다.
+빈 파일은 전송하지 않아 우지·팀홀튼 등의 기존 자료가 지워지지 않는다. 원천 JSONL은 공개 git에서 제외한다.
+출처·라이선스·수집 범위 → `docs/architecture/data-sources.md` §9. MySQL 스키마 검증은 Docker가
+있을 때 수행하고, Querydsl 필터·정렬·카페인 미공개 배제 회귀는 외부 서비스 없는 H2에서 실행한다.
 
 ## 키
 

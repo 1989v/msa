@@ -61,3 +61,6 @@ docs/verify/
 
 # skill-quality-eval artifacts (when SKILL_EVAL_GOLDSET_ROOT not set)
 goldset/
+
+# 공개 레포에는 수집한 공식 카페 영양 원천을 포함하지 않는다.
+ranking/ingest/data/

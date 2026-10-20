@@ -47,10 +47,7 @@ fun isRankingDockerAvailable(): Boolean = dockerAvailable
         "spring.jpa.hibernate.ddl-auto=validate",
     ],
 )
-@org.junit.jupiter.api.condition.EnabledIf(
-    value = "com.kgd.ranking.infrastructure.persistence.RankingSchemaIntegrationSpecKt#isRankingDockerAvailable",
-    disabledReason = "Docker 미연결 — Testcontainers MySQL 사용 불가",
-)
+@io.kotest.core.annotation.EnabledIf(RankingDockerCondition::class)
 class RankingSchemaIntegrationSpec(
     @Autowired private val r0: RankingBoardJpaRepository,
     @Autowired private val r1: RankingSnapshotJpaRepository,
@@ -101,4 +98,9 @@ class RankingSchemaIntegrationSpec(
             registry.add("spring.datasource.ranking.driver-class-name") { "com.mysql.cj.jdbc.Driver" }
         }
     }
+}
+
+/** Kotest must skip before Spring bootstraps; JUnit conditions do not gate BehaviorSpec. */
+class RankingDockerCondition : io.kotest.core.annotation.EnabledCondition {
+    override fun enabled(kclass: kotlin.reflect.KClass<out io.kotest.core.spec.Spec>): Boolean = dockerAvailable
 }

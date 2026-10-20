@@ -11,6 +11,7 @@ plugins {
 
 dependencies {
     implementation(project(":ranking:domain"))
+    implementation("com.querydsl:querydsl-jpa:5.1.0:jakarta")
     implementation(project(":common"))
     // Kotlin 데이터 클래스 역직렬화 (ADR-0067). 없으면 Kotlin 기본값이 무시되고
     // 요청에 빠진 non-null 필드에서 역직렬화가 실패한다.
@@ -25,6 +26,7 @@ dependencies {
     runtimeOnly(libs.mysql.connector)
     runtimeOnly(libs.mysql.connector)
     testImplementation(libs.spring.boot.starter.test)
+    testImplementation(libs.h2)
     testImplementation(libs.kotest.extensions.spring)
     // 스키마 검증 — Flyway 적용 + ddl-auto=validate 로 엔티티/마이그레이션 일치를 확인한다.
     // 운영은 ddl-auto=none 이라 불일치가 거기서는 절대 안 드러난다.

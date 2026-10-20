@@ -158,6 +158,10 @@ targetKey 와 같은 규약이라 찜하기 연동이 스키마 변경 없이 �
 apex 리다이렉트 / 프리렌더 `_hosts/$host` 키 / **`serviceHref.ts` 의 `SUBDOMAIN_ORIGIN` 한 줄**.
 ④ 를 빠뜨리면 타일이 apex 경로를 걸고 hover·링크복사·새 탭·크롤러가 전부 apex 에 머문다.
 
+### 9) 카페 음료 슬라이스 (2026-10-20)
+
+카페는 공식 영양정보 9브랜드 1,922행을 `ranking_db.cafe_drink`(V2)에 별도 적재한다. 원천 25필드를 개별 컬럼과 raw 영양표·notes로 보존하고 메뉴 유형·100ml당 농도만 파생한다. 같은 메뉴의 디카페인은 다른 판이므로 유일키에 `caffeine_status`를 포함하며 온도·사이즈 null은 빈 문자열로 정규화한다. 내부 bulk는 등장한 브랜드만 한 트랜잭션으로 교체하고 빈 파일은 전송하지 않는다. 공개 `/api/v1/ranking/cafe/{drinks,groups,brands}`는 DB에서 검색·집계하며 `caffeine=none`은 ZERO·DECAF만 포함한다. `rank.1989v.com/cafe`는 기본 레시피 영양 비교와 출처·확인일을 보여준다. 라이선스·자동수집 조항 미확인은 허가로 해석하지 않으며 원천 JSONL은 공개 레포에 넣지 않는다. 호스트는 ADR-0093에 따라 content:app이고 전용 datasource·TM을 사용한다.
+
 ## 결과
 
 **얻는 것**
