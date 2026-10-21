@@ -10,3 +10,13 @@ describe('cafe comparison URL state', () => {
     expect(readCafeFilters(new URLSearchParams('page=-1&size=999&maxSugar=NaN&sort=bad'))).toMatchObject({ page: 0, size: 200, maxSugar: undefined, sort: 'sugar' });
   });
 });
+
+it('round-trips basis, repeated caffeine states, page and legacy zero/decaf aliases', () => {
+  const filters = readCafeFilters(new URLSearchParams('basis=100ml&caffeineStatus=ZERO&caffeineStatus=DECAF&page=3&size=20'));
+  expect(filters).toMatchObject({ basis: '100ml', caffeineStatus: ['ZERO', 'DECAF'], page: 3, size: 20 });
+  expect(readCafeFilters(writeCafeFilters(filters))).toEqual(filters);
+  expect(readCafeFilters(new URLSearchParams('caffeine=zero')).caffeine).toBe('zero');
+  expect(readCafeFilters(new URLSearchParams('caffeine=decaf')).caffeine).toBe('decaf');
+  expect(readCafeFilters(new URLSearchParams('sort=sugarPer100ml')).basis).toBe('100ml');
+  expect(readCafeFilters(new URLSearchParams()).size).toBe(20);
+});

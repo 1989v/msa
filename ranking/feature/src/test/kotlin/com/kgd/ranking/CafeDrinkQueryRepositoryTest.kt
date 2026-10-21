@@ -6,6 +6,8 @@ import com.kgd.ranking.infrastructure.persistence.entity.CafeDrinkJpaEntity
 import com.kgd.ranking.infrastructure.persistence.repository.CafeDrinkQueryRepository
 import com.querydsl.jpa.impl.JPAQueryFactory
 import io.kotest.core.spec.style.BehaviorSpec
+import io.kotest.assertions.throwables.shouldThrow
+import com.kgd.ranking.domain.cafe.model.CafeDrinkKey
 import io.kotest.matchers.shouldBe
 import org.hibernate.cfg.Configuration
 import org.springframework.data.domain.PageRequest
@@ -49,10 +51,62 @@ class CafeDrinkQueryRepositoryTest : BehaviorSpec({
             result.content.map { it.menuName } shouldBe listOf("일반 라떼", "미공개 라떼")
             result.content.first().sugarPer100ml shouldBe BigDecimal("5.0000")
         }
+        Then("공식 0과 디카페인은 분리하고 반복 상태는 합집합으로 필터한다") {
+            repository.search(CafeDrinkQuery(caffeine = "zero"), PageRequest.of(0, 20)).content.map { it.caffeineStatus } shouldBe listOf(CaffeineStatus.ZERO)
+            repository.search(CafeDrinkQuery(caffeine = "decaf"), PageRequest.of(0, 20)).content.map { it.caffeineStatus } shouldBe listOf(CaffeineStatus.DECAF)
+            repository.search(CafeDrinkQuery(caffeineStatus = listOf(CaffeineStatus.ZERO, CaffeineStatus.DECAF)), PageRequest.of(0, 20)).totalElements shouldBe 2
+            shouldThrow<IllegalArgumentException> { CafeDrinkQuery(caffeine = "none", caffeineStatus = listOf(CaffeineStatus.ZERO)) }
+        }
+        Then("안정 상세키는 동일 자연키 재적재와 무관하고 잘못된 키는 찾지 못한다") {
+            val row = repository.search(CafeDrinkQuery(caffeine = "zero"), PageRequest.of(0, 20)).content.single()
+            repository.find(row.drinkKey) shouldBe row
+            repository.find("invalid") shouldBe null
+            repository.find(CafeDrinkKey.of(cafeItem("deleted", "삭제 메뉴").toDomain())) shouldBe null
+            val source = cafeItem("b", "제로 라떼", CaffeineStatus.ZERO).toDomain()
+            CafeDrinkKey.of(source) shouldBe CafeDrinkKey.of(source.copy(sugarG = BigDecimal("99")))
+        }
+        Then("세 지표의 100ml 정렬은 기준을 적용하고 상한은 1회량으로 유지한다") {
+            listOf("sugar", "caffeine", "kcal").forEach { metric ->
+                val result = repository.search(CafeDrinkQuery(basis = "100ml", sort = metric), PageRequest.of(0, 20))
+                result.totalElements shouldBe 4
+                if (metric != "kcal") result.content.last().menuName shouldBe "미공개 라떼"
+            }
+            repository.search(CafeDrinkQuery(basis = "100ml", maxSugar = BigDecimal("5")), PageRequest.of(0, 20)).totalElements shouldBe 1
+        }
         Then("브랜드·유형별 집계는 행수와 출처·확인일을 반환한다") {
             repository.groups().single().count shouldBe 4
             repository.brands().map { it.count } shouldBe listOf(2L, 2L)
             repository.brands().first().sourceUrls shouldBe listOf("https://example.com/menu")
         }
     }
+    Given("표시 반올림이 같고 용량이 없는 별도 변형") {
+        Then("원래 비율로 전체 정렬하고 용량 없는 행을 남겨 마지막에 둔다") {
+            em.transaction.begin()
+            listOf(
+                cafeItem("precision-a", "__precise A").copy(volumeMl = BigDecimal("100000"), sugarG = BigDecimal("1.0002"), caffeineMg = BigDecimal("1.0002"), kcal = BigDecimal("1.0002")),
+                cafeItem("precision-b", "__precise B").copy(volumeMl = BigDecimal("100000"), sugarG = BigDecimal("1.0001"), caffeineMg = BigDecimal("1.0001"), kcal = BigDecimal("1.0001")),
+                cafeItem("precision-c", "__precise C").copy(volumeMl = null, servingBasis = null, sizeLabel = null),
+            ).forEach { em.persist(CafeDrinkJpaEntity.fromDomain(it.toDomain())) }
+            em.transaction.commit()
+            em.clear()
+            try {
+                listOf("sugar", "caffeine", "kcal").forEach { metric ->
+                    val result = repository.search(CafeDrinkQuery(q = "__precise", sort = metric, basis = "100ml"), PageRequest.of(0, 20))
+                    result.content.map { it.brandSlug } shouldBe listOf("precision-b", "precision-a", "precision-c")
+                    result.content.last().sugarPer100ml shouldBe null
+                    result.content.last().caffeinePer100ml shouldBe null
+                    result.content.last().kcalPer100ml shouldBe null
+                    val secondPage = repository.search(CafeDrinkQuery(q = "__precise", sort = metric, basis = "100ml", page = 1, size = 1), PageRequest.of(1, 1))
+                    secondPage.totalElements shouldBe 3
+                    secondPage.content.single().brandSlug shouldBe "precision-a"
+                }
+            } finally {
+                em.transaction.begin()
+                em.createQuery("delete from CafeDrinkJpaEntity where brandSlug like 'precision-%'").executeUpdate()
+                em.transaction.commit()
+                em.clear()
+            }
+        }
+    }
+
 })

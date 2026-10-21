@@ -1577,6 +1577,19 @@ export function rankHubMeta() {
   };
 }
 
+/** Cafe owns its canonical entry; query combinations and individual variants stay out of the index.
+ * @param {{ filtered?: boolean, detail?: boolean, drinkKey?: string }} options
+ */
+export function cafeMeta({ filtered = false, detail = false, drinkKey = undefined } = {}) {
+  return {
+    title: '카페 음료 당류·카페인·열량 비교 | 1989v 랭킹',
+    description: '브랜드 공식 영양정보로 카페 음료의 당류·카페인·열량을 비교합니다. 1회 제공량과 100ml 기준, 디카페인과 미공개 정보를 구분해 확인하세요.',
+    canonical: rankUrl(drinkKey ? `/cafe/drinks/${encodeURIComponent(drinkKey)}` : '/cafe'),
+    noindex: filtered || detail,
+    image: ogCardUrl(RANK_ORIGIN, 'rank'),
+  };
+}
+
 export function rankBoardMeta(board) {
   const top = board.topName ?? board.entries?.[0]?.subjectName;
   return {

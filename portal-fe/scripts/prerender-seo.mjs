@@ -90,6 +90,7 @@ import {
   RANK_COVERAGE_NOTE,
   RANK_GAS_SOURCE,
   rankHubMeta,
+  cafeMeta,
   rankUrl,
   BLOG_ORIGIN,
   BLOG_BRAND,
@@ -2146,6 +2147,7 @@ async function fetchRankingBoardIndex() {
 function rankSitemapEntries(boards) {
   return [
     { loc: rankUrl('/'), priority: '0.9' },
+    { loc: rankUrl('/cafe'), priority: '0.7' },
     ...boards.map((b) => ({ loc: rankUrl(`/boards/${b.slug}`), priority: '0.6' })),
   ];
 }
@@ -2181,6 +2183,17 @@ async function renderRankHub(shell, boards = []) {
     ),
   });
   await emit(`prerender/_hosts/${RANK_HOST}.html`, html);
+  await emit(`prerender/_hosts/${RANK_HOST}/cafe.html`, renderCafeHtml(shell));
+}
+
+/** Host-scoped route HTML follows ADR-0062's nginx _hosts/$host lookup. */
+export function renderCafeHtml(shell) {
+  const meta = cafeMeta();
+  return compose(shell, {
+    lang: 'ko', title: meta.title, description: meta.description, canonical: meta.canonical,
+    siteName: RANK_SITE_NAME, image: meta.image,
+    body: shellBody('<h1>카페 음료 비교</h1><p>' + escapeHtml(meta.description) + '</p><p>공식 기본 레시피 기준 · 미공개는 0이 아닙니다.</p>'),
+  });
 }
 
 /**

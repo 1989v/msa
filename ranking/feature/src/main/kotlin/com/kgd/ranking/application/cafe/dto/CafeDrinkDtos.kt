@@ -92,6 +92,7 @@ data class CafeDrinkResponse(
     val cupVolumeMl: BigDecimal? = null,
     val volumeSource: VolumeSource = VolumeSource.NONE,
     val kcalPer100ml: BigDecimal? = null,
+    val drinkKey: String = "",
 ) {
     companion object {
         fun of(drink: CafeDrink) = CafeDrinkResponse(
@@ -126,6 +127,7 @@ data class CafeDrinkResponse(
             cupVolumeMl = drink.cupVolumeMl,
             volumeSource = drink.volumeSource,
             kcalPer100ml = drink.kcalPer100ml,
+            drinkKey = CafeDrinkKey.of(drink),
         )
     }
 }
@@ -146,11 +148,17 @@ data class CafeDrinkQuery(
     val caffeine: String? = null,
     val sort: String = "sugar",
     val page: Int = 0,
-    val size: Int = 50,
+    val size: Int = 20,
+    val basis: String = "serving",
+    val caffeineStatus: List<CaffeineStatus> = emptyList(),
 ) {
     init {
         require(page >= 0 && size in 1..200) { "page >= 0, size 1..200" }
         require(sort in setOf("sugar", "caffeine", "kcal", "sugarPer100ml")) { "Unknown sort" }
-        require(caffeine == null || caffeine == "none") { "Unknown caffeine filter" }
+        require(basis in setOf("serving", "100ml")) { "Unknown basis" }
+        require(caffeine == null || caffeine in setOf("none", "zero", "decaf")) { "Unknown caffeine filter" }
+        require(caffeine == null || caffeineStatus.isEmpty()) { "Use caffeine or caffeineStatus, not both" }
+        require(maxSugar == null || maxSugar.signum() >= 0)
+        require(maxCaffeine == null || maxCaffeine.signum() >= 0)
     }
 }

@@ -1,4 +1,4 @@
-import type { CafeFilters } from '../../api/rankingApi';
+import type { CafeFilters, CaffeineStatus } from '../../api/rankingApi';
 
 export function readCafeFilters(params: URLSearchParams): CafeFilters {
   const number = (key: string, max: number) => {
@@ -12,9 +12,11 @@ export function readCafeFilters(params: URLSearchParams): CafeFilters {
     group: params.get('group') || undefined,
     temperature: ['HOT', 'ICE'].includes(params.get('temperature') ?? '') ? params.get('temperature')! : undefined,
     maxSugar: number('maxSugar', 1000), maxCaffeine: number('maxCaffeine', 10000),
-    caffeine: params.get('caffeine') === 'none' ? 'none' : undefined,
+    caffeine: ['none', 'zero', 'decaf'].includes(params.get('caffeine') ?? '') ? params.get('caffeine') as CafeFilters['caffeine'] : undefined,
+    caffeineStatus: params.getAll('caffeineStatus').filter((value): value is CaffeineStatus => ['ZERO', 'DECAF', 'DISCLOSED', 'UNDISCLOSED'].includes(value)),
+    basis: params.get('basis') === '100ml' || sort === 'sugarPer100ml' ? '100ml' : 'serving',
     sort: ['sugar', 'caffeine', 'kcal', 'sugarPer100ml'].includes(sort ?? '') ? sort as CafeFilters['sort'] : 'sugar',
-    page: Math.floor(number('page', 10000) ?? 0), size: Math.max(1, Math.floor(number('size', 200) ?? 50)),
+    page: Math.floor(number('page', 10000) ?? 0), size: Math.max(1, Math.floor(number('size', 200) ?? 20)),
   };
 }
 export function writeCafeFilters(filters: CafeFilters): URLSearchParams {

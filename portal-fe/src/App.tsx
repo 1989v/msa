@@ -299,6 +299,7 @@ function App() {
           {/* 랭킹 리더보드 — apex 는 서브도메인으로 넘긴다 (ADR-0081) */}
           <Route path="/rank" element={rankRoute(<RankPage />)} />
           {rankRoutesEnabled && <Route path="/cafe" element={<CafePage />} />}
+          {rankRoutesEnabled && <Route path="/cafe/drinks/:drinkKey" element={<CafePage />} />}
           {rankRoutesEnabled && <Route path="/boards/:slug" element={<RankBoardPage />} />}
           {/* 광고주 콘솔 — apex 는 서브도메인으로 넘긴다 (ADR-0098) */}
           <Route path="/ads" element={adsRoute(<AdsConsolePage view="dashboard" />)} />

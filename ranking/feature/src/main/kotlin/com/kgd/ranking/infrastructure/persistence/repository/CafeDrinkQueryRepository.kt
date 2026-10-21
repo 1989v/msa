@@ -2,6 +2,8 @@ package com.kgd.ranking.infrastructure.persistence.repository
 
 import com.kgd.ranking.application.cafe.dto.*
 import com.kgd.ranking.domain.cafe.model.CaffeineStatus
+import com.kgd.ranking.domain.cafe.model.CafeDrinkKey
+import com.querydsl.core.types.dsl.Expressions
 import com.kgd.ranking.infrastructure.persistence.entity.CafeDrinkJpaEntity
 import com.querydsl.core.BooleanBuilder
 import com.querydsl.core.types.dsl.PathBuilder
@@ -24,21 +26,46 @@ class CafeDrinkQueryRepository(@Qualifier("rankingQueryFactory") private val que
         query.group?.let { where.and(drink.getString("drinkGroup").eq(it)) }
         query.temperature?.let { where.and(drink.getString("temperature").eq(it)) }
         query.maxSugar?.let { where.and(drink.getNumber("sugarG", BigDecimal::class.java).loe(it)) }
-        query.maxCaffeine?.let { where.and(drink.getNumber("caffeineMg", BigDecimal::class.java).loe(it)) }
-        if (query.caffeine == "none") where.and(drink.getEnum("caffeineStatus", CaffeineStatus::class.java)
-            .`in`(CaffeineStatus.ZERO, CaffeineStatus.DECAF))
-        val sort = when (query.sort) {
+        query.maxCaffeine?.let {
+            where.and(drink.getNumber("caffeineMg", BigDecimal::class.java).loe(it))
+                .and(drink.getEnum("caffeineStatus", CaffeineStatus::class.java).ne(CaffeineStatus.UNDISCLOSED))
+        }
+        val statuses = when (query.caffeine) {
+            "none" -> listOf(CaffeineStatus.ZERO, CaffeineStatus.DECAF)
+            "zero" -> listOf(CaffeineStatus.ZERO)
+            "decaf" -> listOf(CaffeineStatus.DECAF)
+            else -> query.caffeineStatus
+        }
+        if (statuses.isNotEmpty()) where.and(drink.getEnum("caffeineStatus", CaffeineStatus::class.java).`in`(statuses))
+        val field = when (query.sort) {
             "caffeine" -> "caffeineMg"
             "kcal" -> "kcal"
-            "sugarPer100ml" -> "sugarPer100ml"
             else -> "sugarG"
         }
-        val metric = drink.getNumber(sort, BigDecimal::class.java)
+        val raw = drink.getNumber(field, BigDecimal::class.java)
+        // Compute before sorting: persisted concentrations are rounded to four decimals.
+        val metric = if (query.basis == "100ml" || query.sort == "sugarPer100ml")
+            Expressions.numberTemplate(BigDecimal::class.java,
+                "case when {1} > 0 then {0} * 100.0 / {1} else null end",
+                raw, drink.getNumber("cupVolumeMl", BigDecimal::class.java))
+        else raw
         val content = queryFactory.selectFrom(drink).where(where)
-            .orderBy(metric.asc().nullsLast(), drink.getString("brandSlug").asc(), drink.getNumber("id", Long::class.javaObjectType).asc())
+            .orderBy(metric.asc().nullsLast(), drink.getString("brandSlug").asc(),
+                drink.getString("menuName").asc(), drink.getString("temperature").asc(),
+                drink.getString("sizeLabel").asc(), drink.getEnum("caffeineStatus", CaffeineStatus::class.java).asc())
             .offset(pageable.offset).limit(pageable.pageSize.toLong()).fetch()
         val count = queryFactory.select(drink.count()).from(drink).where(where).fetchOne() ?: 0L
         return CafeDrinkPage(content.map { CafeDrinkResponse.of(it.toDomain()) }, count, query.page, query.size)
+    }
+
+    fun find(key: String): CafeDrinkResponse? {
+        val fields = CafeDrinkKey.fields(key) ?: return null
+        val row = queryFactory.selectFrom(drink).where(
+            drink.getString("brandSlug").eq(fields[0]), drink.getString("menuName").eq(fields[1]),
+            drink.getString("temperature").eq(fields[2]), drink.getString("sizeLabel").eq(fields[3]),
+            drink.getEnum("caffeineStatus", CaffeineStatus::class.java).eq(CaffeineStatus.valueOf(fields[4])),
+        ).fetchOne()
+        return row?.toDomain()?.let(CafeDrinkResponse::of)
     }
 
     fun groups(): List<CafeGroupCount> {

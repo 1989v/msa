@@ -23,3 +23,13 @@ describe('컵 용량 표기', () => {
     expect(volumeLabel({ sizeLabel: null, cupVolumeMl: null, servingBasis: null })).toBe('용량 미표시');
   });
 });
+
+describe('metric display', () => {
+  it('rounds only display values, preserving tiny positives', async () => {
+    const { formatCafeNumber } = await import('../cafeView');
+    expect(formatCafeNumber(0.004)).toBe('<0.1');
+    expect(formatCafeNumber(0)).toBe('0');
+    expect(formatCafeNumber(15.24)).toBe('15.2');
+    expect(formatCafeNumber(10)).toBe('10');
+  });
+});

@@ -7,6 +7,7 @@ interface CafeDrinkRepositoryPort {
     fun deleteByBrands(brands: Set<String>)
     fun saveAll(drinks: List<CafeDrink>)
     fun search(query: CafeDrinkQuery): CafeDrinkPage
+    fun find(drinkKey: String): CafeDrinkResponse?
     fun groups(): List<CafeGroupCount>
     fun brands(): List<CafeBrandCount>
 }

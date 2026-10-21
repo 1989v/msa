@@ -7,6 +7,7 @@ interface SyncCafeDrinksUseCase {
 }
 interface GetCafeDrinksUseCase {
     fun execute(query: CafeDrinkQuery): CafeDrinkPage
+    fun find(drinkKey: String): CafeDrinkResponse?
     fun groups(): List<CafeGroupCount>
     fun brands(): List<CafeBrandCount>
 }

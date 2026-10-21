@@ -77,6 +77,7 @@ export const fetchGasAreas = async (): Promise<RankingScope[]> => {
 
 export type CaffeineStatus = 'DISCLOSED' | 'ZERO' | 'DECAF' | 'UNDISCLOSED';
 export interface CafeDrink {
+  drinkKey: string;
   brandSlug: string; brandName: string; menuName: string; menuNameEn: string | null;
   sourceCategory: string | null; temperature: string | null; sizeLabel: string | null;
   volumeMl: number | null; servingBasis: string | null; kcal: number | null; sugarG: number | null;
@@ -92,7 +93,7 @@ export interface CafeBrand { brandSlug: string; brandName: string; count: number
 export interface CafeGroup { group: string; count: number }
 export interface CafeFilters {
   q?: string; brand?: string[]; group?: string; temperature?: string;
-  maxSugar?: number; maxCaffeine?: number; caffeine?: 'none';
+  maxSugar?: number; maxCaffeine?: number; caffeine?: 'none' | 'zero' | 'decaf'; caffeineStatus?: CaffeineStatus[]; basis?: 'serving' | '100ml';
   sort?: 'sugar' | 'caffeine' | 'kcal' | 'sugarPer100ml'; page?: number; size?: number;
 }
 export const fetchCafeDrinks = async (filters: CafeFilters): Promise<CafeDrinkPage> => {
@@ -107,3 +108,6 @@ export const fetchCafeBrands = async (): Promise<CafeBrand[]> =>
   (await api.get<ApiResponse<CafeBrand[]>>('/api/v1/ranking/cafe/brands')).data.data;
 export const fetchCafeGroups = async (): Promise<CafeGroup[]> =>
   (await api.get<ApiResponse<CafeGroup[]>>('/api/v1/ranking/cafe/groups')).data.data;
+
+export const fetchCafeDrink = async (drinkKey: string): Promise<CafeDrink> =>
+  (await api.get<ApiResponse<CafeDrink>>(`/api/v1/ranking/cafe/drinks/${encodeURIComponent(drinkKey)}`)).data.data;

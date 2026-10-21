@@ -13,3 +13,21 @@ export const volumeLabel = (drink: Pick<CafeDrink, 'sizeLabel' | 'cupVolumeMl' |
   const amount = drink.cupVolumeMl != null ? `${drink.cupVolumeMl}ml` : weight ? `${weight}g` : '용량 미표시';
   return drink.sizeLabel ? `${drink.sizeLabel} · ${amount}` : amount;
 };
+
+
+export type CafeMetric = 'sugar' | 'caffeine' | 'kcal';
+export const metricNames = { sugar: '당류', caffeine: '카페인', kcal: '열량' };
+export const metricUnits = { sugar: 'g', caffeine: 'mg', kcal: 'kcal' };
+export const formatCafeNumber = (value: number): string => value > 0 && value < 0.05 ? '<0.1' : Number(value.toFixed(1)).toString();
+export function cafeMetric(drink: CafeDrink, metric: CafeMetric, basis: 'serving' | '100ml'): { amount: string; unit?: string; status?: string } {
+  if (metric === 'caffeine' && drink.caffeineStatus === 'UNDISCLOSED') return { amount: '미공개' };
+  if (basis === '100ml' && !(drink.cupVolumeMl != null && drink.cupVolumeMl > 0)) return { amount: '산출 불가', status: metric === 'caffeine' && drink.caffeineStatus === 'DECAF' ? '디카페인' : undefined };
+  const value = basis === '100ml'
+    ? { sugar: drink.sugarPer100ml, caffeine: drink.caffeinePer100ml, kcal: drink.kcalPer100ml }[metric]
+    : { sugar: drink.sugarG, caffeine: drink.caffeineMg, kcal: drink.kcal }[metric];
+  return {
+    amount: value === null ? (metric === 'caffeine' ? '수치 미확정' : '미공개') : formatCafeNumber(value),
+    unit: value === null ? undefined : metricUnits[metric],
+    status: metric === 'caffeine' ? (drink.caffeineStatus === 'DECAF' ? '디카페인' : drink.caffeineStatus === 'ZERO' ? '공식 0' : undefined) : undefined,
+  };
+}

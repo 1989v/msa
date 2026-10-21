@@ -27,6 +27,8 @@ class CafeDrinkService(private val repository: CafeDrinkRepositoryPort) : SyncCa
     @Transactional("rankingTransactionManager", readOnly = true)
     override fun execute(query: CafeDrinkQuery) = repository.search(query)
     @Transactional("rankingTransactionManager", readOnly = true)
+    override fun find(drinkKey: String) = repository.find(drinkKey)
+    @Transactional("rankingTransactionManager", readOnly = true)
     override fun groups() = repository.groups()
     @Transactional("rankingTransactionManager", readOnly = true)
     override fun brands() = repository.brands()

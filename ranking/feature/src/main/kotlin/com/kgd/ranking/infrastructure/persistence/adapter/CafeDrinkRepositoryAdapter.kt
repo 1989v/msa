@@ -23,6 +23,7 @@ class CafeDrinkRepositoryAdapter(
         repository.saveAll(drinks.map(CafeDrinkJpaEntity::fromDomain))
     }
     override fun search(query: CafeDrinkQuery) = queryRepository.search(query, PageRequest.of(query.page, query.size))
+    override fun find(drinkKey: String) = queryRepository.find(drinkKey)
     override fun groups() = queryRepository.groups()
     override fun brands() = queryRepository.brands()
 }
