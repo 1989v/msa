@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { fetchCafeComparison, fetchCafeDrinkNames, fetchCafeBrands, fetchCafeDrink, fetchCafeDrinks, fetchCafeGroups } from '../../api/rankingApi';
@@ -11,6 +11,8 @@ import { cafeMeta } from '../../seo/copy.mjs';
 import { cafeMetric, cafeMetricValue, metricNames, volumeLabel, volumeExplanation } from './cafeView';
 import type { CafeMetric } from './cafeView';
 import { readCafeFilters, writeCafeFilters } from './cafeUrl';
+import CafeNearby from './CafeNearby';
+import { fetchCafeNearbyCapability } from '../../api/rankingApi';
 import './CafePage.css';
 
 const metrics: CafeMetric[] = ['sugar', 'caffeine', 'kcal'];
@@ -66,20 +68,23 @@ function FilterSheet({ filters, brands, close, apply }: { filters: CafeFilters; 
   </div></div>;
 }
 
-export default function CafePage({ nearbyEnabled = false, onNearbyOpen }: { nearbyEnabled?: boolean; onNearbyOpen?: () => void } = {}) {
+export default function CafePage({ nearbyEnabled, onNearbyOpen }: { nearbyEnabled?: boolean; onNearbyOpen?: () => void } = {}) {
   useHeritageSurface();
   const [params, setParams] = useSearchParams();
   const { drinkKey, drinkName } = useParams();
   const [nearbyOpen, setNearbyOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const filters = readCafeFilters(params);
+  const filters = useMemo(() => readCafeFilters(params), [params]);
+  const capability = useQuery({ queryKey: ['cafe', 'capability'], queryFn: fetchCafeNearbyCapability, retry: false, staleTime: 60000 });
+  const canNearby = nearbyEnabled ?? capability.data?.nearbyEnabled ?? false;
   const landing = !drinkName && !drinkKey && !location.search;
   const [search, setSearch] = useState(filters.q ?? '');
   const [sheet, setSheet] = useState(false);
   const [detailBasis, setDetailBasis] = useState<'serving' | '100ml'>(filters.basis ?? 'serving');
   useEffect(() => { setDetailBasis(readCafeFilters(new URLSearchParams(location.search)).basis ?? 'serving'); }, [drinkKey, location.search]);
   const identity = location.pathname + location.search;
+  useEffect(() => { setNearbyOpen(false); }, [identity]);
   useSeo(cafeMeta({ detail: !!drinkKey || !!drinkName, drinkKey, drinkName, filtered: !!location.search }));
   useEffect(() => { setSearch(readCafeFilters(new URLSearchParams(location.search)).q ?? ''); setSheet(false); }, [location.search]);
   const brands = useQuery({ queryKey: ['cafe', 'brands'], queryFn: fetchCafeBrands, staleTime: 300000 });
@@ -106,9 +111,10 @@ export default function CafePage({ nearbyEnabled = false, onNearbyOpen }: { near
   const sort = filters.sort === 'sugarPer100ml' ? 'sugar' : filters.sort ?? 'sugar';
   const filterCount = (filters.brand?.length ?? 0) + (filters.caffeineStatus?.length ?? 0) + Number(!!filters.caffeine) + Number(filters.maxSugar !== undefined) + Number(filters.maxCaffeine !== undefined);
   const returnTo = (location.state as { returnTo?: string } | null)?.returnTo;
+  const nearbyFilters = useMemo(() => drinkKey ? { ...filters, basis: detailBasis } : filters, [drinkKey, filters, detailBasis]);
   const back = () => returnTo ? navigate(-1) : navigate('/cafe');
   return <main className={`cafe-page ${landing ? 'cafe-landing' : ''}`}>
-    {nearbyEnabled && !drinkKey && <section className="cafe-nearby" aria-label="주변 카페"><button type="button" onClick={() => { setNearbyOpen(true); onNearbyOpen?.(); }}>주변 카페에서 음료 찾기</button>{nearbyOpen && <div role="status"><p>주변 매장 연결을 준비하고 있습니다. 현재는 공식 브랜드 음료 정보를 비교할 수 있습니다. 매장별 판매 여부는 확인되지 않았습니다.</p><button type="button" onClick={() => setNearbyOpen(false)}>안내 닫기</button></div>}</section>}
+    {canNearby && <section className="cafe-nearby" aria-label="주변 카페"><button type="button" disabled={!!drinkKey && !detail.data} onClick={() => { setNearbyOpen(true); onNearbyOpen?.(); }}>주변 카페에서 음료 찾기</button>{nearbyOpen && <CafeNearby filters={nearbyFilters} drinkName={drinkName ?? (drinkKey ? detail.data?.drinkName ?? detail.data?.menuName : undefined)} initialSelection={drinkKey && detail.data ? { [detail.data.brandSlug]: drinkKey } : undefined} close={() => setNearbyOpen(false)} />}</section>}
     <header className="cafe-header"><div className="cafe-top"><Link to={landing ? '/' : '/cafe'}>{landing ? '랭킹' : '‹ 음료 탐색'}</Link><ThemeToggle /></div>
       {!drinkKey && <><h1>{landing ? <>카페 음료<br />비교</> : drinkName ?? (filters.group === '기타' ? '기타·유형 미분류' : filters.group ?? '카페 음료 비교')}</h1>{landing && <p>공식 기본 레시피의 당류·카페인·열량을 확인하세요.</p>}</>}
     </header>

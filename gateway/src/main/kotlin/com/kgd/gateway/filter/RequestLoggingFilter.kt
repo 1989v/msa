@@ -21,7 +21,10 @@ class RequestLoggingFilter : GlobalFilter, Ordered {
         val start = Instant.now()
         val request = exchange.request
         val method = request.method
-        val uri = request.uri
+        if (request.path.value() == "/api/v1/ranking/cafe/nearby-search") {
+            exchange.response.headers.cacheControl = "no-store"
+        }
+        val uri = if (request.path.value() == "/api/v1/ranking/cafe/nearby-search") request.path.value() else request.uri.toString()
 
         return chain.filter(exchange).doFinally {
             val duration = Duration.between(start, Instant.now()).toMillis()

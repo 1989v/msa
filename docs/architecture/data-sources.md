@@ -613,3 +613,30 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 - 지리·POI·상품 시드 → `tools/seed/place/README.md`, `tools/seed/products/README.md`
 - 주유소 수집 실행법 → `ranking/ingest/README.md`
 - 결정 → `docs/adr/ADR-0056`(지리·POI) · `ADR-0065`(K-관광) · `ADR-0070`(콘텐츠 보강) · `ADR-0071`(행정구역 드릴다운) · `ADR-0081`(랭킹 리더보드)
+
+## 10. 카페 주변 매장 — SOHO 상가정보 + 공식 지역 중심
+
+[소상공인시장진흥공단 공식 안내/Swagger](https://www.data.go.kr/data/15012005/openapi.do),
+2026-10-21 CLI 확인. 이용허락범위 제한 없음, 갱신 메타는 실시간이며 실제 매장 반영 속도 보장은 아니다.
+키는 data.go.kr 활용신청 `serviceKey`: 환경 `SOHO_API_KEY`, Secret
+`ranking-ingest-secrets/soho-api-key`. 기존 `tools/seed/place/normalize_pois.py`의
+`DATA_GO_KR_KEY`는 로컬 대체 참조만 허용하며 이 도구의 샘플 폴백은 사용하지 않는다.
+현재 실행 환경에 두 키와 SANGGA_API_KEY 모두 없었고 live 원천 응답 검증은 수행하지 않았다.
+
+전국 `smallUpjongList`로 카페/베이커리 분류를 확인한 뒤 `storeListInUpjong`의
+`divId=indsSclsCd&key=...`를 페이지 끝까지 수집한다. 키는 한 번만 URL 인코딩하고 URL/응답 원문
+예외를 로그에 남기지 않는다. 하루 1,000콜 예산(분류1+목록999), 실행 중 실패면 전체 공개 취소.
+분류 코드뿐 아니라 bizesId/bizesNm/brchNm/주소/좌표와 **알려지지 않은 필드 포함 전체 원문**을 보존한다.
+전국 원천의 승인 9브랜드 후보 투영본이며 전국 모든 매장·전 지점의 판매 여부를 보장하지 않는다.
+원천 기준일 미제공은 null, fetchedAt은 성공 수집일, projectionAsOf는 DB 반영일이다.
+
+지역 대표 중심은 [기상청 단기예보 공식 안내](https://www.data.go.kr/data/15084084/openapi.do)의
+2026-10-19 가이드(2610.zip)의 위경도 열이다. 원문 상위 행·파일 해시·다운로드 출처는
+`ranking/ingest/src/data/cafe_areas.provenance.json`, 파생 272행은 `cafe_areas.json`에 둔다.
+공공누리 출처표시 정책을 따른다. 읍면동 행정동코드와 법정동 코드를 섞지 않고 상위 시도/시군구만
+사용한다. source의 행정개편 코드와 SOHO 코드가 다른 지역은 공개하지 않는다.
+이어도 예보 전용 0,0 행은 제외했으며 수원 등 일반구·제주 행정시·세종 관계는 원문 상위코드로 둔다.
+
+배치는 suspend=true로 추가됐다. 실데이터 브랜드별 정밀도/포함률, 좌표 로그/APM 비검출 및 서버 부하
+검증 후에만 배치·서버 공개를 운영자가 켠다. 상시 파드에 외부 egress를 추가하지 않는다.
+기존 ranking-ingest HTTPS :443 및 content 내부 호출 정책을 재사용한다. 사용자 요청 경로의 원천 호출은 없다.

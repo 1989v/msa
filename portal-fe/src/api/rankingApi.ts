@@ -126,3 +126,36 @@ export const fetchCafeComparison = async (name: string, filters: CafeFilters): P
   });
   return (await api.get<ApiResponse<CafeBrandVariants[]>>('/api/v1/ranking/cafe/drink-names/compare', { params })).data.data;
 };
+
+export interface CafeNearbyCapability { nearbyEnabled: boolean; reason: string; sourceAsOf: string | null; fetchedAt: string | null }
+export interface CafeArea { code: string; name: string; level: 'PROVINCE' | 'DISTRICT'; parentCode: string | null; centerSource: string; sourceAsOf: string | null }
+export interface CafeStore {
+  storeKey: string; brandSlug: string; brandName: string; storeName: string; branchName: string | null;
+  address: string; latitude: number; longitude: number; distanceM: number; mappingStatus: string;
+  selectedDrink: CafeDrink | null; variants: CafeDrink[]; selectionRequired: boolean; autoSelected: boolean;
+  sourceAsOf: string | null; menuAvailability: 'UNVERIFIED';
+}
+export interface CafeNearbyResult {
+  basis: 'serving' | '100ml'; sort: string; radiusKm: number; locationKind: string; areaLabel: string | null;
+  coverage: { status: string; reason: string; brands: string[] }; storeSource: string;
+  storeSourceAsOf: string | null; storeFetchedAt: string; projectionAsOf: string; mappingRuleVersion: string;
+  nearbyStoresWithoutNutrition?: number; totalStores: number | null; matchedBrands: number; page: number; size: number; hasNext: boolean; items: CafeStore[];
+}
+export type CafeLocation = { kind: 'CURRENT'; lat: number; lng: number } | { kind: 'AREA'; areaCode: string };
+export const fetchCafeNearbyCapability = async (): Promise<CafeNearbyCapability> =>
+  (await api.get<ApiResponse<CafeNearbyCapability>>('/api/v1/ranking/cafe/capability')).data.data;
+export const fetchCafeAreas = async (parent?: string): Promise<CafeArea[]> =>
+  (await api.get<ApiResponse<CafeArea[]>>('/api/v1/ranking/cafe/areas', { params: { parent } })).data.data;
+
+/** No Axios error/config, query cache or URL may retain the position body. */
+export async function searchCafeNearby(body: object, signal: AbortSignal): Promise<CafeNearbyResult> {
+  try {
+    const response = await fetch(`${api.defaults.baseURL}/api/v1/ranking/cafe/nearby-search`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal, cache: 'no-store', credentials: 'omit',
+    });
+    if (!response.ok) throw new Error('Nearby request unavailable');
+    const envelope = await response.json() as ApiResponse<CafeNearbyResult>;
+    if (!envelope.success) throw new Error('Nearby request unavailable');
+    return envelope.data;
+  } catch { throw new Error('주변 검색을 완료하지 못했습니다'); }
+}

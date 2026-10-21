@@ -72,3 +72,18 @@ python3 -m tests.smoke_test    # 가짜 API 로 수집 경로 E2E
 
 화면에 **"출처: 한국석유공사 오피넷"** 을 표기한다. 보드 행이 `source_label` 로 들고 다니므로
 화면 코드가 원천마다 분기하지 않는다.
+
+## Cafe store snapshot
+
+`python3 -m src.cafe_stores` — `SOHO_API_KEY` (local fallback `DATA_GO_KR_KEY`). Apply at
+https://www.data.go.kr/data/15012005/openapi.do . Missing key exits 0 without sending fixtures.
+The nationwide coffee/bakery source is paginated under a 1,000-call budget; any incomplete/empty/changing
+response aborts without publishing. Raw store fields are retained separately from alias mapping.
+A complete snapshot is sent once to `/internal/ranking/cafe/stores/bulk`, never in independent chunks.
+
+Bundled official KMA representative centers are in `src/data/cafe_areas.json`, with all selected raw
+source rows and provenance in `cafe_areas.provenance.json`. Only upper province/district codes occur.
+Use `--areas <reviewed-manifest.json>` to replace the reference; do not use store averages or guessed codes.
+Only district codes present in the current SOHO snapshot are exposed. Published-source row precision,
+independent store coverage and operational privacy/load checks are mandatory release evidence.
+The monthly CronJob remains suspended; `ranking.cafe.nearby-verified` remains false by default.

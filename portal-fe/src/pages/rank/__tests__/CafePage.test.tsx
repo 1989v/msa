@@ -5,7 +5,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import CafePage from '../CafePage';
 import * as api from '../../../api/rankingApi';
 import type { CafeDrink } from '../../../api/rankingApi';
-vi.mock('../../../api/rankingApi', () => ({ fetchCafeDrinkNames: vi.fn(), fetchCafeComparison: vi.fn(), fetchCafeBrands: vi.fn(), fetchCafeGroups: vi.fn(), fetchCafeDrinks: vi.fn(), fetchCafeDrink: vi.fn() }));
+vi.mock('../../../api/rankingApi', () => ({ fetchCafeNearbyCapability: vi.fn(), fetchCafeAreas: vi.fn(), searchCafeNearby: vi.fn(), fetchCafeDrinkNames: vi.fn(), fetchCafeComparison: vi.fn(), fetchCafeBrands: vi.fn(), fetchCafeGroups: vi.fn(), fetchCafeDrinks: vi.fn(), fetchCafeDrink: vi.fn() }));
 vi.mock('../../../components/ThemeToggle', () => ({ default: () => <span>테마</span> }));
 vi.mock('../../../components/Footer', () => ({ default: () => <footer>출처 안내</footer> }));
 vi.mock('../../../hooks/useHeritageSurface', () => ({ useHeritageSurface: () => {} }));
@@ -25,6 +25,8 @@ function setup(path = '/cafe', props: Parameters<typeof CafePage>[0] = {}) {
   return router;
 }
 beforeEach(() => {
+  vi.mocked(api.fetchCafeNearbyCapability).mockResolvedValue({ nearbyEnabled: false, reason: "SOURCE_NOT_READY", sourceAsOf: null, fetchedAt: null });
+  vi.mocked(api.fetchCafeAreas).mockResolvedValue([]);
   vi.mocked(api.fetchCafeDrinkNames).mockResolvedValue([]);
   vi.mocked(api.fetchCafeComparison).mockResolvedValue([]);
   vi.mocked(api.fetchCafeBrands).mockResolvedValue([{ brandSlug: 'a', brandName: '브랜드', count: 5, checkedAt: '2026-10-20', sourceUrls: ['https://example.com'] }]);
@@ -180,7 +182,8 @@ it('enables the nearby entry at the top of the normalized drink page without moc
   const entry = screen.getByRole('button', { name: '주변 카페에서 음료 찾기' });
   expect(document.querySelector('main')?.firstElementChild).toContainElement(entry);
   fireEvent.click(entry);
-  expect(screen.getByText(/주변 매장 연결을 준비하고 있습니다/)).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '현재 위치 사용' })).toBeInTheDocument();
+  expect(screen.getByText(/현재 위치는 한 번만 사용하며 저장하지 않습니다/)).toBeInTheDocument();
 });
 
 it('keeps a positive numeric bar for an amount formatted below 0.1', async () => {
@@ -190,4 +193,22 @@ it('keeps a positive numeric bar for an amount formatted below 0.1', async () =>
   expect(within(cards).getByText('<0.1')).toBeInTheDocument();
   const sugarSection = within(cards).getByRole('heading', { name: '당류' }).parentElement;
   expect(sugarSection?.querySelector('i')?.style.width).toBe('2%');
+});
+
+
+it('opens nearby from drink detail with the exact variant selected in memory', async () => {
+  const getPosition = vi.fn();
+  Object.defineProperty(navigator, 'geolocation', { configurable: true, value: { getCurrentPosition: getPosition } });
+  vi.mocked(api.searchCafeNearby).mockRejectedValue(new Error('unavailable'));
+  setup('/cafe/drinks/key', { nearbyEnabled: true });
+  await screen.findByRole('heading', { name: '바닐라라떼' });
+  fireEvent.click(screen.getByRole('button', { name: '100ml당' }));
+  fireEvent.click(screen.getByRole('button', { name: '주변 카페에서 음료 찾기' }));
+  expect(getPosition).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: '현재 위치 사용' }));
+  getPosition.mock.calls[0][0]({ coords: { latitude: 37.5, longitude: 127, accuracy: 10 } });
+  await waitFor(() => expect(api.searchCafeNearby).toHaveBeenCalledWith(expect.objectContaining({ selectedDrinkKeys: ['key'], drinkName: '바닐라라떼', basis: '100ml' }), expect.any(AbortSignal)));
+  fireEvent.click(screen.getByRole('button', { name: '전국 음료 비교로 돌아가기' }));
+  expect(screen.getByRole('heading', { name: '바닐라라떼' })).toBeInTheDocument();
+  expect(window.location.href).not.toContain('37.5');
 });

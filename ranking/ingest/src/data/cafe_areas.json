@@ -1,0 +1,2722 @@
+[
+  {
+    "code": "1100000000",
+    "name": "서울특별시",
+    "level": "PROVINCE",
+    "parentCode": null,
+    "latitude": 37.5635694444444,
+    "longitude": 126.980008333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1111000000",
+    "name": "종로구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.5703777777777,
+    "longitude": 126.981641666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1114000000",
+    "name": "중구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.5610027777777,
+    "longitude": 126.999641666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1117000000",
+    "name": "용산구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.5360944444444,
+    "longitude": 126.967522222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1120000000",
+    "name": "성동구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.5606111111111,
+    "longitude": 127.039,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1121500000",
+    "name": "광진구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.5357388888888,
+    "longitude": 127.084533333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1123000000",
+    "name": "동대문구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.571625,
+    "longitude": 127.042141666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1126000000",
+    "name": "중랑구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.6038055555555,
+    "longitude": 127.094777777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1129000000",
+    "name": "성북구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.5863833333333,
+    "longitude": 127.020333333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1130500000",
+    "name": "강북구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.6369555555555,
+    "longitude": 127.027719444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1132000000",
+    "name": "도봉구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.6658333333333,
+    "longitude": 127.049522222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1135000000",
+    "name": "노원구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.6514611111111,
+    "longitude": 127.058388888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1138000000",
+    "name": "은평구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.5999694444444,
+    "longitude": 126.931241666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1141000000",
+    "name": "서대문구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.5763666666666,
+    "longitude": 126.938897222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1144000000",
+    "name": "마포구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.5607055555555,
+    "longitude": 126.910530555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1147000000",
+    "name": "양천구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.5142305555555,
+    "longitude": 126.868708333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1150000000",
+    "name": "강서구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.5481555555555,
+    "longitude": 126.851675,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1153000000",
+    "name": "구로구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.49265,
+    "longitude": 126.889597222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1154500000",
+    "name": "금천구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.4491083333333,
+    "longitude": 126.904197222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1156000000",
+    "name": "영등포구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.5236111111111,
+    "longitude": 126.898341666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1159000000",
+    "name": "동작구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.5096555555555,
+    "longitude": 126.941575,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1162000000",
+    "name": "관악구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.4753861111111,
+    "longitude": 126.953844444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1165000000",
+    "name": "서초구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.4807861111111,
+    "longitude": 127.034811111111,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1168000000",
+    "name": "강남구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.514575,
+    "longitude": 127.049555555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1171000000",
+    "name": "송파구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.5117555555555,
+    "longitude": 127.107930555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1174000000",
+    "name": "강동구",
+    "level": "DISTRICT",
+    "parentCode": "1100000000",
+    "latitude": 37.5273666666666,
+    "longitude": 127.125863888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1200000000",
+    "name": "전남광주통합특별시",
+    "level": "PROVINCE",
+    "parentCode": null,
+    "latitude": 34.8130444444444,
+    "longitude": 126.465,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1211000000",
+    "name": "목포시",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 34.8087888888888,
+    "longitude": 126.394419444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1213000000",
+    "name": "여수시",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 34.7573111111111,
+    "longitude": 127.664386111111,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1215000000",
+    "name": "순천시",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 34.9476055555555,
+    "longitude": 127.489330555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1217000000",
+    "name": "나주시",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 35.0128388888888,
+    "longitude": 126.712866666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1219000000",
+    "name": "광양시",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 34.9375361111111,
+    "longitude": 127.698177777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1221000000",
+    "name": "동구",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 35.1431,
+    "longitude": 126.925177777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1224000000",
+    "name": "서구",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 35.1494833333333,
+    "longitude": 126.893411111111,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1227000000",
+    "name": "남구",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 35.1190361111111,
+    "longitude": 126.910144444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1230000000",
+    "name": "북구",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 35.1711249999999,
+    "longitude": 126.914122222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1233000000",
+    "name": "광산구",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 35.1364277777777,
+    "longitude": 126.795788888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1271000000",
+    "name": "담양군",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 35.318125,
+    "longitude": 126.990163888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1272000000",
+    "name": "곡성군",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 35.2789555555555,
+    "longitude": 127.294108333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1273000000",
+    "name": "구례군",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 35.1994583333333,
+    "longitude": 127.464933333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1274000000",
+    "name": "고흥군",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 34.6080694444444,
+    "longitude": 127.287055555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1275000000",
+    "name": "보성군",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 34.7683333333333,
+    "longitude": 127.082088888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1276000000",
+    "name": "화순군",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 35.0614805555555,
+    "longitude": 126.988566666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1277000000",
+    "name": "장흥군",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 34.678525,
+    "longitude": 126.909108333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1278000000",
+    "name": "강진군",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 34.6389111111111,
+    "longitude": 126.769197222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1279000000",
+    "name": "해남군",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 34.5704361111111,
+    "longitude": 126.601288888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1280000000",
+    "name": "영암군",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 34.7969888888888,
+    "longitude": 126.698619444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1281000000",
+    "name": "무안군",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 34.9873694444444,
+    "longitude": 126.4837,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1282000000",
+    "name": "함평군",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 35.0627444444444,
+    "longitude": 126.518619444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1283000000",
+    "name": "영광군",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 35.2741666666666,
+    "longitude": 126.514086111111,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1284000000",
+    "name": "장성군",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 35.2988111111111,
+    "longitude": 126.786975,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1285000000",
+    "name": "완도군",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 34.3078527777777,
+    "longitude": 126.757097222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1286000000",
+    "name": "진도군",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 34.48375,
+    "longitude": 126.265544444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "1287000000",
+    "name": "신안군",
+    "level": "DISTRICT",
+    "parentCode": "1200000000",
+    "latitude": 34.7898111111111,
+    "longitude": 126.381730555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2600000000",
+    "name": "부산광역시",
+    "level": "PROVINCE",
+    "parentCode": null,
+    "latitude": 35.1770194444444,
+    "longitude": 129.076952777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2611000000",
+    "name": "중구",
+    "level": "DISTRICT",
+    "parentCode": "2600000000",
+    "latitude": 35.1032166666666,
+    "longitude": 129.034508333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2614000000",
+    "name": "서구",
+    "level": "DISTRICT",
+    "parentCode": "2600000000",
+    "latitude": 35.0948361111111,
+    "longitude": 129.026377777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2617000000",
+    "name": "동구",
+    "level": "DISTRICT",
+    "parentCode": "2600000000",
+    "latitude": 35.1358944444444,
+    "longitude": 129.059175,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2620000000",
+    "name": "영도구",
+    "level": "DISTRICT",
+    "parentCode": "2600000000",
+    "latitude": 35.0881166666666,
+    "longitude": 129.070186111111,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2623000000",
+    "name": "부산진구",
+    "level": "DISTRICT",
+    "parentCode": "2600000000",
+    "latitude": 35.1599527777777,
+    "longitude": 129.055319444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2626000000",
+    "name": "동래구",
+    "level": "DISTRICT",
+    "parentCode": "2600000000",
+    "latitude": 35.2018722222222,
+    "longitude": 129.085855555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2629000000",
+    "name": "남구",
+    "level": "DISTRICT",
+    "parentCode": "2600000000",
+    "latitude": 35.1334083333333,
+    "longitude": 129.0865,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2632000000",
+    "name": "북구",
+    "level": "DISTRICT",
+    "parentCode": "2600000000",
+    "latitude": 35.1941805555555,
+    "longitude": 128.992474999999,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2635000000",
+    "name": "해운대구",
+    "level": "DISTRICT",
+    "parentCode": "2600000000",
+    "latitude": 35.1600194444444,
+    "longitude": 129.165808333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2638000000",
+    "name": "사하구",
+    "level": "DISTRICT",
+    "parentCode": "2600000000",
+    "latitude": 35.1014277777777,
+    "longitude": 128.977041666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2641000000",
+    "name": "금정구",
+    "level": "DISTRICT",
+    "parentCode": "2600000000",
+    "latitude": 35.2400777777777,
+    "longitude": 129.094319444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2644000000",
+    "name": "강서구",
+    "level": "DISTRICT",
+    "parentCode": "2600000000",
+    "latitude": 35.2091638888888,
+    "longitude": 128.982908333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2647000000",
+    "name": "연제구",
+    "level": "DISTRICT",
+    "parentCode": "2600000000",
+    "latitude": 35.1731861111111,
+    "longitude": 129.082075,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2650000000",
+    "name": "수영구",
+    "level": "DISTRICT",
+    "parentCode": "2600000000",
+    "latitude": 35.1424666666666,
+    "longitude": 129.115375,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2653000000",
+    "name": "사상구",
+    "level": "DISTRICT",
+    "parentCode": "2600000000",
+    "latitude": 35.1494666666666,
+    "longitude": 128.993333333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2671000000",
+    "name": "기장군",
+    "level": "DISTRICT",
+    "parentCode": "2600000000",
+    "latitude": 35.24135,
+    "longitude": 129.224475,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2700000000",
+    "name": "대구광역시",
+    "level": "PROVINCE",
+    "parentCode": null,
+    "latitude": 35.8685416666666,
+    "longitude": 128.603552777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2711000000",
+    "name": "중구",
+    "level": "DISTRICT",
+    "parentCode": "2700000000",
+    "latitude": 35.8662861111111,
+    "longitude": 128.608397222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2714000000",
+    "name": "동구",
+    "level": "DISTRICT",
+    "parentCode": "2700000000",
+    "latitude": 35.8836166666666,
+    "longitude": 128.637711111111,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2717000000",
+    "name": "서구",
+    "level": "DISTRICT",
+    "parentCode": "2700000000",
+    "latitude": 35.8687944444444,
+    "longitude": 128.561411111111,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2720000000",
+    "name": "남구",
+    "level": "DISTRICT",
+    "parentCode": "2700000000",
+    "latitude": 35.8429777777777,
+    "longitude": 128.5998,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2723000000",
+    "name": "북구",
+    "level": "DISTRICT",
+    "parentCode": "2700000000",
+    "latitude": 35.8827,
+    "longitude": 128.585022222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2726000000",
+    "name": "수성구",
+    "level": "DISTRICT",
+    "parentCode": "2700000000",
+    "latitude": 35.8552083333333,
+    "longitude": 128.632866666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2729000000",
+    "name": "달서구",
+    "level": "DISTRICT",
+    "parentCode": "2700000000",
+    "latitude": 35.8269277777777,
+    "longitude": 128.535063888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2771000000",
+    "name": "달성군",
+    "level": "DISTRICT",
+    "parentCode": "2700000000",
+    "latitude": 35.7716805555555,
+    "longitude": 128.433274999999,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2772000000",
+    "name": "군위군",
+    "level": "DISTRICT",
+    "parentCode": "2700000000",
+    "latitude": 36.2399972222222,
+    "longitude": 128.575077777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2800000000",
+    "name": "인천광역시",
+    "level": "PROVINCE",
+    "parentCode": null,
+    "latitude": 37.4532333333333,
+    "longitude": 126.707352777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2812500000",
+    "name": "제물포구",
+    "level": "DISTRICT",
+    "parentCode": "2800000000",
+    "latitude": 37.4709333333333,
+    "longitude": 126.623566666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2815500000",
+    "name": "영종구",
+    "level": "DISTRICT",
+    "parentCode": "2800000000",
+    "latitude": 37.4897682,
+    "longitude": 126.559963,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2817700000",
+    "name": "미추홀구",
+    "level": "DISTRICT",
+    "parentCode": "2800000000",
+    "latitude": 37.4606805555555,
+    "longitude": 126.652686111111,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2818500000",
+    "name": "연수구",
+    "level": "DISTRICT",
+    "parentCode": "2800000000",
+    "latitude": 37.4071222222222,
+    "longitude": 126.680441666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2820000000",
+    "name": "남동구",
+    "level": "DISTRICT",
+    "parentCode": "2800000000",
+    "latitude": 37.4445194444444,
+    "longitude": 126.733797222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2823700000",
+    "name": "부평구",
+    "level": "DISTRICT",
+    "parentCode": "2800000000",
+    "latitude": 37.5042666666666,
+    "longitude": 126.7241,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2824500000",
+    "name": "계양구",
+    "level": "DISTRICT",
+    "parentCode": "2800000000",
+    "latitude": 37.5347916666666,
+    "longitude": 126.739752777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2827500000",
+    "name": "서해구",
+    "level": "DISTRICT",
+    "parentCode": "2800000000",
+    "latitude": 37.5426916666666,
+    "longitude": 126.6782,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2829000000",
+    "name": "검단구",
+    "level": "DISTRICT",
+    "parentCode": "2800000000",
+    "latitude": 37.59153433,
+    "longitude": 126.6815694,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2871000000",
+    "name": "강화군",
+    "level": "DISTRICT",
+    "parentCode": "2800000000",
+    "latitude": 37.7438583333333,
+    "longitude": 126.49,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "2872000000",
+    "name": "옹진군",
+    "level": "DISTRICT",
+    "parentCode": "2800000000",
+    "latitude": 37.4437249999999,
+    "longitude": 126.638888888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "3000000000",
+    "name": "대전광역시",
+    "level": "PROVINCE",
+    "parentCode": null,
+    "latitude": 36.3471194444444,
+    "longitude": 127.386566666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "3011000000",
+    "name": "동구",
+    "level": "DISTRICT",
+    "parentCode": "3000000000",
+    "latitude": 36.3241333333333,
+    "longitude": 127.434852777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "3014000000",
+    "name": "중구",
+    "level": "DISTRICT",
+    "parentCode": "3000000000",
+    "latitude": 36.3226305555555,
+    "longitude": 127.423111111111,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "3017000000",
+    "name": "서구",
+    "level": "DISTRICT",
+    "parentCode": "3000000000",
+    "latitude": 36.3524833333333,
+    "longitude": 127.385775,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "3020000000",
+    "name": "유성구",
+    "level": "DISTRICT",
+    "parentCode": "3000000000",
+    "latitude": 36.3593666666666,
+    "longitude": 127.358341666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "3023000000",
+    "name": "대덕구",
+    "level": "DISTRICT",
+    "parentCode": "3000000000",
+    "latitude": 36.3437944444444,
+    "longitude": 127.417686111111,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "3100000000",
+    "name": "울산광역시",
+    "level": "PROVINCE",
+    "parentCode": null,
+    "latitude": 35.5354083333333,
+    "longitude": 129.313688888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "3111000000",
+    "name": "중구",
+    "level": "DISTRICT",
+    "parentCode": "3100000000",
+    "latitude": 35.5663416666666,
+    "longitude": 129.334875,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "3114000000",
+    "name": "남구",
+    "level": "DISTRICT",
+    "parentCode": "3100000000",
+    "latitude": 35.5407638888888,
+    "longitude": 129.332386111111,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "3117000000",
+    "name": "동구",
+    "level": "DISTRICT",
+    "parentCode": "3100000000",
+    "latitude": 35.5018888888888,
+    "longitude": 129.418952777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "3120000000",
+    "name": "북구",
+    "level": "DISTRICT",
+    "parentCode": "3100000000",
+    "latitude": 35.5796888888888,
+    "longitude": 129.363544444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "3171000000",
+    "name": "울주군",
+    "level": "DISTRICT",
+    "parentCode": "3100000000",
+    "latitude": 35.5307388888888,
+    "longitude": 129.297163888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "3600000000",
+    "name": "세종특별자치시",
+    "level": "PROVINCE",
+    "parentCode": null,
+    "latitude": 36.4800121,
+    "longitude": 127.2890691,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "3611000000",
+    "name": "세종특별자치시",
+    "level": "DISTRICT",
+    "parentCode": "3600000000",
+    "latitude": 36.4800121,
+    "longitude": 127.2890691,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4100000000",
+    "name": "경기도",
+    "level": "PROVINCE",
+    "parentCode": null,
+    "latitude": 37.2718444444444,
+    "longitude": 127.011688888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4111100000",
+    "name": "수원시장안구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.3010111111111,
+    "longitude": 127.012222222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4111300000",
+    "name": "수원시권선구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.2547333333333,
+    "longitude": 126.974075,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4111500000",
+    "name": "수원시팔달구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.2831027777777,
+    "longitude": 127.037833333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4111700000",
+    "name": "수원시영통구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.2563111111111,
+    "longitude": 127.048633333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4113100000",
+    "name": "성남시수정구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.4474916666666,
+    "longitude": 127.147719444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4113300000",
+    "name": "성남시중원구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.4276694444444,
+    "longitude": 127.139419444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4113500000",
+    "name": "성남시분당구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.3799694444444,
+    "longitude": 127.121019444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4115000000",
+    "name": "의정부시",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.7352888888888,
+    "longitude": 127.035841666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4117100000",
+    "name": "안양시만안구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.3837777777777,
+    "longitude": 126.9345,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4117300000",
+    "name": "안양시동안구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.3897,
+    "longitude": 126.953355555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4119200000",
+    "name": "부천시원미구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.496592521818,
+    "longitude": 126.786997023532,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4119400000",
+    "name": "부천시소사구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.4800388849706,
+    "longitude": 126.799941264535,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4119600000",
+    "name": "부천시오정구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.5283481619767,
+    "longitude": 126.795813092311,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4121000000",
+    "name": "광명시",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.47575,
+    "longitude": 126.866708333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4122000000",
+    "name": "평택시",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 36.9894388888888,
+    "longitude": 127.114655555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4125000000",
+    "name": "동두천시",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.9009166666666,
+    "longitude": 127.062652777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4127100000",
+    "name": "안산시상록구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.2985194444444,
+    "longitude": 126.846819444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4127300000",
+    "name": "안산시단원구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.3167277777777,
+    "longitude": 126.814419444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4128100000",
+    "name": "고양시덕양구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.6345833333333,
+    "longitude": 126.834197222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4128500000",
+    "name": "고양시일산동구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.6559083333333,
+    "longitude": 126.777055555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4128700000",
+    "name": "고양시일산서구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.6724861111111,
+    "longitude": 126.752777777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4129000000",
+    "name": "과천시",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.4263722222222,
+    "longitude": 126.9898,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4131000000",
+    "name": "구리시",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.591625,
+    "longitude": 127.131863888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4136000000",
+    "name": "남양주시",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.6331777777777,
+    "longitude": 127.218633333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4137000000",
+    "name": "오산시",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.1469138888888,
+    "longitude": 127.079641666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4139000000",
+    "name": "시흥시",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.3773194444444,
+    "longitude": 126.805077777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4141000000",
+    "name": "군포시",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.3586583333333,
+    "longitude": 126.9375,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4143000000",
+    "name": "의왕시",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.34195,
+    "longitude": 126.970388888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4145000000",
+    "name": "하남시",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.5364972222222,
+    "longitude": 127.217,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4146100000",
+    "name": "용인시처인구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.2314777777777,
+    "longitude": 127.203844444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4146300000",
+    "name": "용인시기흥구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.2775972222222,
+    "longitude": 127.116788888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4146500000",
+    "name": "용인시수지구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.3193861111111,
+    "longitude": 127.100097222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4148000000",
+    "name": "파주시",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.7570833333333,
+    "longitude": 126.781952777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4150000000",
+    "name": "이천시",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.2754361111111,
+    "longitude": 127.443219444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4155000000",
+    "name": "안성시",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.005175,
+    "longitude": 127.281844444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4157000000",
+    "name": "김포시",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.6124583333333,
+    "longitude": 126.717777777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4159100000",
+    "name": "화성시만세구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.1377014266454,
+    "longitude": 126.925661985098,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4159300000",
+    "name": "화성시효행구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.2091849460524,
+    "longitude": 126.959145963526,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4159500000",
+    "name": "화성시병점구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.2087495407166,
+    "longitude": 127.035902679402,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4159700000",
+    "name": "화성시동탄구",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.197238234394,
+    "longitude": 127.096870127243,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4161000000",
+    "name": "광주시",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.4145055555555,
+    "longitude": 127.257786111111,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4163000000",
+    "name": "양주시",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.78245,
+    "longitude": 127.047819444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4165000000",
+    "name": "포천시",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.8921555555555,
+    "longitude": 127.202419444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4167000000",
+    "name": "여주시",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.2953583333333,
+    "longitude": 127.639622222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4180000000",
+    "name": "연천군",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 38.0933638888888,
+    "longitude": 127.077066666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4182000000",
+    "name": "가평군",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.8288305555555,
+    "longitude": 127.511777777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4183000000",
+    "name": "양평군",
+    "level": "DISTRICT",
+    "parentCode": "4100000000",
+    "latitude": 37.4889361111111,
+    "longitude": 127.489886111111,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4300000000",
+    "name": "충청북도",
+    "level": "PROVINCE",
+    "parentCode": null,
+    "latitude": 36.6325,
+    "longitude": 127.493586111111,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4311100000",
+    "name": "청주시상당구",
+    "level": "DISTRICT",
+    "parentCode": "4300000000",
+    "latitude": 36.5839972222222,
+    "longitude": 127.511730555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4311200000",
+    "name": "청주시서원구",
+    "level": "DISTRICT",
+    "parentCode": "4300000000",
+    "latitude": 36.6372611111111,
+    "longitude": 127.483288888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4311300000",
+    "name": "청주시흥덕구",
+    "level": "DISTRICT",
+    "parentCode": "4300000000",
+    "latitude": 36.6182,
+    "longitude": 127.359419444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4311400000",
+    "name": "청주시청원구",
+    "level": "DISTRICT",
+    "parentCode": "4300000000",
+    "latitude": 36.6443055555555,
+    "longitude": 127.487663888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4313000000",
+    "name": "충주시",
+    "level": "DISTRICT",
+    "parentCode": "4300000000",
+    "latitude": 36.9881805555555,
+    "longitude": 127.928144444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4315000000",
+    "name": "제천시",
+    "level": "DISTRICT",
+    "parentCode": "4300000000",
+    "latitude": 37.1297694444444,
+    "longitude": 128.193152777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4372000000",
+    "name": "보은군",
+    "level": "DISTRICT",
+    "parentCode": "4300000000",
+    "latitude": 36.4865333333333,
+    "longitude": 127.731608333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4373000000",
+    "name": "옥천군",
+    "level": "DISTRICT",
+    "parentCode": "4300000000",
+    "latitude": 36.3035499999999,
+    "longitude": 127.573633333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4374000000",
+    "name": "영동군",
+    "level": "DISTRICT",
+    "parentCode": "4300000000",
+    "latitude": 36.1720583333333,
+    "longitude": 127.785611111111,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4374500000",
+    "name": "증평군",
+    "level": "DISTRICT",
+    "parentCode": "4300000000",
+    "latitude": 36.7821805555555,
+    "longitude": 127.583288888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4375000000",
+    "name": "진천군",
+    "level": "DISTRICT",
+    "parentCode": "4300000000",
+    "latitude": 36.8525388888888,
+    "longitude": 127.437644444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4376000000",
+    "name": "괴산군",
+    "level": "DISTRICT",
+    "parentCode": "4300000000",
+    "latitude": 36.8124305555555,
+    "longitude": 127.788830555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4377000000",
+    "name": "음성군",
+    "level": "DISTRICT",
+    "parentCode": "4300000000",
+    "latitude": 36.9374055555555,
+    "longitude": 127.692622222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4380000000",
+    "name": "단양군",
+    "level": "DISTRICT",
+    "parentCode": "4300000000",
+    "latitude": 36.9817805555555,
+    "longitude": 128.367841666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4400000000",
+    "name": "충청남도",
+    "level": "PROVINCE",
+    "parentCode": null,
+    "latitude": 36.6588148937733,
+    "longitude": 126.672797505435,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4413100000",
+    "name": "천안시동남구",
+    "level": "DISTRICT",
+    "parentCode": "4400000000",
+    "latitude": 36.804125,
+    "longitude": 127.152466666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4413300000",
+    "name": "천안시서북구",
+    "level": "DISTRICT",
+    "parentCode": "4400000000",
+    "latitude": 36.8755583333333,
+    "longitude": 127.157197222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4415000000",
+    "name": "공주시",
+    "level": "DISTRICT",
+    "parentCode": "4400000000",
+    "latitude": 36.4436138888888,
+    "longitude": 127.121119444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4418000000",
+    "name": "보령시",
+    "level": "DISTRICT",
+    "parentCode": "4400000000",
+    "latitude": 36.330575,
+    "longitude": 126.614886111111,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4420000000",
+    "name": "아산시",
+    "level": "DISTRICT",
+    "parentCode": "4400000000",
+    "latitude": 36.7871055555555,
+    "longitude": 127.004641666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4421000000",
+    "name": "서산시",
+    "level": "DISTRICT",
+    "parentCode": "4400000000",
+    "latitude": 36.7820972222222,
+    "longitude": 126.452163888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4423000000",
+    "name": "논산시",
+    "level": "DISTRICT",
+    "parentCode": "4400000000",
+    "latitude": 36.1842027777777,
+    "longitude": 127.100911111111,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4425000000",
+    "name": "계룡시",
+    "level": "DISTRICT",
+    "parentCode": "4400000000",
+    "latitude": 36.2718361111111,
+    "longitude": 127.250930555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4427000000",
+    "name": "당진시",
+    "level": "DISTRICT",
+    "parentCode": "4400000000",
+    "latitude": 36.89075,
+    "longitude": 126.630252777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4471000000",
+    "name": "금산군",
+    "level": "DISTRICT",
+    "parentCode": "4400000000",
+    "latitude": 36.1058694444444,
+    "longitude": 127.490308333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4476000000",
+    "name": "부여군",
+    "level": "DISTRICT",
+    "parentCode": "4400000000",
+    "latitude": 36.2728222222222,
+    "longitude": 126.911863888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4477000000",
+    "name": "서천군",
+    "level": "DISTRICT",
+    "parentCode": "4400000000",
+    "latitude": 36.0774055555555,
+    "longitude": 126.693888888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4479000000",
+    "name": "청양군",
+    "level": "DISTRICT",
+    "parentCode": "4400000000",
+    "latitude": 36.4562694444444,
+    "longitude": 126.804255555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4480000000",
+    "name": "홍성군",
+    "level": "DISTRICT",
+    "parentCode": "4400000000",
+    "latitude": 36.5983611111111,
+    "longitude": 126.662908333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4481000000",
+    "name": "예산군",
+    "level": "DISTRICT",
+    "parentCode": "4400000000",
+    "latitude": 36.6798055555555,
+    "longitude": 126.850874999999,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4482500000",
+    "name": "태안군",
+    "level": "DISTRICT",
+    "parentCode": "4400000000",
+    "latitude": 36.7426666666666,
+    "longitude": 126.299975,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4700000000",
+    "name": "경상북도",
+    "level": "PROVINCE",
+    "parentCode": null,
+    "latitude": 36.5759985118295,
+    "longitude": 128.505832256098,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4711100000",
+    "name": "포항시남구",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 36.0056861111111,
+    "longitude": 129.361666666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4711300000",
+    "name": "포항시북구",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 36.03885,
+    "longitude": 129.367908333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4713000000",
+    "name": "경주시",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 35.8531694444444,
+    "longitude": 129.227022222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4715000000",
+    "name": "김천시",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 36.1368972222222,
+    "longitude": 128.1158,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4717000000",
+    "name": "안동시",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 36.5654638888888,
+    "longitude": 128.731622222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4719000000",
+    "name": "구미시",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 36.11655,
+    "longitude": 128.346777777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4721000000",
+    "name": "영주시",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 36.8029361111111,
+    "longitude": 128.626344444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4723000000",
+    "name": "영천시",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 35.9700527777777,
+    "longitude": 128.940775,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4725000000",
+    "name": "상주시",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 36.4079694444444,
+    "longitude": 128.161263888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4728000000",
+    "name": "문경시",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 36.5836305555555,
+    "longitude": 128.189019444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4729000000",
+    "name": "경산시",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 35.8220888888888,
+    "longitude": 128.743463888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4773000000",
+    "name": "의성군",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 36.3497583333333,
+    "longitude": 128.699363888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4775000000",
+    "name": "청송군",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 36.4332916666666,
+    "longitude": 129.0594,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4776000000",
+    "name": "영양군",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 36.6642749999999,
+    "longitude": 129.114622222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4777000000",
+    "name": "영덕군",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 36.4121027777777,
+    "longitude": 129.368355555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4782000000",
+    "name": "청도군",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 35.6443111111111,
+    "longitude": 128.7362,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4783000000",
+    "name": "고령군",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 35.7229861111111,
+    "longitude": 128.265022222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4784000000",
+    "name": "성주군",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 35.91914912,
+    "longitude": 128.2829915,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4785000000",
+    "name": "칠곡군",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 35.9925472222222,
+    "longitude": 128.403797222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4790000000",
+    "name": "예천군",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 36.65495,
+    "longitude": 128.455022222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4792000000",
+    "name": "봉화군",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 36.8902611111111,
+    "longitude": 128.734875,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4793000000",
+    "name": "울진군",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 36.9901861111111,
+    "longitude": 129.402786111111,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4794000000",
+    "name": "울릉군",
+    "level": "DISTRICT",
+    "parentCode": "4700000000",
+    "latitude": 37.480575,
+    "longitude": 130.903788888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4800000000",
+    "name": "경상남도",
+    "level": "PROVINCE",
+    "parentCode": null,
+    "latitude": 35.2347361111111,
+    "longitude": 128.694166666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4812100000",
+    "name": "창원시의창구",
+    "level": "DISTRICT",
+    "parentCode": "4800000000",
+    "latitude": 35.2540033,
+    "longitude": 128.6401544,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4812300000",
+    "name": "창원시성산구",
+    "level": "DISTRICT",
+    "parentCode": "4800000000",
+    "latitude": 35.1983844,
+    "longitude": 128.7029401,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4812500000",
+    "name": "창원시마산합포구",
+    "level": "DISTRICT",
+    "parentCode": "4800000000",
+    "latitude": 35.196874,
+    "longitude": 128.567863,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4812700000",
+    "name": "창원시마산회원구",
+    "level": "DISTRICT",
+    "parentCode": "4800000000",
+    "latitude": 35.220932,
+    "longitude": 128.579706,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4812900000",
+    "name": "창원시진해구",
+    "level": "DISTRICT",
+    "parentCode": "4800000000",
+    "latitude": 35.13306,
+    "longitude": 128.710081,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4817000000",
+    "name": "진주시",
+    "level": "DISTRICT",
+    "parentCode": "4800000000",
+    "latitude": 35.1770333333333,
+    "longitude": 128.109999999999,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4822000000",
+    "name": "통영시",
+    "level": "DISTRICT",
+    "parentCode": "4800000000",
+    "latitude": 34.8512583333333,
+    "longitude": 128.435277777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4824000000",
+    "name": "사천시",
+    "level": "DISTRICT",
+    "parentCode": "4800000000",
+    "latitude": 35.0002833333333,
+    "longitude": 128.066777777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4825000000",
+    "name": "김해시",
+    "level": "DISTRICT",
+    "parentCode": "4800000000",
+    "latitude": 35.2255055555555,
+    "longitude": 128.891666666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4827000000",
+    "name": "밀양시",
+    "level": "DISTRICT",
+    "parentCode": "4800000000",
+    "latitude": 35.5007777777777,
+    "longitude": 128.748944444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4831000000",
+    "name": "거제시",
+    "level": "DISTRICT",
+    "parentCode": "4800000000",
+    "latitude": 34.8773583333333,
+    "longitude": 128.623355555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4833000000",
+    "name": "양산시",
+    "level": "DISTRICT",
+    "parentCode": "4800000000",
+    "latitude": 35.3319277777777,
+    "longitude": 129.039411111111,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4872000000",
+    "name": "의령군",
+    "level": "DISTRICT",
+    "parentCode": "4800000000",
+    "latitude": 35.3191194444444,
+    "longitude": 128.263822222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4873000000",
+    "name": "함안군",
+    "level": "DISTRICT",
+    "parentCode": "4800000000",
+    "latitude": 35.2694055555555,
+    "longitude": 128.408708333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4874000000",
+    "name": "창녕군",
+    "level": "DISTRICT",
+    "parentCode": "4800000000",
+    "latitude": 35.5415361111111,
+    "longitude": 128.494533333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4882000000",
+    "name": "고성군",
+    "level": "DISTRICT",
+    "parentCode": "4800000000",
+    "latitude": 34.9699,
+    "longitude": 128.324541666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4884000000",
+    "name": "남해군",
+    "level": "DISTRICT",
+    "parentCode": "4800000000",
+    "latitude": 34.8345583333333,
+    "longitude": 127.894466666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4885000000",
+    "name": "하동군",
+    "level": "DISTRICT",
+    "parentCode": "4800000000",
+    "latitude": 35.0642027777777,
+    "longitude": 127.753430555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4886000000",
+    "name": "산청군",
+    "level": "DISTRICT",
+    "parentCode": "4800000000",
+    "latitude": 35.4124916666666,
+    "longitude": 127.875619444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4887000000",
+    "name": "함양군",
+    "level": "DISTRICT",
+    "parentCode": "4800000000",
+    "latitude": 35.5174694444444,
+    "longitude": 127.727419444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4888000000",
+    "name": "거창군",
+    "level": "DISTRICT",
+    "parentCode": "4800000000",
+    "latitude": 35.683625,
+    "longitude": 127.911655555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "4889000000",
+    "name": "합천군",
+    "level": "DISTRICT",
+    "parentCode": "4800000000",
+    "latitude": 35.5636166666666,
+    "longitude": 128.167930555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5000000000",
+    "name": "제주특별자치도",
+    "level": "PROVINCE",
+    "parentCode": null,
+    "latitude": 33.4856944444444,
+    "longitude": 126.500333333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5011000000",
+    "name": "제주시",
+    "level": "DISTRICT",
+    "parentCode": "5000000000",
+    "latitude": 33.4963111111111,
+    "longitude": 126.533208333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5013000000",
+    "name": "서귀포시",
+    "level": "DISTRICT",
+    "parentCode": "5000000000",
+    "latitude": 33.25406007,
+    "longitude": 126.55955,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5100000000",
+    "name": "강원특별자치도",
+    "level": "PROVINCE",
+    "parentCode": null,
+    "latitude": 37.8826916666666,
+    "longitude": 127.731975,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5111000000",
+    "name": "춘천시",
+    "level": "DISTRICT",
+    "parentCode": "5100000000",
+    "latitude": 37.8785416666666,
+    "longitude": 127.732311111111,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5113000000",
+    "name": "원주시",
+    "level": "DISTRICT",
+    "parentCode": "5100000000",
+    "latitude": 37.3390833333333,
+    "longitude": 127.922055555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5115000000",
+    "name": "강릉시",
+    "level": "DISTRICT",
+    "parentCode": "5100000000",
+    "latitude": 37.7491361111111,
+    "longitude": 128.878497222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5117000000",
+    "name": "동해시",
+    "level": "DISTRICT",
+    "parentCode": "5100000000",
+    "latitude": 37.5219305555555,
+    "longitude": 129.116633333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5119000000",
+    "name": "태백시",
+    "level": "DISTRICT",
+    "parentCode": "5100000000",
+    "latitude": 37.1612277777777,
+    "longitude": 128.987997222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5121000000",
+    "name": "속초시",
+    "level": "DISTRICT",
+    "parentCode": "5100000000",
+    "latitude": 38.204275,
+    "longitude": 128.594166666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5123000000",
+    "name": "삼척시",
+    "level": "DISTRICT",
+    "parentCode": "5100000000",
+    "latitude": 37.4470861111111,
+    "longitude": 129.167488888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5172000000",
+    "name": "홍천군",
+    "level": "DISTRICT",
+    "parentCode": "5100000000",
+    "latitude": 37.6944222222222,
+    "longitude": 127.890841666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5173000000",
+    "name": "횡성군",
+    "level": "DISTRICT",
+    "parentCode": "5100000000",
+    "latitude": 37.4889583333333,
+    "longitude": 127.987222222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5175000000",
+    "name": "영월군",
+    "level": "DISTRICT",
+    "parentCode": "5100000000",
+    "latitude": 37.1808611111111,
+    "longitude": 128.464019444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5176000000",
+    "name": "평창군",
+    "level": "DISTRICT",
+    "parentCode": "5100000000",
+    "latitude": 37.3679166666666,
+    "longitude": 128.392352777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5177000000",
+    "name": "정선군",
+    "level": "DISTRICT",
+    "parentCode": "5100000000",
+    "latitude": 37.3778083333333,
+    "longitude": 128.663086111111,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5178000000",
+    "name": "철원군",
+    "level": "DISTRICT",
+    "parentCode": "5100000000",
+    "latitude": 38.1440555555555,
+    "longitude": 127.315733333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5179000000",
+    "name": "화천군",
+    "level": "DISTRICT",
+    "parentCode": "5100000000",
+    "latitude": 38.1034083333333,
+    "longitude": 127.710355555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5180000000",
+    "name": "양구군",
+    "level": "DISTRICT",
+    "parentCode": "5100000000",
+    "latitude": 38.1072916666666,
+    "longitude": 127.992244444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5181000000",
+    "name": "인제군",
+    "level": "DISTRICT",
+    "parentCode": "5100000000",
+    "latitude": 38.0669722222222,
+    "longitude": 128.172697222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5182000000",
+    "name": "고성군",
+    "level": "DISTRICT",
+    "parentCode": "5100000000",
+    "latitude": 38.3779611111111,
+    "longitude": 128.470163888888,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5183000000",
+    "name": "양양군",
+    "level": "DISTRICT",
+    "parentCode": "5100000000",
+    "latitude": 38.0728333333333,
+    "longitude": 128.621355555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5200000000",
+    "name": "전북특별자치도",
+    "level": "PROVINCE",
+    "parentCode": null,
+    "latitude": 35.817275,
+    "longitude": 127.111052777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5211100000",
+    "name": "전주시완산구",
+    "level": "DISTRICT",
+    "parentCode": "5200000000",
+    "latitude": 35.8091888888888,
+    "longitude": 127.121919444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5211300000",
+    "name": "전주시덕진구",
+    "level": "DISTRICT",
+    "parentCode": "5200000000",
+    "latitude": 35.8263861111111,
+    "longitude": 127.136419444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5213000000",
+    "name": "군산시",
+    "level": "DISTRICT",
+    "parentCode": "5200000000",
+    "latitude": 35.9646416666666,
+    "longitude": 126.738844444444,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5214000000",
+    "name": "익산시",
+    "level": "DISTRICT",
+    "parentCode": "5200000000",
+    "latitude": 35.9452749999999,
+    "longitude": 126.959852777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5218000000",
+    "name": "정읍시",
+    "level": "DISTRICT",
+    "parentCode": "5200000000",
+    "latitude": 35.5668722222222,
+    "longitude": 126.858111111111,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5219000000",
+    "name": "남원시",
+    "level": "DISTRICT",
+    "parentCode": "5200000000",
+    "latitude": 35.4132555555555,
+    "longitude": 127.3925,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5221000000",
+    "name": "김제시",
+    "level": "DISTRICT",
+    "parentCode": "5200000000",
+    "latitude": 35.8005749999999,
+    "longitude": 126.882752777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5271000000",
+    "name": "완주군",
+    "level": "DISTRICT",
+    "parentCode": "5200000000",
+    "latitude": 35.8429694444444,
+    "longitude": 127.149597222222,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5272000000",
+    "name": "진안군",
+    "level": "DISTRICT",
+    "parentCode": "5200000000",
+    "latitude": 35.7887194444444,
+    "longitude": 127.426966666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5273000000",
+    "name": "무주군",
+    "level": "DISTRICT",
+    "parentCode": "5200000000",
+    "latitude": 36.0038277777777,
+    "longitude": 127.662866666666,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5274000000",
+    "name": "장수군",
+    "level": "DISTRICT",
+    "parentCode": "5200000000",
+    "latitude": 35.6442972222222,
+    "longitude": 127.5233,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5275000000",
+    "name": "임실군",
+    "level": "DISTRICT",
+    "parentCode": "5200000000",
+    "latitude": 35.6080638888888,
+    "longitude": 127.284752777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5277000000",
+    "name": "순창군",
+    "level": "DISTRICT",
+    "parentCode": "5200000000",
+    "latitude": 35.3713888888888,
+    "longitude": 127.139630555555,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5279000000",
+    "name": "고창군",
+    "level": "DISTRICT",
+    "parentCode": "5200000000",
+    "latitude": 35.4327388888888,
+    "longitude": 126.704108333333,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  },
+  {
+    "code": "5280000000",
+    "name": "부안군",
+    "level": "DISTRICT",
+    "parentCode": "5200000000",
+    "latitude": 35.7285333333333,
+    "longitude": 126.735677777777,
+    "centerSource": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000007732424&fileDetailSn=1",
+    "sourceAsOf": "2026-10-19"
+  }
+]

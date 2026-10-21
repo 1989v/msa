@@ -141,3 +141,19 @@ python3 -m tests.test_cafe_load
 - 스펙 → `docs/specs/2026-08-23-ranking-leaderboard/`
 - 원천 대장 → `docs/architecture/data-sources.md` §8·§9
 - 수집기 → `ranking/ingest/README.md`
+
+## 카페 주변 비교 (ADR-0113, P2)
+
+- ranking 소유 SOHO 전국 카페/베이커리 배치 → V5 전용 3테이블. place DB/요청 API 재사용 없음.
+- `POST /api/v1/ranking/cafe/nearby-search`는 위치 본문만 받는다. 0.5/1/3km, 기본1km.
+  `GET /api/v1/ranking/cafe/capability`, `/areas?parent=`로 서버 공개 상태와 실제 지원 지역을 확인한다.
+- `POST /internal/ranking/cafe/stores/bulk`는 완전 스냅샷 1회 트랜잭션이다. 빈/부분/급변 입력 거부,
+  동일 version 재시도 멱등, 2회 완전 누락 뒤 비활성화. 원천 기준일 null은 수집일로 덮지 않는다.
+- 공개 스위치 `ranking.cafe.nearby-verified` 기본 false. 검증 표본·포함률·운영 로그·부하 증거 뒤 설정한다.
+  원천/지역 미준비 또는 90일 초과는 스위치가 true여도 비공개. 45일 초과는 지연 안내.
+- 키 `SOHO_API_KEY` (`ranking-ingest-secrets/soho-api-key`), 로컬 `DATA_GO_KR_KEY` 대체 가능.
+  활용신청 https://www.data.go.kr/data/15012005/openapi.do . 키 없으면 정상 '아직 안 켬' 종료.
+- 실행: `cd ranking/ingest && python3 -m src.cafe_stores`. fixture→live fallback은 없다.
+  지역 중심점은 `src/data/cafe_areas.json`/provenance의 공식 KMA 대표 위경도, 상위 시군구 코드만 사용.
+- 사용자 좌표 로그·URL·React Query 캐시·storage 금지. Google 지도는 공개 매장 위치만 전달한다.
+  매장마다 메뉴 판매 미확인·원천/영양 날짜·공식 레시피 안내와 Google 목적지/Naver 지점명 링크를 제공한다.

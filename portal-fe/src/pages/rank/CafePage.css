@@ -88,3 +88,13 @@
 .cafe-variants { list-style: none; padding: 0; margin: 0; }
 .cafe-variants li + li { border-top: 1px solid var(--ko-border-subtle); }
 .cafe-variants a { display: flex; align-items: center; min-height: 44px; padding-block: var(--ko-space-2); font-size: .875rem; line-height: 1.5; }
+
+.cafe-nearby-panel { padding-block: var(--ko-space-4); border-block: 1px solid var(--ko-border-default); }
+.cafe-nearby-panel fieldset { margin-block: var(--ko-space-4); border: 1px solid var(--ko-border-default); }
+.cafe-nearby-panel label { display: flex; flex-direction: column; gap: var(--ko-space-2); margin-block: var(--ko-space-2); }
+.cafe-nearby-map { width: 100%; height: 360px; background: var(--ko-surface-2); }
+.cafe-nearby-list { list-style: none; padding: 0; }
+.cafe-nearby-list li { padding-block: var(--ko-space-4); border-bottom: 1px solid var(--ko-border-default); }
+.cafe-nearby-list select { max-width: 100%; }
+.cafe-store-links { display: flex; flex-wrap: wrap; gap: var(--ko-space-4); }
+.cafe-store-links a { min-height: 44px; display: inline-flex; align-items: center; }

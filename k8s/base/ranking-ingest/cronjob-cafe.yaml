@@ -1,0 +1,46 @@
+# Ranking-owned SOHO nationwide cafe/bakery projection. Existing batch-only HTTPS egress.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ranking-ingest-cafe
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: ranking-ingest
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  # Requires SOHO key, reviewed official area-center manifest and P2-2/3/5/7 release evidence.
+  # Never enable ranking.cafe.nearby-verified from the collector itself.
+  suspend: true
+  schedule: "0 19 1 * *" # monthly full comparison, KST 04:00
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 3600
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: ranking-ingest
+            app.kubernetes.io/part-of: commerce-platform
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/ranking-ingest:latest
+              imagePullPolicy: IfNotPresent
+              command: ["python", "-m", "src.cafe_stores"]
+              env:
+                - name: RANKING_API
+                  value: "http://content:8097"
+                - name: SOHO_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: ranking-ingest-secrets
+                      key: soho-api-key
+                      optional: true
+              resources:
+                requests: { cpu: 50m, memory: 128Mi }
+                limits: { memory: 384Mi }
