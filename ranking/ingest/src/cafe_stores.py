@@ -50,7 +50,9 @@ def mapping(row, categories=CATEGORIES):
  suffix = name[len(alias):]
  branch = normalize(row.get('brchNm'))
  suspicious = any(word in suffix for word in ('풍카페','스타일','컨셉','머신','인테리어','물류','학원','아카데미','교육','유통','용품'))
- approved_suffix = not suffix or suffix == branch or suffix.endswith(('점','dt','d/t'))
+ # 상가정보는 상호에 지역명을 붙이고 지점명을 따로 두는 일이 흔하다(메가엠지씨커피서대문경희궁 / 자이점).
+ located = branch.endswith('점') and re.fullmatch(r'[가-힣0-9]{1,12}', suffix) is not None
+ approved_suffix = not suffix or suffix == branch or suffix.endswith(('점','dt','d/t')) or located
  code = str(row.get('indsSclsCd') or '')
  return slug, 'CONFIRMED' if code in categories and approved_suffix and not suspicious else 'REVIEW'
 
