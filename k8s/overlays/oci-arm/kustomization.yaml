@@ -402,7 +402,7 @@ images:
     newTag: 489138a
   - name: commerce/atlas
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/atlas
-    newTag: bbb42ec
+    newTag: 818dd53
   - name: commerce/auth
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/auth
     newTag: bbb42ec
