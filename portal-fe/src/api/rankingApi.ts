@@ -84,6 +84,7 @@ export interface CafeDrink {
   proteinG: number | null; caffeineMg: number | null; caffeineStatus: CaffeineStatus;
   rawNutrition: Record<string, string>; priceKrw: number | null; priceNote: string | null;
   allergens: string | null; sourceUrl: string; checkedAt: string; notes: string | null;
+  cupVolumeMl: number | null; volumeSource: 'ROW' | 'BRAND_SIZE_TABLE' | 'NONE'; kcalPer100ml: number | null;
   drinkGroup: string; sugarPer100ml: number | null; caffeinePer100ml: number | null;
 }
 export interface CafeDrinkPage { content: CafeDrink[]; totalElements: number; page: number; size: number }

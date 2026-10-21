@@ -93,7 +93,8 @@ cd ranking/ingest && python3 -m tests.test_katec && python3 -m tests.smoke_test
 공식 영양정보 9브랜드 **1,922행**(2026-10-20). `application/cafe/{usecase,port,service,dto}` →
 Querydsl 조회 저장소·JPA Adapter 구조다. 원천 25필드는 개별 컬럼에 남기고 `raw_nutrition` JSON 텍스트와
 `notes` 원문을 보존한다. `drink_group` 은 `ranking:domain` 메뉴명 규칙 한 곳에서 파생하며,
-`volume_ml > 0`인 경우에만 당류·카페인 100ml당 값을 산출한다. g을 ml로 환산하지 않는다.
+`cup_volume_ml`·`volume_source`는 원천 ml 우선 → 빽다방 컵용량 원문 → 투썸 공식 사이즈표 순으로 도메인에서 파생해 적재한다. 원천 `volume_ml`은 덮지 않으며 컵용량이 양수일 때 당류·카페인·열량 100ml당 값을 산출한다. g을 ml로 환산하지 않는다.
+V3는 원천 ml가 있는 기존 행만 보강하며, 사이즈표·원문 파생 및 농도 정렬 갱신은 브랜드별 bulk 재적재로 수행한다.
 
 유일키는 `(brand_slug, menu_name, temperature, size_label, caffeine_status)`다.
 온도·사이즈 null은 DB에서 빈 문자열로 정규화한다. 이디야 70쌍은 이름이 같아도 일반/디카페인의

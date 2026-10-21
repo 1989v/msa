@@ -5,7 +5,7 @@ import type { CafeDrink, CafeFilters } from '../../api/rankingApi';
 import ThemeToggle from '../../components/ThemeToggle';
 import Footer from '../../components/Footer';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
-import { caffeineLabel, isCaffeineNone } from './cafeView';
+import { caffeineLabel, isCaffeineNone, volumeLabel, volumeExplanation } from './cafeView';
 import { readCafeFilters, writeCafeFilters } from './cafeUrl';
 import './RankPage.css';
 import './CafePage.css';
@@ -17,7 +17,7 @@ function DrinkTable({ drinks }: { drinks: CafeDrink[] }) {
     <thead><tr>{['브랜드', '메뉴', '온도', '사이즈', '용량', '당류', '카페인', '열량', '당류/100ml', '출처·확인일'].map(label => <th key={label} scope="col">{label}</th>)}</tr></thead>
     <tbody>{drinks.map(drink => <tr key={[drink.brandSlug, drink.menuName, drink.temperature, drink.sizeLabel, drink.caffeineStatus].join('|')}>
       <td>{drink.brandName}</td><th scope="row">{drink.menuName}</th><td>{drink.temperature ?? '미표시'}</td>
-      <td>{drink.sizeLabel ?? '미표시'}</td><td>{quantity(drink.volumeMl, 'ml')}</td>
+      <td>{drink.sizeLabel ?? '미표시'}</td><td>{volumeLabel(drink)}{drink.volumeSource === 'BRAND_SIZE_TABLE' && <small title={volumeExplanation} aria-label={volumeExplanation}> (사이즈 기준)</small>}</td>
       <td>{quantity(drink.sugarG, 'g')}</td><td>{caffeineLabel(drink)}</td><td>{quantity(drink.kcal, 'kcal')}</td>
       <td>{drink.sugarPer100ml === null ? '산출 불가' : `${drink.sugarPer100ml} g`}</td>
       <td><a href={drink.sourceUrl} target="_blank" rel="noopener noreferrer">공식 원문</a><br /><time>{drink.checkedAt}</time></td>

@@ -69,6 +69,13 @@ class CafeDrinkJpaEntity(
     val sugarPer100ml: BigDecimal?,
     @Column(name = "caffeine_per_100ml", precision = 14, scale = 4)
     val caffeinePer100ml: BigDecimal?,
+    @Column(name = "cup_volume_ml", precision = 14, scale = 4)
+    val cupVolumeMl: BigDecimal? = null,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "volume_source", nullable = false, length = 30)
+    val volumeSource: VolumeSource = VolumeSource.NONE,
+    @Column(name = "kcal_per_100ml", precision = 14, scale = 4)
+    val kcalPer100ml: BigDecimal? = null,
 ) {
     fun toDomain() = CafeDrink(
         brandSlug = brandSlug,
@@ -128,6 +135,9 @@ class CafeDrinkJpaEntity(
             drinkGroup = drink.drinkGroup,
             sugarPer100ml = drink.sugarPer100ml,
             caffeinePer100ml = drink.caffeinePer100ml,
+            cupVolumeMl = drink.cupVolumeMl,
+            volumeSource = drink.volumeSource,
+            kcalPer100ml = drink.kcalPer100ml,
         )
     }
 }

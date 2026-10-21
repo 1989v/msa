@@ -1,5 +1,7 @@
 package com.kgd.ranking
 
+import com.kgd.ranking.domain.cafe.model.VolumeSource
+import java.math.BigDecimal
 import com.kgd.ranking.application.cafe.dto.CafeDrinkUpsertItem
 import com.kgd.ranking.application.cafe.dto.CafeDrinkResponse
 import com.kgd.ranking.infrastructure.persistence.entity.CafeDrinkJpaEntity
@@ -21,6 +23,19 @@ class CafeDrinkDtoRoundTripTest : BehaviorSpec({
             CafeDrinkUpsertItem::class.memberProperties.forEach { property ->
                 responseProperties.getValue(property.name).get(restored) shouldBe property.get(request)
             }
+        }
+        Then("파생 컵 용량·출처·농도도 JPA와 응답까지 보존한다") {
+            val source = request.copy(brandSlug = "twosome", volumeMl = null, sizeLabel = "R", temperature = "ICE")
+            val entity = CafeDrinkJpaEntity.fromDomain(source.toDomain())
+            val response = CafeDrinkResponse.of(entity.toDomain())
+            entity.cupVolumeMl shouldBe BigDecimal("414")
+            entity.volumeSource shouldBe VolumeSource.BRAND_SIZE_TABLE
+            response.cupVolumeMl shouldBe entity.cupVolumeMl
+            response.volumeSource shouldBe entity.volumeSource
+            response.kcalPer100ml shouldBe entity.kcalPer100ml
+            response.sugarPer100ml shouldBe entity.sugarPer100ml
+            response.caffeinePer100ml shouldBe entity.caffeinePer100ml
+            response.volumeMl shouldBe null
         }
         Then("nullable 식별값은 DB의 빈문자열과 왕복하고 raw의 대시와 원문을 보존한다") {
             val source = request.copy(temperature = null, sizeLabel = null, caffeineMg = null,

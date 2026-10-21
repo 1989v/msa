@@ -89,6 +89,9 @@ data class CafeDrinkResponse(
     val drinkGroup: String,
     val sugarPer100ml: BigDecimal?,
     val caffeinePer100ml: BigDecimal?,
+    val cupVolumeMl: BigDecimal? = null,
+    val volumeSource: VolumeSource = VolumeSource.NONE,
+    val kcalPer100ml: BigDecimal? = null,
 ) {
     companion object {
         fun of(drink: CafeDrink) = CafeDrinkResponse(
@@ -120,6 +123,9 @@ data class CafeDrinkResponse(
             drinkGroup = drink.drinkGroup,
             sugarPer100ml = drink.sugarPer100ml,
             caffeinePer100ml = drink.caffeinePer100ml,
+            cupVolumeMl = drink.cupVolumeMl,
+            volumeSource = drink.volumeSource,
+            kcalPer100ml = drink.kcalPer100ml,
         )
     }
 }
