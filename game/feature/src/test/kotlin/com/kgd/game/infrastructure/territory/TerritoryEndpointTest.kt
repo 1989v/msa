@@ -3,6 +3,7 @@ package com.kgd.game.infrastructure.territory
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.shouldBe
+import io.kotest.assertions.withClue
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.core.env.Environment
@@ -14,7 +15,6 @@ import tools.jackson.databind.ObjectMapper
 import java.net.URI
 import java.net.http.*
 import java.util.concurrent.*
-import kotlin.math.*
 import com.kgd.game.application.territory.usecase.TerritoryWorldUseCase
 import com.kgd.game.application.territory.service.TerritoryWorldService
 import com.kgd.game.domain.territory.model.*
@@ -46,6 +46,7 @@ class TerritoryEndpointTest(@Autowired env: Environment, @Autowired mapper: Obje
             val start = System.nanoTime()
             val identityOffset = if (sendPeriodMs == 50L) 0 else 1000
             val clients = (1..100).map { identity -> executor.submit<TerritoryProbe> { connect(ticket(identity + identityOffset)) } }.map { it.get(30, TimeUnit.SECONDS) }
+            val resumeTicks = CountDownLatch(1)
             try {
                 val ids = clients.map { it.await("welcome").path("self").asInt() }
                 ids.toSet().size shouldBe 100
@@ -53,7 +54,7 @@ class TerritoryEndpointTest(@Autowired env: Environment, @Autowired mapper: Obje
                 val engine = field.get(worldService) as TerritoryWorld
                 synchronized(engine) {
                     ids.forEachIndexed { index, id ->
-                        engine.players.getValue(id).apply { x = 1024.23 + index % 10 * 8; y = 1024.23 + index / 10 * 8; started = false }
+                        engine.players.getValue(id).apply { x = 1024.23; y = 1024.23 + index; started = false }
                     }
                 }
                 clients.forEachIndexed { index, client ->
@@ -61,6 +62,7 @@ class TerritoryEndpointTest(@Autowired env: Environment, @Autowired mapper: Obje
                     val frame = client.await("state") { it.path("ack").asLong() == 0L }
                     frame.path("self").path("name").asText() shouldBe "검증 ${index + 1 + identityOffset}"
                     frame.path("population").path("humans").asInt() shouldBe 100
+                    frame.path("players").asSequence().map { it.path("id").asInt() }.toSet() shouldBe ids.toSet()
                     frame.path("chunks").size().let { it <= 9 } shouldBe true
                     client.send("""{"t":"input","seq":1,"moving":false}""")
                 }
@@ -69,38 +71,45 @@ class TerritoryEndpointTest(@Autowired env: Environment, @Autowired mapper: Obje
                 synchronized(engine) {
                     for (id in ids) {
                         val p = engine.players.getValue(id)
-                        engine.land.patch((-3..3).flatMap { dy -> (-3..3).map { dx -> cellId(p.x.toInt() + dx, p.y.toInt() + dy) } }, id)
+                        // Fixed heading zero keeps y exactly constant. One-cell-separated heads
+                        // cannot collide (collision distance < 0.7), and all 100 fit the same AOI.
+                        // At 16 cells/s, the 14-tick lease permits <= 5.6 cells/input.
+                        // Even 60 fully separated inputs travel <= 336 cells, inside this lane.
+                        engine.land.patch((0..370).map { dx -> cellId(p.x.toInt() + dx, p.y.toInt()) }, id)
                     }
                 }
                 var bytes = 0L
                 val steadyStart = System.nanoTime()
-                repeat(60) { frame ->
-                    // Feedback keeps each real moving client on its safe fixture orbit even when
-                    // send/receive scheduling slips; frame index is not a simulation clock.
-                    val angles = synchronized(engine) {
-                        ids.mapIndexed { index, id ->
-                            val p = engine.players.getValue(id)
-                            val cx = 1024.23 + index % 10 * 8
-                            val cy = 1024.23 + index / 10 * 8 + 1.5
-                            val ahead = atan2(p.y - cy, p.x - cx) + PI / 2
-                            atan2(cy + sin(ahead) * 1.5 - p.y, cx + cos(ahead) * 1.5 - p.x)
-                        }
-                    }
-                    clients.forEachIndexed { index, client -> client.send("""{"t":"input","seq":${frame + 2},"moving":true,"angle":${angles[index]}}""") }
+                repeat(59) { frame ->
+                    clients.forEach { client -> client.send("""{"t":"input","seq":${frame + 2},"moving":true,"angle":0}""") }
                     Thread.sleep(sendPeriodMs)
                     for (client in clients) bytes += client.pollBytes()
                 }
                 val seconds = (System.nanoTime() - steadyStart) / 1e9
+                // Traffic above measures 59 inputs with the real clock. Freeze only the final
+                // receipt barrier: a slow socket must not expire another client's lease while
+                // waiting for seq61, and no replacement input or revival hides a failure.
+                val paused = CountDownLatch(1)
+                val clockField = TerritoryWebSocketHandler::class.java.getDeclaredField("clock").apply { isAccessible = true }
+                val clock = clockField.get(runtime) as ScheduledExecutorService
+                clock.execute { paused.countDown(); resumeTicks.await() }
+                check(paused.await(10, TimeUnit.SECONDS)) { "Territory clock did not enter final receipt barrier" }
+                clients.forEach { client -> client.send("""{"t":"input","seq":61,"moving":true,"angle":0}""") }
                 // Check the actual last input receipt, rather than assuming sleep flushed every socket.
                 val receiptDeadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
                 while (synchronized(engine) { ids.any { engine.players[it]?.sequence != 61L } } && System.nanoTime() < receiptDeadline) Thread.sleep(5)
                 synchronized(engine) {
-                    println("TERRITORY_ACTIVITY_DIAGNOSTIC " + ids.groupingBy { id -> engine.players[id]?.let { p -> "alive=${p.alive},moving=${p.moving},pending=${p.capturePending},status=${p.status},seq=${p.sequence}" } ?: "missing" }.eachCount())
-                    ids.count { engine.players[it]?.sequence == 61L } shouldBe 100
-                    ids.count { engine.players[it]?.let { p -> p.alive && p.moving && !p.capturePending } == true } shouldBe 100
+                    val diagnostic = ids.groupingBy { id -> engine.players[id]?.let { p -> "alive=${p.alive},moving=${p.moving},pending=${p.capturePending},status=${p.status},seq=${p.sequence}" } ?: "missing" }.eachCount()
+                    println("TERRITORY_ACTIVITY_DIAGNOSTIC $diagnostic")
+                    withClue("sendPeriodMs=$sendPeriodMs tick=${engine.tick} activity=$diagnostic") {
+                        ids.count { engine.players[it]?.sequence == 61L } shouldBe 100
+                        ids.count { engine.players[it]?.let { p -> p.alive && p.moving && !p.capturePending } == true } shouldBe 100
+                    }
                 }
+                resumeTicks.countDown()
+                clients.forEach { client -> client.await("state") { it.path("ack").asLong() == 61L } }
                 println("TERRITORY_REAL_WS scenario=crowded100 sendPeriodMs=$sendPeriodMs clients=100 alive=100 elapsedMs=${(System.nanoTime()-start)/1e6} steadySeconds=$seconds steadyBytes=$bytes bytesPerSecond=${bytes/seconds} port=$port runtime=${System.getProperty("java.version")} pipeline=${runtime.metrics()}")
-            } finally { clients.forEach { it.session.close() }; executor.shutdownNow() }
+            } finally { resumeTicks.countDown(); clients.forEach { it.session.close() }; executor.shutdownNow() }
         }
         }
         then("one-use tickets reject replay and old sessions release identity for reconnect") {

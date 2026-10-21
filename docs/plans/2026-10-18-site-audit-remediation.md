@@ -9,7 +9,7 @@
 
 이하 구현·브라우저·초기 build 기록은 최초 공유 작업공간 시점이다. **배포 checkout의 최신 상태와 검증은 바로 아래 절을 우선한다.**
 
-범위: [조사 보고서](../research/2026-10-18-site-audit/README.md)의 현행 코드로 재현되는 결함. 운영 배포·DB 변경 실행은 하지 않는다. 브라우저 검증은 후속으로 승인된 범위에서 부모의 native Safari CUA가 수행했다. 기존 dirty/staged 변경을 보존한다.
+범위: 2026-10-18 사이트 조사 보고서(원본 조사 산출물이 현재 저장소에 없어 링크를 제거함)의 현행 코드로 재현되는 결함. 운영 배포·DB 변경 실행은 하지 않는다. 브라우저 검증은 후속으로 승인된 범위에서 부모의 native Safari CUA가 수행했다. 기존 dirty/staged 변경을 보존한다.
 
 ## 최신 origin 기준 배포 패키징 (2026-10-18)
 
@@ -37,7 +37,7 @@
 | 7 상태 복원/복구 | 구현. 게임 태그·정렬 URL, 언어/장르/선택별 최대 20개 메모리 캐시, 페이지·스크롤 복원. aria-pressed/status/alert. 메인·블로그 최신글·랭킹 명시적 retry. | [게임 상태](../../portal-fe/src/pages/games/catalogState.ts), GamesPage 회귀 테스트. 캐시는 현재 탭 JS 세션 동안만 유지. 키보드/스크린리더·브라우저 뒤로가기 실측은 보류. |
 | 8 PREOPEN 일치 | 구현. 초기 프리렌더는 display API OPEN/PREOPEN을 사용하고 준비 중에는 링크를 내지 않음. React 탐색과 랭킹 빈 상태도 준비 상태 안내. | [초기 상태 테스트](../../portal-fe/src/seo/__tests__/siteAuditRemaining.test.ts). OPEN 전환을 같은 데이터로 반영하며, 상태 미확인 rank 링크는 생략. |
 | 9 혜택 초기 탐색 | 구현. 초기 안전 링크와 카드별 제휴 고지, 원문 근거의 이벤트 모음 분류, 공유 적용조건·확인일 미제공 안내. | [DealPage](../../portal-fe/src/pages/deal/DealPage.tsx). 실제 할인 조건·검증일은 생성하지 않음. 부모 CUA에서 안내/분류/여행 필터4건 확인. |
-| 10 관광 방문 정보 | 구현. 원천 줄바꿈 목록, 라벨+정규화 값의 동일 중복만 제거, 변경·예외 원문 보존, 없는 수집일·갱신일은 미제공 안내. | [공통 formatter](../../portal-fe/src/seo/visitorInfo.mjs). 부모 CUA에서 영문 Hours/Closed/Parking/Contact 각1개 확인. owning SSR도 별도 보완. |
+| 10 관광 방문 정보 | 구현. 원천 줄바꿈 목록, 라벨+정규화 값의 동일 중복만 제거, 변경·예외 원문 보존, 없는 수집일·갱신일은 미제공 안내. | [현행 방문 요약 formatter](../../portal-fe/src/pages/place/placeAttributes.ts). 부모 CUA에서 영문 Hours/Closed/Parking/Contact 각1개 확인. owning SSR도 별도 보완. |
 | 11 오류 URL | 구현. App.tsx AST에서 nginx 경로 계약 생성, 미등록 path 실제404+noindex+홈/서비스 복구링크. | [ADR 추가 결정](../adr/ADR-0062-seo-and-organic-discovery.md), [검증 스크립트](../../portal-fe/scripts/verify-spa-http.mjs). 실제 nginx HTTP18개 검증. 없는 동적 ID는 기존 상세/API 존재 확인 경로 유지. |
 | 12 성능 | 구현. 화면 밖 서비스 query4개 유예, 서비스 직접 링크 상시 제공. 관측/rAF 정지 시에도 본문·실제 통계 표시. | [가시성/요청 테스트](../../portal-fe/src/components/home/__tests__/ServiceShowcase.loading.test.tsx). 부모 Safari CUA에서 히어로·8/82/7/12 실제 수치 확인. LCP/INP/CLS 실측치는 주장하지 않음. |
 

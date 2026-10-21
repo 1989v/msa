@@ -134,6 +134,7 @@ export const DATA_SOURCES = [
   { data: '관광지 영상', source: 'YouTube Data API v3', license: 'Google API 서비스 약관', note: '' },
   { data: '관광지 후기', source: '네이버 검색 API(블로그)', license: '네이버 오픈API 이용약관', note: '' },
   { data: '지도', source: 'Google Maps JavaScript API', license: 'Google Maps Platform 약관', note: '' },
+  { data: '시장 지도 바탕', source: '네이버 Maps — Web Dynamic Map (JS v3)', license: 'NCP Maps 이용약관 (타일 저장·재배포 금지)', note: '' },
   {
     data: '구글 place_id',
     source: 'Google Places API (New) Text Search',

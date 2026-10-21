@@ -17,7 +17,7 @@ it.each(['ko', 'en'] as const)('all 82 catalog games share complete initial/live
   expect(catalog).toHaveLength(82);
   const titles = catalog.map(game => detailMeta(lang, game).title);
   expect(new Set(titles).size).toBe(82);
-  expect(gameSelectionGuide(lang).picks.map(pick => pick.slug)).toEqual(['block-burst', 'mine-pioneer', 'rift-front']);
+  expect(gameSelectionGuide(lang).picks.map(pick => pick.slug)).toEqual(['marble-race', 'block-burst', 'mine-pioneer', 'seven-seconds', 'circle-trace', 'rift-front']);
   for (const item of catalog) {
     expect(gameDetailLastmod(item)).toBe('2026-10-15');
     const game = { ...item, description: '게임 소개', descriptionEn: 'Game introduction', ratingCount: 0 } as GameDetail;
