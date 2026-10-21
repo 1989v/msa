@@ -151,10 +151,16 @@ describe('normalized name comparison and nullable responses', () => {
     setup('/cafe/drink/바닐라라떼');
     await screen.findByRole('list', { name: '음료 비교' });
     expect(screen.queryByRole('table')).toBeNull();
-    expect(screen.getByText(/최저 수치가 아닙니다/)).toBeInTheDocument();
+    const note = screen.getByText(/최저 수치가 아닙니다/);
+    expect(note).toHaveClass('cafe-comparison-note');
+    expect(screen.getByRole('list', { name: '음료 비교' }).compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(document.querySelector('.cafe-search-launch')).toBeNull();
+    expect(document.querySelector('.cafe-controls')).toBeNull();
+    expect(document.querySelector('.cafe-card-heading a')).toBeNull();
+    expect(document.querySelector('.cafe-original-name')).toHaveTextContent('바닐라라떼');
     const variants = screen.getByRole('group', { name: '브랜드 공개 판 전체 2개' });
-    expect(within(variants).getByRole('button', { name: /ICE · R · 414ml · 디카페인/ })).toHaveAttribute('aria-pressed', 'true');
-    fireEvent.click(within(variants).getByRole('button', { name: /HOT · L · 414ml · 수치 공개/ }));
+    expect(within(variants).getByRole('button', { name: /ICE R 414ml 디카페인/ })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(within(variants).getByRole('button', { name: /HOT L 414ml/ }));
     expect(screen.getByRole('link', { name: '상세 ›' })).toHaveAttribute('href', '/cafe/drinks/large?basis=serving');
     fireEvent.click(screen.getByRole('button', { name: '당류 낮은 순 ↑' }));
     await waitFor(() => expect(api.fetchCafeComparison).toHaveBeenLastCalledWith('바닐라라떼', expect.objectContaining({ direction: 'desc' })));
@@ -261,7 +267,7 @@ it('keeps selected card variants through basis/sort changes and puts unknowns la
   vi.mocked(api.fetchCafeComparison).mockResolvedValue([{ brandSlug: 'a', brandName: a.brandName, representative: a, variants: [a, large] }, { brandSlug: 'b', brandName: b.brandName, representative: b, variants: [b] }]);
   setup('/cafe/drink/라떼');
   const cards = await screen.findByRole('list', { name: '음료 비교' });
-  fireEvent.click(within(screen.getByRole('group', { name: '가브랜드 공개 판 전체 2개' })).getByRole('button', { name: /L · 414ml/ }));
+  fireEvent.click(within(screen.getByRole('group', { name: '가브랜드 공개 판 전체 2개' })).getByRole('button', { name: /L 414ml/ }));
   fireEvent.click(screen.getByRole('button', { name: '당류 낮은 순 ↑' }));
   await waitFor(() => expect(within(cards).getAllByRole('link', { name: '상세 ›' })[0]).toHaveAttribute('href', '/cafe/drinks/large?basis=serving'));
   expect(cards.lastElementChild).toHaveTextContent('나브랜드');
@@ -294,4 +300,25 @@ it('completes the home nearby path through an actual drink selection and explici
   fireEvent.click(screen.getByRole('button', { name: '현재 위치 사용' }));
   await act(async () => getPosition.mock.calls[0][0]({ coords: { latitude: 37.5, longitude: 127, accuracy: 10 } }));
   await waitFor(() => expect(api.searchCafeNearby).toHaveBeenCalledWith(expect.objectContaining({ drinkName: '라떼', location: { kind: 'CURRENT', lat: 37.5, lng: 127 } }), expect.any(AbortSignal)));
+});
+
+it('uses the drink header search icon to open the dedicated search screen', async () => {
+  setup('/cafe/drink/라떼', { nearbyEnabled: true });
+  await screen.findByText('조건에 맞는 음료가 없습니다.');
+  expect(screen.getAllByRole('button', { name: '주변 카페에서 음료 찾기' })).toHaveLength(1);
+  fireEvent.click(screen.getByRole('button', { name: '음료 이름 검색' }));
+  expect(screen.getByRole('region', { name: '음료 검색' })).toBeInTheDocument();
+  expect(screen.getByRole('searchbox')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: '주변 카페에서 음료 찾기' })).toBeNull();
+});
+
+it('omits missing metadata and disclosed statuses from compact variant chips', async () => {
+  const unknown = fixture({ temperature: null, sizeLabel: null, cupVolumeMl: null, caffeineStatus: 'UNDISCLOSED' });
+  const disclosed = fixture({ drinkKey: 'hot', temperature: 'HOT', sizeLabel: 'Tall(톨)', caffeineStatus: 'DISCLOSED' });
+  vi.mocked(api.fetchCafeComparison).mockResolvedValue([{ brandSlug: 'a', brandName: '브랜드', representative: unknown, variants: [unknown, disclosed] }]);
+  setup('/cafe/drink/라떼');
+  const variants = await screen.findByRole('group', { name: '브랜드 공개 판 전체 2개' });
+  expect(within(variants).getByRole('button', { name: '미공개' })).toHaveAttribute('aria-pressed', 'true');
+  expect(within(variants).getByRole('button', { name: 'HOT Tall 414ml' })).toBeInTheDocument();
+  expect(variants).not.toHaveTextContent(/미표시|수치 공개|공식 0mg/);
 });
