@@ -45,6 +45,8 @@ class CafeDrinkDtoRoundTripTest : BehaviorSpec({
             entity.sizeLabel shouldBe ""
             CafeDrinkResponse.of(entity.toDomain()).rawNutrition shouldBe source.rawNutrition
             entity.toDomain() shouldBe source.toDomain()
+            entity.drinkName shouldBe source.toDomain().drinkName
+            CafeDrinkResponse.of(entity.toDomain()).drinkName shouldBe entity.drinkName
         }
     }
 })

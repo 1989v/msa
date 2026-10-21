@@ -78,6 +78,7 @@ export const fetchGasAreas = async (): Promise<RankingScope[]> => {
 export type CaffeineStatus = 'DISCLOSED' | 'ZERO' | 'DECAF' | 'UNDISCLOSED';
 export interface CafeDrink {
   drinkKey: string;
+  drinkName?: string;
   brandSlug: string; brandName: string; menuName: string; menuNameEn: string | null;
   sourceCategory: string | null; temperature: string | null; sizeLabel: string | null;
   volumeMl: number | null; servingBasis: string | null; kcal: number | null; sugarG: number | null;
@@ -94,6 +95,7 @@ export interface CafeGroup { group: string; count: number }
 export interface CafeFilters {
   q?: string; brand?: string[]; group?: string; temperature?: string;
   maxSugar?: number; maxCaffeine?: number; caffeine?: 'none' | 'zero' | 'decaf'; caffeineStatus?: CaffeineStatus[]; basis?: 'serving' | '100ml';
+  direction?: 'asc' | 'desc';
   sort?: 'sugar' | 'caffeine' | 'kcal' | 'sugarPer100ml'; page?: number; size?: number;
 }
 export const fetchCafeDrinks = async (filters: CafeFilters): Promise<CafeDrinkPage> => {
@@ -111,3 +113,16 @@ export const fetchCafeGroups = async (): Promise<CafeGroup[]> =>
 
 export const fetchCafeDrink = async (drinkKey: string): Promise<CafeDrink> =>
   (await api.get<ApiResponse<CafeDrink>>(`/api/v1/ranking/cafe/drinks/${encodeURIComponent(drinkKey)}`)).data.data;
+
+export interface CafeDrinkName { drinkName: string; brandCount: number; rowCount: number }
+export interface CafeBrandVariants { brandSlug: string; brandName: string; representative: CafeDrink; variants: CafeDrink[] }
+export const fetchCafeDrinkNames = async (q: string): Promise<CafeDrinkName[]> =>
+  (await api.get<ApiResponse<CafeDrinkName[]>>('/api/v1/ranking/cafe/drink-names', { params: { q } })).data.data;
+export const fetchCafeComparison = async (name: string, filters: CafeFilters): Promise<CafeBrandVariants[]> => {
+  const params = new URLSearchParams({ name });
+  Object.entries(filters).forEach(([key, value]) => {
+    if (Array.isArray(value)) value.forEach(item => params.append(key, item));
+    else if (value !== undefined) params.set(key, String(value));
+  });
+  return (await api.get<ApiResponse<CafeBrandVariants[]>>('/api/v1/ranking/cafe/drink-names/compare', { params })).data.data;
+};

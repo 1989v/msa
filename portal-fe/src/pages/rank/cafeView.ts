@@ -26,8 +26,18 @@ export function cafeMetric(drink: CafeDrink, metric: CafeMetric, basis: 'serving
     ? { sugar: drink.sugarPer100ml, caffeine: drink.caffeinePer100ml, kcal: drink.kcalPer100ml }[metric]
     : { sugar: drink.sugarG, caffeine: drink.caffeineMg, kcal: drink.kcal }[metric];
   return {
-    amount: value === null ? (metric === 'caffeine' ? '수치 미확정' : '미공개') : formatCafeNumber(value),
-    unit: value === null ? undefined : metricUnits[metric],
+    amount: value == null || !Number.isFinite(value) ? (metric === 'caffeine' ? '수치 미확정' : '미공개') : formatCafeNumber(value),
+    unit: value == null || !Number.isFinite(value) ? undefined : metricUnits[metric],
     status: metric === 'caffeine' ? (drink.caffeineStatus === 'DECAF' ? '디카페인' : drink.caffeineStatus === 'ZERO' ? '공식 0' : undefined) : undefined,
   };
+}
+
+/** Unformatted numeric value for visual scales; tiny positive amounts must retain their bar. */
+export function cafeMetricValue(drink: CafeDrink, metric: CafeMetric, basis: 'serving' | '100ml'): number | null {
+  if (metric === 'caffeine' && drink.caffeineStatus === 'UNDISCLOSED') return null;
+  const value = { sugar: drink.sugarG, caffeine: drink.caffeineMg, kcal: drink.kcal }[metric];
+  if (value == null || !Number.isFinite(value)) return null;
+  if (basis === 'serving') return value;
+  return drink.cupVolumeMl != null && Number.isFinite(drink.cupVolumeMl) && drink.cupVolumeMl > 0
+    ? value * 100 / drink.cupVolumeMl : null;
 }

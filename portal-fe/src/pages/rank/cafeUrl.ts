@@ -7,6 +7,7 @@ export function readCafeFilters(params: URLSearchParams): CafeFilters {
   };
   const sort = params.get('sort');
   return {
+    direction: params.get('direction') === 'desc' ? 'desc' : 'asc',
     q: params.get('q')?.slice(0, 120) || undefined,
     brand: params.getAll('brand').filter(value => /^[a-z0-9-]+$/.test(value)),
     group: params.get('group') || undefined,

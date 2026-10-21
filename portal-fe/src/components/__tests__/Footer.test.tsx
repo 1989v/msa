@@ -27,3 +27,8 @@ describe('Footer 신뢰 링크', () => {
     );
   });
 });
+
+it('always exposes the public ranking entry', () => {
+  const { container } = render(<Footer />);
+  expect(container.querySelector('a[href="https://rank.1989v.com"]')).toHaveTextContent('랭킹');
+});

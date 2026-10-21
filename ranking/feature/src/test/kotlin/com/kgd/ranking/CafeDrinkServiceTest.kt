@@ -57,4 +57,38 @@ class CafeDrinkServiceTest : BehaviorSpec({
             verify(exactly = 1) { port.search(query) }
         }
     }
+    Given("24 published variants spanning brands") {
+        val port = mockk<CafeDrinkRepositoryPort>()
+        val variants = (1..22).map { index -> CafeDrinkResponse.of(cafeItem("a", "라떼 (L)").copy(sizeLabel = "L$index", sugarG = BigDecimal.ONE).toDomain()) } +
+            listOf(CafeDrinkResponse.of(cafeItem("a", "라떼 (R)").copy(sizeLabel = "R", sugarG = BigDecimal("30")).toDomain()),
+                CafeDrinkResponse.of(cafeItem("b", "라떼 (R)").copy(sizeLabel = "R", sugarG = BigDecimal("10")).toDomain()),
+                CafeDrinkResponse.of(cafeItem("c", "라떼 (R)").copy(sizeLabel = "R", sugarG = null).toDomain()))
+        every { port.variants("라떼") } returns variants
+        val service = CafeDrinkService(port)
+        Then("all variants survive and sort uses displayed basic size, never hidden minimum; null stays last") {
+            val result = service.compare("라떼", CafeDrinkQuery())
+            result.map { it.brandSlug } shouldBe listOf("b", "a", "c")
+            result[1].variants.size shouldBe 23
+            result[1].representative.sugarG shouldBe BigDecimal("30")
+            service.compare("라떼", CafeDrinkQuery(direction = "desc")).map { it.brandSlug } shouldBe listOf("a", "b", "c")
+            service.compare("라떼", CafeDrinkQuery(brands = listOf("b"))).size shouldBe 1
+        }
+    }
+    Given("rounded concentrations conceal different raw ratios") {
+        val port = mockk<CafeDrinkRepositoryPort>()
+        val service = CafeDrinkService(port)
+        val variants = listOf("a" to "333", "b" to "333.01", "c" to null).map { (brand, volume) ->
+            CafeDrinkResponse.of(cafeItem(brand, "라떼").copy(sugarG = BigDecimal.ONE,
+                caffeineMg = BigDecimal.ONE, kcal = BigDecimal.ONE, volumeMl = volume?.let(::BigDecimal),
+                servingBasis = null, sizeLabel = null).toDomain())
+        }
+        every { port.variants("라떼") } returns variants
+        Then("all concentration metrics order unrounded ratios and retain unavailable volume last in both directions") {
+            variants.take(2).map { it.sugarPer100ml }.distinct() shouldBe listOf(BigDecimal("0.3003"))
+            listOf("sugar", "caffeine", "kcal", "sugarPer100ml").forEach { metric ->
+                service.compare("라떼", CafeDrinkQuery(sort = metric, basis = "100ml")).map { it.brandSlug } shouldBe listOf("b", "a", "c")
+                service.compare("라떼", CafeDrinkQuery(sort = metric, basis = "100ml", direction = "desc")).map { it.brandSlug } shouldBe listOf("a", "b", "c")
+            }
+        }
+    }
 })

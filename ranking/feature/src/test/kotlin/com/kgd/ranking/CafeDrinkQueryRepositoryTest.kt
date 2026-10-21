@@ -73,6 +73,12 @@ class CafeDrinkQueryRepositoryTest : BehaviorSpec({
             }
             repository.search(CafeDrinkQuery(basis = "100ml", maxSugar = BigDecimal("5")), PageRequest.of(0, 20)).totalElements shouldBe 1
         }
+        Then("normalized names aggregate distinct brands and all source rows") {
+            repository.names("라떼").sumOf { it.rowCount } shouldBe 4L
+            repository.names("제로").single().brandCount shouldBe 1
+            repository.variants("제로라떼").single().menuName shouldBe "제로 라떼"
+            repository.search(CafeDrinkQuery(direction = "desc"), PageRequest.of(0, 20)).content.last().menuName shouldBe "미공개 라떼"
+        }
         Then("브랜드·유형별 집계는 행수와 출처·확인일을 반환한다") {
             repository.groups().single().count shouldBe 4
             repository.brands().map { it.count } shouldBe listOf(2L, 2L)
@@ -105,6 +111,49 @@ class CafeDrinkQueryRepositoryTest : BehaviorSpec({
                 em.createQuery("delete from CafeDrinkJpaEntity where brandSlug like 'precision-%'").executeUpdate()
                 em.transaction.commit()
                 em.clear()
+            }
+        }
+    }
+
+    Given("undisclosed status with an otherwise numeric caffeine value") {
+        Then("unavailable caffeine remains last for serving and concentration in both directions") {
+            em.transaction.begin()
+            listOf(
+                cafeItem("status-a", "__status A").copy(caffeineMg = BigDecimal("100")),
+                cafeItem("status-b", "__status B").copy(caffeineMg = BigDecimal("200")),
+                cafeItem("status-c", "__status C", CaffeineStatus.UNDISCLOSED).copy(caffeineMg = BigDecimal.ZERO),
+            ).forEach { em.persist(CafeDrinkJpaEntity.fromDomain(it.toDomain())) }
+            em.transaction.commit(); em.clear()
+            try {
+                listOf("serving", "100ml").forEach { basis ->
+                    repository.search(CafeDrinkQuery(q = "__status", sort = "caffeine", basis = basis), PageRequest.of(0, 20))
+                        .content.map { it.brandSlug } shouldBe listOf("status-a", "status-b", "status-c")
+                    repository.search(CafeDrinkQuery(q = "__status", sort = "caffeine", basis = basis, direction = "desc"), PageRequest.of(0, 20))
+                        .content.map { it.brandSlug } shouldBe listOf("status-b", "status-a", "status-c")
+                }
+            } finally {
+                em.transaction.begin()
+                em.createQuery("delete from CafeDrinkJpaEntity where brandSlug like 'status-%'").executeUpdate()
+                em.transaction.commit(); em.clear()
+            }
+        }
+    }
+    Given("EX variants across temperatures, source names and brands") {
+        Then("autocomplete consolidates all source rows with one normalized name") {
+            em.transaction.begin()
+            listOf(cafeItem("ex-a", "(EX) HOT 연유 카페 라떼"), cafeItem("ex-a", "(EX) ICED 연유 카페 라떼"),
+                cafeItem("ex-b", "연유 카페 라떼 (EX)")).forEach { em.persist(CafeDrinkJpaEntity.fromDomain(it.toDomain())) }
+            em.transaction.commit(); em.clear()
+            try {
+                val name = repository.names("연유 카페 라떼").single()
+                name.drinkName shouldBe "연유카페라떼"
+                name.brandCount shouldBe 2
+                name.rowCount shouldBe 3L
+                repository.variants(name.drinkName).size shouldBe 3
+            } finally {
+                em.transaction.begin()
+                em.createQuery("delete from CafeDrinkJpaEntity where brandSlug like 'ex-%'").executeUpdate()
+                em.transaction.commit(); em.clear()
             }
         }
     }

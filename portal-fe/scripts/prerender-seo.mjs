@@ -624,10 +624,8 @@ export function siteFooter(lang = 'ko', services = footerServices) {
   const en = lang === 'en';
   const english = ['1989v', 'Free web games', 'Explore Korea', 'Blog', 'Rankings', 'Deals'];
   const links = SITE_LINKS.flatMap(([href, label], i) => {
-    if (href === RANK_ORIGIN) {
-      const rank = services.find((service) => service.code === 'rank');
-      if (!rank) return [];
-      if (rank.status !== 'OPEN') return [`<span>${en ? 'Rankings (coming soon)' : '랭킹 리더보드 (준비 중)'}</span>`];
+    if (href === RANK_ORIGIN && services.some(service => service.code === 'rank' && service.status !== 'OPEN')) {
+      return [`<span>${en ? 'Rankings (coming soon)' : '랭킹 리더보드 (준비 중)'}</span>`];
     }
     return [`<a href="${escapeHtml(href)}">${escapeHtml(en ? english[i] : label)}</a>`];
   });

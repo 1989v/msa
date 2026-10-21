@@ -24,6 +24,8 @@ class CafeDrinkRepositoryAdapter(
     }
     override fun search(query: CafeDrinkQuery) = queryRepository.search(query, PageRequest.of(query.page, query.size))
     override fun find(drinkKey: String) = queryRepository.find(drinkKey)
+    override fun names(q: String) = queryRepository.names(q)
+    override fun variants(name: String) = queryRepository.variants(name)
     override fun groups() = queryRepository.groups()
     override fun brands() = queryRepository.brands()
 }

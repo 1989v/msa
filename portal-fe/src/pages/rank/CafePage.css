@@ -8,7 +8,7 @@
 .cafe-page button { padding: var(--ko-space-2) var(--ko-space-3); cursor: pointer; }
 .cafe-page button:disabled { opacity: .5; cursor: default; }
 .cafe-page :focus-visible { outline: var(--ko-focus-ring); outline-offset: var(--ko-focus-ring-offset); }
-.cafe-page button[aria-pressed='true'] { background: var(--ko-surface-2); font-weight: 600; box-shadow: inset 0 -2px var(--ko-text-primary); }
+.cafe-page button[aria-pressed='true'] { background: var(--ko-surface-2); font-weight: 600; border-bottom: 3px solid var(--ko-text-primary); }
 .cafe-page small, .cafe-note, .cafe-meta { font-size: .875rem; color: var(--ko-text-secondary); }
 .cafe-page p { line-height: 1.5; }
 .cafe-top { display: flex; justify-content: space-between; align-items: center; min-height: 44px; }
@@ -42,14 +42,6 @@
 .cafe-sort-bar label { display: flex; align-items: center; gap: var(--ko-space-2); font-size: .875rem; }
 .cafe-summary { margin-block: var(--ko-space-3); font-size: .875rem; }
 .cafe-summary small { display: block; margin-top: var(--ko-space-2); }
-.cafe-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-.cafe-table thead { position: sticky; top: 0; z-index: 1; background: var(--ko-surface-0); }
-.cafe-table th, .cafe-table td { border-bottom: 1px solid var(--ko-border-default); padding: var(--ko-space-3) var(--ko-space-2); vertical-align: top; }
-.cafe-table thead th { font-size: .875rem; font-weight: 500; text-align: right; }
-.cafe-table thead th:first-child { text-align: left; width: 40%; }
-.cafe-table thead small { display: block; font-size: .875rem; }
-.cafe-table tbody th { text-align: left; font-weight: 400; }
-.cafe-table tbody th a { display: flex; align-items: center; min-height: 44px; line-height: 1.35; overflow-wrap: anywhere; text-decoration: none; color: var(--ko-text-primary); }
 .cafe-brand { display: block; font-size: .875rem; color: var(--kh-ocher-text); margin-bottom: var(--ko-space-2); }
 .cafe-meta { display: block; line-height: 1.5; overflow-wrap: anywhere; }
 .cafe-metric { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 400; }
@@ -79,3 +71,20 @@
 .cafe-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 @media (min-width: 640px) { .cafe-page { padding: var(--ko-space-6); } .cafe-sheet-backdrop { align-items: center; } .cafe-table thead th:first-child { width: 52%; } }
 @media (max-width: 380px) { .cafe-table th, .cafe-table td { padding-inline: 3px; } .cafe-basis button { padding-inline: var(--ko-space-2); } }
+.cafe-cards { list-style: none; padding: 0; display: grid; gap: var(--ko-space-4); }
+.cafe-card { min-width: 0; border-block: 1px solid var(--ko-border-default); padding: var(--ko-space-4) 0; overflow-wrap: anywhere; }
+.cafe-card > a { display: inline-flex; align-items: center; min-height: 44px; font-size: 1.125rem; }
+.cafe-card-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ko-space-3); }
+.cafe-card-metrics section { min-width: 0; }
+.cafe-card-metrics h2 { font-size: .875rem; }
+.cafe-bar { display: block; height: 4px; background: var(--ko-surface-2); margin-block: var(--ko-space-3); }
+.cafe-bar i { display: block; height: 100%; background: var(--ko-text-secondary); }
+.cafe-sorted h2 { font-weight: 700; text-decoration: underline; text-underline-offset: .3em; }
+.cafe-names { display: flex; flex-wrap: wrap; gap: var(--ko-space-2); margin-block: var(--ko-space-3); }
+.cafe-names a { display: flex; flex-direction: column; gap: var(--ko-space-2); padding: var(--ko-space-3); border: 1px solid var(--ko-border-default); min-height: 44px; }
+.cafe-sort-bar [role='group'] { display: flex; flex-wrap: wrap; gap: var(--ko-space-2); }
+.cafe-nearby { border-bottom: 1px solid var(--ko-border-default); padding-block: var(--ko-space-3); }
+
+.cafe-variants { list-style: none; padding: 0; margin: 0; }
+.cafe-variants li + li { border-top: 1px solid var(--ko-border-subtle); }
+.cafe-variants a { display: flex; align-items: center; min-height: 44px; padding-block: var(--ko-space-2); font-size: .875rem; line-height: 1.5; }

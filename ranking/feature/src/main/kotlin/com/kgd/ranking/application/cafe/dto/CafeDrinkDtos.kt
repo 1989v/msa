@@ -93,6 +93,7 @@ data class CafeDrinkResponse(
     val volumeSource: VolumeSource = VolumeSource.NONE,
     val kcalPer100ml: BigDecimal? = null,
     val drinkKey: String = "",
+    val drinkName: String = "",
 ) {
     companion object {
         fun of(drink: CafeDrink) = CafeDrinkResponse(
@@ -128,6 +129,7 @@ data class CafeDrinkResponse(
             volumeSource = drink.volumeSource,
             kcalPer100ml = drink.kcalPer100ml,
             drinkKey = CafeDrinkKey.of(drink),
+            drinkName = drink.drinkName,
         )
     }
 }
@@ -151,8 +153,10 @@ data class CafeDrinkQuery(
     val size: Int = 20,
     val basis: String = "serving",
     val caffeineStatus: List<CaffeineStatus> = emptyList(),
+    val direction: String = "asc",
 ) {
     init {
+        require(direction in setOf("asc", "desc")) { "Unknown direction" }
         require(page >= 0 && size in 1..200) { "page >= 0, size 1..200" }
         require(sort in setOf("sugar", "caffeine", "kcal", "sugarPer100ml")) { "Unknown sort" }
         require(basis in setOf("serving", "100ml")) { "Unknown basis" }
@@ -162,3 +166,6 @@ data class CafeDrinkQuery(
         require(maxCaffeine == null || maxCaffeine.signum() >= 0)
     }
 }
+
+data class CafeDrinkNameCount(val drinkName: String, val brandCount: Int, val rowCount: Long)
+data class CafeDrinkBrandVariants(val brandSlug: String, val brandName: String, val representative: CafeDrinkResponse, val variants: List<CafeDrinkResponse>)

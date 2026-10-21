@@ -76,6 +76,8 @@ class CafeDrinkJpaEntity(
     val volumeSource: VolumeSource = VolumeSource.NONE,
     @Column(name = "kcal_per_100ml", precision = 14, scale = 4)
     val kcalPer100ml: BigDecimal? = null,
+    @Column(name = "drink_name", nullable = false, length = 255)
+    val drinkName: String = DrinkNames.normalize(menuName),
 ) {
     fun toDomain() = CafeDrink(
         brandSlug = brandSlug,
@@ -107,6 +109,7 @@ class CafeDrinkJpaEntity(
     companion object {
         private val mapper = JsonMapper.builder().build()
         fun fromDomain(drink: CafeDrink) = CafeDrinkJpaEntity(
+            drinkName = drink.drinkName,
             brandSlug = drink.brandSlug,
             brandName = drink.brandName,
             menuName = drink.menuName,

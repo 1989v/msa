@@ -42,7 +42,12 @@ class CafeDrinkQueryRepository(@Qualifier("rankingQueryFactory") private val que
             "kcal" -> "kcal"
             else -> "sugarG"
         }
-        val raw = drink.getNumber(field, BigDecimal::class.java)
+        val sourceMetric = drink.getNumber(field, BigDecimal::class.java)
+        // A status explicitly marked undisclosed is unavailable even if a source numeric value exists.
+        val raw = if (query.sort == "caffeine") Expressions.numberTemplate(BigDecimal::class.java,
+            "case when {0} = {1} then null else {2} end",
+            drink.getEnum("caffeineStatus", CaffeineStatus::class.java), CaffeineStatus.UNDISCLOSED, sourceMetric)
+        else sourceMetric
         // Compute before sorting: persisted concentrations are rounded to four decimals.
         val metric = if (query.basis == "100ml" || query.sort == "sugarPer100ml")
             Expressions.numberTemplate(BigDecimal::class.java,
@@ -50,7 +55,7 @@ class CafeDrinkQueryRepository(@Qualifier("rankingQueryFactory") private val que
                 raw, drink.getNumber("cupVolumeMl", BigDecimal::class.java))
         else raw
         val content = queryFactory.selectFrom(drink).where(where)
-            .orderBy(metric.asc().nullsLast(), drink.getString("brandSlug").asc(),
+            .orderBy((if (query.direction == "desc") metric.desc() else metric.asc()).nullsLast(), drink.getString("brandSlug").asc(),
                 drink.getString("menuName").asc(), drink.getString("temperature").asc(),
                 drink.getString("sizeLabel").asc(), drink.getEnum("caffeineStatus", CaffeineStatus::class.java).asc())
             .offset(pageable.offset).limit(pageable.pageSize.toLong()).fetch()
@@ -67,6 +72,18 @@ class CafeDrinkQueryRepository(@Qualifier("rankingQueryFactory") private val que
         ).fetchOne()
         return row?.toDomain()?.let(CafeDrinkResponse::of)
     }
+
+    fun names(q: String): List<CafeDrinkNameCount> {
+        val name = drink.getString("drinkName")
+        val brands = drink.getString("brandSlug").countDistinct()
+        return queryFactory.select(name, brands, drink.count()).from(drink)
+            .where(name.containsIgnoreCase(com.kgd.ranking.domain.cafe.model.DrinkNames.normalize(q))).groupBy(name)
+            .orderBy(brands.desc(), drink.count().desc(), name.asc()).limit(20).fetch()
+            .map { CafeDrinkNameCount(it.get(name)!!, it.get(brands)!!.toInt(), it.get(drink.count())!!) }
+    }
+
+    fun variants(name: String): List<CafeDrinkResponse> = queryFactory.selectFrom(drink)
+        .where(drink.getString("drinkName").eq(name)).fetch().map { CafeDrinkResponse.of(it.toDomain()) }
 
     fun groups(): List<CafeGroupCount> {
         val group = drink.getString("drinkGroup")

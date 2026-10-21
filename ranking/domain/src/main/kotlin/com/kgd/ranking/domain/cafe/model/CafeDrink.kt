@@ -33,6 +33,7 @@ data class CafeDrink(
     val checkedAt: LocalDate,
     val notes: String? = null,
 ) {
+    val drinkName: String get() = DrinkNames.normalize(menuName)
     val drinkGroup: String get() = DrinkGroups.classify(menuName)
     private val cupVolume get() = CupVolumes.resolve(brandSlug, volumeMl, servingBasis, sizeLabel, temperature)
     val cupVolumeMl: BigDecimal? get() = cupVolume.ml

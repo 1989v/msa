@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import ServiceExplorer from './chrome/ServiceExplorer';
-import { TRUST_LINKS } from '../seo/copy.mjs';
+import { RANK_ORIGIN, TRUST_LINKS } from '../seo/copy.mjs';
 import './Footer.css';
 
 /**
@@ -40,6 +40,7 @@ export default function Footer({
             {lang === 'en' ? 'Explore services' : '서비스 탐색'}
           </button>
         </div>
+        <a className="site-footer-policy" href={RANK_ORIGIN}>{lang === 'en' ? 'Rankings' : '랭킹'}</a>
         {children && <div className="site-footer-slot">{children}</div>}
         <p className="site-footer-copy">
           © 2026 Gideok Kwon. All rights reserved.
