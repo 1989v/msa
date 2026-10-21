@@ -22,3 +22,11 @@ flat full 응답/모든 관광지 unified 적재/suspended 새 CronJob 설명은
 - q/all/page 복원과 페이지 이동, 자동완성 첫 Enter/방향키/IME/역순 응답 보호, `/s`, PWA 동작은 유지한다.
 - 기존 heritage hook·ThemeToggle을 유지하고 DESIGN.md §12의 kh-field/kh-display/kh-button-ghost로 일반 CSS를 정리한다.
 - 결과의 타입은 목적지 구분용 수동 라벨로만 남긴다. API·검색 엔진은 변경하지 않는다.
+
+
+## 2026-10-21 GNB 서비스 탐색 자동완성 — 사용자 승인
+
+- GNB 검색 Enter가 /search를 경유해 두 번 Enter를 요구하던 흐름을 제거한다. ready 선택 결과로 즉시 이동한다.
+- `useUnifiedSearch`로 /search와 ServiceExplorer의 요청·선택·키보드·IME·취소/역순응답 보호를 공유한다.
+- 첫 Escape는 자동완성만 닫고 이후 Escape는 기존 KhSheet가 처리한다. 조합 중 Escape는 전파하지 않는다. KhSheet 자체는 변경하지 않는다.
+- 전체 보기 링크는 기존 unifiedSearchHref에 all=1을 추가한다. 백엔드/API/PWA는 변경하지 않는다.

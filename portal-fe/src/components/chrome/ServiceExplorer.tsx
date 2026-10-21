@@ -1,6 +1,8 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { fetchDisplayServices, type DisplayService } from '../../api/displayApi';
 import { portalHomeHref, resolveExplorerHref, unifiedSearchHref } from '../../shell/serviceHref';
+import { unifiedHref, type UnifiedHit } from '../../api/unifiedSearchApi';
+import { useUnifiedSearch } from '../../hooks/useUnifiedSearch';
 import KhSheet from '../shell/KhSheet';
 import './ServiceExplorer.css';
 
@@ -18,18 +20,20 @@ import './ServiceExplorer.css';
 /* 첫 열림에만 부른다 — 탐색은 세션 중 여러 번 열리는데 목록은 사실상 정적이다 */
 let cache: DisplayService[] | null = null;
 
-export default function ServiceExplorer({ onClose, lang = 'ko' }: { onClose: () => void; lang?: 'ko' | 'en' }) {
+export default function ServiceExplorer({ onClose, lang = 'ko', navigate = (href: string) => window.location.assign(href) }: { onClose: () => void; lang?: 'ko' | 'en'; navigate?: (href: string) => void }) {
   const [services, setServices] = useState<DisplayService[] | null>(cache);
   const [failed, setFailed] = useState(false);
   const [query, setQuery] = useState('');
 
-  // 어느 호스트에서 열든 통합 검색은 apex 의 /search 하나다 — 주소가 서비스마다 갈리지 않게
-  const submitSearch = (e: FormEvent) => {
-    e.preventDefault();
-    const q = query.trim();
-    if (!q) return;
-    window.location.assign(unifiedSearchHref(q));
-  };
+  const search = useUnifiedSearch(query);
+  const open = (hit: UnifiedHit) => navigate(unifiedHref(hit));
+  const hasSearch = !!query.trim() && !search.dismissed;
+  useEffect(() => {
+    if (search.activeId) document.getElementById(search.activeId)?.scrollIntoView?.({ block: 'nearest' });
+  }, [search.activeId]);
+  const typeLabels: Record<string, string> = lang === 'en'
+    ? { game: 'Game', attraction: 'Place', cafe_drink: 'Cafe drink', blog_post: 'Blog', concept: 'Concept', deal_offer: 'Deal', product: 'Product', service: 'Service' }
+    : { game: '게임', attraction: '장소', cafe_drink: '카페 음료', blog_post: '블로그', concept: '개념', deal_offer: '혜택', product: '상품', service: '서비스' };
 
   useEffect(() => {
     if (cache) return;
@@ -51,16 +55,44 @@ export default function ServiceExplorer({ onClose, lang = 'ko' }: { onClose: () 
   const label = (service: DisplayService) => lang === 'en' ? englishNames[service.code] ?? service.code : service.label;
   return (
     <KhSheet label={lang === 'en' ? 'Explore services' : '서비스 탐색'} onClose={onClose} className="kh-sheet--dialog">
-      <form className="kh-explorer-search" role="search" onSubmit={submitSearch}>
+      <form className="kh-explorer-search" role="search" onSubmit={event => { event.preventDefault(); search.activate(open); }}>
         <input
           className="kh-field"
           type="search"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          role="combobox"
+          autoComplete="off"
+          maxLength={120}
+          aria-autocomplete="list"
+          aria-expanded={!!search.result?.hits.length}
+          aria-controls={search.listId}
+          aria-activedescendant={search.activeId}
+          onChange={event => { search.invalidate(); setQuery(event.target.value); }}
+          onCompositionStart={search.onCompositionStart}
+          onCompositionEnd={search.onCompositionEnd}
+          onKeyDown={event => search.onKeyDown(event, open, () => {
+            if (hasSearch) { event.preventDefault(); event.stopPropagation(); search.dismiss(); }
+          })}
           placeholder={lang === 'en' ? 'Search all services' : '모든 서비스에서 찾기 — 관광지 · 글 · 게임 · 개념 · 혜택 · 상품'}
           aria-label={lang === 'en' ? 'Search all services' : '통합 검색어'}
           enterKeyHint="search"
         />
+        {hasSearch && <p className="kh-explorer-search-status" role="status" aria-live="polite">
+          {search.status === 'loading' && (lang === 'en' ? 'Searching…' : '검색 중…')}
+          {search.status === 'error' && (lang === 'en' ? 'Could not load results. Try again.' : '검색을 불러오지 못했습니다. 다시 입력해 주세요.')}
+          {search.status === 'ready' && (search.result?.hits.length
+            ? (lang === 'en' ? 'Use arrow keys to select, Enter to open.' : '방향키로 선택하고 Enter로 이동')
+            : (lang === 'en' ? 'No results found.' : '검색 결과가 없습니다.'))}
+        </p>}
+        <ul id={search.listId} className="kh-explorer-suggestions" role="listbox" aria-label={lang === 'en' ? 'Search results' : '검색 결과'} aria-busy={search.status === 'loading'}>
+          {search.result?.hits.map((hit, index) => <li key={hit.id} id={search.hitId(index)} role="option" aria-selected={search.selected === index}>
+            <a href={unifiedHref(hit)} tabIndex={-1} onMouseEnter={() => search.setSelected(index)} onClick={event => { event.preventDefault(); open(hit); }}>
+              <span className="kh-explorer-result-type">{typeLabels[hit.type] ?? hit.type}</span>
+              <strong>{hit.title}</strong><small>{hit.summary}</small>
+            </a>
+          </li>)}
+        </ul>
+        {query.trim() && <a className="kh-explorer-all" href={`${unifiedSearchHref(query.trim())}&all=1`}>{lang === 'en' ? 'View all results' : '전체 결과 보기'}</a>}
       </form>
       <ul className="kh-explorer-list">
         {/* 본진 행은 고정이다 — 서브도메인 호스트에서 런처로 돌아가는 상시 통로.

@@ -29,3 +29,21 @@
   출력: `[seo] 프리렌더 190개 페이지 · 게임 83종`, `[html] 주석 제거 795개 파일 · 1402.9KB 절감`.
   로그: `/private/tmp/search-heritage-build.log`. routes 테스트에는 기존 외부 XHR stderr가 있지만10 tests passed.
 - 부모가 이 개정의 push/image build/rollout을 담당한다. 이 에이전트는 배포하지 않는다.
+
+
+## 2026-10-21 GNB 서비스 탐색 자동완성
+
+- 위치: `/private/tmp/search-launcher-release-20261021`만 수정. clean 확인 후 origin/main 4328cfc4a로 ff. 다른 카페/랭킹 변경 보존.
+- 기존 /search와 GNB ServiceExplorer가 `useUnifiedSearch`를 공유한다. 전체 타입 180ms suggest, 첫 결과/방향키 순환/한 번 Enter로 정규 상세 이동.
+- query별 응답 키와 generation/AbortController로 역순·입력 변경·clear·close/reopen의 과거 응답을 무시한다.
+  status는 요청 키에서 유도하며 effect 안의 동기 상태 초기화를 추가하지 않았다.
+- composing/isComposing/229/조합 직후 Enter, native form submit을 공통 보호한다. 정상 Enter는 기본 form 제출을 막아 한 번만 이동한다.
+- 첫 Escape는 자동완성 닫기+전파 차단, 다음 Escape는 기존 dialog 닫기. IME Escape도 전파 차단. KhSheet 자체 변경 없음.
+- combobox/listbox/activedescendant, 기존 focus trap/복귀, 서비스 카드·한영 문구, 선택행 scroll/모바일 결과 높이 제한 유지.
+- 명시적 전체 보기 링크는 unifiedSearchHref(q)에 all=1을 붙여 전체 검색으로 바로 연다. backend/PWA/공유 토큰 변경 없음.
+- 검증: scoped 6 files/45 tests passed (두 진입점 동일 계약 + page URL 회귀 + dialog + API/목적지/shell), scoped ESLint exit0, tsc-b exit0.
+  로그 `/private/tmp/service-explorer-search-tests.log`, `/private/tmp/service-explorer-search-eslint.log`.
+- 최종 코드 `npm run build` exit0: Vite built in492ms, 프리렌더190개 페이지/게임83종, HTML796파일 정리.
+  최종 로그 `/private/tmp/service-explorer-search-final-build.log`. 최종 SEO 원격 en/sido48/p3 timeout 경고1회가 있었지만 파이프라인은 exit0.
+  초기 build도 exit0이나 IME/link 수정 전 산출물이므로 최종 build 결과를 배포 근거로 사용한다.
+- UI computer-use 미실행(해당 범위 승인 없음). 원본 shared workspace 변경 없음. 정상 hook 커밋 후 부모가 push/image rollout 수행.

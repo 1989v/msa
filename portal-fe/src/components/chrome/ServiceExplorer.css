@@ -9,7 +9,7 @@
   flex-direction: column;
 }
 
-/* 통합 검색 입력 — 목록 위 한 줄. 제출하면 apex /search 로 나간다 */
+/* 통합 검색 입력 — 자동완성에서 바로 이동, 전체 결과는 apex /search. */
 .kh-explorer-search {
   padding: 0 var(--ko-space-2) var(--ko-space-3);
   margin-bottom: var(--ko-space-2);
@@ -83,3 +83,12 @@ a.kh-explorer-item:focus-visible {
     transform: none;
   }
 }
+
+.kh-explorer-search-status { margin: var(--ko-space-3) 0; color: var(--ko-text-secondary); font-size: var(--ko-text-sm); }
+.kh-explorer-suggestions { list-style: none; padding: 0; margin: 0; max-height: min(36dvh, 320px); overflow-y: auto; overscroll-behavior: contain; }
+.kh-explorer-suggestions li { border-bottom: 1px solid var(--ko-border-subtle); border-inline-start: 3px solid transparent; }
+.kh-explorer-suggestions li[aria-selected='true'] { background: var(--ko-surface-2); border-inline-start-color: var(--ko-accent-text); }
+.kh-explorer-suggestions a { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: var(--ko-space-1) var(--ko-space-2); padding: var(--ko-space-3) var(--ko-space-2); min-height: 44px; color: var(--ko-text-primary); text-decoration: none; overflow-wrap: anywhere; }
+.kh-explorer-result-type { font-size: var(--ko-text-xs); color: var(--kh-ocher-text, var(--ko-text-secondary)); }
+.kh-explorer-suggestions small { grid-column: 2; color: var(--ko-text-secondary); }
+.kh-explorer-all { display: inline-flex; align-items: center; min-height: 44px; color: var(--ko-accent-text); font-size: var(--ko-text-sm); }
