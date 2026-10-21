@@ -435,7 +435,7 @@ images:
     newTag: 9a6adac
   - name: commerce/ranking-ingest
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/ranking-ingest
-    newTag: ca37332
+    newTag: 0642c90
   - name: commerce/recommendation-ann
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/recommendation-ann
     newTag: 6a1889c
