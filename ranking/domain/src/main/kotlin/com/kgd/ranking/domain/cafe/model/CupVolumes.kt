@@ -2,7 +2,7 @@ package com.kgd.ranking.domain.cafe.model
 
 import java.math.BigDecimal
 
-enum class VolumeSource { ROW, BRAND_SIZE_TABLE, NONE }
+enum class VolumeSource { ROW, BRAND_SIZE_TABLE, NONE, ADMIN_VERIFIED }
 
 data class CupVolume(val ml: BigDecimal?, val source: VolumeSource)
 

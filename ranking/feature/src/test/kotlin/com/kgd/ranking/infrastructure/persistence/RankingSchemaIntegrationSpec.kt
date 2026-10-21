@@ -1,6 +1,17 @@
 package com.kgd.ranking.infrastructure.persistence
 
 import com.kgd.ranking.infrastructure.config.RankingDataSourceConfig
+import com.kgd.ranking.infrastructure.config.CafeQueryConfig
+import com.kgd.ranking.infrastructure.persistence.adapter.RankingAdminAdapter
+import com.kgd.ranking.infrastructure.persistence.adapter.CafeDrinkRepositoryAdapter
+import com.kgd.ranking.application.admin.service.RankingAdminService
+import com.kgd.ranking.application.admin.port.RankingAdminPort
+import com.kgd.ranking.application.admin.dto.*
+import com.kgd.ranking.application.cafe.dto.*
+import com.kgd.ranking.domain.cafe.model.*
+import io.kotest.assertions.throwables.shouldThrow
+import java.time.LocalDate
+import java.util.UUID
 import com.kgd.ranking.infrastructure.persistence.repository.RankingBoardJpaRepository
 import com.kgd.ranking.infrastructure.persistence.repository.RankingSnapshotJpaRepository
 import com.kgd.ranking.infrastructure.persistence.repository.RankingEntryJpaRepository
@@ -54,8 +65,44 @@ class RankingSchemaIntegrationSpec(
     @Autowired private val r2: RankingEntryJpaRepository,
     @Autowired private val r3: GasStationJpaRepository,
     @Autowired private val r4: GasStationPriceJpaRepository,
+    @Autowired private val admin: RankingAdminService,
+    @Autowired private val adminStore: RankingAdminPort,
+    @Autowired private val publicQuery: com.kgd.ranking.infrastructure.persistence.repository.CafeDrinkQueryRepository,
 ) : BehaviorSpec({
 
+    Given("MySQL 실제 column collation과 자연키 문자열이 다를 때") {
+        Then("대소문자와 Unicode 동등 alias는 삭제 전에 거절해 원천/투영/교정/세대가 유지된다") {
+            val row = CafeDrinkUpsertItem("collation-brand", "Brand", "Café", caffeineStatus = CaffeineStatus.DISCLOSED, rawNutrition = mapOf("원문" to "보존"), sourceUrl = "https://official.example/menu", checkedAt = LocalDate.of(2026, 10, 20))
+            admin.sync(CafeDrinkBulkRequest(listOf(row)))
+            val key = CafeDrinkKey.of(row.toDomain())
+            val generation = adminStore.brands().single { it.brandSlug == row.brandSlug }.generation
+            admin.correct(key, CorrectionRequest(UUID.randomUUID().toString(), 0, generation, mapOf("drinkGroup" to FieldChange("SET", "티")), "대조", row.sourceUrl, row.checkedAt), 27)
+            publicQuery.find(CafeDrinkKey.of(row.copy(menuName = "Cafe").toDomain())) shouldBe null
+            publicQuery.find(key)!!.drinkGroup shouldBe "티"
+            val sourceBefore = adminStore.sourceDrinks(); val correctionBefore = adminStore.corrections(); val brandsBefore = adminStore.brands()
+            listOf(row.copy(brandSlug = "COLLATION-BRAND"), row.copy(menuName = "Cafe"), row.copy(menuName = "Cafe\u0301")).forEach { alias ->
+                shouldThrow<IllegalArgumentException> { admin.sync(CafeDrinkBulkRequest(listOf(alias))) }
+                adminStore.sourceDrinks() shouldBe sourceBefore
+                adminStore.corrections() shouldBe correctionBefore
+                adminStore.brands() shouldBe brandsBefore
+            }
+            shouldThrow<IllegalArgumentException> { admin.sync(CafeDrinkBulkRequest(listOf(row.copy(brandSlug = "new"), row.copy(brandSlug = "new", menuName = "Cafe")))) }
+            admin.read("cafe/drinks/$key", emptyMap()).let { it as Map<*, *> }["effective"].let { it as CafeDrinkResponse }.drinkGroup shouldBe "티"
+            // No live Café remains; its retained full natural key still reserves its spelling.
+            admin.sync(CafeDrinkBulkRequest(listOf(row.copy(menuName = "Replacement"))))
+            val orphanSource = adminStore.sourceDrinks(); val orphanCorrections = adminStore.corrections(); val orphanBrands = adminStore.brands()
+            listOf(row.copy(menuName = "Cafe"), row.copy(menuName = "Cafe\u0301", temperature = "", sizeLabel = "")).forEach { alias ->
+                shouldThrow<IllegalArgumentException> { admin.sync(CafeDrinkBulkRequest(listOf(alias))) }
+                adminStore.sourceDrinks() shouldBe orphanSource
+                adminStore.corrections() shouldBe orphanCorrections
+                adminStore.brands() shouldBe orphanBrands
+                publicQuery.find(key) shouldBe null
+            }
+            admin.sync(CafeDrinkBulkRequest(listOf(row.copy(temperature = "", sizeLabel = ""))))
+            publicQuery.find(key)!!.menuName shouldBe row.menuName
+            adminStore.corrections().single { it.drinkKey == key }.fields.getValue("drinkGroup").reason shouldBe "KEY_REAPPEARED"
+        }
+    }
     Given("ranking 전용 Flyway 가 적용된 ranking_db") {
         Then("엔티티 매핑이 마이그레이션 스키마와 일치하고 쿼리가 실행된다")
             .config(enabledIf = { dockerAvailable }) {
@@ -69,7 +116,7 @@ class RankingSchemaIntegrationSpec(
     override fun extensions() = listOf(SpringExtension)
 
     @EnableAutoConfiguration
-    @Import(RankingDataSourceConfig::class)
+    @Import(RankingDataSourceConfig::class, CafeQueryConfig::class, com.kgd.ranking.infrastructure.persistence.repository.CafeDrinkQueryRepository::class, RankingAdminAdapter::class, CafeDrinkRepositoryAdapter::class, RankingAdminService::class)
     open class Ctx {
         @Bean
         @Primary

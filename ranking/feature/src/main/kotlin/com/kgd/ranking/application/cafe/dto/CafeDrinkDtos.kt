@@ -79,7 +79,7 @@ data class CafeDrinkResponse(
     val proteinG: BigDecimal? = null,
     val caffeineMg: BigDecimal? = null,
     val caffeineStatus: CaffeineStatus,
-    val rawNutrition: Map<String, String>,
+    @get:com.fasterxml.jackson.annotation.JsonIgnore val rawNutrition: Map<String, String>,
     val priceKrw: Int? = null,
     val priceNote: String? = null,
     val allergens: String? = null,
@@ -94,12 +94,16 @@ data class CafeDrinkResponse(
     val kcalPer100ml: BigDecimal? = null,
     val drinkKey: String = "",
     val drinkName: String = "",
+    val displayName: String? = null,
+    val officialSourceUrl: String? = null,
+    val officialCheckedAt: LocalDate? = null,
+    val correctionEvidence: Map<String, CafeCorrectionEvidence> = emptyMap(),
 ) {
     companion object {
         fun of(drink: CafeDrink) = CafeDrinkResponse(
             brandSlug = drink.brandSlug,
             brandName = drink.brandName,
-            menuName = drink.menuName,
+            menuName = drink.displayName ?: drink.menuName,
             menuNameEn = drink.menuNameEn,
             sourceCategory = drink.sourceCategory,
             temperature = drink.temperature,
@@ -130,11 +134,15 @@ data class CafeDrinkResponse(
             kcalPer100ml = drink.kcalPer100ml,
             drinkKey = CafeDrinkKey.of(drink),
             drinkName = drink.drinkName,
+            displayName = drink.displayName,
+            officialSourceUrl = drink.officialSourceUrl ?: drink.sourceUrl,
+            officialCheckedAt = drink.officialCheckedAt ?: drink.checkedAt,
+            correctionEvidence = drink.correctionEvidence,
         )
     }
 }
 
-data class CafeDrinkBulkRequest(val drinks: List<CafeDrinkUpsertItem>)
+data class CafeDrinkBulkRequest(val drinks: List<CafeDrinkUpsertItem>, val parentRunId: String? = null)
 data class CafeDrinkBulkResult(val received: Int, val replacedBrands: Set<String>)
 data class CafeDrinkPage(val content: List<CafeDrinkResponse>, val totalElements: Long, val page: Int, val size: Int)
 data class CafeGroupCount(val group: String, val count: Long)

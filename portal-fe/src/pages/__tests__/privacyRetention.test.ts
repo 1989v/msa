@@ -17,6 +17,7 @@ const REPO = resolve(__dirname, '../../../..');
  * TTL 이 지우므로 그 상수가 있는 키 정의 파일을 둔다.
  */
 const RETENTION_RUNNERS = [
+  'ranking/feature/src/main/kotlin/com/kgd/ranking/application/admin/service/RankingAdminService.kt',
   'code-dictionary/feature/src/main/kotlin/com/kgd/codedictionary/infrastructure/retention/RetentionRunner.kt',
   'game/feature/src/main/kotlin/com/kgd/game/infrastructure/retention/GameRetentionRunner.kt',
   'ads/feature/src/main/kotlin/com/kgd/ads/infrastructure/redis/AdsRedisKeys.kt',
@@ -66,6 +67,9 @@ const friendGroupSection = () => {
 };
 
 describe('보존기간 — 방침과 코드가 같은 숫자를 말한다', () => {
+  it('랭킹 관리자 감사는 같은 정책으로 1년 정리된다', () => {
+    expect(retentionFromCode('AUDIT_RETENTION_DAYS')).toBe(retentionDaysFromPolicy('랭킹 관리자 교정 감사'));
+  });
   it('친구 그룹: 코드 상수가 1년이고 방침도 1년이라고 적는다', () => {
     expect(retentionFromCode('FRIEND_GROUP_RETENTION_DAYS')).toBe(365);
     const section = friendGroupSection();

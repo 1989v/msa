@@ -1,6 +1,7 @@
 """Load saved official nutrition rows, replacing only each nonempty brand batch."""
 import argparse
 import json
+import uuid
 from pathlib import Path
 from urllib.request import Request, urlopen
 
@@ -30,8 +31,9 @@ def load_directory(directory, base_url='http://localhost:8097', send=None):
                 raise ValueError(f'Missing brand_slug: {path}')
             batches.setdefault(brand, []).append({camel_case(k): v for k, v in row.items()})
     # Empty files produce no request, so previously loaded brand data cannot be deleted.
+    parent_run_id = str(uuid.uuid4())
     for brand, drinks in batches.items():
-        send(base_url.rstrip('/') + '/internal/ranking/cafe/drinks/bulk', {'drinks': drinks})
+        send(base_url.rstrip('/') + '/internal/ranking/cafe/drinks/bulk', {'drinks': drinks, 'parentRunId': parent_run_id})
         print(f'{brand}: {len(drinks)} rows')
     return sum(map(len, batches.values()))
 

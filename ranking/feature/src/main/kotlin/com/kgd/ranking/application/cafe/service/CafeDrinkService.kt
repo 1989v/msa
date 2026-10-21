@@ -8,9 +8,9 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-class CafeDrinkService(private val repository: CafeDrinkRepositoryPort) : SyncCafeDrinksUseCase, GetCafeDrinksUseCase {
-    @Transactional("rankingTransactionManager")
+class CafeDrinkService(private val repository: CafeDrinkRepositoryPort, private val adminIngest: com.kgd.ranking.application.admin.usecase.CafeAdminIngestUseCase? = null) : SyncCafeDrinksUseCase, GetCafeDrinksUseCase {
     override fun execute(request: CafeDrinkBulkRequest): CafeDrinkBulkResult {
+        adminIngest?.let { return it.sync(request) }
         val drinks = request.drinks.map { it.toDomain() }
         require(drinks.all { it.brandSlug.isNotBlank() && it.menuName.isNotBlank() }) { "Brand and menu required" }
         require(drinks.distinctBy { listOf(it.brandSlug, it.menuName, it.temperature.orEmpty(), it.sizeLabel.orEmpty(), it.caffeineStatus.name) }.size == drinks.size) {

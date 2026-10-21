@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/part-of: commerce-platform
     app.kubernetes.io/component: retention
 spec:
-  # ADR-0077 / ADR-0093 — content 파드가 가진 원장 정리 (party_friend_group 365일).
+  # ADR-0077 / ADR-0093 — content 파드가 가진 원장 정리 (party_friend_group 365일 + ranking 관리자 감사 365일).
   #
   # code-dictionary 의 retention 에서 갈라져 나왔다. game 이 content 로 옮겨가면서
   # 그 이미지에는 party_friend_group 을 아는 코드가 없다 — 원장이 사는 이미지가 정리한다.

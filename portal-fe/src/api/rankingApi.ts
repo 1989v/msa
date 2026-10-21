@@ -84,9 +84,12 @@ export interface CafeDrink {
   volumeMl: number | null; servingBasis: string | null; kcal: number | null; sugarG: number | null;
   sodiumMg: number | null; carbsG: number | null; fatG: number | null; satFatG: number | null;
   proteinG: number | null; caffeineMg: number | null; caffeineStatus: CaffeineStatus;
-  rawNutrition: Record<string, string>; priceKrw: number | null; priceNote: string | null;
+  /** Raw source is admin-only; optional for cached legacy responses. */
+  rawNutrition?: Record<string, string>;
+  officialSourceUrl?: string; officialCheckedAt?: string;
+  correctionEvidence?: Record<string, { evidenceUrl: string; evidenceCheckedAt: string; reason: string }>; priceKrw: number | null; priceNote: string | null;
   allergens: string | null; sourceUrl: string; checkedAt: string; notes: string | null;
-  cupVolumeMl: number | null; volumeSource: 'ROW' | 'BRAND_SIZE_TABLE' | 'NONE'; kcalPer100ml: number | null;
+  cupVolumeMl: number | null; volumeSource: 'ROW' | 'BRAND_SIZE_TABLE' | 'NONE' | 'ADMIN_VERIFIED'; kcalPer100ml: number | null;
   drinkGroup: string; sugarPer100ml: number | null; caffeinePer100ml: number | null;
 }
 export interface CafeDrinkPage { content: CafeDrink[]; totalElements: number; page: number; size: number }

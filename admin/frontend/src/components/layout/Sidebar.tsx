@@ -50,6 +50,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
+  { label: '랭킹 데이터', icon: BarChart3, to: '/ranking/cafe/drinks', enabled: true },
   { label: '대시보드', icon: LayoutDashboard, to: '/', enabled: true },
   { label: '회원 관리', icon: Users, to: '/members', enabled: true },
   { label: '상품 관리', icon: Package, to: '/products', enabled: true },

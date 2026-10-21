@@ -62,8 +62,9 @@ class CafeDrinkController(private val getCafeDrinks: GetCafeDrinksUseCase) {
 /** Collector only. Gateway exposes the public ranking prefix, never this internal route. */
 @RestController
 @RequestMapping("/internal/ranking/cafe")
-class CafeDrinkInternalController(private val syncCafeDrinks: SyncCafeDrinksUseCase) {
+class CafeDrinkInternalController(private val syncCafeDrinks: com.kgd.ranking.application.admin.usecase.CafeAdminIngestUseCase) {
     @PostMapping("/drinks/bulk")
     fun bulk(@RequestBody request: CafeDrinkBulkRequest): ApiResponse<CafeDrinkBulkResult> =
-        ApiResponse.success(syncCafeDrinks.execute(request))
+        try { ApiResponse.success(syncCafeDrinks.sync(request)) }
+        catch (_: IllegalArgumentException) { throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid cafe bulk") }
 }

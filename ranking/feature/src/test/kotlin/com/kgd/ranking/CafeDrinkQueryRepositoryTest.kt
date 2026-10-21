@@ -2,7 +2,7 @@ package com.kgd.ranking
 
 import com.kgd.ranking.application.cafe.dto.CafeDrinkQuery
 import com.kgd.ranking.domain.cafe.model.CaffeineStatus
-import com.kgd.ranking.infrastructure.persistence.entity.CafeDrinkJpaEntity
+import com.kgd.ranking.infrastructure.persistence.entity.CafeEffectiveDrinkJpaEntity
 import com.kgd.ranking.infrastructure.persistence.repository.CafeDrinkQueryRepository
 import com.querydsl.jpa.impl.JPAQueryFactory
 import io.kotest.core.spec.style.BehaviorSpec
@@ -15,7 +15,7 @@ import java.math.BigDecimal
 
 /** Runs the real Querydsl predicates against a local SQL DB; no external service required. */
 class CafeDrinkQueryRepositoryTest : BehaviorSpec({
-    val factory = Configuration().addAnnotatedClass(CafeDrinkJpaEntity::class.java)
+    val factory = Configuration().addAnnotatedClass(CafeEffectiveDrinkJpaEntity::class.java)
         .setProperty("hibernate.connection.driver_class", "org.h2.Driver")
         .setProperty("hibernate.connection.url", "jdbc:h2:mem:cafe;DB_CLOSE_DELAY=-1")
         .setProperty("hibernate.hbm2ddl.auto", "create-drop")
@@ -29,7 +29,7 @@ class CafeDrinkQueryRepositoryTest : BehaviorSpec({
             cafeItem("a", "디카페인 라떼", CaffeineStatus.DECAF).copy(sugarG = BigDecimal("10"), caffeineMg = BigDecimal("5")),
             cafeItem("b", "제로 라떼", CaffeineStatus.ZERO).copy(sugarG = BigDecimal.ZERO, caffeineMg = BigDecimal.ZERO),
             cafeItem("b", "미공개 라떼", CaffeineStatus.UNDISCLOSED).copy(sugarG = null, caffeineMg = null),
-        ).forEach { em.persist(CafeDrinkJpaEntity.fromDomain(it.toDomain())) }
+        ).forEach { em.persist(CafeEffectiveDrinkJpaEntity.fromDomain(it.toDomain())) }
         em.transaction.commit()
         em.clear()
     }
@@ -92,7 +92,7 @@ class CafeDrinkQueryRepositoryTest : BehaviorSpec({
                 cafeItem("precision-a", "__precise A").copy(volumeMl = BigDecimal("100000"), sugarG = BigDecimal("1.0002"), caffeineMg = BigDecimal("1.0002"), kcal = BigDecimal("1.0002")),
                 cafeItem("precision-b", "__precise B").copy(volumeMl = BigDecimal("100000"), sugarG = BigDecimal("1.0001"), caffeineMg = BigDecimal("1.0001"), kcal = BigDecimal("1.0001")),
                 cafeItem("precision-c", "__precise C").copy(volumeMl = null, servingBasis = null, sizeLabel = null),
-            ).forEach { em.persist(CafeDrinkJpaEntity.fromDomain(it.toDomain())) }
+            ).forEach { em.persist(CafeEffectiveDrinkJpaEntity.fromDomain(it.toDomain())) }
             em.transaction.commit()
             em.clear()
             try {
@@ -108,7 +108,7 @@ class CafeDrinkQueryRepositoryTest : BehaviorSpec({
                 }
             } finally {
                 em.transaction.begin()
-                em.createQuery("delete from CafeDrinkJpaEntity where brandSlug like 'precision-%'").executeUpdate()
+                em.createQuery("delete from CafeEffectiveDrinkJpaEntity where brandSlug like 'precision-%'").executeUpdate()
                 em.transaction.commit()
                 em.clear()
             }
@@ -122,7 +122,7 @@ class CafeDrinkQueryRepositoryTest : BehaviorSpec({
                 cafeItem("status-a", "__status A").copy(caffeineMg = BigDecimal("100")),
                 cafeItem("status-b", "__status B").copy(caffeineMg = BigDecimal("200")),
                 cafeItem("status-c", "__status C", CaffeineStatus.UNDISCLOSED).copy(caffeineMg = BigDecimal.ZERO),
-            ).forEach { em.persist(CafeDrinkJpaEntity.fromDomain(it.toDomain())) }
+            ).forEach { em.persist(CafeEffectiveDrinkJpaEntity.fromDomain(it.toDomain())) }
             em.transaction.commit(); em.clear()
             try {
                 listOf("serving", "100ml").forEach { basis ->
@@ -133,7 +133,7 @@ class CafeDrinkQueryRepositoryTest : BehaviorSpec({
                 }
             } finally {
                 em.transaction.begin()
-                em.createQuery("delete from CafeDrinkJpaEntity where brandSlug like 'status-%'").executeUpdate()
+                em.createQuery("delete from CafeEffectiveDrinkJpaEntity where brandSlug like 'status-%'").executeUpdate()
                 em.transaction.commit(); em.clear()
             }
         }
@@ -142,7 +142,7 @@ class CafeDrinkQueryRepositoryTest : BehaviorSpec({
         Then("autocomplete consolidates all source rows with one normalized name") {
             em.transaction.begin()
             listOf(cafeItem("ex-a", "(EX) HOT 연유 카페 라떼"), cafeItem("ex-a", "(EX) ICED 연유 카페 라떼"),
-                cafeItem("ex-b", "연유 카페 라떼 (EX)")).forEach { em.persist(CafeDrinkJpaEntity.fromDomain(it.toDomain())) }
+                cafeItem("ex-b", "연유 카페 라떼 (EX)")).forEach { em.persist(CafeEffectiveDrinkJpaEntity.fromDomain(it.toDomain())) }
             em.transaction.commit(); em.clear()
             try {
                 val name = repository.names("연유 카페 라떼").single()
@@ -152,7 +152,7 @@ class CafeDrinkQueryRepositoryTest : BehaviorSpec({
                 repository.variants(name.drinkName).size shouldBe 3
             } finally {
                 em.transaction.begin()
-                em.createQuery("delete from CafeDrinkJpaEntity where brandSlug like 'ex-%'").executeUpdate()
+                em.createQuery("delete from CafeEffectiveDrinkJpaEntity where brandSlug like 'ex-%'").executeUpdate()
                 em.transaction.commit(); em.clear()
             }
         }

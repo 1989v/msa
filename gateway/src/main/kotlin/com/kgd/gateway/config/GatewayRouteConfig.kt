@@ -697,6 +697,11 @@ class GatewayRouteConfig(
             // === ADR-0081 랭킹 리더보드 (code-dictionary 소유) ===
             // 공개 조회만 연다. 수집기가 쓰는 `/internal` 하위는 여기 없다 — 클러스터 안에서
             // 직접 부르므로 게이트웨이를 통과할 이유가 없고, 열면 외부에서 적재가 가능해진다.
+            .route("ranking-admin") { r ->
+                r.path("/api/v1/admin/ranking/**")
+                    .filters { f -> f.filter(authFilter.apply(adminConfig())).stripPrefix(0) }
+                    .uri(CONTENT_URI)
+            }
             .route("ranking-public") { r ->
                 r.path("/api/v1/ranking/**")
                     .filters { f -> f.stripPrefix(0) }

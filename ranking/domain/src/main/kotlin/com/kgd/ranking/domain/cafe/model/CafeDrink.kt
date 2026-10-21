@@ -32,10 +32,19 @@ data class CafeDrink(
     val sourceUrl: String,
     val checkedAt: LocalDate,
     val notes: String? = null,
+    val displayName: String? = null,
+    val adminNote: String? = null,
+    val effectiveGroup: String? = null,
+    val volumeOverridden: Boolean = false,
+    val effectiveVolume: BigDecimal? = null,
+    val effectiveVolumeSource: VolumeSource? = null,
+    val officialSourceUrl: String? = null,
+    val officialCheckedAt: LocalDate? = null,
+    val correctionEvidence: Map<String, CafeCorrectionEvidence> = emptyMap(),
 ) {
-    val drinkName: String get() = DrinkNames.normalize(menuName)
-    val drinkGroup: String get() = DrinkGroups.classify(menuName)
-    private val cupVolume get() = CupVolumes.resolve(brandSlug, volumeMl, servingBasis, sizeLabel, temperature)
+    val drinkName: String get() = DrinkNames.normalize(displayName ?: menuName)
+    val drinkGroup: String get() = effectiveGroup ?: DrinkGroups.classify(menuName)
+    private val cupVolume get() = if (volumeOverridden) CupVolume(effectiveVolume, effectiveVolumeSource ?: if (effectiveVolume == null) VolumeSource.NONE else VolumeSource.ADMIN_VERIFIED) else CupVolumes.resolve(brandSlug, volumeMl, servingBasis, sizeLabel, temperature)
     val cupVolumeMl: BigDecimal? get() = cupVolume.ml
     val volumeSource: VolumeSource get() = cupVolume.source
     val kcalPer100ml: BigDecimal? get() = per100ml(kcal)
@@ -90,3 +99,5 @@ object DrinkGroups {
         return group
     }
 }
+
+data class CafeCorrectionEvidence(val evidenceUrl: String, val evidenceCheckedAt: LocalDate, val reason: String)

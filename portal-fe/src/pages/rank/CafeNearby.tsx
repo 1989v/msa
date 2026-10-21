@@ -1,3 +1,4 @@
+import { CafeSources } from './CafeSources';
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchCafeAreas, searchCafeNearby } from '../../api/rankingApi';
@@ -86,7 +87,7 @@ export default function CafeNearby({ filters, drinkName, close, initialSelection
         <h3>{store.brandName} · {store.branchName ?? store.storeName}</h3><p>{store.address} · {store.distanceM}m</p>
         <label>{store.selectionRequired ? '음료 선택 필요' : '비교 음료'}<select value={store.selectedDrink?.drinkKey ?? ''} onChange={event => { setSelected(value => { const next = { ...value }; if (event.target.value) next[store.brandSlug] = event.target.value; else delete next[store.brandSlug]; return next; }); setPage(0); }}><option value="">선택해 주세요</option>{store.variants.map(drink => <option key={drink.drinkKey} value={drink.drinkKey}>{drink.menuName} · {drink.temperature ?? '온도 미표시'} · {drink.sizeLabel ?? '사이즈 미표시'} · {drink.caffeineStatus}</option>)}</select></label>
         {store.autoSelected && <p className="cafe-note">조건에 맞는 변형이 하나여서 자동 선택했습니다.</p>}
-        {store.selectedDrink && <><p>{(['sugar', 'caffeine', 'kcal'] as const).map(metric => { const value = cafeMetric(store.selectedDrink!, metric, result.basis); return `${metricNames[metric]} ${value.amount}${value.unit ?? ''} ${value.status ?? ''}`; }).join(' · ')}</p><p className="cafe-note">브랜드 공식 기본 레시피 · 영양 확인일 {store.selectedDrink.checkedAt} <a href={store.selectedDrink.sourceUrl} target="_blank" rel="noopener noreferrer">영양 원문</a></p></>}
+        {store.selectedDrink && <><p>{(['sugar', 'caffeine', 'kcal'] as const).map(metric => { const value = cafeMetric(store.selectedDrink!, metric, result.basis); return `${metricNames[metric]} ${value.amount}${value.unit ?? ''} ${value.status ?? ''}`; }).join(' · ')}</p><p className="cafe-note">브랜드 공식 기본 레시피 · 영양 확인일 {store.selectedDrink.checkedAt} </p><CafeSources drink={store.selectedDrink} /></>}
         <p className="cafe-note">매핑 {store.mappingStatus} · 매장 원천 기준일 {store.sourceAsOf ?? '미제공'} · 매장 메뉴 판매 미확인</p>
         <div className="cafe-store-links"><a href={googleMapsDirectionsUrl({ title: store.storeName, latitude: store.latitude, longitude: store.longitude })} target="_blank" rel="noopener noreferrer">구글맵 길찾기 ↗</a><a href={`https://map.naver.com/p/search/${encodeURIComponent(`${store.brandName} ${store.branchName ?? store.storeName}`)}`} target="_blank" rel="noopener noreferrer">네이버 지도에서 메뉴·가격 보기 ↗</a></div>
       </li>)}</ul>

@@ -2,7 +2,7 @@
 
 # Admin (백오피스 — FE 전용)
 
-`/admin/*` 로 서빙되는 **프론트엔드 전용** 디렉토리다. **백엔드 모듈이 없다** —
+전용 admin 호스트의 루트(`/`)에서 서빙되는 **프론트엔드 전용** 디렉토리다. 경로 prefix 배포는 `/admin/*`를 사용한다. **백엔드 모듈이 없다** —
 어드민 API 는 각 서비스가 `/api/v1/admin/**` 로 직접 제공하고, gateway 가 `ROLE_ADMIN` 으로 막는다.
 
 ## 구조
@@ -39,3 +39,18 @@ scripts/image-import.sh --fe          # FE 5종 docker build + 클러스터 로�
 
 - 어드민 API 목록은 각 서비스 `CLAUDE.md` 의 API 표 (`game` · `code-dictionary` · `blog` · `ranking`)
 - 인증/역할: `docs/adr/ADR-0078-identity-minimization.md` (auth 복구 절차는 `auth/CLAUDE.md`)
+
+## 랭킹 데이터 운영 (ADR-0114)
+
+전용 admin 호스트의 `/ranking/*`에 S1~S8을 제공한다. 음료 검색·페이지 간 최대 200키 선택,
+원천/교정 비교, 유형 preview, 적재 이력, 필드별 충돌 검토, 복수 브랜드 공식 URL 검증,
+감사/작업 단위 보상 되돌리기, 읽기 전용 주유소 진단이다. API 소유자는 ranking이며
+`/api/v1/admin/ranking/**`를 content에 전달한다. 쓰기 응답 유실은 제출 전 만든 UUID로
+결과 조회 후 동일 키·본문 재시도를 제공한다. 근거·사유·초안을 URL/storage에 저장하지 않는다.
+가격·순위·재수집 버튼은 없다. 실제 viewport/확대·지도·운영 데이터 검수는 별도 증거가 필요하다.
+
+랭킹 S3 경로는 `/ranking/cafe/group-corrections`, S4는 `/ranking/ingest-runs/:runId`,
+S8은 `/ranking/gas/boards/:boardId`다. 검색/필터는 제출 시 적용하고 변경 시 선택을 비우며,
+페이지 이동에서는 선택을 유지한다. 전체 필터 결과 선택은 서버가 반환한 최대200개 명시 키다.
+409 최신 기준 재조회는 초안을 보존하고 자동 재제출하지 않는다. 후기403은 캐시된 상세·선택 폼을
+모두 제거한다. 숫자·용량·100ml 초안 미리보기와 대상별 일괄/되돌리기 미리보기를 제공한다.

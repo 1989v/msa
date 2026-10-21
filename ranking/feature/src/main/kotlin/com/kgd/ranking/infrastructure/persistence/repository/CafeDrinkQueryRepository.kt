@@ -4,7 +4,7 @@ import com.kgd.ranking.application.cafe.dto.*
 import com.kgd.ranking.domain.cafe.model.CaffeineStatus
 import com.kgd.ranking.domain.cafe.model.CafeDrinkKey
 import com.querydsl.core.types.dsl.Expressions
-import com.kgd.ranking.infrastructure.persistence.entity.CafeDrinkJpaEntity
+import com.kgd.ranking.infrastructure.persistence.entity.CafeEffectiveDrinkJpaEntity
 import com.querydsl.core.BooleanBuilder
 import com.querydsl.core.types.dsl.PathBuilder
 import com.querydsl.jpa.impl.JPAQueryFactory
@@ -17,11 +17,11 @@ import java.time.LocalDate
 /** Filters and pagination run in the DB; count omits sorting and pagination. */
 @Repository
 class CafeDrinkQueryRepository(@Qualifier("rankingQueryFactory") private val queryFactory: JPAQueryFactory) {
-    private val drink = PathBuilder(CafeDrinkJpaEntity::class.java, "drink")
+    private val drink = PathBuilder(CafeEffectiveDrinkJpaEntity::class.java, "drink")
 
     fun search(query: CafeDrinkQuery, pageable: Pageable): CafeDrinkPage {
         val where = BooleanBuilder()
-        query.q?.takeIf { it.isNotBlank() }?.let { where.and(drink.getString("menuName").containsIgnoreCase(it)) }
+        query.q?.takeIf { it.isNotBlank() }?.let { where.and(drink.getString("menuName").containsIgnoreCase(it).or(drink.getString("displayName").containsIgnoreCase(it))) }
         if (query.brands.isNotEmpty()) where.and(drink.getString("brandSlug").`in`(query.brands))
         query.group?.let { where.and(drink.getString("drinkGroup").eq(it)) }
         query.temperature?.let { where.and(drink.getString("temperature").eq(it)) }
@@ -70,7 +70,7 @@ class CafeDrinkQueryRepository(@Qualifier("rankingQueryFactory") private val que
             drink.getString("temperature").eq(fields[2]), drink.getString("sizeLabel").eq(fields[3]),
             drink.getEnum("caffeineStatus", CaffeineStatus::class.java).eq(CaffeineStatus.valueOf(fields[4])),
         ).fetchOne()
-        return row?.toDomain()?.let(CafeDrinkResponse::of)
+        return row?.toDomain()?.takeIf { CafeDrinkKey.of(it) == key }?.let(CafeDrinkResponse::of)
     }
 
     fun names(q: String): List<CafeDrinkNameCount> {

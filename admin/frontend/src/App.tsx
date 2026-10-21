@@ -19,6 +19,7 @@ import { SearchJudgmentsPage } from '@/pages/SearchJudgmentsPage';
 import { ResumePage } from '@/pages/ResumePage';
 import { ResumeProfilePage } from '@/pages/ResumeProfilePage';
 import { DisplayServicesPage } from '@/pages/DisplayServicesPage';
+import { RankingPage } from '@/pages/ranking/RankingPage';
 import { DealOffersPage } from '@/pages/DealOffersPage';
 import { MarketGeometryRequestsPage } from '@/pages/MarketGeometryRequestsPage';
 import { MarketStewardsPage } from '@/pages/MarketStewardsPage';
@@ -50,6 +51,7 @@ export default function App() {
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
       <Route path="/" element={<AppLayout />}>
         <Route index element={<DashboardPage />} />
+        <Route path="ranking/*" element={<RankingPage />} />
         <Route path="system" element={<SystemPage />} />
         <Route path="members" element={<MembersPage />} />
         <Route path="place/markets/geometry-requests" element={<MarketGeometryRequestsPage />} />

@@ -157,3 +157,23 @@ python3 -m tests.test_cafe_load
   지역 중심점은 `src/data/cafe_areas.json`/provenance의 공식 KMA 대표 위경도, 상위 시군구 코드만 사용.
 - 사용자 좌표 로그·URL·React Query 캐시·storage 금지. Google 지도는 공개 매장 위치만 전달한다.
   매장마다 메뉴 판매 미확인·원천/영양 날짜·공식 레시피 안내와 Google 목적지/Naver 지점명 링크를 제공한다.
+
+## 관리자 교정 (ADR-0114, P1)
+
+- `/api/v1/admin/ranking/**`는 gateway `adminConfig`와 서비스의 ads 동일 신원 검사로 `ROLE_ADMIN`만 허용한다.
+- V6 `ranking_admin_record`는 자연키별 교정·브랜드 revision/generation·감사·멱등 operation·preview·적재 이력을 원천 FK 없이 보존한다. `cafe_drink_effective`는 공개 조회 전용 투영이며 source/raw/notes는 `cafe_drink`에 그대로 남는다.
+- `RankingAdminService`가 교정·최대 200키/5분 유형 preview·필드별 충돌 해결·브랜드 검증·보상 되돌리기를 소유한다. API는 계획서 §6 전체 경로를 따른다. 자연키·카페인 상태·가격은 수정하지 않는다.
+- SET_UNKNOWN 용량은 추론과 모든 100ml 값을 중지하고, SET은 ADMIN_VERIFIED, RESET만 원천 추론을 재개한다. 공개 Querydsl 목록/상세/집계/이름/주변 조회는 동일 투영을 읽는다.
+- bulk와 관리자 쓰기는 전용 TM 및 동일 DB 잠금을 사용한다. control 잠금으로 신규 operation/brand 잠금 생성을 직렬화하고 브랜드 잠금은 slug 순으로 취득한다. 완료 멱등 결과는 revision/generation/preview보다 먼저 조회한다.
+- bulk 시작/실패 원장은 별도 짧은 트랜잭션, 성공 원장·원천·교정 상태·투영·generation·SYSTEM 감사는 하나의 트랜잭션이다. parentRunId로 브랜드별 부분 성공을 묶고 15분 초과 RUNNING은 INTERRUPTED로 진단한다.
+- 관리자 감사와 멱등 결과는 `AUDIT_RETENTION_DAYS=365` 정책으로 기존 content retention CronJob의 `RankingRetentionRunner`가 정리한다. `/privacy` §6과 드리프트 테스트로 대조한다. 회원 ID만 기록하며 이름/이메일을 복제하지 않는다.
+- 주유소 보드/스냅샷 API는 읽기 전용이다. 도메인 status와 36시간 지연·미생성·포인터/count/순위 정합 진단을 분리한다. 과거 자료 없음은 30일 보관 경과 또는 없음이다.
+
+### P1 운영 계약 보강
+
+- 원천 bulk는 실제 DB column collation으로 대소문자·accent·유니코드 동등 alias를 삭제 전에 거부하고 DECIMAL 정밀도를 명시 검증한다. 애플리케이션 소문자 변환으로 DB 비교를 흉내 내지 않는다.
+- nullable 영양값·운영 메모의 SET_UNKNOWN도 지원한다. ZERO는 caffeineMg=0만, UNDISCLOSED 수치 교정은 금지다.
+- 교정 근거 URL/확인일/사유·원천 스냅샷·구조화 의존 baseline은 교정 자체에 보존한다. 1년 감사 정리로 미해결 교정의 근거가 사라지지 않는다. 반복 미해결 충돌은 최초 검출 시각/run을 유지한다.
+- 공개 응답은 원래 공식 출처와 교정 근거를 구분하고 rawNutrition은 직렬화하지 않는다. 관리자 source/raw 왕복은 유지한다.
+- `/operations/{operationId}/revert-preview`는 대상별 현재/복구 상태와 전체 가능 여부를 읽는다. 한 대상의 후속 수정/세대 차이도 전체 실행을 잠근다.
+- 적재 이력은 job/actor·잠금 시점 전후 generation·확인일 범위·소요 시간·안전한 오류 요약을 제공하며, PARTIAL은 성공 브랜드가 실제로 있는 경우만 사용한다. orphanedKeys는 필드 수가 아닌 자연키 수다.

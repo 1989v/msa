@@ -66,6 +66,30 @@ class GatewayRouteAuthSpec(
             .returnResult(String::class.java)
             .status.value()
 
+    Given("랭킹 관리자 전체 계약 경로와 내부 적재 경계") {
+        val reads = listOf("cafe/drinks", "cafe/drinks/key", "cafe/groups", "cafe/brands", "ingest-runs", "ingest-runs/id", "conflicts", "audit-events", "operations/id", "gas/boards", "gas/boards/1/snapshots", "gas/snapshots/1")
+        val posts = listOf("cafe/group-corrections/preview", "cafe/group-corrections", "conflicts/id/resolve", "operations/id/revert")
+        Then("모든 조회·쓰기에서 무인증 401, 일반·판매자 403") {
+            (reads.map { HttpMethod.GET to it } + posts.map { HttpMethod.POST to it } + listOf(HttpMethod.PATCH to "cafe/drinks/key/corrections", HttpMethod.PATCH to "cafe/brands/a/verification")).forEach { (method, path) ->
+                val uri = "/api/v1/admin/ranking/$path"
+                status(method, uri) shouldBe 401
+                status(method, uri, userToken) shouldBe 403
+                status(method, uri, sellerToken) shouldBe 403
+            }
+        }
+        Then("위조 역할 헤더는 인증이 아니고 internal은 노출되지 않는다") {
+            client.patch().uri("/api/v1/admin/ranking/cafe/drinks/key/corrections")
+                .header("X-User-Id", "1").header("X-User-Roles", "ROLE_ADMIN")
+                .exchange().expectStatus().isUnauthorized
+            status(HttpMethod.POST, "/internal/ranking/cafe/drinks/bulk", adminToken) shouldBe 404
+        }
+        Then("관리자 라우트는 content로만 전달한다") {
+            val route = routeLocator.routes.collectList().block().orEmpty().single { it.id == "ranking-admin" }
+            route.uri.toString() shouldBe "http://content:8097"
+            status(HttpMethod.GET, "/api/v1/admin/ranking/cafe/groups", adminToken) shouldNotBeIn listOf(401, 403, 404)
+        }
+    }
+
     Given("상품 쓰기 (ROLE_SELLER · ROLE_ADMIN)") {
         Then("토큰이 없으면 401") {
             status(HttpMethod.POST, "/api/v1/products") shouldBe 401

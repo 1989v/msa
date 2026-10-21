@@ -312,6 +312,11 @@ export default function PrivacyPage() {
                   관심사를 추정하는 <strong>행태 타기팅은 하지 않습니다</strong>.
                 </li>
                 <li>
+                  <strong>랭킹 관리자 교정 감사</strong> — 관리자 회원 ID, 변경 전후 값·근거와 사유를
+                  <strong>1년</strong> 보관한 뒤 자동 파기합니다. 운영 책임 추적을 위해 회원 탈퇴 뒤에도
+                  이 기간까지 유지하며, 이름·이메일은 복제하지 않습니다.
+                </li>
+                <li>
                   <strong>이력서 열람 기록</strong> — <strong>1년</strong> 보관 후 자동으로
                   삭제합니다. 어떤 공유 링크가 언제 열렸는지만 남고, 열람한 사람을 식별하는
                   정보는 기록하지 않습니다.
