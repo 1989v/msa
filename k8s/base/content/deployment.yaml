@@ -29,6 +29,12 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "kubernetes"
+            # ── ranking ──────────────────────────────────────────────────
+            # 카페 주변 매장 공개 스위치(ranking.cafe.nearby-verified). 2026-10-21 전국 수집 19,919곳 중
+            # 확정 19,049 · 검토 870(4.4%, 검토는 노출 안 함), 확정 무작위 30곳 브랜드 오매핑 0,
+            # 표식 좌표 요청 뒤 gateway·content 로그 좌표 검출 0 을 보고 켰다.
+            - name: RANKING_CAFE_NEARBYVERIFIED
+              value: "true"
             # ── place ────────────────────────────────────────────────────
             # 오픈데이터 시드 — 기본 비활성. place-seed ConfigMap 생성 후 PLACE_SEED_ENABLED=true 로 1회 적재(멱등).
             - name: PLACE_SEED_ENABLED
