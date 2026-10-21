@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { createMemoryRouter, RouterProvider } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation, type Location } from 'react-router-dom';
 import CafePage from '../CafePage';
 import * as api from '../../../api/rankingApi';
 import type { CafeDrink } from '../../../api/rankingApi';
@@ -19,9 +19,16 @@ const fixture = (patch: Partial<CafeDrink> = {}): CafeDrink => ({
   caffeinePer100ml: 1.2077, kcalPer100ml: 47.9227, ...patch,
 });
 function setup(path = '/cafe', props: Parameters<typeof CafePage>[0] = {}) {
-  const router = createMemoryRouter([{ path: '/cafe', element: <CafePage {...props} /> }, { path: '/cafe/drink/:drinkName', element: <CafePage {...props} /> }, { path: '/cafe/drinks/:drinkKey', element: <CafePage {...props} /> }], { initialEntries: [path] });
+  // MemoryRouter, not createMemoryRouter: the data router builds a fetch Request with jsdom's AbortSignal,
+  // which Node 24's undici rejects, so every navigation silently failed in CI while passing on Node 22.
+  const router = { state: { location: undefined as unknown as Location } };
+  function LocationProbe() { router.state.location = useLocation(); return null; }
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>);
+  render(<QueryClientProvider client={client}><MemoryRouter initialEntries={[path]}><LocationProbe /><Routes>
+    <Route path="/cafe" element={<CafePage {...props} />} />
+    <Route path="/cafe/drink/:drinkName" element={<CafePage {...props} />} />
+    <Route path="/cafe/drinks/:drinkKey" element={<CafePage {...props} />} />
+  </Routes></MemoryRouter></QueryClientProvider>);
   return router;
 }
 beforeEach(() => {
