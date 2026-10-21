@@ -39,6 +39,13 @@ class CafeStoreTests(unittest.TestCase):
    self.assertEqual(0,c.main([]))
   codes={a['code'] for a in calls[0]['areas']}
   self.assertEqual({'1100000000','1168000000'},codes)
+ def test_verified_release_date_is_published_and_invalid_dates_do_not_write(self):
+  calls=[]
+  self.assertEqual(0,c.run(fetch=lambda cat,page:(1,[self.row(sid=cat)]),source_as_of='2026-10-01',send=lambda path,body:calls.append(body)))
+  self.assertEqual('2026-10-01',calls[0]['sourceAsOf'])
+  self.assertNotEqual(calls[0]['fetchedAt'][:10],calls[0]['sourceAsOf'])
+  for source_date in ('2026-02-30','2099-01-01','not-a-date'):
+   self.assertEqual(1,c.run(fetch=lambda cat,page:(1,[self.row(sid=cat)]),source_as_of=source_date,send=lambda *_:self.fail('invalid date must not publish')))
  def test_invalid_source_does_not_publish(self):
   with self.assertRaises(ValueError): c.project(self.row(sid='SAMPLE-1'))
   r=self.row();r['lat']='nan'

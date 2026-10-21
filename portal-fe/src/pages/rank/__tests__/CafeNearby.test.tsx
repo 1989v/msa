@@ -5,7 +5,8 @@ import CafeNearby from '../CafeNearby';
 import * as api from '../../../api/rankingApi';
 import type { CafeNearbyResult } from '../../../api/rankingApi';
 
-vi.mock('../../../api/rankingApi', () => ({ fetchCafeAreas: vi.fn(), searchCafeNearby: vi.fn() }));
+vi.mock('../CafeNearbyMap', () => ({ default: () => <div aria-label="매장 위치 지도" /> }));
+vi.mock('../../../api/rankingApi', () => ({ fetchCafeAreas: vi.fn(), fetchCafeDrinkNames: vi.fn(), searchCafeNearby: vi.fn() }));
 const getPosition = vi.fn();
 const empty: CafeNearbyResult = { basis: 'serving', sort: 'distance', radiusKm: 1, locationKind: 'CURRENT', areaLabel: null, coverage: { status: 'SUPPORTED', reason: '', brands: [] }, storeSource: '상가정보', storeSourceAsOf: null, storeFetchedAt: '2026-10-21', projectionAsOf: '2026-10-21', mappingRuleVersion: 'v1', totalStores: 0, matchedBrands: 0, page: 0, size: 20, hasNext: false, items: [] };
 function setup() {
@@ -34,17 +35,20 @@ describe('one-shot memory-only location', () => {
   setup(); fireEvent.click(screen.getByRole('button', { name: '현재 위치 사용' }));
   getPosition.mock.calls[0][1]({ code: 1 });
   expect(await screen.findByText(/위치 권한이 거부되었습니다/)).toBeInTheDocument();
-  await screen.findByRole('option', { name: '서울특별시' });
-  fireEvent.change(screen.getByLabelText('시도'), { target: { value: '1100000000' } });
-  await screen.findByRole('option', { name: '강남구' });
-  fireEvent.change(screen.getByLabelText('시군구'), { target: { value: '1168000000' } });
+  fireEvent.click(screen.getByText('시도: 시도 선택'));
+  fireEvent.click(await screen.findByRole('button', { name: '서울특별시' }));
+  fireEvent.click(screen.getByText('시군구: 시군구 선택'));
+  fireEvent.click(await screen.findByRole('button', { name: '강남구' }));
   await waitFor(() => expect(api.searchCafeNearby).toHaveBeenCalledWith(expect.objectContaining({ location: { kind: 'AREA', areaCode: '1168000000' }, radiusKm: 1 }), expect.any(AbortSignal)));
   expect(await screen.findByRole('link', { name: '중심점 출처: 기상청 단기예보 지역대표 위경도' })).toHaveAttribute('href', 'https://www.data.go.kr');
-  fireEvent.change(screen.getByLabelText('반경'), { target: { value: '0.5' } });
+  fireEvent.click(screen.getByRole('button', { name: '500m' }));
   await waitFor(() => expect(api.searchCafeNearby).toHaveBeenLastCalledWith(expect.objectContaining({ radiusKm: 0.5 }), expect.any(AbortSignal)));
-  fireEvent.change(screen.getByLabelText('시도'), { target: { value: '5000000000' } });
-  await screen.findByRole('option', { name: '제주시' });
-  expect(screen.queryByRole('option', { name: '강남구' })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: '위치 변경' }));
+  fireEvent.click(screen.getByText('시도: 서울특별시'));
+  fireEvent.click(screen.getByRole('button', { name: '제주특별자치도' }));
+  fireEvent.click(screen.getByText('시군구: 시군구 선택'));
+  await screen.findByRole('button', { name: '제주시' });
+  expect(screen.queryByRole('button', { name: '강남구' })).not.toBeInTheDocument();
  });
  it('submits position only to the body, aborts on exit, and does not save position in web storage', async () => {
   const local = vi.spyOn(Storage.prototype, 'setItem');
@@ -58,12 +62,12 @@ describe('one-shot memory-only location', () => {
   view.unmount(); expect(signal.aborted).toBe(true); local.mockRestore();
  });
  it('publishes only public store destinations and no user origin in outbound links', async () => {
-  vi.mocked(api.searchCafeNearby).mockResolvedValue({ ...empty, totalStores: 1, matchedBrands: 1, items: [{ storeKey: 's', brandSlug: 'starbucks', brandName: '스타벅스', storeName: '스타벅스', branchName: '강남점', address: '서울', latitude: 37.5, longitude: 127, distanceM: 100, mappingStatus: 'CONFIRMED', selectedDrink: null, variants: [], selectionRequired: true, autoSelected: false, sourceAsOf: null, menuAvailability: 'UNVERIFIED' }] });
+  vi.mocked(api.searchCafeNearby).mockResolvedValue({ ...empty, totalStores: 1, matchedBrands: 1, items: [{ storeKey: 's', brandSlug: 'starbucks', brandName: '스타벅스', storeName: '스타벅스', branchName: '강남점', displayName: '스타벅스 강남점', address: '서울', latitude: 37.5, longitude: 127, distanceM: 100, mappingStatus: 'CONFIRMED', selectedDrink: null, variants: [], selectionRequired: true, autoSelected: false, sourceAsOf: null, menuAvailability: 'UNVERIFIED' }] });
   setup(); fireEvent.click(screen.getByRole('button', { name: '현재 위치 사용' }));
   getPosition.mock.calls[0][0]({ coords: { latitude: 37.51234567, longitude: 127.01234567, accuracy: 10 } });
-  const google = await screen.findByRole('link', { name: '구글맵 길찾기 ↗' });
+  const google = await screen.findByRole('link', { name: '길찾기 ↗' });
   const target = new URL(google.getAttribute('href')!); expect(target.searchParams.get('destination')).toBe('37.5,127'); expect(target.searchParams.has('origin')).toBe(false);
-  const naver = screen.getByRole('link', { name: '네이버 지도에서 메뉴·가격 보기 ↗' });
+  const naver = screen.getByRole('link', { name: '네이버 메뉴·가격 ↗' });
   expect(decodeURIComponent(naver.getAttribute('href')!)).toBe('https://map.naver.com/p/search/스타벅스 강남점');
   expect(screen.getByText(/매장 메뉴 판매 미확인/)).toBeInTheDocument();
  });
@@ -75,9 +79,11 @@ it('clears a pending request when province changes and ignores the late response
  setup(); fireEvent.click(screen.getByRole('button', { name: '현재 위치 사용' }));
  getPosition.mock.calls[0][0]({ coords: { latitude: 37.5, longitude: 127, accuracy: 10 } });
  await screen.findByText('주변 매장 검색 중…');
- await screen.findByRole('option', { name: '서울특별시' });
+ fireEvent.click(screen.getByRole('button', { name: '위치 변경' }));
+ fireEvent.click(screen.getByText('시도: 시도 선택'));
+ await screen.findByRole('button', { name: '서울특별시' });
  const signal = vi.mocked(api.searchCafeNearby).mock.calls[0][1];
- fireEvent.change(screen.getByLabelText('시도'), { target: { value: '1100000000' } });
+ fireEvent.click(screen.getByRole('button', { name: '서울특별시' }));
  expect(signal.aborted).toBe(true);
  expect(screen.queryByText('주변 매장 검색 중…')).not.toBeInTheDocument();
  resolve(empty); await Promise.resolve();

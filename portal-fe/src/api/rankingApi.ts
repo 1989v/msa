@@ -133,7 +133,7 @@ export const fetchCafeComparison = async (name: string, filters: CafeFilters): P
 export interface CafeNearbyCapability { nearbyEnabled: boolean; reason: string; sourceAsOf: string | null; fetchedAt: string | null }
 export interface CafeArea { code: string; name: string; level: 'PROVINCE' | 'DISTRICT'; parentCode: string | null; centerSource: string; sourceAsOf: string | null }
 export interface CafeStore {
-  storeKey: string; brandSlug: string; brandName: string; storeName: string; branchName: string | null;
+  storeKey: string; brandSlug: string; brandName: string; storeName: string; branchName: string | null; displayName?: string;
   address: string; latitude: number; longitude: number; distanceM: number; mappingStatus: string;
   selectedDrink: CafeDrink | null; variants: CafeDrink[]; selectionRequired: boolean; autoSelected: boolean;
   sourceAsOf: string | null; menuAvailability: 'UNVERIFIED';

@@ -38,6 +38,10 @@ class CafeNearbyServiceTest : BehaviorSpec({
             val request = CafeNearbyRequest(location, group = "라떼")
             request.toString() shouldBe "CafeNearbyRequest(redacted)"
             val result = service.search(request)
+            result.storeSourceAsOf shouldBe meta.sourceAsOf
+            service.capability().sourceAsOf shouldBe meta.sourceAsOf
+            result.items.single().sourceAsOf shouldBe meta.sourceAsOf
+            result.items.single().displayName shouldBe "스타벅스 강남점"
             result.items.single().autoSelected shouldBe true
             result.items.single().latitude shouldBe store.latitude
             result.totalStores shouldBe 1

@@ -45,7 +45,42 @@ data class CafeNearbyItem(
     val distanceM: Long, val mappingStatus: String, val selectedDrink: CafeDrinkResponse?,
     val variants: List<CafeDrinkResponse>, val selectionRequired: Boolean, val autoSelected: Boolean,
     val sourceAsOf: LocalDate?, val menuAvailability: String = "UNVERIFIED",
-)
+) {
+    /** Query-only presentation; the source trade and branch names remain unchanged. */
+    val displayName: String get() {
+        val raw = storeName.trim()
+        val branch = branchName?.trim().orEmpty()
+        val aliases = STORE_ALIASES[brandSlug].orEmpty().sortedByDescending { it.length }
+        val alias = aliases.firstOrNull { raw.startsWith(it, ignoreCase = true) }
+            ?: return listOf(raw, branch).filter { it.isNotEmpty() }.distinct().joinToString(" · ")
+        val remainder = raw.substring(alias.length).trim()
+        val local = when {
+            branch.isEmpty() -> remainder
+            remainder.isEmpty() || remainder == branch -> branch
+            remainder.endsWith(branch) -> remainder
+            branch.endsWith(remainder) -> branch
+            // Conflicting complete branches cannot safely be concatenated.
+            remainder.endsWith("점") && branch.endsWith("점") -> return "$raw · $branch"
+            remainder.endsWith("점") -> branch + remainder
+            else -> remainder + branch
+        }
+        return listOf(brandName, local).filter { it.isNotBlank() }.joinToString(" ")
+    }
+
+    private companion object {
+        val STORE_ALIASES = mapOf(
+            "starbucks" to listOf("스타벅스", "starbucks"),
+            "mega" to listOf("메가MGC커피", "메가엠지씨커피", "메가커피", "megamgccoffee", "megacoffee"),
+            "compose" to listOf("컴포즈커피", "composecoffee"),
+            "paik" to listOf("빽다방", "paikdabang"),
+            "ediya" to listOf("이디야커피", "이디야", "ediya"),
+            "twosome" to listOf("투썸플레이스", "atwosomeplace", "twosomeplace"),
+            "theventi" to listOf("더벤티", "theventi"),
+            "dunkin" to listOf("던킨도너츠", "던킨", "dunkindonuts", "dunkin"),
+            "parisbaguette" to listOf("파리바게뜨", "파리바게트", "parisbaguette"),
+        )
+    }
+}
 data class CafeNearbyResult(
     val basis: String, val sort: String, val radiusKm: Double, val locationKind: String, val areaLabel: String?,
     val coverage: CafeCoverage, val storeSource: String, val storeSourceAsOf: LocalDate?, val storeFetchedAt: Instant,

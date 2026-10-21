@@ -79,6 +79,13 @@ python3 -m tests.smoke_test    # 가짜 API 로 수집 경로 E2E
 https://www.data.go.kr/data/15012005/openapi.do . Missing key exits 0 without sending fixtures.
 The nationwide coffee/bakery source is paginated under a 1,000-call budget; any incomplete/empty/changing
 response aborts without publishing. Raw store fields are retained separately from alias mapping.
+The published SOHO API store-row schema has no dataset release-date field. When the source
+release date has been verified, pass `--source-as-of YYYY-MM-DD` (or `SOHO_SOURCE_AS_OF`).
+The collector includes this date in the bulk snapshot; ranking persists it and exposes it through
+capability and nearby responses as the 매장 자료 기준일. Without that evidence the date stays null.
+Neither collection time nor the separate area-center source date is substituted. Existing null
+snapshots require a new complete publication with the verified release date; this does not backfill them.
+
 A complete snapshot is sent once to `/internal/ranking/cafe/stores/bulk`, never in independent chunks.
 
 Bundled official KMA representative centers are in `src/data/cafe_areas.json`, with all selected raw

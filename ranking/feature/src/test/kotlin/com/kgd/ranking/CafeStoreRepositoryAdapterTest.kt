@@ -10,6 +10,8 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.mockk.*
 import tools.jackson.databind.ObjectMapper
 import java.time.Instant
+import java.time.LocalDate
+import java.util.Optional
 
 class CafeStoreRepositoryAdapterTest : BehaviorSpec({
     Given("a complete snapshot with three stores") {
@@ -36,6 +38,16 @@ class CafeStoreRepositoryAdapterTest : BehaviorSpec({
             adapter.replace(snapshot("four", listOf("a", "b", "c", "d"), 180))
             rows.single { it.storeKey == "d" }.missingRounds shouldBe 0
             ObjectMapper().readTree(rows.first().rawJson).get("sourceExtra").asText() shouldBe "unchanged"
+        }
+        Then("a published verified source date survives snapshot metadata independently of collection time") {
+            current = null
+            rows.clear()
+            val published = snapshot("dated", listOf("a"), 240).copy(sourceAsOf = LocalDate.parse("2026-10-01"))
+            adapter.replace(published)
+            every { snapshots.findById(1) } answers { Optional.ofNullable(current) }
+            adapter.metadata()?.sourceAsOf shouldBe LocalDate.parse("2026-10-01")
+            adapter.metadata()?.fetchedAt shouldBe published.fetchedAt
+            rows.single().storeName shouldBe "스타벅스"
         }
         Then("excessive shrink/growth or out-of-order input is rejected before any write") {
             current = CafeStoreSnapshotJpaEntity(version = "latest", fetchedAt = Instant.parse("2026-10-20T00:00:00Z"))

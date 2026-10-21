@@ -21,7 +21,7 @@ export default function CafeNearbyMap({ stores, basis }: { stores: CafeStore[]; 
         const position = { lat: store.latitude, lng: store.longitude }; bounds.extend(position);
         const sugar = store.selectedDrink ? cafeMetric(store.selectedDrink, 'sugar', basis) : null;
         const summary = `${store.brandName} ${store.branchName ?? ''} · 당류 ${sugar ? `${sugar.amount}${sugar.unit ?? ''}` : '선택 필요'}${basis === '100ml' ? '/100ml' : ''}`;
-        return new sdk.Marker({ position, title: summary, label: { text: summary, fontSize: '12px' } });
+        return new sdk.Marker({ position, title: summary, label: { text: `${store.brandName.slice(0, 1)} ${sugar ? `${sugar.amount}${sugar.unit ?? ''}` : '선택 필요'}`, fontSize: '12px' } });
       });
       const cluster = new MarkerClusterer({ map, markers });
       if (stores.length > 1) map.fitBounds(bounds);

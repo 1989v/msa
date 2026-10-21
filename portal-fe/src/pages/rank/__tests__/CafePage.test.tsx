@@ -33,12 +33,14 @@ beforeEach(() => {
   vi.mocked(api.fetchCafeGroups).mockResolvedValue([{ group: '바닐라라떼', count: 5 }]);
   vi.mocked(api.fetchCafeDrinks).mockResolvedValue({ content: [fixture()], totalElements: 1, page: 0, size: 20 });
   vi.mocked(api.fetchCafeDrink).mockResolvedValue(fixture());
+  localStorage.clear();
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
 });
 afterEach(() => vi.clearAllMocks());
 describe('cafe search and filter drafts', () => {
   it('does not request while typing Korean composition; submits once with complete text', async () => {
     const router = setup();
+    fireEvent.click(screen.getByRole('button', { name: /음료 이름 검색/ }));
     const input = screen.getByRole('searchbox');
     fireEvent.compositionStart(input);
     fireEvent.change(input, { target: { value: '바닐라' } });
@@ -143,10 +145,10 @@ describe('normalized name comparison and nullable responses', () => {
     await screen.findByRole('list', { name: '음료 비교' });
     expect(screen.queryByRole('table')).toBeNull();
     expect(screen.getByText(/최저 수치가 아닙니다/)).toBeInTheDocument();
-    expect(screen.getByText('공개 판 전체 2개')).toBeInTheDocument();
-    const variants = document.querySelector('.cafe-variants') as HTMLElement;
-    expect(within(variants).getByRole('link', { name: /ICE · R · 414ml · 디카페인/ })).toHaveAttribute('href', '/cafe/drinks/key?basis=serving');
-    expect(within(variants).getByRole('link', { name: /HOT · L · 414ml · 수치 공개/ })).toHaveAttribute('href', '/cafe/drinks/large?basis=serving');
+    const variants = screen.getByRole('group', { name: '브랜드 공개 판 전체 2개' });
+    expect(within(variants).getByRole('button', { name: /ICE · R · 414ml · 디카페인/ })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(within(variants).getByRole('button', { name: /HOT · L · 414ml · 수치 공개/ }));
+    expect(screen.getByRole('link', { name: '상세 ›' })).toHaveAttribute('href', '/cafe/drinks/large?basis=serving');
     fireEvent.click(screen.getByRole('button', { name: '당류 낮은 순 ↑' }));
     await waitFor(() => expect(api.fetchCafeComparison).toHaveBeenLastCalledWith('바닐라라떼', expect.objectContaining({ direction: 'desc' })));
   });
@@ -168,6 +170,7 @@ describe('normalized name comparison and nullable responses', () => {
     setup();
     await waitFor(() => expect(api.fetchCafeDrinkNames).toHaveBeenCalledWith(''));
     vi.mocked(api.fetchCafeDrinkNames).mockClear();
+    fireEvent.click(screen.getByRole('button', { name: /음료 이름 검색/ }));
     const input = screen.getByRole('searchbox');
     fireEvent.compositionStart(input); fireEvent.change(input, { target: { value: '라' } });
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -177,12 +180,13 @@ describe('normalized name comparison and nullable responses', () => {
   });
 });
 
-it('enables the nearby entry at the top of the normalized drink page without mock stores', async () => {
+it('enables the fixed nearby entry on the normalized drink page without mock stores', async () => {
   setup('/cafe/drink/라떼', { nearbyEnabled: true });
   const entry = screen.getByRole('button', { name: '주변 카페에서 음료 찾기' });
-  expect(document.querySelector('main')?.firstElementChild).toContainElement(entry);
+  expect(entry).toHaveClass('cafe-nearby-cta');
   fireEvent.click(entry);
   expect(screen.getByRole('button', { name: '현재 위치 사용' })).toBeInTheDocument();
+  fireEvent.click(screen.getByText('주변 비교 도움말'));
   expect(screen.getByText(/현재 위치는 한 번만 사용하며 저장하지 않습니다/)).toBeInTheDocument();
 });
 
@@ -211,4 +215,76 @@ it('opens nearby from drink detail with the exact variant selected in memory', a
   fireEvent.click(screen.getByRole('button', { name: '전국 음료 비교로 돌아가기' }));
   expect(screen.getByRole('heading', { name: '바닐라라떼' })).toBeInTheDocument();
   expect(window.location.href).not.toContain('37.5');
+});
+
+it('uses real brand counts for four horizontal popular chips and hides all nearby actions when unavailable', async () => {
+  vi.mocked(api.fetchCafeDrinkNames).mockResolvedValue([
+    { drinkName: '티', brandCount: 1, rowCount: 10 }, { drinkName: '라떼', brandCount: 8, rowCount: 30 },
+    { drinkName: '모카', brandCount: 4, rowCount: 20 }, { drinkName: '아메리카노', brandCount: 6, rowCount: 12 },
+    { drinkName: '콜드브루', brandCount: 2, rowCount: 8 },
+  ]);
+  setup();
+  const popular = await screen.findByRole('navigation', { name: '많이 찾는 음료' });
+  await waitFor(() => expect(within(popular).getAllByRole('link')).toHaveLength(4));
+  expect(within(popular).getAllByRole('link').map(link => link.textContent)).toEqual(['라떼 8', '아메리카노 6', '모카 4', '콜드브루 2']);
+  expect(screen.queryByRole('button', { name: '주변 카페에서 음료 찾기' })).not.toBeInTheDocument();
+  expect(document.querySelector('select')).toBeNull();
+});
+
+it('highlights autocomplete and saves removable recent searches without navigation on typing', async () => {
+  vi.mocked(api.fetchCafeDrinkNames).mockImplementation(async q => q ? [{ drinkName: '바닐라라떼', brandCount: 8, rowCount: 46 }] : []);
+  const router = setup();
+  fireEvent.click(screen.getByRole('button', { name: /음료 이름 검색/ }));
+  fireEvent.change(screen.getByRole('searchbox'), { target: { value: '바닐라' } });
+  const link = await screen.findByRole('link', { name: /바닐라\s*라떼 8개 브랜드/ });
+  expect(link.querySelector('mark')?.textContent).toBe('바닐라');
+  expect(router.state.location.search).toBe('');
+  fireEvent.click(link);
+  await screen.findByRole('heading', { name: '바닐라라떼' });
+  expect(localStorage.getItem('cafe-recent-searches')).toContain('바닐라라떼');
+  fireEvent.click(screen.getByRole('button', { name: /음료 이름 검색/ }));
+  fireEvent.click(screen.getByRole('button', { name: '바닐라라떼 최근 검색 삭제' }));
+  expect(localStorage.getItem('cafe-recent-searches')).toBe('[]');
+});
+
+it('keeps selected card variants through basis/sort changes and puts unknowns last in either direction', async () => {
+  const a = fixture({ brandSlug: 'a', brandName: '가브랜드', sugarG: 5 });
+  const large = fixture({ drinkKey: 'large', brandSlug: 'a', brandName: '가브랜드', sugarG: 30, sizeLabel: 'L', sugarPer100ml: 7.2 });
+  const b = fixture({ drinkKey: 'b', brandSlug: 'b', brandName: '나브랜드', sugarG: null, sugarPer100ml: null });
+  vi.mocked(api.fetchCafeComparison).mockResolvedValue([{ brandSlug: 'a', brandName: a.brandName, representative: a, variants: [a, large] }, { brandSlug: 'b', brandName: b.brandName, representative: b, variants: [b] }]);
+  setup('/cafe/drink/라떼');
+  const cards = await screen.findByRole('list', { name: '음료 비교' });
+  fireEvent.click(within(screen.getByRole('group', { name: '가브랜드 공개 판 전체 2개' })).getByRole('button', { name: /L · 414ml/ }));
+  fireEvent.click(screen.getByRole('button', { name: '당류 낮은 순 ↑' }));
+  await waitFor(() => expect(within(cards).getAllByRole('link', { name: '상세 ›' })[0]).toHaveAttribute('href', '/cafe/drinks/large?basis=serving'));
+  expect(cards.lastElementChild).toHaveTextContent('나브랜드');
+  expect(cards.lastElementChild?.querySelector('.cafe-rank')?.textContent).toBe('–');
+  fireEvent.click(screen.getByRole('button', { name: '100ml당' }));
+  await waitFor(() => expect(within(screen.getByRole('list', { name: '음료 비교' })).getAllByRole('link', { name: '상세 ›' })[0]).toHaveAttribute('href', '/cafe/drinks/large?basis=100ml'));
+});
+
+it('keeps unfiltered popular drinks when a no-match search is closed', async () => {
+  vi.mocked(api.fetchCafeDrinkNames).mockImplementation(async q => q ? [] : [{ drinkName: '라떼', brandCount: 8, rowCount: 20 }]);
+  setup();
+  expect(await screen.findByRole('link', { name: '라떼 8' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: /음료 이름 검색/ }));
+  fireEvent.change(screen.getByRole('searchbox'), { target: { value: '없는음료' } });
+  await waitFor(() => expect(api.fetchCafeDrinkNames).toHaveBeenCalledWith('없는음료'));
+  fireEvent.click(screen.getByRole('button', { name: '‹ 검색 닫기' }));
+  expect(screen.getByRole('link', { name: '라떼 8' })).toBeInTheDocument();
+});
+
+it('completes the home nearby path through an actual drink selection and explicit location action', async () => {
+  const getPosition = vi.fn();
+  Object.defineProperty(navigator, 'geolocation', { configurable: true, value: { getCurrentPosition: getPosition } });
+  vi.mocked(api.fetchCafeDrinkNames).mockResolvedValue([{ drinkName: '라떼', brandCount: 8, rowCount: 20 }]);
+  vi.mocked(api.searchCafeNearby).mockRejectedValue(new Error('offline'));
+  setup('/cafe', { nearbyEnabled: true });
+  fireEvent.click(screen.getByRole('button', { name: '주변 카페에서 음료 찾기' }));
+  fireEvent.click(await screen.findByRole('button', { name: '라떼 · 8개 브랜드' }));
+  expect(api.searchCafeNearby).not.toHaveBeenCalled();
+  expect(getPosition).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: '현재 위치 사용' }));
+  await act(async () => getPosition.mock.calls[0][0]({ coords: { latitude: 37.5, longitude: 127, accuracy: 10 } }));
+  await waitFor(() => expect(api.searchCafeNearby).toHaveBeenCalledWith(expect.objectContaining({ drinkName: '라떼', location: { kind: 'CURRENT', lat: 37.5, lng: 127 } }), expect.any(AbortSignal)));
 });

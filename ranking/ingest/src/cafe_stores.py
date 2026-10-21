@@ -6,7 +6,7 @@ No fixture fallback and no partial write, including an exhausted call budget.
 """
 from __future__ import annotations
 import argparse
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 import json
 import math
 import os
@@ -130,12 +130,18 @@ def collect(fetch, budget=1000, categories=CATEGORIES):
  if not projected: raise ValueError('No target stores; preserving previous snapshot')
  return projected, totals
 
-def run(fetch=None, send=None, areas=None):
+def run(fetch=None, send=None, areas=None, source_as_of=None):
  key = os.environ.get('SOHO_API_KEY') or os.environ.get('DATA_GO_KR_KEY')
  if not key and fetch is None:
   print('[RANKING] Cafe stores not enabled: SOHO_API_KEY required; apply https://www.data.go.kr/data/15012005/openapi.do')
   return 0
  try:
+  # SOHO storeListInUpjong exposes no dataset-as-of field in its published schema.
+  # Accept the operator's verified source release date explicitly; never use fetchedAt
+  # or the area's unrelated center-source date as a substitute.
+  source_date = date.fromisoformat(source_as_of) if source_as_of else None
+  if source_date and source_date > datetime.now(timezone.utc).date():
+   raise ValueError('Future source date')
   categories = CATEGORIES if fetch else discover_categories(key)
   stores, total = collect(fetch or (lambda category,page: http_page(key,category,page)), budget=999, categories=categories)
   if areas is None:
@@ -146,7 +152,7 @@ def run(fetch=None, send=None, areas=None):
   parents = {a['parentCode'] for a in districts}
   areas = [a for a in areas if a['level'] == 'PROVINCE' and a['code'] in parents] + districts
   now = datetime.now(timezone.utc).isoformat()
-  snapshot = dict(version=now.replace(':','-').replace('+','-'), complete=True, sourceAsOf=None,
+  snapshot = dict(version=now.replace(':','-').replace('+','-'), complete=True, sourceAsOf=source_date.isoformat() if source_date else None,
    fetchedAt=now, mappingRuleVersion=RULE_VERSION, sourceTotal=total, receivedTotal=total,
    stores=stores, areas=areas or [])
   (send or ranking_client._post)('/internal/ranking/cafe/stores/bulk', snapshot)
@@ -160,8 +166,9 @@ def run(fetch=None, send=None, areas=None):
 def main(argv=None):
  parser=argparse.ArgumentParser(description=__doc__)
  parser.add_argument('--areas', type=Path, help='Reviewed official legal-area codes and center-source manifest, never inferred store centroid')
+ parser.add_argument('--source-as-of', help='Verified SOHO dataset release date (YYYY-MM-DD), never the collection date')
  args=parser.parse_args(argv)
- return run(areas=json.loads(args.areas.read_text()) if args.areas else None)
+ return run(areas=json.loads(args.areas.read_text()) if args.areas else None, source_as_of=args.source_as_of or os.environ.get('SOHO_SOURCE_AS_OF'))
 
 if __name__ == '__main__':
  raise SystemExit(main())
