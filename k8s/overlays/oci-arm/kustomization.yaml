@@ -411,7 +411,7 @@ images:
     newTag: e2d04a5
   - name: commerce/content
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/content
-    newTag: 2cc2441
+    newTag: a7f488c
   - name: commerce/engagement
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/engagement
     newTag: bbb42ec
@@ -426,7 +426,7 @@ images:
     newTag: 9d34dd7
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: 2cc2441
+    newTag: a7f488c
   - name: commerce/quant-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant-fe
     newTag: cb23a78
@@ -435,7 +435,7 @@ images:
     newTag: 9a6adac
   - name: commerce/ranking-ingest
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/ranking-ingest
-    newTag: 2cc2441
+    newTag: a7f488c
   - name: commerce/recommendation-ann
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/recommendation-ann
     newTag: 6a1889c
