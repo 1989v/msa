@@ -35,3 +35,29 @@ it('preserves multiple source groups as repeated URL parameters and keeps single
   expect(writeCafeFilters(filters).getAll('group')).toEqual(['아메리카노', '콜드브루']);
   expect(readCafeFilters(new URLSearchParams('group=라떼')).group).toBe('라떼');
 });
+
+it.each([
+  ['coffee', ['아메리카노', '에스프레소', '콜드브루']],
+  ['coffee-latte', ['라떼', '바닐라라떼', '카라멜마끼아또', '카페모카', '카푸치노']],
+  ['non-coffee', ['말차·녹차라떼', '고구마라떼', '초코', '밀크티', '우유·요거트']],
+  ['tea', ['티']], ['ade', ['에이드', '탄산음료']], ['blended', ['스무디·프라페']], ['juice', ['주스']], ['etc', ['기타']],
+])('expands category %s to exact source groups with no implicit name query', (slug, groups) => {
+  const filters = readCafeFilters(new URLSearchParams(`category=${slug}&maxSugar=10`));
+  expect(filters.group).toEqual(groups);
+  expect(filters.q).toBeUndefined();
+  const params = writeCafeFilters(filters);
+  expect(params.getAll('category')).toEqual([slug]);
+  expect(params.has('group')).toBe(false);
+  expect(readCafeFilters(params)).toEqual(filters);
+});
+
+it('handles decaf, all, unknown categories and explicit legacy group precedence', () => {
+  const decaf = readCafeFilters(new URLSearchParams('category=decaf&group=티'));
+  expect(decaf).toMatchObject({ caffeine: 'decaf', group: undefined });
+  expect(writeCafeFilters(decaf).has('caffeine')).toBe(false);
+  expect(readCafeFilters(new URLSearchParams('category=all&group=티')).group).toBeUndefined();
+  expect(readCafeFilters(new URLSearchParams('category=unknown&group=티')).group).toBe('티');
+  expect(readCafeFilters(new URLSearchParams('category=tea&group=주스')).group).toEqual(['티']);
+  expect(writeCafeFilters({ ...decaf, caffeine: undefined }).has('category')).toBe(false);
+  expect(writeCafeFilters({ ...readCafeFilters(new URLSearchParams('category=coffee')), group: undefined }).has('category')).toBe(false);
+});

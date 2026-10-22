@@ -96,6 +96,7 @@ export interface CafeDrinkPage { content: CafeDrink[]; totalElements: number; pa
 export interface CafeBrand { brandSlug: string; brandName: string; count: number; sourceUrls: string[]; checkedAt: string }
 export interface CafeGroup { group: string; count: number }
 export interface CafeFilters {
+  category?: string; // UI category slug; API queries use the expanded group/caffeine fields.
   q?: string; brand?: string[]; group?: string | string[]; temperature?: string;
   maxSugar?: number; maxCaffeine?: number; maxKcal?: number; sizeLabel?: string; caffeine?: 'none' | 'zero' | 'decaf'; caffeineStatus?: CaffeineStatus[]; basis?: 'serving' | '100ml';
   direction?: 'asc' | 'desc';
@@ -104,6 +105,7 @@ export interface CafeFilters {
 export const fetchCafeDrinks = async (filters: CafeFilters): Promise<CafeDrinkPage> => {
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([key, value]) => {
+    if (key === 'category') return;
     if (Array.isArray(value)) value.forEach(item => params.append(key, item));
     else if (value !== undefined && value !== '') params.set(key, String(value));
   });
@@ -124,6 +126,7 @@ export const fetchCafeDrinkNames = async (q: string): Promise<CafeDrinkName[]> =
 export const fetchCafeComparison = async (name: string, filters: CafeFilters): Promise<CafeBrandVariants[]> => {
   const params = new URLSearchParams({ name });
   Object.entries(filters).forEach(([key, value]) => {
+    if (key === 'category') return;
     if (Array.isArray(value)) value.forEach(item => params.append(key, item));
     else if (value !== undefined) params.set(key, String(value));
   });

@@ -57,9 +57,9 @@ describe('v3 home and search', () => {
     await waitFor(() => expect(within(popular).getAllByRole('link')).toHaveLength(4));
     expect(within(popular).getAllByRole('link').map(link => link.textContent)).toEqual(['라떼8개 브랜드', '아메리카노6개 브랜드', '모카4개 브랜드', '콜드브루2개 브랜드']);
     const chips = within(screen.getByRole('navigation', { name: '음료 유형' })).getAllByRole('link');
-    expect(chips.map(chip => chip.textContent)).toEqual(['전체', '커피', '라떼', '에이드', '스무디', '티', '프라페', '주스', '논커피', '디카페인']);
-    expect(new URL(chips[1].getAttribute('href')!, 'https://example.com').searchParams.getAll('group')).toEqual(['아메리카노', '에스프레소', '콜드브루']);
-    expect(chips[9]).toHaveAttribute('href', '/cafe/search?caffeine=decaf');
+    expect(chips.map(chip => chip.textContent)).toEqual(['전체', '커피', '커피 라떼', '논커피 라떼', '티', '에이드·탄산', '스무디·프라페', '주스', '디카페인', '기타']);
+    expect(new URL(chips[1].getAttribute('href')!, 'https://example.com').searchParams.get('category')).toBe('coffee');
+    expect(chips[8]).toHaveAttribute('href', '/cafe/search?category=decaf&page=0');
     expect(screen.queryByRole('button', { name: '주변 카페에서 음료 찾기' })).toBeNull();
     expect(document.querySelector('select')).toBeNull();
   });
@@ -299,4 +299,44 @@ it('keeps zero caffeine numeric without the official-zero helper', async () => {
   setup('/cafe/drinks/key');
   expect((await screen.findAllByLabelText(/^카페인 0mg\s*$/)).length).toBeGreaterThan(0);
   expect(screen.queryByText('공식 0')).toBeNull();
+});
+
+it.each(['/cafe/search', '/cafe/results'])('keeps category selection and toggle-off in %s with other conditions', async path => {
+  const router = setup(`${path}?category=coffee&brand=a&q=라떼&temperature=ICE&maxSugar=10&basis=100ml&sort=kcal&direction=desc&page=2`);
+  const chips = screen.getByRole('navigation', { name: '음료 유형' });
+  expect(within(chips).getByRole('link', { name: '커피' })).toHaveAttribute('aria-current', 'true');
+  const preceding = path.endsWith('search') ? document.querySelector('.cafe-search-toolbar') : screen.getByLabelText('적용된 조건');
+  expect(preceding?.nextElementSibling).toBe(chips);
+  if (path.endsWith('search')) expect(chips.nextElementSibling).toBe(screen.getByRole('navigation', { name: '카페별 검색 결과' }));
+  fireEvent.click(within(chips).getByRole('link', { name: '논커피 라떼' }));
+  await waitFor(() => expect(api.fetchCafeDrinks).toHaveBeenCalledWith(expect.objectContaining({ group: ['말차·녹차라떼', '고구마라떼', '초코', '밀크티', '우유·요거트'], q: '라떼', brand: ['a'], temperature: 'ICE', maxSugar: 10, basis: '100ml', sort: 'kcal', direction: 'desc', page: 0 })));
+  expect(router.state.location.pathname).toBe(path);
+  expect(new URLSearchParams(router.state.location.search).getAll('category')).toEqual(['non-coffee']);
+  expect(new URLSearchParams(router.state.location.search).has('group')).toBe(false);
+  fireEvent.click(within(chips).getByRole('link', { name: '논커피 라떼' }));
+  await waitFor(() => expect(within(chips).getByRole('link', { name: '전체' })).toHaveAttribute('aria-current', 'true'));
+  expect(new URLSearchParams(router.state.location.search).get('category')).toBe('all');
+  expect(api.fetchCafeDrinks).toHaveBeenLastCalledWith(expect.objectContaining({ group: undefined, caffeine: undefined, maxSugar: 10, q: '라떼' }));
+});
+
+it('recognizes a legacy single-group selection and clears a decaf category chip', async () => {
+  const router = setup('/cafe/search?group=기타&maxKcal=200');
+  const chips = screen.getByRole('navigation', { name: '음료 유형' });
+  expect(within(chips).getByRole('link', { name: '기타' })).toHaveAttribute('aria-current', 'true');
+  fireEvent.click(within(chips).getByRole('link', { name: '디카페인' }));
+  await waitFor(() => expect(api.fetchCafeDrinks).toHaveBeenCalledWith(expect.objectContaining({ group: undefined, caffeine: 'decaf', maxKcal: 200 })));
+  expect(new URLSearchParams(router.state.location.search).get('category')).toBe('decaf');
+  fireEvent.click(within(chips).getByRole('link', { name: '디카페인' }));
+  await waitFor(() => expect(api.fetchCafeDrinks).toHaveBeenCalledWith(expect.objectContaining({ caffeine: undefined, maxKcal: 200 })));
+});
+
+it.each([
+  ['coffee', /아메리카노 · 에스프레소 · 콜드브루/],
+  ['decaf', /디카페인/],
+])('removes an applied %s condition without restoring it from category metadata', async (category, label) => {
+  const router = setup(`/cafe/results?category=${category}&maxSugar=10`);
+  fireEvent.click(within(screen.getByLabelText('적용된 조건')).getByRole('button', { name: label }));
+  await waitFor(() => expect(api.fetchCafeDrinks).toHaveBeenCalledWith(expect.objectContaining({ group: undefined, caffeine: undefined, maxSugar: 10 })));
+  expect(new URLSearchParams(router.state.location.search).has('category')).toBe(false);
+  expect(within(screen.getByRole('navigation', { name: '음료 유형' })).getByRole('link', { name: '전체' })).toHaveAttribute('aria-current', 'true');
 });
