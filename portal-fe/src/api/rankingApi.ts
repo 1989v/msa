@@ -92,12 +92,12 @@ export interface CafeDrink {
   cupVolumeMl: number | null; volumeSource: 'ROW' | 'BRAND_SIZE_TABLE' | 'NONE' | 'ADMIN_VERIFIED'; kcalPer100ml: number | null;
   drinkGroup: string; sugarPer100ml: number | null; caffeinePer100ml: number | null;
 }
-export interface CafeDrinkPage { content: CafeDrink[]; totalElements: number; page: number; size: number }
+export interface CafeDrinkPage { content: CafeDrink[]; totalElements: number; page: number; size: number; sizeLabels?: string[] }
 export interface CafeBrand { brandSlug: string; brandName: string; count: number; sourceUrls: string[]; checkedAt: string }
 export interface CafeGroup { group: string; count: number }
 export interface CafeFilters {
   q?: string; brand?: string[]; group?: string; temperature?: string;
-  maxSugar?: number; maxCaffeine?: number; caffeine?: 'none' | 'zero' | 'decaf'; caffeineStatus?: CaffeineStatus[]; basis?: 'serving' | '100ml';
+  maxSugar?: number; maxCaffeine?: number; maxKcal?: number; sizeLabel?: string; caffeine?: 'none' | 'zero' | 'decaf'; caffeineStatus?: CaffeineStatus[]; basis?: 'serving' | '100ml';
   direction?: 'asc' | 'desc';
   sort?: 'sugar' | 'caffeine' | 'kcal' | 'sugarPer100ml'; page?: number; size?: number;
 }

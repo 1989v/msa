@@ -28,9 +28,11 @@ class CafeDrinkController(private val getCafeDrinks: GetCafeDrinksUseCase) {
         @RequestParam(defaultValue = "serving") basis: String,
         @RequestParam(required = false) caffeineStatus: List<CaffeineStatus>?,
         @RequestParam(defaultValue = "asc") direction: String,
+        @RequestParam(required = false) maxKcal: BigDecimal?,
+        @RequestParam(required = false) sizeLabel: String?,
     ): ApiResponse<CafeDrinkPage> {
         val query = try {
-            CafeDrinkQuery(q, brand.orEmpty(), group, temperature, maxSugar, maxCaffeine, caffeine, sort, page, size, basis, caffeineStatus.orEmpty(), direction)
+            CafeDrinkQuery(q, brand.orEmpty(), group, temperature, maxSugar, maxCaffeine, caffeine, sort, page, size, basis, caffeineStatus.orEmpty(), direction, maxKcal, sizeLabel)
         } catch (_: IllegalArgumentException) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid cafe filters")
         }

@@ -35,6 +35,16 @@ class CafeDrinkQueryRepositoryTest : BehaviorSpec({
     }
     afterSpec { em.close(); factory.close() }
     Given("공개·0·디카페인·미공개 네 음료") {
+        Then("칼로리 상한과 원문 사이즈를 DB에서 적용하며 총계와 사이즈 facet은 페이지에 제한되지 않는다") {
+            val query = CafeDrinkQuery(maxKcal = BigDecimal("200"), sizeLabel = "Tall", size = 1)
+            val result = repository.search(query, PageRequest.of(0, 1))
+            result.totalElements shouldBe 4L
+            result.content.size shouldBe 1
+            result.sizeLabels shouldBe listOf("Tall")
+            repository.search(query.copy(maxKcal = BigDecimal.ZERO), PageRequest.of(0, 1)).totalElements shouldBe 0L
+            repository.search(query.copy(sizeLabel = "Large"), PageRequest.of(0, 1)).totalElements shouldBe 0L
+            shouldThrow<IllegalArgumentException> { CafeDrinkQuery(maxKcal = BigDecimal("-1")) }
+        }
         Then("카페인 없음은 ZERO+DECAF만 반환하고 미공개는 섞이지 않는다") {
             val result = repository.search(CafeDrinkQuery(caffeine = "none"), PageRequest.of(0, 50))
             result.totalElements shouldBe 2

@@ -2190,7 +2190,7 @@ export function renderCafeHtml(shell) {
   return compose(shell, {
     lang: 'ko', title: meta.title, description: meta.description, canonical: meta.canonical,
     siteName: RANK_SITE_NAME, image: meta.image,
-    body: shellBody('<h1>카페 음료 비교</h1><p>' + escapeHtml(meta.description) + '</p><p>공식 기본 레시피 기준 · 미공개는 0이 아닙니다.</p>'),
+    body: shellBody('<h1>카페 음료 비교</h1><p>' + escapeHtml(meta.description) + '</p><h2>당류, 카페인, 칼로리 한눈에 비교해 보세요!</h2><p><a href="/cafe/search">음료 검색</a> · <a href="/cafe/filter">조건별로 찾아보기</a></p><p>공식 기본 레시피 기준 · 미공개는 0이 아닙니다. 디카페인은 0mg와 다릅니다.</p>'),
   });
 }
 

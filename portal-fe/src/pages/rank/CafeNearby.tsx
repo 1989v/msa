@@ -61,7 +61,7 @@ export default function CafeNearby({ filters, drinkName, close, initialSelection
     setPending(true); setError(false); setResult(null);
     void searchCafeNearby({ location: position, radiusKm, group: filters.group, q: filters.q, drinkName: activeDrinkName,
       brands: filters.brand ?? [], temperature: filters.temperature, caffeineStatus: filters.caffeineStatus ?? [], caffeine: filters.caffeine,
-      maxSugar: filters.maxSugar, maxCaffeine: filters.maxCaffeine, basis: filters.basis ?? 'serving', sort, direction: filters.direction ?? 'asc',
+      maxSugar: filters.maxSugar, maxCaffeine: filters.maxCaffeine, maxKcal: filters.maxKcal, sizeLabel: filters.sizeLabel, basis: filters.basis ?? 'serving', sort, direction: filters.direction ?? 'asc',
       selectedDrinkKeys: Object.values(selected), page, size: 20,
     }, abort.signal).then(data => { if (!abort.signal.aborted) setResult(data); }).catch(() => { if (!abort.signal.aborted) setError(true); }).finally(() => { if (!abort.signal.aborted) setPending(false); });
     return () => abort.abort();
@@ -73,7 +73,7 @@ export default function CafeNearby({ filters, drinkName, close, initialSelection
     {result && <Suspense fallback={<p>지도 불러오는 중…</p>}><CafeNearbyMap stores={result.items} basis={result.basis} /></Suspense>}
     <div className="cafe-nearby-sheet"><h2 id="cafe-nearby-title">{result ? `매장 ${result.totalStores ?? '상한 도달'}곳 · 브랜드 ${result.matchedBrands}개` : '주변 카페에서 음료 찾기'}</h2>
     <div className="cafe-radius" role="group" aria-label="반경">{[0.5, 1, 3].map(radius => <button type="button" key={radius} aria-pressed={radiusKm === radius} onClick={() => { setRadius(radius); setPage(0); }}>{radius === 0.5 ? '500m' : `${radius}km`}</button>)}<button type="button" onClick={() => setChangingLocation(value => !value)}>위치 변경</button></div>
-    <details className="cafe-choice"><summary>정렬: {({ distance: '가까운 순', sugar: '당류', caffeine: '카페인', kcal: '열량' } as Record<string,string>)[sort]}</summary>{[['distance', '가까운 순'], ['sugar', '당류'], ['caffeine', '카페인'], ['kcal', '열량']].map(([value, label]) => <button type="button" key={value} aria-pressed={sort === value} onClick={() => { setSort(value); setPage(0); }}>{label}</button>)}</details>
+    <details className="cafe-choice"><summary>정렬: {({ distance: '가까운 순', sugar: '당류', caffeine: '카페인', kcal: '칼로리' } as Record<string,string>)[sort]}</summary>{[['distance', '가까운 순'], ['sugar', '당류'], ['caffeine', '카페인'], ['kcal', '칼로리']].map(([value, label]) => <button type="button" key={value} aria-pressed={sort === value} onClick={() => { setSort(value); setPage(0); }}>{label}</button>)}</details>
     <p className="cafe-note">수치는 브랜드 기본 레시피입니다. 매장별 판매 여부는 확인되지 않았습니다. 위치는 저장하지 않습니다.</p>
     <details><summary>주변 비교 도움말</summary><p>현재 위치는 한 번만 사용하며 저장하지 않습니다. 매장까지의 직선거리이며 도보시간이 아닙니다. 지도는 공개 매장 위치만 표시합니다.</p><p className="cafe-note">{filters.basis === '100ml' ? '100ml당 농도' : '1회 제공량'} · 수치 정렬 {filters.direction === 'desc' ? '높은 순' : '낮은 순'} · 미확정·음료 선택 필요는 마지막</p></details>
     {changingLocation && <section aria-label="검색 위치 선택"><button type="button" onClick={locate} disabled={locating}>{locating ? '위치 확인 중…' : '현재 위치 사용'}</button>{locating && <button type="button" onClick={clearPosition}>위치 요청 취소</button>}

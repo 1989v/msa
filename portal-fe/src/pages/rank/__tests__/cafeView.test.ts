@@ -33,3 +33,9 @@ describe('metric display', () => {
     expect(formatCafeNumber(10)).toBe('10');
   });
 });
+
+it('never leaks nonfinite or missing values through metadata labels', () => {
+  expect(volumeLabel({ sizeLabel: null, cupVolumeMl: NaN, servingBasis: null })).toBe('용량 미표시');
+  expect(caffeineLabel({ caffeineStatus: 'DISCLOSED', caffeineMg: NaN })).toBe('수치 미확정');
+  expect(caffeineLabel({ caffeineStatus: 'DECAF', caffeineMg: undefined as unknown as null })).toBe('디카페인 · 수치 미확정');
+});

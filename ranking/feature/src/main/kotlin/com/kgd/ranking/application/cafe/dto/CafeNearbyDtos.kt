@@ -17,6 +17,7 @@ class CafeNearbyRequest(
     val basis: String = "serving", val sort: String = "distance", val direction: String = "asc",
     val selectedDrinkKeys: List<String> = emptyList(), val page: Int = 0, val size: Int = 20,
     val drinkName: String? = null, val caffeine: String? = null,
+    val maxKcal: BigDecimal? = null, val sizeLabel: String? = null,
 ) { override fun toString() = "CafeNearbyRequest(redacted)" }
 
 data class CafeStoreRecord(

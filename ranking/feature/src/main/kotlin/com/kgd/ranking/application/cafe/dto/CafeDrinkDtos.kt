@@ -144,7 +144,7 @@ data class CafeDrinkResponse(
 
 data class CafeDrinkBulkRequest(val drinks: List<CafeDrinkUpsertItem>, val parentRunId: String? = null)
 data class CafeDrinkBulkResult(val received: Int, val replacedBrands: Set<String>)
-data class CafeDrinkPage(val content: List<CafeDrinkResponse>, val totalElements: Long, val page: Int, val size: Int)
+data class CafeDrinkPage(val content: List<CafeDrinkResponse>, val totalElements: Long, val page: Int, val size: Int, val sizeLabels: List<String> = emptyList())
 data class CafeGroupCount(val group: String, val count: Long)
 data class CafeBrandCount(val brandSlug: String, val brandName: String, val count: Long, val sourceUrls: List<String>, val checkedAt: LocalDate)
 
@@ -162,6 +162,8 @@ data class CafeDrinkQuery(
     val basis: String = "serving",
     val caffeineStatus: List<CaffeineStatus> = emptyList(),
     val direction: String = "asc",
+    val maxKcal: BigDecimal? = null,
+    val sizeLabel: String? = null,
 ) {
     init {
         require(direction in setOf("asc", "desc")) { "Unknown direction" }
@@ -172,6 +174,8 @@ data class CafeDrinkQuery(
         require(caffeine == null || caffeineStatus.isEmpty()) { "Use caffeine or caffeineStatus, not both" }
         require(maxSugar == null || maxSugar.signum() >= 0)
         require(maxCaffeine == null || maxCaffeine.signum() >= 0)
+        require(maxKcal == null || maxKcal.signum() >= 0)
+        require(sizeLabel == null || sizeLabel.length in 1..120)
     }
 }
 

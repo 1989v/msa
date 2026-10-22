@@ -1,13 +1,13 @@
 <!-- source: packages/design-system/src/tokens.css, docs/conventions/frontend-design.md, docs/conventions/design-system.md -->
 <!-- standard: docs/standards/design-md.md -->
 ---
-version: 2.4.0
+version: 2.5.0
 archetype: dark-trading
 # 브랜드/포트폴리오 화면(portal-fe `/`, `/portfolio`, resume 호스트)만 두 번째 아키타입을
 # 쓴다 — §12 참조. 공유 토큰은 그대로 dark-trading 이다.
 archetype_secondary: k-heritage
 mood: [data-dense, calm-night, korean-fintech]
-last_updated: 2026-09-03
+last_updated: 2026-10-22
 owners: [frontend-platform]
 default_theme: dark
 themes: [dark, light]
@@ -375,3 +375,43 @@ flat 디자인 지향. 카드 사이에 그림자 남발 금지.
 - 토큰 코드 (Source of truth — CSS): [`packages/design-system/src/tokens.css`](packages/design-system/src/tokens.css)
 - 컴포넌트 코드: [`packages/design-system/src/components/`](packages/design-system/src/components/)
 - 룩북: `quant/frontend/src/pages/PortfolioDemoPage.tsx`, `TrancheDemoPage.tsx`
+
+
+## 13. Cafe surface — `--cafe-*` (`/cafe/**` only)
+
+승인된 v3 모바일 시안(2026-10-22)을 따른다. 화면은 480px 읽기 폭, 20px 안쪽 여백,
+44px 최소 터치 영역, 14–16px 카드 모서리와 둥근 검색창을 사용한다. 포털 공통 하단 탭바는 유지한다.
+공유 design-system 버전과 토큰은 변경하지 않는다. 이 절의 로컬 표면 버전만 root 문서 minor에 반영한다.
+
+토큰 정의의 실행 원본은 `portal-fe/src/pages/rank/CafePage.css`의 `.cafe-page`와
+`:root[data-theme='dark'] .cafe-page`다. 카페 자식 요소에만 적용하고 다른 서비스와 공통 내비게이션으로 전파하지 않는다.
+기존 주변 지도/매장 화면의 `--ko-*` 참조는 이 스코프 안에서 카페 토큰으로 연결한다.
+
+| 역할 / 토큰 | Light | Dark |
+|---|---|---|
+| `--cafe-bg` / `surface` / `soft` | `#fbfaf7` / `#ffffff` / `#f4f3ef` | `#182125` / `#202d32` / `#2b383d` |
+| `--cafe-text` / `muted` | `#192326` / `#606569` | `#f3f4ed` / `#bdc8c9` |
+| `--cafe-line` | `#e7e5df` | `#425257` |
+| `--cafe-cta` / `on-cta` | `#123f46` / `#ffffff` | `#b5ddd8` / `#133b40` |
+| `--cafe-active` / `active-text` | `#d9eee3` / `#174d3b` | `#25483e` / `#d5f4df` |
+| `--cafe-sugar-bg` / `sugar-text` | `#fceced` / `#a51c39` | `#442c36` / `#ffbed0` |
+| `--cafe-caffeine-bg` / `caffeine-text` | `#eaf4ec` / `#1e5934` | `#253e31` / `#b7e4c1` |
+| `--cafe-kcal-bg` / `kcal-text` | `#fcf2e2` / `#864619` | `#42362a` / `#f6d3a7` |
+| `--cafe-banner` / `banner-text` | `#fff1d3` / `#3c321e` | `#403726` / `#f9e2b8` |
+| `--cafe-badge-bg` / `badge-text` | `#e1f1fa` / `#174765` | `#294450` / `#d0edf9` |
+
+수치의 높고 낮음으로 색을 바꾸지 않는다. 당류는 분홍, 카페인은 녹색, 칼로리는 주황으로 고정하고
+조건 결과 카드는 중립 배경을 사용한다. 단위·제목·최저 배지의 문자로 색상 이외 신호를 함께 제공한다.
+기본 본문·보조 본문·활성·CTA·세 지표·배너·배지·브랜드 이니셜의 18쌍을 두 테마에서 검사했다.
+WCAG sRGB 상대 휘도 계산상 최소 대비는 light **5.31:1**, dark **7.07:1**로 4.5:1을 넘는다.
+`CafeDesign.test.ts`가 이 대비와 색상 토큰 경계를 검증한다.
+
+장식은 외부 이미지/로고 없이 로컬 `CafeCup` SVG로 그린다. `--cafe-art-*` 고정 토큰은
+커피 갈색, 라떼 크림, 에이드 노랑, 스무디 분홍, 말차 녹색을 구분한다.
+`--cafe-brand-{green,blue,yellow,purple,brown,teal}`은 브랜드명 첫 글자 원의 고정 배경이며
+`--cafe-brand-on-dark` / `--cafe-brand-on-yellow`가 글자색이다. 영양 상태나 수치에 따라 바뀌지 않는다.
+장식은 `aria-hidden`이고 원천·제품 사진이나 공식 로고로 오인시키지 않는다.
+
+Popover는 버튼과 그룹, 확장 상태, Escape/바깥 클릭 닫기, 닫을 때 포커스 복원을 제공한다.
+상세 탭은 좌우/Home/End 키를 지원하고, 범위 입력은 라벨과 현재 값·단위를 읽는다.
+`prefers-reduced-motion`에서 모션을 제거한다. 위치는 기존 명시적 액션·메모리 보관 계약을 유지한다.

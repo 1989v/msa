@@ -1582,8 +1582,8 @@ export function rankHubMeta() {
  */
 export function cafeMeta({ filtered = false, detail = false, drinkKey = undefined, drinkName = undefined } = {}) {
   return {
-    title: '카페 음료 당류·카페인·열량 비교 | 1989v 랭킹',
-    description: '브랜드 공식 영양정보로 카페 음료의 당류·카페인·열량을 비교합니다. 1회 제공량과 100ml 기준, 디카페인과 미공개 정보를 구분해 확인하세요.',
+    title: '카페 음료 비교 · 당류·카페인·칼로리 | 1989v 랭킹',
+    description: '브랜드 공식 영양정보로 카페 음료의 당류·카페인·칼로리를 비교합니다. 1회 제공량과 100ml 기준, 디카페인과 미공개 정보를 구분해 확인하세요.',
     canonical: rankUrl(drinkName ? `/cafe/drink/${encodeURIComponent(drinkName)}` : drinkKey ? `/cafe/drinks/${encodeURIComponent(drinkKey)}` : '/cafe'),
     noindex: filtered || detail,
     image: ogCardUrl(RANK_ORIGIN, 'rank'),

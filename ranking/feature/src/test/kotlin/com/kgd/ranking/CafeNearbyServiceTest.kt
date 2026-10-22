@@ -48,6 +48,12 @@ class CafeNearbyServiceTest : BehaviorSpec({
             result.radiusKm shouldBe 1.0
             result.items.single().menuAvailability shouldBe "UNVERIFIED"
         }
+        Then("calorie and exact-size conditions are retained by nearby name filtering") {
+            service.search(CafeNearbyRequest(CafeLocation("CURRENT", 37.5, 127.0), drinkName = "라떼", maxKcal = BigDecimal.ZERO)).items shouldBe emptyList()
+            service.search(CafeNearbyRequest(CafeLocation("CURRENT", 37.5, 127.0), drinkName = "라떼", sizeLabel = "Large")).items shouldBe emptyList()
+            service.search(CafeNearbyRequest(CafeLocation("CURRENT", 37.5, 127.0), drinkName = "라떼", sizeLabel = "Tall", maxKcal = BigDecimal("12"))).items.size shouldBe 1
+            shouldThrow<CafeNearbyInvalid> { service.search(CafeNearbyRequest(CafeLocation("CURRENT", 37.5, 127.0), drinkName = "라떼", maxKcal = BigDecimal("-1"))) }
+        }
         Then("district uses official center and never accepts user coordinates simultaneously") {
             service.search(CafeNearbyRequest(CafeLocation("AREA", areaCode = area.code), group = "라떼")).areaLabel shouldBe "강남구"
             shouldThrow<CafeNearbyInvalid> { service.search(CafeNearbyRequest(CafeLocation("AREA", 37.5, 127.0, area.code), group = "라떼")) }

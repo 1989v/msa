@@ -98,3 +98,12 @@ it('distinguishes a physical store with missing nutrition from an empty radius',
  expect(screen.queryByText(/현재 조건에 맞는 매장이 없습니다/)).not.toBeInTheDocument();
  expect(screen.getByRole('link', { name: /매장 출처: 상가정보/ })).toHaveAttribute('href', 'https://www.data.go.kr/data/15012005/openapi.do');
 });
+
+
+it('retains calorie and exact-size filters in a memory-only nearby request', async () => {
+ const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+ render(<QueryClientProvider client={client}><CafeNearby filters={{ group: '라떼', maxKcal: 200, sizeLabel: 'Tall' }} close={vi.fn()} /></QueryClientProvider>);
+ fireEvent.click(screen.getByRole('button', { name: '현재 위치 사용' }));
+ getPosition.mock.calls[0][0]({ coords: { latitude: 37.5, longitude: 127, accuracy: 10 } });
+ await waitFor(() => expect(api.searchCafeNearby).toHaveBeenCalledWith(expect.objectContaining({ maxKcal: 200, sizeLabel: 'Tall' }), expect.any(AbortSignal)));
+});

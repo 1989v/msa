@@ -541,3 +541,14 @@ FE 빌드에서 TypeScript AST로 `App.tsx`의 실제 `<Route path>` 선언과 �
 route 선언의 리터럴이 아닌 path/알 수 없는 호스트 조건은 빌드 오류로 드러낸다.
 URL query는 경로 판정에서 제외하고 trailing slash는 React Router처럼 허용한다.
 경로 형태는 자원의 존재를 증명하지 않는다. 없는 상품·관광지·게임 ID의 응답은 기존 API/서버 상세 렌더와 클라이언트 noindex가 담당하며, nginx가 전체 상세를 404로 만들지 않는다.
+
+
+### 카페 v3 검색·조건 도구 경로 (2026-10-22)
+
+`rank.1989v.com/cafe`를 카페 비교 서비스의 색인·공유 진입으로 유지한다.
+빌드 시 host-scoped `cafe.html`은 `cafeMeta()`의 제목·설명·canonical과
+검색/조건 탐색 진입 문구를 렌더한다. `/cafe/search`, `/cafe/filter`, `/cafe/results`는
+개인 검색·조건 조합을 다루므로 nginx의 좁은 전용 location에서 첫 응답에
+`X-Robots-Tag: noindex, follow`를 보낸다. SPA의 `useSeo`도 동일한 noindex를 유지한다.
+새 도구 경로는 sitemap에 추가하지 않는다. 기존 `/cafe` query 조합과 상세/이름 비교의
+canonical·색인 정책은 유지한다. App.tsx의 세 명시적 Route가 생성된 SPA 경로 맵에도 반영된다.

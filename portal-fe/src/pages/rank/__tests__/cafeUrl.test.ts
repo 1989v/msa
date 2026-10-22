@@ -20,3 +20,11 @@ it('round-trips basis, repeated caffeine states, page and legacy zero/decaf alia
   expect(readCafeFilters(new URLSearchParams('sort=sugarPer100ml')).basis).toBe('100ml');
   expect(readCafeFilters(new URLSearchParams()).size).toBe(20);
 });
+
+
+it('round trips calorie caps and exact source size labels and rejects nonfinite bounds', () => {
+  const filters = readCafeFilters(new URLSearchParams('maxKcal=200&sizeLabel=Tall%28톨%29'));
+  expect(filters).toMatchObject({ maxKcal: 200, sizeLabel: 'Tall(톨)' });
+  expect(readCafeFilters(writeCafeFilters(filters))).toMatchObject({ maxKcal: 200, sizeLabel: 'Tall(톨)' });
+  expect(readCafeFilters(new URLSearchParams('maxKcal=NaN')).maxKcal).toBeUndefined();
+});

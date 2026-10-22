@@ -1,0 +1,32 @@
+export function cafeCupTone(name: string, group = ''): 'coffee' | 'fruit' | 'tea' | 'cream' | 'yellow' {
+  if (/딸기|베리|자몽/.test(name)) return 'fruit';
+  if (/말차|녹차/.test(name)) return 'tea';
+  if (/망고|레몬/.test(name) || /에이드|주스/.test(group || name)) return 'yellow';
+  if (/스무디|프라페/.test(group || name)) return 'fruit';
+  if (/라떼|고구마|바닐라/.test(group + name)) return 'cream';
+  return 'coffee';
+}
+/** Decorative, locally drawn cup art; no brand marks or external assets. */
+export function CafeCup({ name = '', group = '' }: { name?: string; group?: string }) {
+  const type = cafeCupTone(name, group);
+  const whipped = /라떼|스무디|프라페/.test(name + group);
+  return <svg className={`cafe-cup cafe-cup--${type}`} viewBox="0 0 100 140" fill="none" aria-hidden="true">
+    <ellipse cx="50" cy="130" rx="30" ry="5" className="cafe-art-shadow" />
+    <path d="M25 43H75L69 120Q68 128 59 129H41Q32 128 31 120Z" className="cafe-art-glass" />
+    <path d="M29 54H71L66 119Q65 124 58 125H42Q35 124 34 119Z" className="cafe-art-drink" />
+    <path d="M32 60Q50 69 69 61L68 79Q47 88 33 76Z" className="cafe-art-milk" />
+    {[0, 1, 2, 3].map(i => <rect key={i} x={35 + (i % 2) * 19} y={58 + Math.floor(i / 2) * 19} width="13" height="12" rx="3" transform={`rotate(${i % 2 ? 15 : -12} ${41 + (i % 2) * 19} ${64 + Math.floor(i / 2) * 19})`} className="cafe-art-ice" />)}
+    <path d="M38 55L42 116" strokeWidth="4" strokeLinecap="round" className="cafe-art-highlight" />
+    <path d="M62 45L68 13" strokeWidth="4" strokeLinecap="round" className="cafe-art-straw" />
+    {whipped && <><path d="M25 43Q24 35 35 32Q29 25 42 23Q37 17 50 14Q55 9 51 5Q68 15 61 23Q74 24 68 33Q80 36 74 44Z" className="cafe-art-cream" /><path d="M36 34Q49 39 65 31M40 24Q52 29 61 23M47 16L54 19" className="cafe-art-topping" strokeWidth="3" strokeLinecap="round" /></>}
+    <ellipse cx="50" cy="45" rx="26" ry="5" className="cafe-art-rim" />
+    <path d="M25 46L31 120Q32 128 41 129H59Q68 128 69 120L75 46" className="cafe-art-outline" strokeWidth="1.5" />
+  </svg>;
+}
+const brandTones: Record<string, string> = { starbucks: 'green', mega: 'yellow', 'mega-mgc': 'yellow', megacoffee: 'yellow', compose: 'blue', 'compose-coffee': 'blue', theventi: 'purple', 'the-venti': 'purple', ediya: 'blue', paik: 'brown', 'paiks-coffee': 'brown' };
+export function CafeBrandBadge({ slug, name }: { slug: string; name: string }) {
+  return <span className={`cafe-brand-badge cafe-brand-badge--${brandTones[slug] ?? 'teal'}`} aria-hidden="true">{name.slice(0, 1)}</span>;
+}
+export function CafeIcon({ kind }: { kind: 'search' | 'back' | 'share' | 'filter' | 'cup' }) {
+  return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{kind === 'search' ? <><circle cx="10.5" cy="10.5" r="7" /><path d="m16 16 5 5" /></> : kind === 'back' ? <path d="m14 5-7 7 7 7" /> : kind === 'share' ? <><path d="M12 15V2m-4 4 4-4 4 4M6 9H4v13h16V9h-2" /></> : kind === 'filter' ? <path d="M4 6h16M4 12h12M4 18h8" /> : <><path d="M6 7h12l-2 15H8L6 7ZM5 7h14M14 7l2-6" /><circle cx="12" cy="13" r="2" /></>}</svg>;
+}

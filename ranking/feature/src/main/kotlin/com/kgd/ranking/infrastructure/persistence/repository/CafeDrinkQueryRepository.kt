@@ -37,6 +37,11 @@ class CafeDrinkQueryRepository(@Qualifier("rankingQueryFactory") private val que
             else -> query.caffeineStatus
         }
         if (statuses.isNotEmpty()) where.and(drink.getEnum("caffeineStatus", CaffeineStatus::class.java).`in`(statuses))
+        query.maxKcal?.let { where.and(drink.getNumber("kcal", BigDecimal::class.java).loe(it)) }
+        // Facets cover all matching rows, independently of pagination and selected size.
+        val sizeLabels = queryFactory.select(drink.getString("sizeLabel")).distinct().from(drink).where(where)
+            .orderBy(drink.getString("sizeLabel").asc()).fetch().filterNotNull().filter { it.isNotBlank() }
+        query.sizeLabel?.let { where.and(drink.getString("sizeLabel").eq(it)) }
         val field = when (query.sort) {
             "caffeine" -> "caffeineMg"
             "kcal" -> "kcal"
@@ -60,7 +65,7 @@ class CafeDrinkQueryRepository(@Qualifier("rankingQueryFactory") private val que
                 drink.getString("sizeLabel").asc(), drink.getEnum("caffeineStatus", CaffeineStatus::class.java).asc())
             .offset(pageable.offset).limit(pageable.pageSize.toLong()).fetch()
         val count = queryFactory.select(drink.count()).from(drink).where(where).fetchOne() ?: 0L
-        return CafeDrinkPage(content.map { CafeDrinkResponse.of(it.toDomain()) }, count, query.page, query.size)
+        return CafeDrinkPage(content.map { CafeDrinkResponse.of(it.toDomain()) }, count, query.page, query.size, sizeLabels)
     }
 
     fun find(key: String): CafeDrinkResponse? {

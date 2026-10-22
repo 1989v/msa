@@ -51,7 +51,7 @@ class CafeNearbyService(
         if (!capability().nearbyEnabled) throw CafeNearbyUnavailable()
         val r = request
         if (r.radiusKm !in setOf(0.5, 1.0, 3.0) || r.page !in 0..1000 || r.size !in 1..50 || r.brands.any { it !in BRANDS } || (r.q?.length ?: 0) > 120 || (r.drinkName?.length ?: 0) > 255 || r.selectedDrinkKeys.size > 9 || r.sort !in setOf("distance", "sugar", "caffeine", "kcal") || r.direction !in setOf("asc", "desc") || (r.group.isNullOrBlank() && r.drinkName.isNullOrBlank() && r.q.isNullOrBlank())) throw CafeNearbyInvalid()
-        val query = try { CafeDrinkQuery(q = r.q, brands = r.brands, group = r.group, temperature = r.temperature, maxSugar = r.maxSugar, maxCaffeine = r.maxCaffeine, caffeine = r.caffeine, basis = r.basis, sort = if (r.sort == "distance") "sugar" else r.sort, caffeineStatus = r.caffeineStatus) } catch (_: IllegalArgumentException) { throw CafeNearbyInvalid() }
+        val query = try { CafeDrinkQuery(q = r.q, brands = r.brands, group = r.group, temperature = r.temperature, maxSugar = r.maxSugar, maxCaffeine = r.maxCaffeine, caffeine = r.caffeine, basis = r.basis, sort = if (r.sort == "distance") "sugar" else r.sort, caffeineStatus = r.caffeineStatus, maxKcal = r.maxKcal, sizeLabel = r.sizeLabel) } catch (_: IllegalArgumentException) { throw CafeNearbyInvalid() }
         val location = r.location
         val area = if (location.kind == "AREA") {
             if (location.lat != null || location.lng != null || location.areaCode == null) throw CafeNearbyInvalid()
@@ -74,6 +74,8 @@ class CafeNearbyService(
         val eligible = variants.filter { d ->
             (r.brands.isEmpty() || d.brandSlug in r.brands) && (r.group == null || d.drinkGroup == r.group) &&
             (r.temperature == null || d.temperature == r.temperature) && (r.caffeineStatus.isEmpty() || d.caffeineStatus in r.caffeineStatus) &&
+            (r.sizeLabel == null || d.sizeLabel == r.sizeLabel) &&
+            (r.maxKcal == null || d.kcal?.let { it <= r.maxKcal } == true) &&
             (r.maxSugar == null || d.sugarG?.let { it <= r.maxSugar } == true) &&
             (r.maxCaffeine == null || (d.caffeineStatus != CaffeineStatus.UNDISCLOSED && d.caffeineMg?.let { it <= r.maxCaffeine } == true)) &&
             (r.caffeine == null || when (r.caffeine) { "none" -> d.caffeineStatus in setOf(CaffeineStatus.ZERO, CaffeineStatus.DECAF); "zero" -> d.caffeineStatus == CaffeineStatus.ZERO; else -> d.caffeineStatus == CaffeineStatus.DECAF })

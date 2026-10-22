@@ -26,3 +26,11 @@ describe('cafe dedicated SEO', () => {
     expect(script).toContain('prerender/_hosts/${RANK_HOST}/cafe.html');
   });
 });
+
+it('keeps search and condition tools noindex before JS while preserving the main canonical', () => {
+  const nginx = readFileSync(resolve(__dirname, '../../../nginx.conf'), 'utf8');
+  expect(nginx).toMatch(/location ~ \^\/cafe\/\(search\|filter\|results\)\/\?\$ \{[^}]*X-Robots-Tag \$private_robots_tag always;/);
+  expect(cafeMeta({ filtered: true }).canonical).toBe('https://rank.1989v.com/cafe');
+  expect(renderCafeHtml(shell)).toContain('href="/cafe/filter"');
+  expect(renderCafeHtml(shell)).toContain('디카페인은 0mg와 다릅니다.');
+});

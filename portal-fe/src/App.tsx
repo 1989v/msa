@@ -299,6 +299,9 @@ function App() {
           {/* 랭킹 리더보드 — apex 는 서브도메인으로 넘긴다 (ADR-0081) */}
           <Route path="/rank" element={rankRoute(<RankPage />)} />
           {rankRoutesEnabled && <Route path="/cafe" element={<CafePage />} />}
+          {rankRoutesEnabled && <Route path="/cafe/search" element={<CafePage />} />}
+          {rankRoutesEnabled && <Route path="/cafe/filter" element={<CafePage />} />}
+          {rankRoutesEnabled && <Route path="/cafe/results" element={<CafePage />} />}
           {rankRoutesEnabled && <Route path="/cafe/drink/:drinkName" element={<CafePage />} />}
           {rankRoutesEnabled && <Route path="/cafe/drinks/:drinkKey" element={<CafePage />} />}
           {rankRoutesEnabled && <Route path="/boards/:slug" element={<RankBoardPage />} />}
