@@ -552,3 +552,43 @@ URL query는 경로 판정에서 제외하고 trailing slash는 React Router처�
 `X-Robots-Tag: noindex, follow`를 보낸다. SPA의 `useSeo`도 동일한 noindex를 유지한다.
 새 도구 경로는 sitemap에 추가하지 않는다. 기존 `/cafe` query 조합과 상세/이름 비교의
 canonical·색인 정책은 유지한다. App.tsx의 세 명시적 Route가 생성된 SPA 경로 맵에도 반영된다.
+
+
+### 페이지별 PWA 설치 (2026-10-22)
+
+portal-fe 라우터의 공통 설치 provider가 현재 페이지 manifest를 소유한다. 기존 GNB에는
+설치 버튼을 넣고, 자체 헤더를 쓰는 place·blog·rank·deal·검색·로그인 등에는 작은 공통
+GNB를 앞에 둔다. resume 호스트와 실제 standalone 실행에서는 버튼·동적 manifest를 숨긴다.
+모바일은 44px 아이콘 버튼, 데스크톱은 아이콘과 「앱 설치」다. 기존 페이지 GNB가 등록되면
+공통 헤더를 그리지 않는다. 설치 후 일반 브라우저에서는 다른 페이지도 계속 설치할 수 있다.
+
+nginx `/app.webmanifest`는 같은 origin의 경로를 `id`와 `start_url`로 쓰고 `scope: /`,
+`display: standalone`을 낸다. query·fragment는 저장하지 않는다. OAuth·이력서 제출 토큰
+경로(`/oauth/**`, `/resume/**`, `/d/**`), 공유 bearer token(`/shared/**`), 파티 초대 코드
+(`/party/:room`, `/en/party/:room`)는 apex에서도 `/`로 줄인다. 서버 map은 512byte 이하
+ASCII/UTF-8 한글 경로만 받고, 외부 origin·이중 slash·dot segment·잘못된 percent·encoded
+ASCII(따옴표/역슬래시/제어문자/중첩 인코딩 포함)를 거절해 `/`로 대체한다. raw `$arg_start`를
+사용하므로 FE는 경로를 다시 URL encode하지 않는다. 개인정보가 담길 수 있는 일반 query는
+manifest 요청 자체에도 싣지 않는다. 음료 이름의 공백·괄호만 `%20/%28/%29`로 좁게 허용하며
+encoded slash·dot·percent는 계속 거절한다. 응답은 `no-store`, `noindex, nofollow`다.
+
+페이지 title 앞부분을 16 UTF-16 단위의 short name으로 제한하고 제어문자를 제거한다.
+nginx `$arg_*`가 percent를 decode하지 않는 제약 때문에 `name`은 정확히 64자리 hex로
+전송한다. 서버의 16개 bounded capture를 JSON `\uXXXX`로 변환하므로 한글을 보존하면서
+따옴표·역슬래시·줄바꿈 주입을 막는다. 빠지거나 형식이 다르면 호스트별 이름을 쓴다.
+이름 끝의 padding 공백은 고정 길이 전송을 위한 것이다. 색상은 DESIGN.md의 `--kh-hanji`,
+아이콘은 기존 `/search-icons/search-{192,512}.png`를 재사용한다.
+`/search`와 `/s`는 기존 `/search.webmanifest`를 사용해 `id/start_url/scope: /search`를 보존한다.
+
+라우트 commit의 layout effect에서 이벤트·paint 전에 저장된 `beforeinstallprompt`를 즉시 폐기한다. title/manifest
+변경도 이벤트를 폐기하고 클릭 때 경로와 manifest 주소를 다시 대조한다. 이벤트가 없거나
+실패하면 KhSheet에서 iOS Safari의 공유 → 홈 화면에 추가, 그 외 브라우저의 설치 메뉴를
+안내한다. 브라우저의 참여도·설치 지원 여부에 따라 네이티브 prompt가 바로 나오지 않을 수 있다.
+
+새 service worker는 추가하지 않는다. Google의 최신 [설치 기준](https://web.dev/articles/install-criteria)
+(2024-09-19 갱신, 2026-10-22 확인)은 beforeinstallprompt 조건에 SW를 요구하지 않는다.
+이전 [Chrome 설치 기준 변경 글](https://developer.chrome.com/blog/update-install-criteria)
+(2023)은 오래된 조건을 설명한다. 오프라인/캐시는 이번 범위 밖이며, 기존
+`quant/frontend/vite.config.ts`의 VitePWA·Workbox와 `/quant/` scope에 새 root SW가 간섭하지 않는다.
+`node scripts/verify-spa-http.mjs`는 실제 nginx HTTP로 경로·이름 주입 방어, 기존 search identity,
+resume 차단, manifest MIME/cache 및 PNG 실측 크기를 검증한다. 브라우저 설치 UI 실측은 별도다.

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { AppInstallButton } from './shell/AppInstall';
 import AuthButton from './AuthButton';
 import KhSheet from './shell/KhSheet';
 import ServiceExplorer from './chrome/ServiceExplorer';
@@ -109,6 +110,7 @@ export default function GNB({ pageLabel, items = TECH_ITEMS, onSearchFocus }: GN
             </button>
           )}
         </div>
+        <AppInstallButton />
         <button
           type="button"
           ref={menuTrigger}

@@ -71,3 +71,10 @@ export default defineConfig([
   },
 ])
 ```
+
+
+페이지별 앱 설치는 공통 GNB에서 제공한다(resume·standalone 제외). nginx의
+`/app.webmanifest`가 query/fragment를 제외한 안전한 현재 경로로 시작하며 `/search`의 기존
+설치 identity는 유지한다. SW/오프라인 캐시는 추가하지 않는다.
+상세: [ADR-0062](../docs/adr/ADR-0062-seo-and-organic-discovery.md#페이지별-pwa-설치-2026-10-22).
+검증: `node scripts/verify-spa-http.mjs` (Docker nginx 필요).

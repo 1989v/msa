@@ -1,0 +1,24 @@
+.gnb-install {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ko-space-2);
+  min-width: 44px;
+  min-height: 44px;
+  padding: var(--ko-space-2);
+  border: 0;
+  border-radius: var(--kh-radius);
+  background: none;
+  color: var(--ko-text-primary);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.gnb-install:hover { background: var(--ko-surface-2); }
+.gnb-install:focus-visible { outline: var(--ko-focus-ring); outline-offset: var(--ko-focus-ring-offset); }
+.gnb-install:active { transform: translateY(1px); }
+@media (max-width: 767.98px) {
+  .gnb-install { margin-left: auto; }
+  .gnb-install span { display: none; }
+  .gnb-install + .gnb-hamburger { margin-left: 0; }
+}

@@ -4,6 +4,7 @@ import { isApexProd, isProd1989vHost } from './shell/serviceHref';
 import { PORTAL_ORIGIN } from './seo/copy.mjs';
 import { recordPlaceEntry } from './analytics/inflow';
 import WebVitalsNavigationGuard from './analytics/WebVitalsNavigationGuard';
+import { AppInstallProvider } from './components/shell/AppInstall';
 import AppShellChrome from './components/shell/AppShellChrome';
 import HomePage from './pages/HomePage';
 import { rootInvitation } from './pages/party/invitation';
@@ -221,6 +222,7 @@ function AdminHostRedirect() {
 function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
+      <AppInstallProvider>
       <WebVitalsNavigationGuard />
       <Suspense fallback={<div style={{ padding: 32, color: 'var(--ko-text-muted)' }}>로딩…</div>}>
         <Routes>
@@ -388,6 +390,7 @@ function App() {
       </Suspense>
       {/* 모바일 앱 셸 — 탭바 + 스택 전환 방향 판정 (kh-motion-app-shell spec §4) */}
       <AppShellChrome />
+      </AppInstallProvider>
     </BrowserRouter>
   );
 }

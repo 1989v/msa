@@ -29,10 +29,6 @@ export default function UnifiedSearchPage({ navigate = (href: string) => window.
     // URL changes, including Back/Forward, restore the complete search state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryString]);
-  useEffect(() => {
-    const manifest = document.createElement('link'); manifest.rel = 'manifest'; manifest.href = '/search.webmanifest';
-    document.head.append(manifest); return () => manifest.remove();
-  }, []);
   const fullResults = (nextPage = 0) => {
     if (!q.trim()) return;
     invalidate(); setRequestNonce(previous => previous + 1); setAll(true); setPage(nextPage);
