@@ -45,6 +45,11 @@ class CafeDrinkQueryRepositoryTest : BehaviorSpec({
             repository.search(query.copy(sizeLabel = "Large"), PageRequest.of(0, 1)).totalElements shouldBe 0L
             shouldThrow<IllegalArgumentException> { CafeDrinkQuery(maxKcal = BigDecimal("-1")) }
         }
+        Then("복수 유형은 합집합이며 기존 단일 유형도 유지한다") {
+            repository.search(CafeDrinkQuery(groups = listOf("티", "라떼")), PageRequest.of(0, 50)).totalElements shouldBe 4L
+            repository.search(CafeDrinkQuery(groups = listOf("티", "주스")), PageRequest.of(0, 50)).totalElements shouldBe 0L
+            repository.search(CafeDrinkQuery(group = "라떼"), PageRequest.of(0, 50)).totalElements shouldBe 4L
+        }
         Then("카페인 없음은 ZERO+DECAF만 반환하고 미공개는 섞이지 않는다") {
             val result = repository.search(CafeDrinkQuery(caffeine = "none"), PageRequest.of(0, 50))
             result.totalElements shouldBe 2

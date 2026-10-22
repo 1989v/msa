@@ -19,5 +19,9 @@ describe('cafe token guardrails', () => {
     expect(css).toContain('.cafe-page button { min-width: 44px;');
     expect(css).toMatch(/\.cafe-page button, \.cafe-page summary, \.cafe-page select \{ min-height: 44px;/);
     expect(css).toContain('bottom: var(--kh-shell-bottom, 0px)');
+    expect(css).toContain('grid-template-columns: repeat(5, minmax(0, 1fr))');
+    expect(css).toContain('::-webkit-slider-runnable-track');
+    expect(css).toContain('::-moz-range-progress');
+    expect(css).toContain('var(--cafe-range-progress)');
   });
 });

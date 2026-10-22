@@ -59,7 +59,7 @@ export default function CafeNearby({ filters, drinkName, close, initialSelection
     const abort = new AbortController();
     requestAbort.current = abort;
     setPending(true); setError(false); setResult(null);
-    void searchCafeNearby({ location: position, radiusKm, group: filters.group, q: filters.q, drinkName: activeDrinkName,
+    void searchCafeNearby({ location: position, radiusKm, group: Array.isArray(filters.group) ? undefined : filters.group, groups: Array.isArray(filters.group) ? filters.group : undefined, q: filters.q, drinkName: activeDrinkName,
       brands: filters.brand ?? [], temperature: filters.temperature, caffeineStatus: filters.caffeineStatus ?? [], caffeine: filters.caffeine,
       maxSugar: filters.maxSugar, maxCaffeine: filters.maxCaffeine, maxKcal: filters.maxKcal, sizeLabel: filters.sizeLabel, basis: filters.basis ?? 'serving', sort, direction: filters.direction ?? 'asc',
       selectedDrinkKeys: Object.values(selected), page, size: 20,
@@ -68,7 +68,7 @@ export default function CafeNearby({ filters, drinkName, close, initialSelection
   }, [position, radiusKm, filters, activeDrinkName, sort, selected, page]);
   const selectedArea = position?.kind === 'AREA' ? districts.data?.find(area => area.code === position.areaCode) : undefined;
   return <section className="cafe-nearby-panel" aria-labelledby="cafe-nearby-title">
-    <header><button type="button" onClick={() => { clearPosition(); close(); }}>전국 음료 비교로 돌아가기</button><p>{activeDrinkName ?? filters.group ?? filters.q ?? '음료 선택'} · 반경 {radiusKm === 0.5 ? '500m' : `${radiusKm}km`}</p></header>
+    <header><button type="button" onClick={() => { clearPosition(); close(); }}>전국 음료 비교로 돌아가기</button><p>{activeDrinkName ?? (Array.isArray(filters.group) ? filters.group.join(' · ') : filters.group) ?? filters.q ?? '음료 선택'} · 반경 {radiusKm === 0.5 ? '500m' : `${radiusKm}km`}</p></header>
     {needsDrink && <section aria-label="주변에서 찾을 음료"><label htmlFor="cafe-nearby-drink">주변에서 찾을 음료</label><input id="cafe-nearby-drink" type="search" placeholder="음료 이름 검색" value={drinkQuery} onCompositionStart={() => setComposing(true)} onCompositionEnd={() => setComposing(false)} onChange={event => setDrinkQuery(event.target.value)} />{activeDrinkName && <p>선택한 음료: {activeDrinkName}</p>}<div className="cafe-variant-picker" role="group" aria-label="주변 검색 음료 선택">{names.data?.map(name => <button type="button" key={name.drinkName} aria-pressed={chosenName === name.drinkName} onClick={() => { setChosenName(name.drinkName); setSelected({}); setPage(0); }}>{name.drinkName} · {name.brandCount}개 브랜드</button>)}</div>{names.isError && <p role="alert">음료 이름을 불러오지 못했습니다. <button onClick={() => void names.refetch()}>다시 시도</button></p>}</section>}
     {result && <Suspense fallback={<p>지도 불러오는 중…</p>}><CafeNearbyMap stores={result.items} basis={result.basis} /></Suspense>}
     <div className="cafe-nearby-sheet"><h2 id="cafe-nearby-title">{result ? `매장 ${result.totalStores ?? '상한 도달'}곳 · 브랜드 ${result.matchedBrands}개` : '주변 카페에서 음료 찾기'}</h2>

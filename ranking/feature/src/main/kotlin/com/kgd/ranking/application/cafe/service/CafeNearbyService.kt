@@ -50,8 +50,8 @@ class CafeNearbyService(
     override fun search(request: CafeNearbyRequest): CafeNearbyResult {
         if (!capability().nearbyEnabled) throw CafeNearbyUnavailable()
         val r = request
-        if (r.radiusKm !in setOf(0.5, 1.0, 3.0) || r.page !in 0..1000 || r.size !in 1..50 || r.brands.any { it !in BRANDS } || (r.q?.length ?: 0) > 120 || (r.drinkName?.length ?: 0) > 255 || r.selectedDrinkKeys.size > 9 || r.sort !in setOf("distance", "sugar", "caffeine", "kcal") || r.direction !in setOf("asc", "desc") || (r.group.isNullOrBlank() && r.drinkName.isNullOrBlank() && r.q.isNullOrBlank())) throw CafeNearbyInvalid()
-        val query = try { CafeDrinkQuery(q = r.q, brands = r.brands, group = r.group, temperature = r.temperature, maxSugar = r.maxSugar, maxCaffeine = r.maxCaffeine, caffeine = r.caffeine, basis = r.basis, sort = if (r.sort == "distance") "sugar" else r.sort, caffeineStatus = r.caffeineStatus, maxKcal = r.maxKcal, sizeLabel = r.sizeLabel) } catch (_: IllegalArgumentException) { throw CafeNearbyInvalid() }
+        if (r.radiusKm !in setOf(0.5, 1.0, 3.0) || r.page !in 0..1000 || r.size !in 1..50 || r.brands.any { it !in BRANDS } || (r.q?.length ?: 0) > 120 || (r.drinkName?.length ?: 0) > 255 || r.selectedDrinkKeys.size > 9 || r.sort !in setOf("distance", "sugar", "caffeine", "kcal") || r.direction !in setOf("asc", "desc") || (r.group.isNullOrBlank() && r.groups.isEmpty() && r.drinkName.isNullOrBlank() && r.q.isNullOrBlank())) throw CafeNearbyInvalid()
+        val query = try { CafeDrinkQuery(q = r.q, brands = r.brands, group = r.group, temperature = r.temperature, maxSugar = r.maxSugar, maxCaffeine = r.maxCaffeine, caffeine = r.caffeine, basis = r.basis, sort = if (r.sort == "distance") "sugar" else r.sort, caffeineStatus = r.caffeineStatus, maxKcal = r.maxKcal, sizeLabel = r.sizeLabel, groups = r.groups) } catch (_: IllegalArgumentException) { throw CafeNearbyInvalid() }
         val location = r.location
         val area = if (location.kind == "AREA") {
             if (location.lat != null || location.lng != null || location.areaCode == null) throw CafeNearbyInvalid()
@@ -72,7 +72,7 @@ class CafeNearbyService(
         if (r.drinkName != null) variants += drinks.variants(r.drinkName)
         else { var page = 0; do { val found = drinks.search(query.copy(page = page, size = 200)); variants += found.content; page++ } while (page * 200 < found.totalElements) }
         val eligible = variants.filter { d ->
-            (r.brands.isEmpty() || d.brandSlug in r.brands) && (r.group == null || d.drinkGroup == r.group) &&
+            (r.brands.isEmpty() || d.brandSlug in r.brands) && (query.selectedGroups.isEmpty() || d.drinkGroup in query.selectedGroups) &&
             (r.temperature == null || d.temperature == r.temperature) && (r.caffeineStatus.isEmpty() || d.caffeineStatus in r.caffeineStatus) &&
             (r.sizeLabel == null || d.sizeLabel == r.sizeLabel) &&
             (r.maxKcal == null || d.kcal?.let { it <= r.maxKcal } == true) &&

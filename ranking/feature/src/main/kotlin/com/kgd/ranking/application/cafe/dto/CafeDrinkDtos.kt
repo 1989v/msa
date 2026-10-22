@@ -164,7 +164,10 @@ data class CafeDrinkQuery(
     val direction: String = "asc",
     val maxKcal: BigDecimal? = null,
     val sizeLabel: String? = null,
+    val groups: List<String> = emptyList(),
 ) {
+    val selectedGroups: List<String> get() = (groups + listOfNotNull(group)).distinct()
+
     init {
         require(direction in setOf("asc", "desc")) { "Unknown direction" }
         require(page >= 0 && size in 1..200) { "page >= 0, size 1..200" }

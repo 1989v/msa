@@ -10,7 +10,7 @@ export function readCafeFilters(params: URLSearchParams): CafeFilters {
     direction: params.get('direction') === 'desc' ? 'desc' : 'asc',
     q: params.get('q')?.slice(0, 120) || undefined,
     brand: params.getAll('brand').filter(value => /^[a-z0-9-]+$/.test(value)),
-    group: params.get('group') || undefined,
+    group: params.getAll('group').filter(Boolean).length > 1 ? params.getAll('group').filter(Boolean) : params.get('group') || undefined,
     temperature: ['HOT', 'ICE'].includes(params.get('temperature') ?? '') ? params.get('temperature')! : undefined,
     maxSugar: number('maxSugar', 1000), maxCaffeine: number('maxCaffeine', 10000), maxKcal: number('maxKcal', 10000),
     sizeLabel: params.get('sizeLabel')?.slice(0, 120) || undefined,

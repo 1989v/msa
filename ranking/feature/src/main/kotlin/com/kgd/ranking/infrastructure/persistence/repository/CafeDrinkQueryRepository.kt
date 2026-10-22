@@ -23,7 +23,7 @@ class CafeDrinkQueryRepository(@Qualifier("rankingQueryFactory") private val que
         val where = BooleanBuilder()
         query.q?.takeIf { it.isNotBlank() }?.let { where.and(drink.getString("menuName").containsIgnoreCase(it).or(drink.getString("displayName").containsIgnoreCase(it))) }
         if (query.brands.isNotEmpty()) where.and(drink.getString("brandSlug").`in`(query.brands))
-        query.group?.let { where.and(drink.getString("drinkGroup").eq(it)) }
+        if (query.selectedGroups.isNotEmpty()) where.and(drink.getString("drinkGroup").`in`(query.selectedGroups))
         query.temperature?.let { where.and(drink.getString("temperature").eq(it)) }
         query.maxSugar?.let { where.and(drink.getNumber("sugarG", BigDecimal::class.java).loe(it)) }
         query.maxCaffeine?.let {

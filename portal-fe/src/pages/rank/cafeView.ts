@@ -28,7 +28,7 @@ export function cafeMetric(drink: CafeDrink, metric: CafeMetric, basis: 'serving
   return {
     amount: value == null || !Number.isFinite(value) ? (metric === 'caffeine' ? '수치 미확정' : '미공개') : formatCafeNumber(value),
     unit: value == null || !Number.isFinite(value) ? undefined : metricUnits[metric],
-    status: metric === 'caffeine' ? (drink.caffeineStatus === 'DECAF' ? '디카페인' : drink.caffeineStatus === 'ZERO' ? '공식 0' : undefined) : undefined,
+    status: metric === 'caffeine' ? (drink.caffeineStatus === 'DECAF' ? '디카페인' : undefined) : undefined,
   };
 }
 

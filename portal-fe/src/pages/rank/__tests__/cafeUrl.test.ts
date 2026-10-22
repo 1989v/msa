@@ -28,3 +28,10 @@ it('round trips calorie caps and exact source size labels and rejects nonfinite 
   expect(readCafeFilters(writeCafeFilters(filters))).toMatchObject({ maxKcal: 200, sizeLabel: 'Tall(톨)' });
   expect(readCafeFilters(new URLSearchParams('maxKcal=NaN')).maxKcal).toBeUndefined();
 });
+
+it('preserves multiple source groups as repeated URL parameters and keeps single-group links compatible', () => {
+  const filters = readCafeFilters(new URLSearchParams('group=아메리카노&group=콜드브루'));
+  expect(filters.group).toEqual(['아메리카노', '콜드브루']);
+  expect(writeCafeFilters(filters).getAll('group')).toEqual(['아메리카노', '콜드브루']);
+  expect(readCafeFilters(new URLSearchParams('group=라떼')).group).toBe('라떼');
+});

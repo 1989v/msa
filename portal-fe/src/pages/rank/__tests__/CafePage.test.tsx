@@ -49,14 +49,17 @@ beforeEach(() => {
 afterEach(() => vi.clearAllMocks());
 
 describe('v3 home and search', () => {
-  it('shows four popular names ordered by distinct brand count and actual group chips', async () => {
+  it('shows four popular names ordered by distinct brand count and ten curated group chips', async () => {
     vi.mocked(api.fetchCafeDrinkNames).mockResolvedValue([{ drinkName: '티', brandCount: 1, rowCount: 99 }, { drinkName: '라떼', brandCount: 8, rowCount: 30 }, { drinkName: '모카', brandCount: 4, rowCount: 20 }, { drinkName: '아메리카노', brandCount: 6, rowCount: 12 }, { drinkName: '콜드브루', brandCount: 2, rowCount: 8 }]);
     setup();
     expect(screen.getByRole('heading', { name: '카페 음료 비교' })).toBeInTheDocument();
     const popular = screen.getByRole('navigation', { name: '많이 찾는 음료' });
     await waitFor(() => expect(within(popular).getAllByRole('link')).toHaveLength(4));
     expect(within(popular).getAllByRole('link').map(link => link.textContent)).toEqual(['라떼8개 브랜드', '아메리카노6개 브랜드', '모카4개 브랜드', '콜드브루2개 브랜드']);
-    expect(within(screen.getByRole('navigation', { name: '음료 유형' })).getByRole('link', { name: '바닐라라떼' })).toHaveAttribute('href', '/cafe/search?group=%EB%B0%94%EB%8B%90%EB%9D%BC%EB%9D%BC%EB%96%BC');
+    const chips = within(screen.getByRole('navigation', { name: '음료 유형' })).getAllByRole('link');
+    expect(chips.map(chip => chip.textContent)).toEqual(['전체', '커피', '라떼', '에이드', '스무디', '티', '프라페', '주스', '논커피', '디카페인']);
+    expect(new URL(chips[1].getAttribute('href')!, 'https://example.com').searchParams.getAll('group')).toEqual(['아메리카노', '에스프레소', '콜드브루']);
+    expect(chips[9]).toHaveAttribute('href', '/cafe/search?caffeine=decaf');
     expect(screen.queryByRole('button', { name: '주변 카페에서 음료 찾기' })).toBeNull();
     expect(document.querySelector('select')).toBeNull();
   });
@@ -175,6 +178,8 @@ describe('v3 comparison and detail', () => {
     vi.mocked(api.fetchCafeComparison).mockResolvedValue(comparisonRows().map(row => ({ brandSlug: row.brandSlug, brandName: row.brandName, representative: row, variants: [row] })));
     setup('/cafe/drink/바닐라라떼'); const table = await screen.findByRole('table');
     expect(within(table).getAllByText('당류 가장 낮아요!')).toHaveLength(2);
+    for (const badge of within(table).getAllByText('당류 가장 낮아요!')) expect(badge.closest('td')).toHaveAttribute('colspan', '4');
+    expect(within(table).queryByRole('button')).toBeNull();
     expect(screen.getByText('당류를 줄이고 싶다면 가브랜드, 나브랜드 바닐라라떼가 공동으로 가장 낮아요.')).toBeInTheDocument();
     expect(within(table).getByText('미공개')).toBeInTheDocument();
     expect(api.fetchCafeComparison).toHaveBeenCalledWith('바닐라라떼', {});
@@ -185,7 +190,7 @@ describe('v3 comparison and detail', () => {
     const b = fixture({ drinkKey: 'b', brandSlug: 'b', brandName: '나브랜드', sugarG: 20, cupVolumeMl: 500, sugarPer100ml: 4 });
     vi.mocked(api.fetchCafeComparison).mockResolvedValue([{ brandSlug: 'a', brandName: a.brandName, representative: a, variants: [a, large] }, { brandSlug: 'b', brandName: b.brandName, representative: b, variants: [b] }]);
     setup('/cafe/drink/라떼'); await screen.findByRole('table');
-    fireEvent.click(screen.getByRole('button', { name: '브랜드 사이즈 선택' })); fireEvent.click(screen.getByRole('button', { name: /ICE · L · 500ml/ }));
+    fireEvent.click(screen.getByRole('button', { name: '기본 사이즈' })); fireEvent.click(screen.getByRole('button', { name: /ICE · L · 500ml/ }));
     fireEvent.click(screen.getByRole('button', { name: '100ml당 기준' }));
     await waitFor(() => expect(screen.getByRole('link', { name: /브랜드 ICE · L · 500ml/ })).toHaveAttribute('href', '/cafe/drinks/large?basis=100ml'));
     expect(screen.getByText('당류를 줄이고 싶다면 나브랜드 라떼가 가장 낮아요.')).toBeInTheDocument();
@@ -274,4 +279,24 @@ it('places the capability-enabled nearby row below banner and preserves drink se
   expect(api.searchCafeNearby).not.toHaveBeenCalled(); expect(getPosition).not.toHaveBeenCalled(); fireEvent.click(screen.getByRole('button', { name: '현재 위치 사용' }));
   await act(async () => getPosition.mock.calls[0][0]({ coords: { latitude: 37.5, longitude: 127, accuracy: 10 } }));
   await waitFor(() => expect(api.searchCafeNearby).toHaveBeenCalledWith(expect.objectContaining({ drinkName: '라떼', location: { kind: 'CURRENT', lat: 37.5, lng: 127 } }), expect.any(AbortSignal)));
+});
+
+it('hides confirmed empty brand tabs while keeping failed and pending counts honest', async () => {
+  vi.mocked(api.fetchCafeBrands).mockResolvedValue(['empty', 'failed', 'pending'].map(brandSlug => ({ brandSlug, brandName: brandSlug, count: 1, checkedAt: '2026-10-20', sourceUrls: [] })));
+  vi.mocked(api.fetchCafeDrinks).mockImplementation(async filters => {
+    if (filters.brand?.[0] === 'failed') throw new Error('unavailable');
+    if (filters.brand?.[0] === 'pending') return new Promise(() => {});
+    return { content: [], totalElements: 0, page: 0, size: 20 };
+  });
+  setup('/cafe/search?q=라떼');
+  expect(await screen.findByRole('button', { name: 'failed 조회 실패' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /empty/ })).toBeNull();
+  expect(screen.getByRole('button', { name: 'pending …' })).toBeInTheDocument();
+});
+
+it('keeps zero caffeine numeric without the official-zero helper', async () => {
+  vi.mocked(api.fetchCafeDrink).mockResolvedValue(fixture({ caffeineStatus: 'ZERO', caffeineMg: 0 }));
+  setup('/cafe/drinks/key');
+  expect((await screen.findAllByLabelText(/^카페인 0mg\s*$/)).length).toBeGreaterThan(0);
+  expect(screen.queryByText('공식 0')).toBeNull();
 });

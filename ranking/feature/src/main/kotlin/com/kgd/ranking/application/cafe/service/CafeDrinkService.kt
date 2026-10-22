@@ -37,7 +37,7 @@ class CafeDrinkService(private val repository: CafeDrinkRepositoryPort, private 
                 (query.temperature == null || it.temperature == query.temperature) &&
                 (query.caffeineStatus.isEmpty() || it.caffeineStatus in query.caffeineStatus) &&
                 (query.caffeine == null || when (query.caffeine) { "none" -> it.caffeineStatus.name in setOf("ZERO", "DECAF"); "zero" -> it.caffeineStatus.name == "ZERO"; else -> it.caffeineStatus.name == "DECAF" }) &&
-                (query.group == null || it.drinkGroup == query.group) &&
+                (query.selectedGroups.isEmpty() || it.drinkGroup in query.selectedGroups) &&
                 (query.maxSugar == null || it.sugarG?.let { value -> value <= query.maxSugar } == true) &&
                 (query.maxCaffeine == null || (it.caffeineStatus != com.kgd.ranking.domain.cafe.model.CaffeineStatus.UNDISCLOSED && it.caffeineMg?.let { value -> value <= query.maxCaffeine } == true))
         }.groupBy { it.brandSlug }.map { (brand, rows) ->

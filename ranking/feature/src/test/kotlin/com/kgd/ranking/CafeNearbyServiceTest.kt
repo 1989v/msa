@@ -48,6 +48,11 @@ class CafeNearbyServiceTest : BehaviorSpec({
             result.radiusKm shouldBe 1.0
             result.items.single().menuAvailability shouldBe "UNVERIFIED"
         }
+        Then("multiple source groups survive nearby search and exact-name eligibility") {
+            service.search(CafeNearbyRequest(CafeLocation("CURRENT", 37.5, 127.0), groups = listOf("라떼", "티"))).items.size shouldBe 1
+            verify { drinks.search(match { it.selectedGroups == listOf("라떼", "티") }) }
+            service.search(CafeNearbyRequest(CafeLocation("CURRENT", 37.5, 127.0), drinkName = "라떼", groups = listOf("티", "주스"))).items shouldBe emptyList()
+        }
         Then("calorie and exact-size conditions are retained by nearby name filtering") {
             service.search(CafeNearbyRequest(CafeLocation("CURRENT", 37.5, 127.0), drinkName = "라떼", maxKcal = BigDecimal.ZERO)).items shouldBe emptyList()
             service.search(CafeNearbyRequest(CafeLocation("CURRENT", 37.5, 127.0), drinkName = "라떼", sizeLabel = "Large")).items shouldBe emptyList()

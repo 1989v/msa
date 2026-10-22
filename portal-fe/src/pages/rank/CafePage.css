@@ -51,6 +51,8 @@
 .cafe-search button { border: 0; background: transparent; min-width: 44px; display: grid; place-items: center; padding: 8px; }
 .cafe-groups { display: flex; flex-wrap: wrap; gap: 6px; margin-block: 16px; }
 .cafe-groups a { display: flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; background: var(--cafe-soft); padding: 8px 16px; border-radius: 24px; font-size: 13px; }
+.cafe-landing .cafe-groups, .cafe-search-screen .cafe-groups { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.cafe-landing .cafe-groups a, .cafe-search-screen .cafe-groups a { padding-inline: 2px; min-width: 0; }
 .cafe-groups .is-active { background: var(--cafe-sugar-bg); font-weight: 700; }
 .cafe-banner { display: flex; align-items: center; overflow: hidden; background: var(--cafe-banner); color: var(--cafe-banner-text); border-radius: 16px; padding: 16px 12px 16px 20px; min-height: 112px; margin-block: 20px; }
 .cafe-banner h2 { flex: 1; line-height: 1.55; font-size: 20px; }
@@ -119,11 +121,14 @@
 .cafe-table-brand { display: flex; align-items: center; gap: 8px; min-height: 44px; }
 .cafe-table-brand > span:last-child { min-width: 0; overflow-wrap: anywhere; }
 .cafe-table-brand small { display: block; font-size: 10px; font-weight: 400; margin-top: 3px; }
-.cafe-table .cafe-popover > button { padding: 4px 8px; font-size: 10px; white-space: normal; margin-top: 4px; }
+.cafe-comparison-size { display: flex; justify-content: flex-end; align-items: center; gap: 4px; font-size: 12px; }
+.cafe-comparison-size .cafe-popover > button { border: 0; padding-inline: 6px; font-size: 12px; }
+.cafe-comparison-size h3 { font-size: 12px; padding: 8px; color: var(--cafe-muted); }
 .cafe-table td { text-align: center; border-radius: 9px; padding: 10px 2px; vertical-align: middle; position: relative; }
 .cafe-table td .cafe-metric b { font-size: 17px; }
 .cafe-table td .cafe-metric > small:not(.cafe-caffeine-state) { display: none; }
-.cafe-minimum-badge { display: block; font-size: 9px; line-height: 1.4; border-radius: 8px; padding: 4px 2px; margin-top: 6px; background: var(--cafe-badge-bg); color: var(--cafe-badge-text); }
+.cafe-table .cafe-minimum-row td { padding: 0; text-align: right; }
+.cafe-minimum-badge { display: inline-block; white-space: nowrap; font-size: 10px; line-height: 1.4; border-radius: 8px; padding: 3px 10px; margin-top: -6px; vertical-align: top; background: var(--cafe-badge-bg); color: var(--cafe-badge-text); }
 .cafe-recommendation { display: flex; gap: 12px; background: var(--cafe-caffeine-bg); color: var(--cafe-caffeine-text); border-radius: 14px; padding: 16px; margin-top: 16px; }
 .cafe-recommendation > span { display: grid; place-items: center; border-radius: 50%; flex-shrink: 0; width: 24px; height: 24px; background: var(--cafe-caffeine-text); color: var(--cafe-caffeine-bg); }
 .cafe-recommendation h2 { font-size: 14px; margin-bottom: 6px; }
@@ -155,13 +160,18 @@
 .cafe-nearby-hero > span:nth-child(2) { flex: 1; }.cafe-nearby-hero strong { display: block; font-size: 14px; }.cafe-nearby-hero small { display: block; font-size: 11px; margin-top: 3px; color: inherit; }.cafe-nearby-pin { font-size: 28px; }
 .cafe-page .cafe-search-link { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 16px; }
 .cafe-tabs { display: flex; gap: 6px; margin-bottom: 16px; }.cafe-tabs button { flex: 1; font-size: 13px; padding-inline: 8px; }
-.cafe-condition { border: 1px solid var(--cafe-line); background: var(--cafe-surface); border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+.cafe-condition { border: 1px solid var(--cafe-line); background: var(--cafe-surface); border-radius: 16px; padding: 14px; margin-bottom: 12px; }
 .cafe-condition label { font-size: 14px; }.cafe-condition label > span { color: var(--cafe-muted); }.cafe-condition > strong { display: block; font-size: 21px; font-weight: 800; margin-top: 4px; }
-.cafe-condition input[type='range'] { accent-color: var(--cafe-cta); width: 100%; min-height: 44px; margin: 0; }
+.cafe-condition input[type='range'] { appearance: none; -webkit-appearance: none; width: 100%; height: 44px; min-height: 44px; margin: 0; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.cafe-condition input[type='range']::-webkit-slider-runnable-track { height: 6px; border-radius: 8px; background: linear-gradient(to right, var(--cafe-cta) 0 var(--cafe-range-progress), var(--cafe-soft) var(--cafe-range-progress) 100%); }
+.cafe-condition input[type='range']::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; margin-top: -7px; border: 2px solid var(--cafe-surface); border-radius: 50%; background: var(--cafe-cta); box-shadow: 0 0 0 1px var(--cafe-line); }
+.cafe-condition input[type='range']::-moz-range-track { height: 6px; border-radius: 8px; background: var(--cafe-soft); }
+.cafe-condition input[type='range']::-moz-range-progress { height: 6px; border-radius: 8px; background: var(--cafe-cta); }
+.cafe-condition input[type='range']::-moz-range-thumb { width: 16px; height: 16px; border: 2px solid var(--cafe-surface); border-radius: 50%; background: var(--cafe-cta); box-shadow: 0 0 0 1px var(--cafe-line); }
 .cafe-range-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--cafe-muted); }
-.cafe-presets { display: flex; gap: 6px; margin-top: 12px; }.cafe-presets button { flex: 1; font-size: 11px; padding: 8px 4px; white-space: nowrap; }
+.cafe-presets { display: flex; gap: 6px; margin-top: 12px; }.cafe-presets button { flex: 1; font-size: 11px; padding: 8px 4px; white-space: nowrap; background: var(--cafe-soft); border-color: transparent; }
 .cafe-page .cafe-presets button[aria-pressed='true'] { background: var(--cafe-cta); color: var(--cafe-on-cta); }
-.cafe-condition h2 { font-size: 16px; }.cafe-check { display: flex; align-items: center; min-height: 44px; gap: 8px; }.cafe-check input { width: 20px; height: 20px; accent-color: var(--cafe-cta); }
+.cafe-decaf-option { padding-inline: 4px; margin-bottom: 12px; }.cafe-decaf-option .cafe-note { margin-block: 2px 8px !important; }.cafe-check { display: flex; align-items: center; min-height: 44px; gap: 8px; }.cafe-check input { width: 20px; height: 20px; accent-color: var(--cafe-cta); }
 .cafe-filter-page { padding-bottom: 80px; }.cafe-filter-dock { position: fixed; z-index: 20; bottom: var(--kh-shell-bottom, 0px); left: 50%; transform: translateX(-50%); width: min(480px, 100%); padding: 12px 20px; background: var(--cafe-bg); }
 .cafe-page .cafe-primary-button { width: 100%; min-height: 54px; border: 0; background: var(--cafe-cta); color: var(--cafe-on-cta); font-size: 15px; font-weight: 700; }
 .cafe-condition-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }.cafe-condition-chips button { display: flex; gap: 6px; align-items: center; font-size: 11px; padding-inline: 10px; background: var(--cafe-badge-bg); color: var(--cafe-badge-text); border: 0; }
@@ -180,3 +190,5 @@
 @media (prefers-reduced-motion: reduce) { .cafe-page *, .cafe-page *::before, .cafe-page *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 
 .cafe-metric-basis-label { color: var(--cafe-muted); font-size: 12px; text-align: right; margin-top: 6px !important; }
+
+@media (max-width: 380px) { .cafe-landing .cafe-groups a, .cafe-search-screen .cafe-groups a { font-size: 12px; padding-inline: 0; } }

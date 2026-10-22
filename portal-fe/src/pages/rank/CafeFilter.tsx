@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { fetchCafeDrinks, type CafeFilters } from '../../api/rankingApi';
@@ -25,12 +25,12 @@ export default function CafeFilter({ filters }: { filters: CafeFilters }) {
     {conditions.map(condition => <section className="cafe-condition" key={condition.key} ref={element => { sectionRefs.current[condition.name] = element; }}>
       <label htmlFor={`cafe-${condition.key}`}><b>{condition.name} 조건</b> <span>({condition.unit})</span></label>
       <strong>{draft[condition.key]}{condition.unit} 이하</strong>
-      <input id={`cafe-${condition.key}`} type="range" min="0" max={Math.max(condition.max, draft[condition.key] ?? 0)} step={(draft[condition.key] ?? 0) % condition.step === 0 ? condition.step : 'any'} value={draft[condition.key] ?? 0} aria-valuetext={`${draft[condition.key]}${condition.unit} 이하`} onChange={event => setDraft(previous => ({ ...previous, [condition.key]: Number(event.target.value) }))} />
+      <input id={`cafe-${condition.key}`} type="range" style={{ '--cafe-range-progress': `${(draft[condition.key] ?? 0) / Math.max(condition.max, draft[condition.key] ?? 0) * 100}%` } as CSSProperties} min="0" max={Math.max(condition.max, draft[condition.key] ?? 0)} step={(draft[condition.key] ?? 0) % condition.step === 0 ? condition.step : 'any'} value={draft[condition.key] ?? 0} aria-valuetext={`${draft[condition.key]}${condition.unit} 이하`} onChange={event => setDraft(previous => ({ ...previous, [condition.key]: Number(event.target.value) }))} />
       <div className="cafe-range-labels"><span>0{condition.unit}</span><span>{Math.max(condition.max, draft[condition.key] ?? 0)}{condition.unit}</span></div>
       <div className="cafe-presets">{condition.presets.map(value => <button key={value} aria-pressed={draft[condition.key] === value} onClick={() => setDraft(previous => ({ ...previous, [condition.key]: value }))}>{value}{condition.unit} 이하</button>)}</div>
     </section>)}
-    <section className="cafe-condition" ref={element => { sectionRefs.current['디카페인'] = element; }}>
-      <h2>디카페인</h2><label className="cafe-check"><input type="checkbox" checked={draft.caffeine === 'decaf'} onChange={event => setDraft(previous => ({ ...previous, caffeine: event.target.checked ? 'decaf' : undefined, caffeineStatus: [] }))} />디카페인 음료만 보기</label>
+    <section className="cafe-decaf-option" ref={element => { sectionRefs.current['디카페인'] = element; }}>
+      <label className="cafe-check"><input type="checkbox" checked={draft.caffeine === 'decaf'} onChange={event => setDraft(previous => ({ ...previous, caffeine: event.target.checked ? 'decaf' : undefined, caffeineStatus: [] }))} />디카페인 음료만 보기</label>
       <p className="cafe-note">디카페인은 0mg와 다릅니다. 미공개 수치는 상한 검색에서 제외됩니다. 조건은 1회 제공량 기준입니다.</p>
     </section>
     <div className="cafe-filter-dock"><button className="cafe-primary-button" disabled={!current || count.isFetching || !count.data || count.isError} onClick={() => navigate(`/cafe/results?${writeCafeFilters(draft)}`)}>조건에 맞는 음료 찾기 {count.isError ? '(조회 실패)' : !current || count.isFetching ? '(확인 중…)' : `(${count.data?.totalElements ?? 0}개)`}</button>{count.isError && <p role="alert">개수를 불러오지 못했습니다. <button onClick={() => void count.refetch()}>다시 시도</button></p>}</div>
