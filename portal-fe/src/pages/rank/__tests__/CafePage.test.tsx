@@ -49,6 +49,23 @@ beforeEach(() => {
 afterEach(() => vi.clearAllMocks());
 
 describe('v3 home and search', () => {
+  it('summarizes hundreds of menu source pages with one official site link per brand', async () => {
+    vi.mocked(api.fetchCafeBrands).mockResolvedValue(['a', 'b'].map(brandSlug => ({
+      brandSlug, brandName: `브랜드 ${brandSlug}`, count: 450, checkedAt: '2026-10-20',
+      sourceUrls: Array.from({ length: 300 }, (_, index) => `https://${brandSlug}.example.com/menu/${index}?nutrition=true`),
+    })));
+    setup();
+    const guide = screen.getByText('공식 영양정보 · 출처 안내').closest('details')!;
+    fireEvent.click(within(guide).getByText('공식 영양정보 · 출처 안내'));
+    await waitFor(() => expect(within(guide).getAllByRole('link')).toHaveLength(2));
+    for (const brandSlug of ['a', 'b']) {
+      const row = within(guide).getByText(`브랜드 ${brandSlug}`, { exact: false }).closest('p')!;
+      expect(within(row).getAllByRole('link')).toHaveLength(1);
+      expect(within(row).getByRole('link', { name: '공식 사이트 ↗' })).toHaveAttribute('href', `https://${brandSlug}.example.com/`);
+      expect(row).toHaveTextContent(`브랜드 ${brandSlug} · 2026-10-20 · 공식 사이트 ↗ · 메뉴 300개 페이지에서 확인`);
+    }
+  });
+
   it('shows four popular names ordered by distinct brand count and ten curated group chips', async () => {
     vi.mocked(api.fetchCafeDrinkNames).mockResolvedValue([{ drinkName: '티', brandCount: 1, rowCount: 99 }, { drinkName: '라떼', brandCount: 8, rowCount: 30 }, { drinkName: '모카', brandCount: 4, rowCount: 20 }, { drinkName: '아메리카노', brandCount: 6, rowCount: 12 }, { drinkName: '콜드브루', brandCount: 2, rowCount: 8 }]);
     setup();

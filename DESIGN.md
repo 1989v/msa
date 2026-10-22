@@ -1,7 +1,7 @@
 <!-- source: packages/design-system/src/tokens.css, docs/conventions/frontend-design.md, docs/conventions/design-system.md -->
 <!-- standard: docs/standards/design-md.md -->
 ---
-version: 2.5.0
+version: 2.6.0
 archetype: dark-trading
 # 브랜드/포트폴리오 화면(portal-fe `/`, `/portfolio`, resume 호스트)만 두 번째 아키타입을
 # 쓴다 — §12 참조. 공유 토큰은 그대로 dark-trading 이다.
@@ -397,6 +397,8 @@ flat 디자인 지향. 카드 사이에 그림자 남발 금지.
 | `--cafe-sugar-bg` / `sugar-text` | `#fceced` / `#a51c39` | `#442c36` / `#ffbed0` |
 | `--cafe-caffeine-bg` / `caffeine-text` | `#eaf4ec` / `#1e5934` | `#253e31` / `#b7e4c1` |
 | `--cafe-kcal-bg` / `kcal-text` | `#fcf2e2` / `#864619` | `#42362a` / `#f6d3a7` |
+| `--cafe-icon-sugar-top` / `sugar-front` / `sugar-side` | `#8dcc65` / `#59a441` / `#32823c` | `#a6dc85` / `#75b859` / `#4b9456` |
+| `--cafe-icon-flame-outer` / `flame-inner` | `#ff7047` / `#d94332` | `#ff8b67` / `#ef6552` |
 | `--cafe-banner` / `banner-text` | `#fff1d3` / `#3c321e` | `#403726` / `#f9e2b8` |
 | `--cafe-badge-bg` / `badge-text` | `#e1f1fa` / `#174765` | `#294450` / `#d0edf9` |
 
@@ -410,6 +412,8 @@ WCAG sRGB 상대 휘도 계산상 최소 대비는 light **5.31:1**, dark **7.07
 커피 갈색, 라떼 크림, 에이드 노랑, 스무디 분홍, 말차 녹색을 구분한다.
 `--cafe-brand-{green,blue,yellow,purple,brown,teal}`은 브랜드명 첫 글자 원의 고정 배경이며
 `--cafe-brand-on-dark` / `--cafe-brand-on-yellow`가 글자색이다. 영양 상태나 수치에 따라 바뀌지 않는다.
+조건 타일은 녹색 설탕 큐브 3개(아래 2개·위 1개), S자 홈의 갈색 원두, 주황·빨강 불꽃 SVG를 사용한다.
+큐브의 세 면과 불꽃 두 겹은 `--cafe-icon-*`, 원두는 기존 `--cafe-art-*` 토큰을 따른다.
 장식은 `aria-hidden`이고 원천·제품 사진이나 공식 로고로 오인시키지 않는다.
 
 Popover는 버튼과 그룹, 확장 상태, Escape/바깥 클릭 닫기, 닫을 때 포커스 복원을 제공한다.

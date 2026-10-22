@@ -9,6 +9,7 @@
   --cafe-banner: #fff1d3; --cafe-banner-text: #3c321e; --cafe-badge-bg: #e1f1fa; --cafe-badge-text: #174765;
   --cafe-art-coffee: #5e3420; --cafe-art-fruit: #e999aa; --cafe-art-tea: #a6bc77; --cafe-art-cream: #dfb77c; --cafe-art-yellow: #e9bb52;
   --cafe-art-milk: #f5d8b0; --cafe-art-whip: #fff7e5; --cafe-art-glass: #f7eedf; --cafe-art-outline: #967b61; --cafe-art-straw: #af8b63; --cafe-art-topping: #c27a24; --cafe-art-shadow: #ddd6c8;
+  --cafe-icon-sugar-top: #8dcc65; --cafe-icon-sugar-front: #59a441; --cafe-icon-sugar-side: #32823c; --cafe-icon-flame-outer: #ff7047; --cafe-icon-flame-inner: #d94332;
   --cafe-brand-green: #176447; --cafe-brand-blue: #2451a0; --cafe-brand-yellow: #ffe16c; --cafe-brand-purple: #71378f; --cafe-brand-brown: #69472f; --cafe-brand-teal: #275e64; --cafe-brand-on-dark: #ffffff; --cafe-brand-on-yellow: #3a3012;
   --ko-surface-0: var(--cafe-bg); --ko-surface-1: var(--cafe-surface); --ko-surface-2: var(--cafe-soft); --ko-text-primary: var(--cafe-text); --ko-text-secondary: var(--cafe-muted); --ko-border-subtle: var(--cafe-line); --ko-border-default: var(--cafe-line); --ko-accent-primary: var(--cafe-cta); --ko-accent-text: var(--cafe-active-text);
   box-sizing: border-box; max-width: 480px; margin: 0 auto; padding: 20px 20px calc(var(--kh-shell-bottom, 0px) + 32px); min-height: 80dvh; background: var(--cafe-bg); color: var(--cafe-text); font-variant-numeric: tabular-nums; line-height: 1.5;
@@ -17,6 +18,7 @@
   --cafe-bg: #182125; --cafe-surface: #202d32; --cafe-soft: #2b383d; --cafe-text: #f3f4ed; --cafe-muted: #bdc8c9; --cafe-line: #425257;
   --cafe-cta: #b5ddd8; --cafe-on-cta: #133b40; --cafe-active: #25483e; --cafe-active-text: #d5f4df;
   --cafe-sugar-bg: #442c36; --cafe-sugar-text: #ffbed0; --cafe-caffeine-bg: #253e31; --cafe-caffeine-text: #b7e4c1; --cafe-kcal-bg: #42362a; --cafe-kcal-text: #f6d3a7;
+  --cafe-icon-sugar-top: #a6dc85; --cafe-icon-sugar-front: #75b859; --cafe-icon-sugar-side: #4b9456; --cafe-icon-flame-outer: #ff8b67; --cafe-icon-flame-inner: #ef6552;
   --cafe-banner: #403726; --cafe-banner-text: #f9e2b8; --cafe-badge-bg: #294450; --cafe-badge-text: #d0edf9;
 }
 .cafe-page *, .cafe-page *::before, .cafe-page *::after { box-sizing: border-box; }

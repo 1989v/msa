@@ -30,3 +30,21 @@ export function CafeBrandBadge({ slug, name }: { slug: string; name: string }) {
 export function CafeIcon({ kind }: { kind: 'search' | 'back' | 'share' | 'filter' | 'cup' }) {
   return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{kind === 'search' ? <><circle cx="10.5" cy="10.5" r="7" /><path d="m16 16 5 5" /></> : kind === 'back' ? <path d="m14 5-7 7 7 7" /> : kind === 'share' ? <><path d="M12 15V2m-4 4 4-4 4 4M6 9H4v13h16V9h-2" /></> : kind === 'filter' ? <path d="M4 6h16M4 12h12M4 18h8" /> : <><path d="M6 7h12l-2 15H8L6 7ZM5 7h14M14 7l2-6" /><circle cx="12" cy="13" r="2" /></>}</svg>;
 }
+
+/** Decorative condition art: three stacked cubes, a coffee bean, and a layered flame. */
+export function CafeConditionIcon({ kind }: { kind: 'sugar' | 'caffeine' | 'kcal' }) {
+  return <svg width="40" height="40" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+    {kind === 'sugar' ? <>{[[7, 24], [25, 24], [16, 8]].map(([x, y]) => <g key={x} transform={`translate(${x} ${y})`}>
+      <path d="M0 5 8 0 16 5 8 10Z" fill="var(--cafe-icon-sugar-top)" />
+      <path d="M0 5 8 10V21L0 16Z" fill="var(--cafe-icon-sugar-front)" />
+      <path d="M8 10 16 5V16L8 21Z" fill="var(--cafe-icon-sugar-side)" />
+    </g>)}</> : kind === 'caffeine' ? <g transform="rotate(35 24 24)">
+      <ellipse cx="24" cy="24" rx="14" ry="20" fill="var(--cafe-art-coffee)" />
+      <path d="M24 5C9 16 33 29 24 43C40 34 17 18 24 5Z" fill="var(--cafe-art-topping)" />
+      <path d="M25 6C13 19 34 28 24 42" stroke="var(--cafe-art-milk)" strokeWidth="1.5" strokeLinecap="round" />
+    </g> : <>
+      <path d="M24 3C28 13 39 15 36 25C40 23 41 20 40 18C49 33 38 45 25 45C10 45 3 34 9 23C10 28 13 29 14 25C14 16 23 12 24 3Z" fill="var(--cafe-icon-flame-outer)" />
+      <path d="M25 17C27 25 36 29 33 37C31 44 20 46 15 38C11 31 19 26 19 22C20 28 24 28 25 17Z" fill="var(--cafe-icon-flame-inner)" />
+    </>}
+  </svg>;
+}
