@@ -607,6 +607,24 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 원천 `volume_ml`은 보존하고 `cup_volume_ml`·`volume_source`는 원천 ml/빽다방 컵용량 원문(ROW), 투썸 공식 사이즈표(BRAND_SIZE_TABLE), 미확정(NONE)으로 구분한다.
 당류·카페인·열량 100ml당 값은 양수 컵용량으로 파생하며, g을 ml로 바꾸지 않는다. 매장별 판매·커스텀 옵션은 보증하지 않는다.
 
+### 9-1. 카페 로고 (`portal-fe/public/cafe/brands/<slug>.png`)
+
+비교 행에서 어느 카페인지 알아보게 하는 식별 표시로만 쓴다. 각 사의 상표이고 권리는 각 사에 있다.
+2026-10-23 각 공식 사이트가 스스로 내건 아이콘을 받았고, 크기 조정·흰 여백 외에는 고치지 않았다.
+권리자가 요청하면 해당 파일을 지우고 `CafeArt.tsx` 의 `brandLogos` 에서 빼면 글자 배지로 돌아간다.
+
+| slug | 원본 |
+|---|---|
+| compose | `composecoffee.com/files/attach/xeicon/mobicon.png` (apple-touch-icon) |
+| dunkin | `www.dunkindonuts.co.kr/images/favicon_180x180.png` |
+| ediya | `www.ediya.com/images/ico/favicon.ico` (256px 층) |
+| mega | `mega-mgccoffee.com/thumbnail.png` (og:image) 의 컵 심볼 영역 — 파비콘과 같은 그림, 파비콘은 32px 뿐이라 |
+| paik | `paikdabang.com/wp-content/uploads/2026/08/cropped-favicon-180x180.png` |
+| parisbaguette | `d2afncas1tel3t.cloudfront.net/wp-content/uploads/2019/09/cropped-PB_favicon-180x180.png` (www.paris.co.kr 이 건 apple-touch-icon) |
+| starbucks | `www.starbucks.co.kr/favicon.ico` (256px 층) |
+| theventi | `www.theventi.co.kr/new2022/assets/images/sub/v-logo-purple.png` (40px, 파비콘과 같은 V) |
+| twosome | `www.twosome.co.kr/resources/images/common/favicon3.ico` |
+
 ## 관련
 
 - 관광지 ETL 실행법 → `place/ingest/README.md`

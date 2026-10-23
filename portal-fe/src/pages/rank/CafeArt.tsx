@@ -38,7 +38,11 @@ export function CafeCup({ name = '', group = '', eager = false }: { name?: strin
 }
 
 const brandTones: Record<string, string> = { starbucks: 'green', mega: 'yellow', 'mega-mgc': 'yellow', megacoffee: 'yellow', compose: 'blue', 'compose-coffee': 'blue', theventi: 'purple', 'the-venti': 'purple', ediya: 'blue', paik: 'brown', 'paiks-coffee': 'brown' };
+/** Official icons taken from each brand's own site (sources: docs/architecture/data-sources.md). Symbol marks fill the circle; wordmarks get an inset. */
+const brandLogos: Record<string, 'fill' | 'inset'> = { compose: 'fill', paik: 'fill', starbucks: 'fill', twosome: 'fill', dunkin: 'inset', ediya: 'inset', mega: 'inset', parisbaguette: 'inset', theventi: 'inset' };
 export function CafeBrandBadge({ slug, name }: { slug: string; name: string }) {
+  const logo = brandLogos[slug];
+  if (logo) return <span className={`cafe-brand-badge cafe-brand-badge--logo cafe-brand-badge--${logo}`} aria-hidden="true"><img src={`/cafe/brands/${slug}.png`} alt="" width={96} height={96} loading="lazy" decoding="async" /></span>;
   return <span className={`cafe-brand-badge cafe-brand-badge--${brandTones[slug] ?? 'teal'}`} aria-hidden="true">{name.slice(0, 1)}</span>;
 }
 export function CafeIcon({ kind }: { kind: 'search' | 'back' | 'share' | 'filter' | 'cup' }) {
