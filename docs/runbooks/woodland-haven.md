@@ -16,7 +16,7 @@
 
 배포 전에 개인 OCI 대상 `msa-oci`에서 `woodland-bridge` Secret `secret` 키를64hex 랜덤 값으로 생성한다. 값을 출력하지 않는다. content와 woodland에 같은 비밀을 주입하며 없으면 시작하지 않는다. 기본 kubectl context가 회사 클러스터일 수 있으므로 로컬 기본 context를 쓰지 않는다. 개인 대상은 `ssh msa-oci 'sudo k3s kubectl ...'`로 명시한다.
 
-Node24, user1000, readOnlyRootFilesystem, RWO `woodland-world`1Gi, resource limit1CPU/384Mi. `/health/live`는 프로세스, `/health/ready`는 저장 오류 여부다. 신규 경제 명령은 파일 fsync/원자 교체 성공 뒤에만 응답한다. 장애 시 기록을 보존하고503으로 닫는다. 종료는 SSE를 닫고 HTTP를 드레인한 뒤 저장한다. Linux 잠금은 PID namespace+process start tick을 함께 기록해 컨테이너 재시작의 PID1 재사용을 구별한다. 서로 다른 namespace의 동시 writer를 허용하는 장치는 아니며 Recreate/RWO가 필수다.
+Node24, user1000, readOnlyRootFilesystem, enableServiceLinks=false 및 명시 WOODLAND_PORT=8349(동명 K8s Service의 tcp:// 자동 변수 충돌 방지), RWO `woodland-world`1Gi, resource limit1CPU/384Mi. `/health/live`는 프로세스, `/health/ready`는 저장 오류 여부다. 신규 경제 명령은 파일 fsync/원자 교체 성공 뒤에만 응답한다. 장애 시 기록을 보존하고503으로 닫는다. 종료는 SSE를 닫고 HTTP를 드레인한 뒤 저장한다. Linux 잠금은 PID namespace+process start tick을 함께 기록해 컨테이너 재시작의 PID1 재사용을 구별한다. 서로 다른 namespace의 동시 writer를 허용하는 장치는 아니며 Recreate/RWO가 필수다.
 
 ## 백업과 복원
 
@@ -37,3 +37,8 @@ node backup.mjs restore /qa/downloaded-woodland.json.gz /qa/restored-world
 `woodland-haven/package-lock.json`의 개발 의존성으로 `npm ci && npm test`를 실행한다. 런타임 패키지는 없다. `postman/simulations/woodland.sim.yaml`은 공개하지 않는 로컬 프로필 브리지 mock으로 실제 HTTP 요청/재사용401을 검증한다. Node의 실제 HTTP 의존 실패(401/HTML500/timeout), 쿠키 교체,2개인 공유·서버재시작·복원,8동시/64저장 정원, Linux 재시작 잠금을 별도로 검증한다. JVM은 `:game:feature:test --tests '*Woodland*'`, gateway 컴파일과 verifyArchitecture를 실행한다.
 
 배포 후 실제 gateway를 경유한 접속권 발급/join200/state200/SSE를 확인해야 Host 보존과 실제 라우팅까지 증명된다. 화면·계단/사육 조작의 브라우저 검증은 별도 UI 승인이 필요하며 HTTP 테스트와 구분한다. 운영 월드 초기화 없이 전용 QA 프로필만 사용한다.
+
+
+## 검증된 첫 릴리스
+
+2026-10-23:4서비스 c05c2cd Ready, 실제2개 플랫폼 프로필의 join200/동시SSE/채집 저장, Node 재기동 후 ID·순번·개인 가방 복원, 실제 OCI 업로드·인증 다운로드·빈 디렉터리 복원 통과. 근거는 [Woodland status](../specs/2026-10-18-woodland-haven/status.md)의 운영 배포 완료 절을 참조한다.

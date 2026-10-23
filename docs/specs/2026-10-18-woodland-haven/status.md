@@ -159,3 +159,26 @@
 - 실제 운영 adapter:64 영구프로필/8 동시 join batch19.28ms(다른 Linux실행29.1ms), 추가접속/등록409. 최대규모 fixture:64 record3,630,949bytes, parse3.83s,8snapshot3,250,744bytes, 추정 전체tick61.22ms. 50ms보다 느릴 수 있으며 시간을 소급하지 않는 기존 계약 유지.
 - OCI overlay render 성공:woodland replicas1/Recreate(전역RollingUpdate 뒤 재적용), RWO PVC, 비root/readOnlyRootFS, requiredsecret, 외부백업egress.
 - 개인OCI SSH node/msa 및 기존portal-fe/content Ready확인, woodland-bridge 랜덤secret 생성 완료(값 미출력). mainpush/실서비스 검증은 아래 배포 기록에서 구분한다.
+
+
+## 2026-10-23 — 공유 월드 운영 배포 완료 (05:01 UTC)
+
+플레이 주소: https://game.1989v.com/games/woodland-haven/index.html
+
+- games main `7014ec741230868b6e9d2142acca86b7b15f812c` (기존 main과 기능 브랜치를 모두 보존).
+- MSA 기능 통합 `72a9fd7d6`, CI/라우트 검증 보정 포함 `c05c2cd36`, 운영 포트 설정 수정 `5f6159a1a`, 이미지 commit-back 병합 `6e386423b`. 병행 PWA·카페 변경과 이미지 태그를 보존했고 force push/훅 우회는 하지 않았다.
+- [전체 CI 성공](https://github.com/1989v/msa/actions/runs/39900777171): Linux Woodland186 tests/186 pass/0 fail/0 skipped, 이미지 빌드 포함; FE 및 JVM compile·구조·YAML·Kustomize 게이트 성공.
+- [명시한4서비스 이미지 배포 성공](https://github.com/1989v/msa/actions/runs/39900790043): content/gateway/portal-fe/woodland, 태그 `c05c2cd`. JVM 서비스 전체 테스트 성공(7.8분). 이미지 태그 commit-back `4c33148f2df12061660f6a580c261a8328fdc169`.
+- 운영4 Deployment 모두 Ready1. 이미지 `ap-chuncheon-1.ocir.io/axyooxbyk5yv/{content,gateway,portal-fe,woodland}:c05c2cd`.
+- 공개 HTML200; game.mjs200 + text/javascript + games7014ec74 원문 hash 일치. 실제 gateway 경유 플랫폼 게스트 프로필2개 → 티켓/Node join200 → 서로 다른 영구ID. 동시 SSE2개 모두 상대 플레이어1명 전달. 실제 harvest 성공, 개인 명령 순번1→2.
+- 운영 보안 확인: 세션 없이 위조 X-User-Id를 붙인 state401, 유효 게스트 쿠키와 잘못된 회원 Bearer를 함께 보낸 tickets401, 다른 Origin403. 세션 쿠키 Secure/HttpOnly/host-only/Path=/api/v1/games/woodland 확인(값 기록하지 않음).
+- Node만 한 차례 정상 재기동(월드 초기화 없음) 후 이전 세션401. 새 플랫폼 접속권으로 같은2개 영구ID 재접속, 다음 명령 순번2/1 및 돌2/0 복원. 공개 state200에서 서로 확인.
+- 실제 Job `woodland-backup-smoke-20261023` Succeeded1. OCI `msa-db-backup`의 `woodland/woodland-2026-10-23T04-58-16-713Z.json.gz`에 Content-MD5 업로드 성공. 운영자 OCI 인증으로 다운로드 후 별도의 빈 디렉터리 복원에서2프로필 UUID 연결·순번·돌2개를 검증했다. 운영 PVC나 기존 로컬 QA 기록을 덮어쓰지 않았다.
+- Argo Synced/operation Succeeded. Application 전체 health는2026-10-04부터 기존 Degraded 상태이며 개별 Degraded resource 목록은 비어 있었다. 이 배포4서비스 Ready와 구분한다.
+
+기동 중 확인한 설정 문제와 조치:
+1. PVC WaitForFirstConsumer: 병행 main `80fd54d8d`가 PVC와 Node Deployment를 같은 wave5로 수정한 것을 보존해 Bound 확인.
+2. Kubernetes 자동 서비스 환경변수 WOODLAND_PORT=tcp://...가 이미지 숫자 포트를 덮어써 첫 기동 실패. Pod enableServiceLinks=false와 명시 포트8349로 수정. 렌더에서 false/8349/Recreate 확인 후 실제 Ready 확인.
+3. 이전 Argo sync가4c331에서 기다리며 최신 설정을 적용하지 못했다. `/operation` 제거만으로 종료되지 않은 것을 확인하고 status.operationState.phase=Terminating으로 정상 종료해 최신6e386 동기화가 진행됐다. watchdog 자체는 이번 범위에서 수정하지 않았다.
+
+제한: 동시8명/등록64프로필의 단일 협동 베타. 로컬 백업7일, 오프노드 기본 무기한(별도 prefix lifecycle 후속). 브라우저·화면·계단/사육 조작의 UI 검증은 이번 배포에서 실행하지 않았다. 접속/규칙/저장/복구 HTTP 검증과 구분한다. QA 쿠키·게스트 자격·운영 비밀은 문서나 저장소에 올리지 않았다.

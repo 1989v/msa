@@ -61,3 +61,13 @@
 - 보존정정: 로컬 백업7일; write-only PAR로는 원격 삭제 불가하므로 오프노드는 무기한, 별도 prefix lifecycle은 후속 운영 설정. 런북 docs/runbooks/woodland-haven.md.
 - 결과 로그 /private/tmp/woodland-{release-tests-20261023,production-tests,linux-tests,gradle,gradle-controller,fe-build}.log. 재생성 전체 Node약1분, Gradle증분약45초.
 - 최종 소스 검증·독립 SHIP 완료: 전체186/185pass0fail1Macskip, Linux6/6, JVM4/4, FEbuild0, 비root읽기전용image ready200. games 운영연동7014ec74. 부모 mainpushhold 해제, games mainpush→MSA정확gitlink mergecommit→images/Argo→공개HTTPsmoke 순서.
+
+
+## 완료 — 2026-10-23 05:01 UTC
+- 공유 월드 공개 배포 완료: https://game.1989v.com/games/woodland-haven/index.html
+- games7014ec74/main, MSA c05c2cd36 + runtime5f6159a1a/merge6e386423b.4서비스 c05c2cd Ready1.
+- 전체CI39900777171/명시4서비스images39900790043 성공. 실제2프로필 join/SSE/harvest/state, Node 정상 재기동 후 같은ID·순번·개인 돌2개 복원 통과.
+- 실제 오프노드 백업 Job성공; OCI 다운로드와 별도 빈 디렉터리 복원 통과. 기록·운영 비밀·쿠키 값 미출력/미커밋. 기존 로컬월드 /private/tmp/woodland-shared-world-qa-20261018 손대지 않음.
+- 상세 최종 근거 status.md 운영 배포 절. Node자동 서비스env 포트충돌은 enableServiceLinks=false+명시8349로 해결. Argo구sync 종료는 status.phase=Terminating이 필요했으며 /operation 제거만으로는 멈추지 않았음.
+- QA 복원본 /private/tmp/woodland-live-smoke/restored, 인증파일은 동일700권한 디렉터리의 비공개 로컬 파일이며 저장소에 넣지 않음. 필요할 때만 운영자 본인 접근.
+- 남은 구현 작업 없음. UI 검증은 새 승인 필요. 기존 전체Argohealth Degraded(10-04부터)는 이번4서비스Ready와 별도다.

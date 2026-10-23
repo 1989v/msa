@@ -83,4 +83,4 @@
 - [x] OCI Node 단일 Recreate/PVC/보안 context/probes·SSE·이미지 파이프라인
 - [x] 전용 prefix 오프노드 업로드·로컬7일 보존·빈 디렉터리 복원 도구
 - [x] 운영 HTTP 의존 mock/보안·JVM 테스트·Linux 재시작 검증
-- [ ] 전체 최종 검증·독립 SHIP·main 통합·CI 배포·실서비스 HTTP 확인
+- [x] 전체 최종 검증·독립 SHIP·main 통합·CI 배포·실서비스 HTTP 확인
