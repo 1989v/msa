@@ -26,7 +26,7 @@ export function cafeMetric(drink: CafeDrink, metric: CafeMetric, basis: 'serving
     ? { sugar: drink.sugarPer100ml, caffeine: drink.caffeinePer100ml, kcal: drink.kcalPer100ml }[metric]
     : { sugar: drink.sugarG, caffeine: drink.caffeineMg, kcal: drink.kcal }[metric];
   return {
-    amount: value == null || !Number.isFinite(value) ? (metric === 'caffeine' ? '수치 미확정' : '미공개') : formatCafeNumber(value),
+    amount: value == null || !Number.isFinite(value) ? (metric === 'caffeine' ? '미확정' : '미공개') : formatCafeNumber(value),
     unit: value == null || !Number.isFinite(value) ? undefined : metricUnits[metric],
     status: metric === 'caffeine' ? (drink.caffeineStatus === 'DECAF' ? '디카페인' : undefined) : undefined,
   };
