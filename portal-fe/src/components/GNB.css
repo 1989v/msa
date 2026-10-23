@@ -235,3 +235,6 @@ a.gnb-menu-item {
     transition: none;
   }
 }
+
+/* Mobile tablets may have a desktop-width viewport; device eligibility owns install visibility. */
+.gnb-hamburger.gnb-hamburger--install { display: flex; }

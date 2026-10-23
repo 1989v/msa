@@ -1,3 +1,4 @@
+import AppInstallMenu from '../../components/shell/AppInstallMenu';
 import MarketMapBadge from './MarketMapBadge';
 import { useEffect, useMemo } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
@@ -228,6 +229,7 @@ export default function RegionPage() {
               {regionDisplayName(lang, parent)}
             </Link>
           )}
+          <AppInstallMenu />
         </nav>
       </header>
 

@@ -1,9 +1,10 @@
 import { useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Download } from 'lucide-react';
+import { flushSync } from 'react-dom';
 import KhSheet from './KhSheet';
 import './AppInstall.css';
-import { InstallContext, installPath, installName } from '../../shell/appInstall';
+import { InstallContext, installPath, installName, isMobileInstallDevice } from '../../shell/appInstall';
 
 interface InstallPrompt extends Event {
   prompt(): Promise<void>;
@@ -21,14 +22,16 @@ export function AppInstallProvider({ children }: { children: ReactNode }) {
   const pending = useRef<{ event: InstallPrompt; route: string; href: string } | null>(null);
   const [standalone, setStandalone] = useState(() => Boolean(standaloneMedia()?.matches) || Boolean((navigator as Navigator & { standalone?: boolean }).standalone));
   const [guide, setGuide] = useState<string | null>(null);
-  const hidden = window.location.hostname.split('.')[0] === 'resume' || standalone;
+  // Privacy/standalone keep their existing manifest policy; desktop only hides our UI.
+  const manifestDisabled = window.location.hostname.split('.')[0] === 'resume' || standalone;
+  const hidden = manifestDisabled || !isMobileInstallDevice(navigator);
   const link = useRef<HTMLLinkElement | null>(null);
 
   useLayoutEffect(() => {
     // Commit synchronously before events/paint; the click closure also checks its route.
     current.current = route;
     pending.current = null;
-    if (hidden) return;
+    if (manifestDisabled) return;
     const manifest = document.createElement('link');
     manifest.rel = 'manifest';
     link.current = manifest;
@@ -46,7 +49,7 @@ export function AppInstallProvider({ children }: { children: ReactNode }) {
     const title = document.querySelector('title');
     if (title) observer.observe(title, { childList: true, subtree: true, characterData: true });
     return () => { observer.disconnect(); manifest.remove(); link.current = null; pending.current = null; };
-  }, [route, hidden, location.pathname]);
+  }, [route, manifestDisabled, location.pathname]);
 
   useEffect(() => {
     const before = (event: Event) => {
@@ -80,9 +83,13 @@ export function AppInstallProvider({ children }: { children: ReactNode }) {
   </InstallContext.Provider>;
 }
 
-export function AppInstallButton() {
+export function AppInstallButton({ onBeforeInstall }: { onBeforeInstall?: () => void }) {
   const { hidden, install } = useContext(InstallContext);
   if (hidden) return null;
-  return <button type="button" className="gnb-install" aria-label="이 페이지를 앱으로 설치" onClick={install}><Download size={18} aria-hidden="true" /><span>앱 설치</span></button>;
+  return <button type="button" className="gnb-install" aria-label="이 페이지를 앱으로 설치" onClick={() => {
+    // Close the invoking sheet before guide/prompt, while retaining user activation.
+    if (onBeforeInstall) flushSync(onBeforeInstall);
+    void install();
+  }}><Download size={18} aria-hidden="true" /><span>앱 설치</span></button>;
 }
 
