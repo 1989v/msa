@@ -38,6 +38,7 @@ spec:
         app.kubernetes.io/part-of: commerce-platform
     spec:
       imagePullSecrets: [{name: ocir-pull-secret}]
+      enableServiceLinks: false
       automountServiceAccountToken: false
       terminationGracePeriodSeconds: 20
       securityContext: { runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, fsGroup: 1000 }
@@ -46,6 +47,7 @@ spec:
           image: commerce/woodland:pending
           ports: [{ name: http, containerPort: 8349 }]
           env:
+            - { name: WOODLAND_PORT, value: "8349" }
             - { name: WOODLAND_ORIGINS, value: "https://game.1989v.com,https://1989v.com" }
             - { name: WOODLAND_REDEEM_URL, value: "http://content:8097/internal/games/woodland/tickets/redeem" }
             - name: WOODLAND_BRIDGE_SECRET

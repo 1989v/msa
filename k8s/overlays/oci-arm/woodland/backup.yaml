@@ -18,6 +18,7 @@ spec:
         spec:
           restartPolicy: OnFailure
           imagePullSecrets: [{name: ocir-pull-secret}]
+          enableServiceLinks: false
           automountServiceAccountToken: false
           affinity:
             podAffinity:
