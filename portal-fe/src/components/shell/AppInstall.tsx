@@ -10,13 +10,16 @@ interface InstallPrompt extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+// Some embedded browsers and test DOMs lack matchMedia; treat them as a normal browser tab.
+const standaloneMedia = () => (typeof window.matchMedia === 'function' ? window.matchMedia('(display-mode: standalone)') : null);
+
 export function AppInstallProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   // Include query/hash even though neither is persisted: any navigation invalidates the event.
   const route = location.key + location.pathname + location.search + location.hash;
   const current = useRef(route);
   const pending = useRef<{ event: InstallPrompt; route: string; href: string } | null>(null);
-  const [standalone, setStandalone] = useState(() => window.matchMedia('(display-mode: standalone)').matches || Boolean((navigator as Navigator & { standalone?: boolean }).standalone));
+  const [standalone, setStandalone] = useState(() => Boolean(standaloneMedia()?.matches) || Boolean((navigator as Navigator & { standalone?: boolean }).standalone));
   const [guide, setGuide] = useState<string | null>(null);
   const hidden = window.location.hostname.split('.')[0] === 'resume' || standalone;
   const link = useRef<HTMLLinkElement | null>(null);
@@ -52,12 +55,12 @@ export function AppInstallProvider({ children }: { children: ReactNode }) {
       pending.current = { event: event as InstallPrompt, route: current.current, href: link.current.href };
     };
     const installed = () => { pending.current = null; setGuide(null); };
-    const media = window.matchMedia('(display-mode: standalone)');
-    const changed = () => setStandalone(media.matches || Boolean((navigator as Navigator & { standalone?: boolean }).standalone));
+    const media = standaloneMedia();
+    const changed = () => setStandalone(Boolean(media?.matches) || Boolean((navigator as Navigator & { standalone?: boolean }).standalone));
     window.addEventListener('beforeinstallprompt', before);
     window.addEventListener('appinstalled', installed);
-    media.addEventListener('change', changed);
-    return () => { window.removeEventListener('beforeinstallprompt', before); window.removeEventListener('appinstalled', installed); media.removeEventListener('change', changed); };
+    media?.addEventListener('change', changed);
+    return () => { window.removeEventListener('beforeinstallprompt', before); window.removeEventListener('appinstalled', installed); media?.removeEventListener('change', changed); };
   }, [hidden]);
 
   const install = async () => {
