@@ -34,9 +34,29 @@ jobs:
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 10
     steps:
+      - name: Generate game checkout token
+        id: game-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            msa
+            games
       - uses: actions/checkout@v4
-        with: {submodules: false}
-      - run: git submodule update --init portal-fe/public/games
+        with:
+          submodules: false
+          token: ${{ steps.game-token.outputs.token }}
+      - name: Resolve pinned game revision
+        id: games
+        run: echo "sha=$(git rev-parse HEAD:portal-fe/public/games)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: 1989v/games
+          ref: ${{ steps.games.outputs.sha }}
+          path: portal-fe/public/games
+          token: ${{ steps.game-token.outputs.token }}
       - uses: actions/setup-node@v4
         with: {node-version: 24}
       - run: npm ci --ignore-scripts --no-audit --no-fund && npm test
