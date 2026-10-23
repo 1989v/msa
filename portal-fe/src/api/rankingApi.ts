@@ -92,10 +92,11 @@ export interface CafeDrink {
   cupVolumeMl: number | null; volumeSource: 'ROW' | 'BRAND_SIZE_TABLE' | 'NONE' | 'ADMIN_VERIFIED'; kcalPer100ml: number | null;
   drinkGroup: string; sugarPer100ml: number | null; caffeinePer100ml: number | null;
 }
-export interface CafeDrinkPage { content: CafeDrink[]; totalElements: number; page: number; size: number; sizeLabels?: string[] }
+export interface CafeDrinkPage { content: CafeDrink[]; totalElements: number; page: number; size: number; sizeLabels?: string[]; brandGroups?: CafeSearchBrand[]; menuCount?: number; brandCounts?: CafeBrandFacet[] }
 export interface CafeBrand { brandSlug: string; brandName: string; count: number; sourceUrls: string[]; checkedAt: string }
 export interface CafeGroup { group: string; count: number }
 export interface CafeFilters {
+  grouped?: boolean;
   category?: string; // UI category slug; API queries use the expanded group/caffeine fields.
   q?: string; brand?: string[]; group?: string | string[]; temperature?: string;
   maxSugar?: number; maxCaffeine?: number; maxKcal?: number; sizeLabel?: string; caffeine?: 'none' | 'zero' | 'decaf'; caffeineStatus?: CaffeineStatus[]; basis?: 'serving' | '100ml';
@@ -119,6 +120,8 @@ export const fetchCafeGroups = async (): Promise<CafeGroup[]> =>
 export const fetchCafeDrink = async (drinkKey: string): Promise<CafeDrink> =>
   (await api.get<ApiResponse<CafeDrink>>(`/api/v1/ranking/cafe/drinks/${encodeURIComponent(drinkKey)}`)).data.data;
 
+export interface CafeSearchBrand { brandSlug: string; brandName: string; menus: CafeBrandVariants[] }
+export interface CafeBrandFacet { brandSlug: string; brandName: string; count: number }
 export interface CafeDrinkName { drinkName: string; brandCount: number; rowCount: number }
 export interface CafeBrandVariants { brandSlug: string; brandName: string; representative: CafeDrink; variants: CafeDrink[] }
 export const fetchCafeDrinkNames = async (q: string): Promise<CafeDrinkName[]> =>
@@ -145,6 +148,7 @@ export interface CafeNearbyResult {
   basis: 'serving' | '100ml'; sort: string; radiusKm: number; locationKind: string; areaLabel: string | null;
   coverage: { status: string; reason: string; brands: string[] }; storeSource: string;
   storeSourceAsOf: string | null; storeFetchedAt: string; projectionAsOf: string; mappingRuleVersion: string;
+  brandCounts?: CafeBrandFacet[];
   nearbyStoresWithoutNutrition?: number; totalStores: number | null; matchedBrands: number; page: number; size: number; hasNext: boolean; items: CafeStore[];
 }
 export type CafeLocation = { kind: 'CURRENT'; lat: number; lng: number } | { kind: 'AREA'; areaCode: string };

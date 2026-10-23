@@ -19,6 +19,7 @@ class CafeNearbyRequest(
     val drinkName: String? = null, val caffeine: String? = null,
     val maxKcal: BigDecimal? = null, val sizeLabel: String? = null,
     val groups: List<String> = emptyList(),
+    val storeBrands: List<String> = emptyList(),
 ) { override fun toString() = "CafeNearbyRequest(redacted)" }
 
 data class CafeStoreRecord(
@@ -89,4 +90,5 @@ data class CafeNearbyResult(
     val projectionAsOf: Instant, val mappingRuleVersion: String, val totalStores: Int?, val matchedBrands: Int,
     val page: Int, val size: Int, val hasNext: Boolean, val items: List<CafeNearbyItem>,
     val nearbyStoresWithoutNutrition: Int = 0,
+    val brandCounts: List<CafeSearchBrandCount> = emptyList(),
 )

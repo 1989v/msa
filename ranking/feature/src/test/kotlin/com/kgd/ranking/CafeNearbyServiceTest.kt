@@ -73,6 +73,29 @@ class CafeNearbyServiceTest : BehaviorSpec({
             selected.items.single().autoSelected shouldBe false
             shouldThrow<CafeNearbyInvalid> { service.search(CafeNearbyRequest(CafeLocation("CURRENT", 37.5, 127.0), group = "라떼", selectedDrinkKeys = listOf(other.drinkKey, other.drinkKey))) }
         }
+        Then("brand facets span all stores before brand filtering and pagination; missing nutrition sorts by distance last") {
+            val missing = row.copy(brandSlug = "mega", brandName = "메가", drinkKey = "mega", sugarG = null)
+            every { drinks.search(any()) } returns CafeDrinkPage(listOf(row, missing), 2, 0, 200)
+            val far = store.copy(storeKey = "a-far", brandSlug = "mega", brandName = "메가", latitude = 37.503)
+            val near = far.copy(storeKey = "z-near", latitude = 37.501)
+            every { port.candidates(any(), any(), any(), any(), any()) } returns listOf(far, near, store)
+            val location = CafeLocation("CURRENT", 37.5, 127.0)
+            val ordered = service.search(CafeNearbyRequest(location, group = "라떼", sort = "sugar", direction = "desc"))
+            ordered.items.map { it.storeKey } shouldBe listOf("public-store", "z-near", "a-far")
+            val filtered = service.search(CafeNearbyRequest(location, group = "라떼", storeBrands = listOf("mega"), size = 1))
+            filtered.totalStores shouldBe 2
+            filtered.items.single().storeKey shouldBe "z-near"
+            filtered.hasNext shouldBe true
+            filtered.brandCounts.associate { it.brandSlug to it.count } shouldBe mapOf("starbucks" to 1, "mega" to 2)
+            service.search(CafeNearbyRequest(location, group = "라떼", storeBrands = listOf("ediya"))).items shouldBe emptyList()
+        }
+        Then("HOT-only comparison representative remains valid for an ICE nearby preference") {
+            val hot = row.copy(temperature = "HOT", drinkKey = "hot-only")
+            every { drinks.variants("라떼") } returns listOf(hot, hot.copy(drinkKey = "decaf-ice", temperature = "ICE", caffeineStatus = CaffeineStatus.DECAF))
+            every { drinks.find("hot-only") } returns hot
+            val result = service.search(CafeNearbyRequest(CafeLocation("CURRENT", 37.5, 127.0), drinkName = "라떼", temperature = "ICE", selectedDrinkKeys = listOf("hot-only")))
+            result.items.single().selectedDrink!!.drinkKey shouldBe "hot-only"
+        }
         Then("empty group, invalid coordinates, radius and paging fail generically before repository candidate queries") {
             listOf(CafeNearbyRequest(CafeLocation("CURRENT", Double.NaN, 127.0), group = "라떼"), CafeNearbyRequest(CafeLocation("CURRENT", 37.5, 127.0)), CafeNearbyRequest(CafeLocation("CURRENT", 37.5, 127.0), group = "라떼", radiusKm = 2.0)).forEach { invalid -> shouldThrow<CafeNearbyInvalid> { service.search(invalid) } }
             verify(exactly = 0) { port.candidates(any(), any(), any(), any(), any()) }

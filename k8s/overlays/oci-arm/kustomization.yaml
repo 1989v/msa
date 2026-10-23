@@ -402,9 +402,6 @@ patches:
         annotations:
           argocd.argoproj.io/sync-wave: "20"
 images:
-  - name: commerce/woodland
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/woodland
-    newTag: pending
   - name: commerce/account
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/account
     newTag: bbb42ec
@@ -425,7 +422,7 @@ images:
     newTag: e2d04a5
   - name: commerce/content
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/content
-    newTag: 02f4cdd
+    newTag: 918d4ed
   - name: commerce/engagement
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/engagement
     newTag: bbb42ec
@@ -440,7 +437,7 @@ images:
     newTag: 9d34dd7
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: 1bf42d5
+    newTag: 918d4ed
   - name: commerce/quant-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant-fe
     newTag: cb23a78
@@ -471,6 +468,9 @@ images:
   - name: commerce/sideapp
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/sideapp
     newTag: e2d04a5
+  - name: commerce/woodland
+    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/woodland
+    newTag: pending
   # 인프라 이미지 — default-deny egress 라 기동 래퍼의 nori 다운로드가 불가.
   # analysis-nori 베이크 이미지로 교체 (docker/opensearch/Dockerfile, 수동 빌드·푸시)
   - name: opensearchproject/opensearch

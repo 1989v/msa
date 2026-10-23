@@ -1,8 +1,9 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import CafeNearby from '../CafeNearby';
 import * as api from '../../../api/rankingApi';
+import * as preferences from '../cafeNearbyPreferences';
 import type { CafeNearbyResult } from '../../../api/rankingApi';
 
 vi.mock('../CafeNearbyMap', () => ({ default: () => <div aria-label="매장 위치 지도" /> }));
@@ -14,12 +15,13 @@ function setup() {
  return render(<QueryClientProvider client={client}><CafeNearby filters={{ group: '라떼' }} close={vi.fn()} /></QueryClientProvider>);
 }
 beforeEach(() => {
+ localStorage.clear();
  getPosition.mockReset();
  Object.defineProperty(navigator, 'geolocation', { configurable: true, value: { getCurrentPosition: getPosition } });
  vi.mocked(api.fetchCafeAreas).mockImplementation(async parent => parent ? [{ code: parent === '1100000000' ? '1168000000' : '5011000000', name: parent === '1100000000' ? '강남구' : '제주시', level: 'DISTRICT', parentCode: parent, centerSource: 'https://www.data.go.kr', sourceAsOf: '2026-10-19' }] : [{ code: '1100000000', name: '서울특별시', level: 'PROVINCE', parentCode: null, centerSource: 'https://www.data.go.kr', sourceAsOf: '2026-10-19' }, { code: '5000000000', name: '제주특별자치도', level: 'PROVINCE', parentCode: null, centerSource: 'https://www.data.go.kr', sourceAsOf: '2026-10-19' }]);
  vi.mocked(api.searchCafeNearby).mockResolvedValue(empty);
 });
-afterEach(() => vi.clearAllMocks());
+afterEach(() => { vi.clearAllMocks(); vi.restoreAllMocks(); });
 describe('one-shot memory-only location', () => {
  it('never asks automatically; explicit action requests once and cancellation ignores late position', async () => {
   setup(); expect(getPosition).not.toHaveBeenCalled();
@@ -27,13 +29,13 @@ describe('one-shot memory-only location', () => {
   expect(getPosition).toHaveBeenCalledTimes(1);
   expect(getPosition.mock.calls[0][2]).toEqual({ enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
   fireEvent.click(screen.getByRole('button', { name: '위치 요청 취소' }));
-  getPosition.mock.calls[0][0]({ coords: { latitude: 37.51234567, longitude: 127.01234567, accuracy: 10 } });
+  await act(async () => { getPosition.mock.calls[0][0]({ coords: { latitude: 37.51234567, longitude: 127.01234567, accuracy: 10 } }); });
   await Promise.resolve(); expect(api.searchCafeNearby).not.toHaveBeenCalled();
  });
  it('denial completes through real province/district selection, radius stays in request body', async () => {
   vi.mocked(api.searchCafeNearby).mockResolvedValue({ ...empty, locationKind: 'AREA', areaLabel: '강남구' });
   setup(); fireEvent.click(screen.getByRole('button', { name: '현재 위치 사용' }));
-  getPosition.mock.calls[0][1]({ code: 1 });
+  await act(async () => { getPosition.mock.calls[0][1]({ code: 1 }); });
   expect(await screen.findByText(/위치 권한이 거부되었습니다/)).toBeInTheDocument();
   fireEvent.click(screen.getByText('시도: 시도 선택'));
   fireEvent.click(await screen.findByRole('button', { name: '서울특별시' }));
@@ -53,7 +55,7 @@ describe('one-shot memory-only location', () => {
  it('submits position only to the body, aborts on exit, and does not save position in web storage', async () => {
   const local = vi.spyOn(Storage.prototype, 'setItem');
   const view = setup(); fireEvent.click(screen.getByRole('button', { name: '현재 위치 사용' }));
-  getPosition.mock.calls[0][0]({ coords: { latitude: 37.51234567, longitude: 127.01234567, accuracy: 1400 } });
+  await act(async () => { getPosition.mock.calls[0][0]({ coords: { latitude: 37.51234567, longitude: 127.01234567, accuracy: 1400 } }); });
   await waitFor(() => expect(api.searchCafeNearby).toHaveBeenCalled());
   expect(screen.getByText(/위치가 넓게 추정되었습니다/)).toBeInTheDocument();
   const [body, signal] = vi.mocked(api.searchCafeNearby).mock.calls[0];
@@ -64,7 +66,7 @@ describe('one-shot memory-only location', () => {
  it('publishes only public store destinations and no user origin in outbound links', async () => {
   vi.mocked(api.searchCafeNearby).mockResolvedValue({ ...empty, totalStores: 1, matchedBrands: 1, items: [{ storeKey: 's', brandSlug: 'starbucks', brandName: '스타벅스', storeName: '스타벅스', branchName: '강남점', displayName: '스타벅스 강남점', address: '서울', latitude: 37.5, longitude: 127, distanceM: 100, mappingStatus: 'CONFIRMED', selectedDrink: null, variants: [], selectionRequired: true, autoSelected: false, sourceAsOf: null, menuAvailability: 'UNVERIFIED' }] });
   setup(); fireEvent.click(screen.getByRole('button', { name: '현재 위치 사용' }));
-  getPosition.mock.calls[0][0]({ coords: { latitude: 37.51234567, longitude: 127.01234567, accuracy: 10 } });
+  await act(async () => { getPosition.mock.calls[0][0]({ coords: { latitude: 37.51234567, longitude: 127.01234567, accuracy: 10 } }); });
   const google = await screen.findByRole('link', { name: '길찾기 ↗' });
   const target = new URL(google.getAttribute('href')!); expect(target.searchParams.get('destination')).toBe('37.5,127'); expect(target.searchParams.has('origin')).toBe(false);
   const naver = screen.getByRole('link', { name: '네이버 메뉴·가격 ↗' });
@@ -77,7 +79,7 @@ it('clears a pending request when province changes and ignores the late response
  let resolve!: (value: CafeNearbyResult) => void;
  vi.mocked(api.searchCafeNearby).mockImplementationOnce(() => new Promise(done => { resolve = done; }));
  setup(); fireEvent.click(screen.getByRole('button', { name: '현재 위치 사용' }));
- getPosition.mock.calls[0][0]({ coords: { latitude: 37.5, longitude: 127, accuracy: 10 } });
+ await act(async () => { getPosition.mock.calls[0][0]({ coords: { latitude: 37.5, longitude: 127, accuracy: 10 } }); });
  await screen.findByText('주변 매장 검색 중…');
  fireEvent.click(screen.getByRole('button', { name: '위치 변경' }));
  fireEvent.click(screen.getByText('시도: 시도 선택'));
@@ -93,7 +95,7 @@ it('clears a pending request when province changes and ignores the late response
 it('distinguishes a physical store with missing nutrition from an empty radius', async () => {
  vi.mocked(api.searchCafeNearby).mockResolvedValue({ ...empty, nearbyStoresWithoutNutrition: 3 });
  setup(); fireEvent.click(screen.getByRole('button', { name: '현재 위치 사용' }));
- getPosition.mock.calls[0][0]({ coords: { latitude: 37.5, longitude: 127, accuracy: 10 } });
+ await act(async () => { getPosition.mock.calls[0][0]({ coords: { latitude: 37.5, longitude: 127, accuracy: 10 } }); });
  expect(await screen.findByText(/매장은 있으나 비교할 영양 자료가 없습니다/)).toBeInTheDocument();
  expect(screen.queryByText(/현재 조건에 맞는 매장이 없습니다/)).not.toBeInTheDocument();
  expect(screen.getByRole('link', { name: /매장 출처: 상가정보/ })).toHaveAttribute('href', 'https://www.data.go.kr/data/15012005/openapi.do');
@@ -102,8 +104,47 @@ it('distinguishes a physical store with missing nutrition from an empty radius',
 
 it('retains calorie and exact-size filters in a memory-only nearby request', async () => {
  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
- render(<QueryClientProvider client={client}><CafeNearby filters={{ group: '라떼', maxKcal: 200, sizeLabel: 'Tall' }} close={vi.fn()} /></QueryClientProvider>);
+ render(<QueryClientProvider client={client}><CafeNearby filters={{ group: '라떼', maxKcal: 200, sizeLabel: 'Tall', sort: 'kcal', direction: 'desc' }} close={vi.fn()} /></QueryClientProvider>);
  fireEvent.click(screen.getByRole('button', { name: '현재 위치 사용' }));
- getPosition.mock.calls[0][0]({ coords: { latitude: 37.5, longitude: 127, accuracy: 10 } });
- await waitFor(() => expect(api.searchCafeNearby).toHaveBeenCalledWith(expect.objectContaining({ maxKcal: 200, sizeLabel: 'Tall' }), expect.any(AbortSignal)));
+ await act(async () => { getPosition.mock.calls[0][0]({ coords: { latitude: 37.5, longitude: 127, accuracy: 10 } }); });
+ await waitFor(() => expect(api.searchCafeNearby).toHaveBeenCalledWith(expect.objectContaining({ maxKcal: 200, sizeLabel: 'Tall', sort: 'distance', direction: 'asc' }), expect.any(AbortSignal)));
+});
+
+it('multi-selects whole-result brand facets, preserves brands on radius change and clears to closest', async () => {
+ const facets = [{ brandSlug: 'mega', brandName: '메가커피', count: 3 }, { brandSlug: 'ediya', brandName: '이디야', count: 2 }];
+ vi.mocked(api.searchCafeNearby).mockImplementation(async body => ({ ...empty, brandCounts: facets, totalStores: (body as { storeBrands: string[] }).storeBrands.length ? 0 : 5 }));
+ setup();
+ fireEvent.click(screen.getByText('시도: 시도 선택'));
+ fireEvent.click(await screen.findByRole('button', { name: '서울특별시' }));
+ fireEvent.click(screen.getByText('시군구: 시군구 선택'));
+ fireEvent.click(await screen.findByRole('button', { name: '강남구' }));
+ fireEvent.click(await screen.findByRole('button', { name: '메가커피 3' }));
+ await waitFor(() => expect(api.searchCafeNearby).toHaveBeenLastCalledWith(expect.objectContaining({ storeBrands: ['mega'], sort: 'distance', direction: 'asc' }), expect.any(AbortSignal)));
+ expect(await screen.findByText(/선택한 브랜드의 매장이 없습니다/)).toBeInTheDocument();
+ fireEvent.click(await screen.findByRole('button', { name: '이디야 2' }));
+ await waitFor(() => expect(api.searchCafeNearby).toHaveBeenLastCalledWith(expect.objectContaining({ storeBrands: ['mega', 'ediya'] }), expect.any(AbortSignal)));
+ fireEvent.click(screen.getByRole('button', { name: '500m' }));
+ await waitFor(() => expect(api.searchCafeNearby).toHaveBeenLastCalledWith(expect.objectContaining({ storeBrands: ['mega', 'ediya'], radiusKm: 0.5 }), expect.any(AbortSignal)));
+ fireEvent.click(screen.getByText('정렬: 가까운 순'));
+ fireEvent.click(screen.getByRole('button', { name: '카페인 높은 순' }));
+ await waitFor(() => expect(api.searchCafeNearby).toHaveBeenLastCalledWith(expect.objectContaining({ sort: 'caffeine', direction: 'desc' }), expect.any(AbortSignal)));
+ fireEvent.click((await screen.findAllByRole('button', { name: '전체 보기' }))[0]);
+ await waitFor(() => expect(api.searchCafeNearby).toHaveBeenLastCalledWith(expect.objectContaining({ storeBrands: [], sort: 'distance', direction: 'asc' }), expect.any(AbortSignal)));
+});
+
+it('ignores a late location hash after the user switches to an area', async () => {
+ let finish!: (hash: string) => void;
+ const fingerprint = vi.spyOn(preferences, 'nearbyFingerprint').mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+ setup(); fireEvent.click(screen.getByRole('button', { name: '현재 위치 사용' }));
+ await act(async () => { getPosition.mock.calls[0][0]({ coords: { latitude: 37.5, longitude: 127, accuracy: 10 } }); });
+ expect(fingerprint).toHaveBeenCalled(); expect(api.searchCafeNearby).not.toHaveBeenCalled();
+ fireEvent.click(screen.getByRole('button', { name: '위치 변경' }));
+ fireEvent.click(screen.getByText('시도: 시도 선택'));
+ fireEvent.click(await screen.findByRole('button', { name: '서울특별시' }));
+ fireEvent.click(screen.getByText('시군구: 시군구 선택'));
+ fireEvent.click(await screen.findByRole('button', { name: '강남구' }));
+ await waitFor(() => expect(api.searchCafeNearby).toHaveBeenCalledWith(expect.objectContaining({ location: { kind: 'AREA', areaCode: '1168000000' } }), expect.any(AbortSignal)));
+ await act(async () => { finish('current:late'); });
+ expect(api.searchCafeNearby).toHaveBeenCalledTimes(1);
+ expect(api.searchCafeNearby).toHaveBeenLastCalledWith(expect.objectContaining({ location: { kind: 'AREA', areaCode: '1168000000' } }), expect.any(AbortSignal));
 });
