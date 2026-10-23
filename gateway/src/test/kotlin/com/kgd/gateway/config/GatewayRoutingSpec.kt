@@ -178,6 +178,28 @@ class GatewayRoutingSpec(
         }
     }
 
+    Given("Woodland public-world routing") {
+        Then("profile tickets match content before the world wildcard") {
+            val exchange = MockServerWebExchange.from(MockServerHttpRequest.post("/api/v1/games/woodland/tickets"))
+            val match = routeLocator.routes.collectList().block().orEmpty()
+                .first { Mono.from(it.predicate.apply(exchange)).block() == true }
+            match.id shouldBe "game-player-profile"
+            client.post().uri("/api/v1/games/woodland/tickets")
+                .header("Authorization", "Bearer invalid")
+                .header("X-User-Id", "1")
+                .exchange().expectStatus().isUnauthorized
+        }
+        Then("world endpoints preserve the browser Host and disable the global response timeout") {
+            val exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/api/v1/games/woodland/events"))
+            val match = routeLocator.routes.collectList().block().orEmpty()
+                .first { Mono.from(it.predicate.apply(exchange)).block() == true }
+            match.id shouldBe "woodland-world"
+            match.uri.host shouldBe "woodland"
+            match.metadata["response-timeout"] shouldBe -1
+            match.filters.any { it.toString().contains("PreserveHostHeader") } shouldBe true
+        }
+    }
+
     // ADR-0093 — 재편의 가장 큰 위험은 라우팅이다. 파드가 합쳐지면 목적지 호스트 이름이
     // 바뀌는데, 라우트를 하나 빠뜨려도 게이트웨이는 멀쩡히 뜨고 그 경로만 죽는다
     // (2026-09-11: product 를 commerce 로 옮기고 게이트웨이 이미지가 안 나가 /api/v1/products 가
@@ -189,6 +211,7 @@ class GatewayRoutingSpec(
             val knownServices = setOf(
                 "auth", "search", "analytics", "engagement", "account",
                 "sideapp", "content", "atlas", "commerce",
+                "woodland", // OCI public beta Service: k8s/overlays/oci-arm/woodland/runtime.yaml
             )
             val destinations = routeLocator.routes.collectList().block().orEmpty()
                 .map { it.uri }
