@@ -198,3 +198,36 @@
 .cafe-brand-menu h3 { font-size: 1rem; }
 .cafe-menu-variants summary, .cafe-menu-variants a { display: flex; align-items: center; min-height: 2.75rem; }
 .cafe-menu-variants > div { padding-block: var(--ko-space-2); }
+
+/* Shared search and comparison rows retain aligned numeric columns on phones. */
+.cafe-compact-table { width: 100%; }
+.cafe-compact-head, .cafe-compact-row { display: grid; grid-template-columns: minmax(0, 1fr) repeat(3, 56px); gap: 4px; align-items: center; }
+.cafe-compact-head { position: sticky; top: 0; z-index: 2; min-height: 40px; padding-block: 4px; background: var(--cafe-bg); border-bottom: 1px solid var(--cafe-line); font-size: 11px; color: var(--cafe-muted); }
+.cafe-compact-head > span:not(:first-child) { text-align: right; }
+.cafe-compact-head small { display: block; font-size: 10px; }
+.cafe-compact-brand { border-bottom: 1px solid var(--cafe-line); }
+.cafe-compact-row { position: relative; min-height: 64px; padding-block: 5px; }
+.cafe-compact-name { display: flex; gap: 5px; align-items: center; min-width: 0; }
+.cafe-compact-name .cafe-brand-badge { width: 22px; height: 22px; font-size: 10px; }
+.cafe-compact-name > span:last-child { min-width: 0; }
+.cafe-compact-name strong, .cafe-compact-name > span > span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; line-height: 1.35; }
+.cafe-compact-name small { display: block; font-size: 9px; line-height: 1.4; overflow-wrap: anywhere; }
+.cafe-compact-metric { padding: 5px 3px; border-radius: 6px; text-align: right; min-width: 0; }
+.cafe-compact-metric .cafe-metric { display: block; }
+.cafe-compact-metric .cafe-metric b { font-size: 13px; }
+.cafe-compact-metric .cafe-metric > small { display: none; }
+.cafe-compact-metric .cafe-compact-min { display: block; font-size: 9px; line-height: 1.2; color: inherit; }
+/* Each link owns a disjoint column; the second control never covers menu text. */
+.cafe-compact-identity { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.cafe-compact-identity .cafe-compact-name { flex: 1; min-width: 0; min-height: 44px; }
+.cafe-search-page .cafe-controls, .cafe-drink-page .cafe-controls { flex-wrap: wrap; }
+.cafe-search-page { padding-top: 8px; }
+.cafe-search-page .cafe-search-toolbar { margin-bottom: 6px; }
+.cafe-search-page .cafe-groups { margin-block: 4px; }
+.cafe-search-page .cafe-controls { margin-block: 4px; }
+.cafe-search-page .cafe-result-heading { margin-bottom: 4px; }
+.cafe-drink-page .cafe-comparison-hero { margin-bottom: 10px; }
+@media (max-width: 360px) { .cafe-compact-head, .cafe-compact-row { grid-template-columns: minmax(0, 1fr) repeat(3, 50px); gap: 3px; } }
+
+.cafe-compact-name::after { content: ""; position: absolute; inset: 0; }
+.cafe-compact-name:focus-visible::after { outline: 2px solid var(--cafe-cta); outline-offset: 2px; }

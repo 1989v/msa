@@ -21,7 +21,7 @@ class CafeDrinkQueryRepository(@Qualifier("rankingQueryFactory") private val que
 
     fun search(query: CafeDrinkQuery, pageable: Pageable): CafeDrinkPage {
         val where = BooleanBuilder()
-        query.q?.takeIf { it.isNotBlank() }?.let { where.and(drink.getString("menuName").containsIgnoreCase(it).or(drink.getString("displayName").containsIgnoreCase(it))) }
+        query.q?.takeIf { it.isNotBlank() }?.let { where.and(drink.getString("menuName").containsIgnoreCase(it).or(drink.getString("displayName").containsIgnoreCase(it)).or(drink.getString("drinkName").containsIgnoreCase(com.kgd.ranking.domain.cafe.model.DrinkNames.normalize(it)))) }
         if (query.brands.isNotEmpty()) where.and(drink.getString("brandSlug").`in`(query.brands))
         if (query.selectedGroups.isNotEmpty()) where.and(drink.getString("drinkGroup").`in`(query.selectedGroups))
         query.temperature?.let { where.and(drink.getString("temperature").eq(it)) }
@@ -88,7 +88,7 @@ class CafeDrinkQueryRepository(@Qualifier("rankingQueryFactory") private val que
     }
 
     fun variants(name: String): List<CafeDrinkResponse> = queryFactory.selectFrom(drink)
-        .where(drink.getString("drinkName").eq(name)).fetch().map { CafeDrinkResponse.of(it.toDomain()) }
+        .where(drink.getString("drinkName").eq(com.kgd.ranking.domain.cafe.model.DrinkNames.normalize(name))).fetch().map { CafeDrinkResponse.of(it.toDomain()) }
 
     fun groups(): List<CafeGroupCount> {
         val group = drink.getString("drinkGroup")

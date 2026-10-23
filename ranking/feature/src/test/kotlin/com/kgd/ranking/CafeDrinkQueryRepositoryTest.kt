@@ -92,6 +92,8 @@ class CafeDrinkQueryRepositoryTest : BehaviorSpec({
             repository.names("라떼").sumOf { it.rowCount } shouldBe 4L
             repository.names("제로").single().brandCount shouldBe 1
             repository.variants("제로라떼").single().menuName shouldBe "제로 라떼"
+            repository.variants("제로 라떼").single().menuName shouldBe "제로 라떼"
+            repository.search(CafeDrinkQuery(q = "제로 라떼"), PageRequest.of(0, 20)).totalElements shouldBe 1L
             repository.search(CafeDrinkQuery(direction = "desc"), PageRequest.of(0, 20)).content.last().menuName shouldBe "미공개 라떼"
         }
         Then("브랜드·유형별 집계는 행수와 출처·확인일을 반환한다") {

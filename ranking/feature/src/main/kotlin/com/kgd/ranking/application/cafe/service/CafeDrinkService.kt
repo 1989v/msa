@@ -42,7 +42,7 @@ class CafeDrinkService(private val repository: CafeDrinkRepositoryPort, private 
                 (query.maxSugar == null || it.sugarG?.let { value -> value <= query.maxSugar } == true) &&
                 (query.maxCaffeine == null || (it.caffeineStatus != com.kgd.ranking.domain.cafe.model.CaffeineStatus.UNDISCLOSED && it.caffeineMg?.let { value -> value <= query.maxCaffeine } == true))
         }.groupBy { it.brandSlug }.map { (brand, rows) ->
-            val variants = rows.sortedWith(representativeOrder(query.temperature))
+            val variants = selectVariants(rows, query)
             CafeDrinkBrandVariants(brand, variants.first().brandName, variants.first(), variants)
         }
         val order = metricOrder(query)
@@ -54,24 +54,43 @@ class CafeDrinkService(private val repository: CafeDrinkRepositoryPort, private 
         val all = mutableListOf<CafeDrinkResponse>()
         var page = 0
         do {
-            val found = repository.search(query.copy(page = page, size = 200, temperature = null, brands = emptyList()))
+            val found = repository.search(query.copy(page = page, size = 200, temperature = null, brands = emptyList(), caffeine = if (query.caffeine == "decaf") null else query.caffeine))
             all += found.content
             page++
         } while (page * 200 < found.totalElements)
         val order = metricOrder(query)
-        val brands = all.groupBy { it.brandSlug }.map { (slug, rows) ->
+        val eligible = if (query.caffeine == "decaf") all.filter { it.caffeineStatus == com.kgd.ranking.domain.cafe.model.CaffeineStatus.DECAF } else all
+        val excluded = all.map { it.brandSlug }.toSet() - eligible.map { it.brandSlug }.toSet()
+        val brands = eligible.groupBy { it.brandSlug }.map { (slug, rows) ->
             val menus = rows.groupBy { it.drinkName.ifBlank { it.menuName } }.map { (_, variants) ->
-                val sorted = variants.sortedWith(representativeOrder(query.temperature))
+                val sorted = selectVariants(variants, query)
                 CafeDrinkBrandVariants(slug, sorted.first().brandName, sorted.first(), sorted)
-            }.sortedWith { a, b -> order.compare(a.representative, b.representative) }
+            }.sortedWith(compareBy({ menuMatchRank(it.representative, query.q) }, { compactName(it.representative.drinkName.ifBlank { it.representative.menuName }).length }, { it.representative.drinkName }, { it.representative.drinkKey }))
             CafeSearchBrand(slug, menus.first().brandName, menus)
         }.sortedWith { a, b -> order.compare(a.menus.first().representative, b.menus.first().representative) }
         val matching = brands.filter { query.brands.isEmpty() || it.brandSlug in query.brands }
         val slice = matching.drop(query.page * query.size).take(query.size)
-        return CafeDrinkPage(slice.flatMap { it.menus.map { menu -> menu.representative } }, matching.size.toLong(), query.page, query.size,
+        return CafeDrinkPage(slice.map { it.menus.first().representative }, matching.size.toLong(), query.page, query.size,
             all.mapNotNull { it.sizeLabel }.distinct().sorted(), slice, matching.sumOf { it.menus.size },
-            brands.map { CafeSearchBrandCount(it.brandSlug, it.brandName, it.menus.size) })
+            brands.map { CafeSearchBrandCount(it.brandSlug, it.brandName, it.menus.size) }, excluded.size)
     }
+
+    private fun compactName(name: String) = name.replace(Regex("\\s+"), "").lowercase()
+
+    private fun menuMatchRank(row: CafeDrinkResponse, query: String?): Int {
+        val name = row.drinkName.ifBlank { row.menuName }
+        val q = query?.trim()?.takeIf { it.isNotEmpty() } ?: return 3
+        return when {
+            name.equals(q, ignoreCase = true) -> 0
+            compactName(name) == compactName(q) -> 1
+            compactName(name).startsWith(compactName(q)) -> 2
+            else -> 3
+        }
+    }
+
+    /** Shared public serving policy for grouped search and exact-name comparison. */
+    private fun selectVariants(rows: List<CafeDrinkResponse>, query: CafeDrinkQuery) =
+        rows.sortedWith(representativeOrder(query.temperature))
 
     private fun representativeOrder(temperature: String?) = compareBy<CafeDrinkResponse>(
         { if (it.caffeineStatus == com.kgd.ranking.domain.cafe.model.CaffeineStatus.DECAF) 1 else 0 },
