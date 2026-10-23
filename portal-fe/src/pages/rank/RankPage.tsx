@@ -1,3 +1,4 @@
+import AppInstallMenu from '../../components/shell/AppInstallMenu';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -43,7 +44,7 @@ export default function RankPage() {
           <a className="rank-header__brand kh-display" href="https://1989v.com">
             1989v
           </a>
-          <ThemeToggle />
+          <AppInstallMenu /><ThemeToggle />
         </div>
         <h1 className="rank-header__title kh-display">
           <span className="kh-display-accent">랭킹</span> 리더보드

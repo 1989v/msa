@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { InstallContext } from '../shell/appInstall';
 import { AppInstallButton } from './shell/AppInstall';
 import AuthButton from './AuthButton';
 import KhSheet from './shell/KhSheet';
@@ -36,6 +37,7 @@ const TECH_ITEMS: GNBItem[] = [
 export default function GNB({ pageLabel, items = TECH_ITEMS, onSearchFocus }: GNBProps) {
   // 구직 중일 때만 이력서 진입점을 띄운다 (ADR-0064)
   const resumeVisible = useResumeStatus();
+  const { hidden: installHidden } = useContext(InstallContext);
   // 모바일 앱 셸 — 아래로 스크롤하면 머리띠가 접힌다 (CSS 가 모바일에서만 적용)
   const collapsed = useScrollDirection();
   // 모바일(< 768px)에서는 메뉴·토글·로그인이 전부 서랍으로 들어간다 — 좁은 폭에서
@@ -110,11 +112,10 @@ export default function GNB({ pageLabel, items = TECH_ITEMS, onSearchFocus }: GN
             </button>
           )}
         </div>
-        <AppInstallButton />
         <button
           type="button"
           ref={menuTrigger}
-          className="gnb-hamburger"
+          className={`gnb-hamburger${installHidden ? '' : ' gnb-hamburger--install'}`}
           aria-label="메뉴"
           aria-haspopup="dialog"
           aria-expanded={drawerOpen}
@@ -132,6 +133,7 @@ export default function GNB({ pageLabel, items = TECH_ITEMS, onSearchFocus }: GN
           상단 고정 패널은 접히는 머리띠(transform)에 기준점이 걸려 스크롤과 함께 흔들린다. */}
       {drawerOpen && (
         <KhSheet label="메뉴" onClose={() => setDrawerOpen(false)}>
+          <AppInstallButton onBeforeInstall={() => setDrawerOpen(false)} />
           <ul className="gnb-drawer-list">
             {menuItems.map((item) => (
               <li key={item.label}>

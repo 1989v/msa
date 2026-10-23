@@ -1,3 +1,4 @@
+import AppInstallMenu from '../../components/shell/AppInstallMenu';
 import MarketMapBadge from './MarketMapBadge';
 import MarketPanelPreview from './MarketPanelPreview';
 import PlaceMarketMatches from './PlaceMarketMatches';
@@ -1555,7 +1556,7 @@ export default function PlacePage({ preset }: { preset?: PlacePreset } = {}) {
                 </button>
               ))}
             </span>
-            <ThemeToggle />
+            <AppInstallMenu /><ThemeToggle />
           </span>
         </h1>
         {preset ? (

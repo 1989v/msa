@@ -1,3 +1,4 @@
+import AppInstallMenu from '../../components/shell/AppInstallMenu';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -48,7 +49,7 @@ export default function BlogShell({
             <Link className="blog-chip kh-press" to="/studio">
               {isLoggedIn ? '내 스튜디오' : '글 쓰기'}
             </Link>
-            <ThemeToggle />
+            <AppInstallMenu /><ThemeToggle />
           </div>
         </div>
         <SpaceSwitcher spaces={categories.data ?? []} />

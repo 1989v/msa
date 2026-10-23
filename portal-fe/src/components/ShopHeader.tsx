@@ -1,3 +1,4 @@
+import AppInstallMenu from './shell/AppInstallMenu';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import './ShopHeader.css';
@@ -23,6 +24,7 @@ export default function ShopHeader() {
           쇼핑
         </Link>
         <nav className="shop-header-nav">
+          <AppInstallMenu />
           {isLoggedIn && (
             <Link to="/shop/cart" className="shop-header-link">
               장바구니

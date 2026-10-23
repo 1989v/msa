@@ -1,3 +1,4 @@
+import AppInstallMenu from '../../components/shell/AppInstallMenu';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { fetchRankingBoard, type RankingEntry } from '../../api/rankingApi';
@@ -88,7 +89,7 @@ export default function RankBoardPage() {
           <Link className="rank-header__brand kh-display" to="/">
             ← 랭킹
           </Link>
-          <ThemeToggle />
+          <AppInstallMenu /><ThemeToggle />
         </div>
         <h1 className="rank-header__title kh-display">{data?.title ?? '리더보드'}</h1>
         {data?.subtitle && <p className="rank-header__subtitle">{data.subtitle}</p>}

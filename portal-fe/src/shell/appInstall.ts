@@ -22,4 +22,9 @@ export function installName(title: string): string {
   return Array.from({ length: 16 }, (_, i) => short.charCodeAt(i).toString(16).padStart(4, '0')).join('');
 }
 
-
+/** Device signals include tablets and iPadOS, without treating a narrow PC window as mobile. */
+export function isMobileInstallDevice(device: Pick<Navigator, 'userAgent' | 'platform' | 'maxTouchPoints'> & { userAgentData?: { mobile?: boolean } }): boolean {
+  return /Android|iPhone|iPad|iPod/i.test(device.userAgent)
+    || (device.platform === 'MacIntel' && device.maxTouchPoints > 1)
+    || device.userAgentData?.mobile === true;
+}

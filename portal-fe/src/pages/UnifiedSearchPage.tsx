@@ -1,3 +1,4 @@
+import AppInstallMenu from '../components/shell/AppInstallMenu';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { unifiedHref } from '../api/unifiedSearchApi';
@@ -37,7 +38,7 @@ export default function UnifiedSearchPage({ navigate = (href: string) => window.
   const open = (hit: UnifiedHit) => navigate(unifiedHref(hit));
   const { activeId } = search;
   return <main className="unified-search">
-    <header><a className="unified-brand" href="/" aria-label="1989v 홈">1989v<span className="kh-mono"> / SEARCH</span></a><ThemeToggle /></header>
+    <header><a className="unified-brand" href="/" aria-label="1989v 홈">1989v<span className="kh-mono"> / SEARCH</span></a><AppInstallMenu /><ThemeToggle /></header>
     <section aria-labelledby="unified-title">
       <p className="unified-eyebrow">찾고, 바로 가기</p><h1 className="kh-display" id="unified-title">무엇을 찾으세요?</h1>
       <p className="unified-intro">게임, 장소, 카페 음료까지 한 번에 찾아보세요.</p>

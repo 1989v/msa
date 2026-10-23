@@ -1,3 +1,4 @@
+import AppInstallMenu from '../../components/shell/AppInstallMenu';
 import { useAttractionMarket } from './marketQueries';
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Link, Navigate, useParams, useLocation } from 'react-router-dom';
@@ -431,6 +432,7 @@ export default function AttractionPage() {
               </Link>
             </Fragment>
           ))}
+          <AppInstallMenu />
         </nav>
       </header>
 

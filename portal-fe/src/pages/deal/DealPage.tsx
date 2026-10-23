@@ -1,3 +1,4 @@
+import AppInstallMenu from '../../components/shell/AppInstallMenu';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -135,7 +136,7 @@ export default function DealPage() {
           <a className="deal-header__brand kh-display" href="https://1989v.com">
             1989v
           </a>
-          <ThemeToggle />
+          <AppInstallMenu /><ThemeToggle />
         </div>
         <h1 className="deal-header__title kh-display">
           <span className="kh-display-accent">혜택</span> 링크
