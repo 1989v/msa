@@ -3,6 +3,9 @@ kind: PersistentVolumeClaim
 metadata:
   name: woodland-world
   namespace: commerce
+  # local-path 는 WaitForFirstConsumer 라 파드가 생겨야 Bound 된다. 파드(Deployment, wave 5)보다
+  # 앞 wave 에 두면 Argo 가 Pending PVC 의 health 를 기다리며 뒤 wave 전체가 멈춘다 — 같은 wave 로 둔다.
+  annotations: { argocd.argoproj.io/sync-wave: "5" }
 spec:
   accessModes: [ReadWriteOnce]
   resources: { requests: { storage: 1Gi } }
