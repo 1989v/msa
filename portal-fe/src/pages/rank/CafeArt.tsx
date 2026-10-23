@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { cafeDrinkImage } from './cafeDrinkImages';
+
 export function cafeCupTone(name: string, group = ''): 'coffee' | 'fruit' | 'tea' | 'cream' | 'yellow' {
   if (/딸기|베리|자몽/.test(name)) return 'fruit';
   if (/말차|녹차/.test(name)) return 'tea';
@@ -6,8 +9,8 @@ export function cafeCupTone(name: string, group = ''): 'coffee' | 'fruit' | 'tea
   if (/라떼|고구마|바닐라/.test(group + name)) return 'cream';
   return 'coffee';
 }
-/** Decorative, locally drawn cup art; no brand marks or external assets. */
-export function CafeCup({ name = '', group = '' }: { name?: string; group?: string }) {
+/** Local SVG fallback when a generated decorative image cannot load. */
+function CafeCupFallback({ name = '', group = '' }: { name?: string; group?: string }) {
   const type = cafeCupTone(name, group);
   const whipped = /라떼|스무디|프라페/.test(name + group);
   return <svg className={`cafe-cup cafe-cup--${type}`} viewBox="0 0 100 140" fill="none" aria-hidden="true">
@@ -23,6 +26,17 @@ export function CafeCup({ name = '', group = '' }: { name?: string; group?: stri
     <path d="M25 46L31 120Q32 128 41 129H59Q68 128 69 120L75 46" className="cafe-art-outline" strokeWidth="1.5" />
   </svg>;
 }
+/** Generated recipe illustration, decorative alongside the menu's text label. */
+export function CafeCup({ name = '', group = '', eager = false }: { name?: string; group?: string; eager?: boolean }) {
+  const src = cafeDrinkImage(name, group);
+  const [failedSrc, setFailedSrc] = useState<string>();
+  return failedSrc === src ? <CafeCupFallback name={name} group={group} /> : <img
+    className="cafe-cup cafe-drink-image" src={src} width={512} height={512}
+    alt="" aria-hidden="true" loading={eager ? 'eager' : 'lazy'} decoding="async"
+    onError={() => setFailedSrc(src)}
+  />;
+}
+
 const brandTones: Record<string, string> = { starbucks: 'green', mega: 'yellow', 'mega-mgc': 'yellow', megacoffee: 'yellow', compose: 'blue', 'compose-coffee': 'blue', theventi: 'purple', 'the-venti': 'purple', ediya: 'blue', paik: 'brown', 'paiks-coffee': 'brown' };
 export function CafeBrandBadge({ slug, name }: { slug: string; name: string }) {
   return <span className={`cafe-brand-badge cafe-brand-badge--${brandTones[slug] ?? 'teal'}`} aria-hidden="true">{name.slice(0, 1)}</span>;

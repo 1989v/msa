@@ -1,13 +1,13 @@
 <!-- source: packages/design-system/src/tokens.css, docs/conventions/frontend-design.md, docs/conventions/design-system.md -->
 <!-- standard: docs/standards/design-md.md -->
 ---
-version: 2.6.0
+version: 2.6.1
 archetype: dark-trading
 # 브랜드/포트폴리오 화면(portal-fe `/`, `/portfolio`, resume 호스트)만 두 번째 아키타입을
 # 쓴다 — §12 참조. 공유 토큰은 그대로 dark-trading 이다.
 archetype_secondary: k-heritage
 mood: [data-dense, calm-night, korean-fintech]
-last_updated: 2026-10-22
+last_updated: 2026-10-23
 owners: [frontend-platform]
 default_theme: dark
 themes: [dark, light]
@@ -408,7 +408,9 @@ flat 디자인 지향. 카드 사이에 그림자 남발 금지.
 WCAG sRGB 상대 휘도 계산상 최소 대비는 light **5.31:1**, dark **7.07:1**로 4.5:1을 넘는다.
 `CafeDesign.test.ts`가 이 대비와 색상 토큰 경계를 검증한다.
 
-장식은 외부 이미지/로고 없이 로컬 `CafeCup` SVG로 그린다. `--cafe-art-*` 고정 토큰은
+음료 장식은 직접 생성한 투명 배경 WebP 12종을 로컬 `/cafe/drinks/`에서 불러온다.
+`cafeDrinkImages.ts`의 `cafeDrinkImages` 매핑을 사용하고, 로드 실패 시 기존 `CafeCup` SVG로 대체한다.
+이미지는 장식용(`alt=""`)이며 브랜드 로고나 공식 제품 사진을 사용하지 않는다. `--cafe-art-*` 고정 토큰은
 커피 갈색, 라떼 크림, 에이드 노랑, 스무디 분홍, 말차 녹색을 구분한다.
 `--cafe-brand-{green,blue,yellow,purple,brown,teal}`은 브랜드명 첫 글자 원의 고정 배경이며
 `--cafe-brand-on-dark` / `--cafe-brand-on-yellow`가 글자색이다. 영양 상태나 수치에 따라 바뀌지 않는다.

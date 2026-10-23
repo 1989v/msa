@@ -34,3 +34,8 @@ it('keeps search and condition tools noindex before JS while preserving the main
   expect(renderCafeHtml(shell)).toContain('href="/cafe/filter"');
   expect(renderCafeHtml(shell)).toContain('디카페인은 0mg와 다릅니다.');
 });
+
+it('serves drink WebP files without falling through to the private detail SPA', () => {
+  const nginx = readFileSync(resolve(__dirname, '../../../nginx.conf'), 'utf8');
+  expect(nginx).toMatch(/location \^~ \/cafe\/drinks\/ \{\s*[^]*?location ~ \\.webp\$ \{[^}]*Cache-Control "no-cache, must-revalidate";[^}]*try_files \$uri =404;/);
+});
