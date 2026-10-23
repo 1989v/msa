@@ -61,11 +61,13 @@ class CafeDrinkService(private val repository: CafeDrinkRepositoryPort, private 
         val order = metricOrder(query)
         val eligible = if (query.caffeine == "decaf") all.filter { it.caffeineStatus == com.kgd.ranking.domain.cafe.model.CaffeineStatus.DECAF } else all
         val excluded = all.map { it.brandSlug }.toSet() - eligible.map { it.brandSlug }.toSet()
+        // A broad query (e.g. 라떼) should compare the same drink across cafes, so prefer names most cafes share.
+        val coverage = eligible.groupBy { it.drinkName.ifBlank { it.menuName } }.mapValues { (_, rows) -> rows.map { it.brandSlug }.toSet().size }
         val brands = eligible.groupBy { it.brandSlug }.map { (slug, rows) ->
             val menus = rows.groupBy { it.drinkName.ifBlank { it.menuName } }.map { (_, variants) ->
                 val sorted = selectVariants(variants, query)
                 CafeDrinkBrandVariants(slug, sorted.first().brandName, sorted.first(), sorted)
-            }.sortedWith(compareBy({ menuMatchRank(it.representative, query.q) }, { compactName(it.representative.drinkName.ifBlank { it.representative.menuName }).length }, { it.representative.drinkName }, { it.representative.drinkKey }))
+            }.sortedWith(compareBy({ menuMatchRank(it.representative, query.q) }, { -(coverage[it.representative.drinkName.ifBlank { it.representative.menuName }] ?: 0) }, { compactName(it.representative.drinkName.ifBlank { it.representative.menuName }).length }, { it.representative.drinkName }, { it.representative.drinkKey }))
             CafeSearchBrand(slug, menus.first().brandName, menus)
         }.sortedWith { a, b -> order.compare(a.menus.first().representative, b.menus.first().representative) }
         val matching = brands.filter { query.brands.isEmpty() || it.brandSlug in query.brands }

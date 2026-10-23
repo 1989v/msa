@@ -20,6 +20,8 @@ class DrinkNamesTest : BehaviorSpec({
             listOf("(EX) HOT 연유 카페 라떼", "(EX) ICED 연유 카페 라떼", "연유 카페 라떼 (EX)").forEach { DrinkNames.normalize(it) shouldBe "연유카페라떼" }
             DrinkNames.normalize("  (L)  ICE   연유 라떼  ") shouldBe "연유라떼"
             DrinkNames.normalize(DrinkNames.normalize("(L) HOT 라떼")) shouldBe "라떼"
+            listOf("연유라떼(라지/점보)", "연유라떼(미디엄/라지)", "연유라떼(라지)", "연유라떼(K)").forEach { DrinkNames.normalize(it) shouldBe "연유라떼" }
+            listOf("원조빽스치노(BASIC)", "퐁당치노(바닐라)", "케냐(DripCoffee)").forEach { DrinkNames.normalize(it) shouldBe it }
         }
     }
 })

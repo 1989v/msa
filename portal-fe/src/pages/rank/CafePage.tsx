@@ -41,11 +41,11 @@ function BrandChips({ counts, selected, onChange, state }: { counts: import('../
 }
 function CompactRows({ rows, basis, identity }: { rows: CafeDrink[]; basis: 'serving' | '100ml'; identity: string }) {
   return <div className="cafe-compact-table" role="table" aria-label={`카페별 영양정보 비교 · ${basis === 'serving' ? '1회 제공량' : '100ml당'} 기준`}>
-    <div role="row" className="cafe-compact-head"><span role="columnheader">카페 / 메뉴<small>{basis === 'serving' ? '1회 제공량' : '100ml당'} 기준</small></span>{metrics.map(metric => <span role="columnheader" key={metric}>{metricNames[metric]}<small>({metricUnits[metric]})</small></span>)}</div>
+    <div role="row" className="cafe-compact-head"><span role="columnheader">카페 / 메뉴<small>{basis === 'serving' ? '1회 제공량' : '100ml당'} 기준 · <span className="cafe-compact-min-legend" aria-hidden="true" />최저</small></span>{metrics.map(metric => <span role="columnheader" key={metric}>{metricNames[metric]}<small>({metricUnits[metric]})</small></span>)}</div>
     {rows.map(drink => { return <div role="rowgroup" className="cafe-compact-brand" key={drink.drinkKey}>
       <div role="row" className="cafe-compact-row">
         <span role="rowheader" className="cafe-compact-identity"><Link className="cafe-compact-name" id={`drink-${drink.drinkKey}`} to={`/cafe/drinks/${drink.drinkKey}?basis=${basis}`} state={{ returnTo: identity }} onClick={() => positions.set(identity, { scroll: window.scrollY, focus: `drink-${drink.drinkKey}` })}><CafeBrandBadge slug={drink.brandSlug} name={drink.brandName} /><span><strong>{drink.brandName}</strong><span>{drink.drinkName || drink.menuName}</span><small>{variantLabel(drink)}</small></span></Link></span>
-        {metrics.map(metric => <span role="cell" key={metric} className={`cafe-compact-metric cafe-metric-cell--${metric}`}><Metric drink={drink} metric={metric} basis={basis} />{cafeMinimumRows(rows, metric, basis).some(row => row.drinkKey === drink.drinkKey) && <small className="cafe-compact-min" aria-label={`${metricNames[metric]} 최저`}>최저</small>}</span>)}
+        {metrics.map(metric => <span role="cell" key={metric} className={`cafe-compact-metric cafe-metric-cell--${metric}`}><Metric drink={drink} metric={metric} basis={basis} />{cafeMinimumRows(rows, metric, basis).some(row => row.drinkKey === drink.drinkKey) && <span className="cafe-compact-min" role="img" aria-label={`${metricNames[metric]} 최저`} />}</span>)}
       </div>
     </div>; })}
   </div>;

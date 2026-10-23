@@ -139,4 +139,18 @@ class CafeDrinkServiceTest : BehaviorSpec({
         }
     }
 
+    Given("a broad query where each cafe also has a shorter unrelated menu") {
+        val port = mockk<CafeDrinkRepositoryPort>()
+        val base = CafeDrinkResponse.of(cafeItem("a", "카페라떼").toDomain()).copy(drinkName = "카페라떼", drinkKey = "a-cafe")
+        val rows = listOf(base, base.copy(drinkName = "숏라떼", drinkKey = "a-short"),
+            base.copy(brandSlug = "b", brandName = "B", drinkKey = "b-cafe"), base.copy(brandSlug = "b", brandName = "B", drinkName = "꿀라떼", drinkKey = "b-honey"),
+            base.copy(brandSlug = "c", brandName = "C", drinkName = "곡물라떼", drinkKey = "c-grain"))
+        every { port.search(any()) } answers { val q = firstArg<CafeDrinkQuery>(); CafeDrinkPage(rows, rows.size.toLong(), q.page, q.size) }
+        val service = CafeDrinkService(port)
+        Then("the name most cafes share represents them and a cafe without it keeps its closest menu") {
+            val result = service.grouped(CafeDrinkQuery(q = "라떼"))
+            result.brandGroups!!.associate { it.brandSlug to it.menus.first().representative.drinkKey } shouldBe mapOf("a" to "a-cafe", "b" to "b-cafe", "c" to "c-grain")
+        }
+    }
+
 })
