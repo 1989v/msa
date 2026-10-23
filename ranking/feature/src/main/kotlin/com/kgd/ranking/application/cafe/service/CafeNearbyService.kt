@@ -50,8 +50,8 @@ class CafeNearbyService(
     override fun search(request: CafeNearbyRequest): CafeNearbyResult {
         if (!capability().nearbyEnabled) throw CafeNearbyUnavailable()
         val r = request
-        if (r.radiusKm !in setOf(0.5, 1.0, 3.0) || r.page !in 0..1000 || r.size !in 1..50 || r.brands.any { it !in BRANDS } || (r.q?.length ?: 0) > 120 || (r.drinkName?.length ?: 0) > 255 || r.selectedDrinkKeys.size > 9 || r.sort !in setOf("distance", "sugar", "caffeine", "kcal") || r.direction !in setOf("asc", "desc") || (r.group.isNullOrBlank() && r.groups.isEmpty() && r.drinkName.isNullOrBlank() && r.q.isNullOrBlank())) throw CafeNearbyInvalid()
-        val query = try { CafeDrinkQuery(q = r.q, brands = r.brands, group = r.group, temperature = r.temperature, maxSugar = r.maxSugar, maxCaffeine = r.maxCaffeine, caffeine = r.caffeine, basis = r.basis, sort = if (r.sort == "distance") "sugar" else r.sort, caffeineStatus = r.caffeineStatus, maxKcal = r.maxKcal, sizeLabel = r.sizeLabel, groups = r.groups) } catch (_: IllegalArgumentException) { throw CafeNearbyInvalid() }
+        if (r.radiusKm !in setOf(0.5, 1.0, 3.0) || r.page !in 0..1000 || r.size !in 1..50 || (r.brands + r.storeBrands).any { it !in BRANDS } || (r.q?.length ?: 0) > 120 || (r.drinkName?.length ?: 0) > 255 || r.selectedDrinkKeys.size > 9 || r.sort !in setOf("distance", "sugar", "caffeine", "kcal") || r.direction !in setOf("asc", "desc") || (r.group.isNullOrBlank() && r.groups.isEmpty() && r.drinkName.isNullOrBlank() && r.q.isNullOrBlank())) throw CafeNearbyInvalid()
+        val query = try { CafeDrinkQuery(q = r.q, brands = r.brands, group = r.group, temperature = null, maxSugar = r.maxSugar, maxCaffeine = r.maxCaffeine, caffeine = r.caffeine, basis = r.basis, sort = if (r.sort == "distance") "sugar" else r.sort, caffeineStatus = r.caffeineStatus, maxKcal = r.maxKcal, sizeLabel = r.sizeLabel, groups = r.groups) } catch (_: IllegalArgumentException) { throw CafeNearbyInvalid() }
         val location = r.location
         val area = if (location.kind == "AREA") {
             if (location.lat != null || location.lng != null || location.areaCode == null) throw CafeNearbyInvalid()
@@ -73,7 +73,7 @@ class CafeNearbyService(
         else { var page = 0; do { val found = drinks.search(query.copy(page = page, size = 200)); variants += found.content; page++ } while (page * 200 < found.totalElements) }
         val eligible = variants.filter { d ->
             (r.brands.isEmpty() || d.brandSlug in r.brands) && (query.selectedGroups.isEmpty() || d.drinkGroup in query.selectedGroups) &&
-            (r.temperature == null || d.temperature == r.temperature) && (r.caffeineStatus.isEmpty() || d.caffeineStatus in r.caffeineStatus) &&
+            (r.temperature == null || d.drinkKey in r.selectedDrinkKeys || d.temperature == r.temperature || variants.none { it.brandSlug == d.brandSlug && it.drinkName == d.drinkName && it.temperature == r.temperature }) && (r.caffeineStatus.isEmpty() || d.caffeineStatus in r.caffeineStatus) &&
             (r.sizeLabel == null || d.sizeLabel == r.sizeLabel) &&
             (r.maxKcal == null || d.kcal?.let { it <= r.maxKcal } == true) &&
             (r.maxSugar == null || d.sugarG?.let { it <= r.maxSugar } == true) &&
@@ -101,15 +101,16 @@ class CafeNearbyService(
             val value = when (r.sort) { "caffeine" -> if (d.caffeineStatus == CaffeineStatus.UNDISCLOSED) null else d.caffeineMg; "kcal" -> d.kcal; else -> d.sugarG } ?: return null
             return value to if (r.basis == "100ml") d.cupVolumeMl?.takeIf { it.signum() > 0 } ?: return null else BigDecimal.ONE
         }
-        val sorted = rows.sortedWith { a, b ->
+        val filtered = rows.filter { r.storeBrands.isEmpty() || it.brandSlug in r.storeBrands }
+        val sorted = filtered.sortedWith { a, b ->
             val comparison = if (r.sort == "distance") a.distanceM.compareTo(b.distanceM) else {
                 val l = metric(a); val v = metric(b)
                 when { l == null && v == null -> 0; l == null -> 1; v == null -> -1; else -> (l.first * v.second).compareTo(v.first * l.second) * if (r.direction == "desc") -1 else 1 }
             }
-            comparison.takeIf { it != 0 } ?: a.storeKey.compareTo(b.storeKey)
+            comparison.takeIf { it != 0 } ?: a.distanceM.compareTo(b.distanceM).takeIf { it != 0 } ?: a.storeKey.compareTo(b.storeKey)
         }
         val status = when { limited -> "LIMITED"; lat !in 33.0..39.0 || lng !in 124.0..132.0 -> "UNSUPPORTED"; age(meta) > 45 -> "STALE"; else -> "SUPPORTED" }
-        return CafeNearbyResult(r.basis, r.sort, r.radiusKm, location.kind, area?.name, CafeCoverage(status, if (meta.sourceAsOf == null) "SOURCE_DATE_UNKNOWN; fetched-date age used" else "Nationwide source; mapped brands only", eligible.keys.sorted()), "소상공인시장진흥공단 상가정보", meta.sourceAsOf, meta.fetchedAt, meta.projectionAsOf, meta.mappingRuleVersion, if (limited) null else rows.size, rows.map { it.brandSlug }.distinct().size, r.page, r.size, (r.page + 1) * r.size < rows.size, sorted.drop(r.page * r.size).take(r.size), nearbyStoresWithoutNutrition = withoutNutrition)
+        return CafeNearbyResult(r.basis, r.sort, r.radiusKm, location.kind, area?.name, CafeCoverage(status, if (meta.sourceAsOf == null) "SOURCE_DATE_UNKNOWN; fetched-date age used" else "Nationwide source; mapped brands only", eligible.keys.sorted()), "소상공인시장진흥공단 상가정보", meta.sourceAsOf, meta.fetchedAt, meta.projectionAsOf, meta.mappingRuleVersion, if (limited) null else filtered.size, filtered.map { it.brandSlug }.distinct().size, r.page, r.size, (r.page + 1) * r.size < filtered.size, sorted.drop(r.page * r.size).take(r.size), nearbyStoresWithoutNutrition = withoutNutrition, brandCounts = rows.groupBy { it.brandSlug }.map { (slug, stores) -> CafeSearchBrandCount(slug, stores.first().brandName, stores.size) }.sortedBy { it.brandSlug })
     }
     companion object { val BRANDS = setOf("starbucks", "mega", "compose", "paik", "ediya", "twosome", "theventi", "dunkin", "parisbaguette") }
 }

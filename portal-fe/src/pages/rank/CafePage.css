@@ -191,3 +191,10 @@
 @media (prefers-reduced-motion: reduce) { .cafe-page *, .cafe-page *::before, .cafe-page *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 
 .cafe-metric-basis-label { color: var(--cafe-muted); font-size: 12px; text-align: right; margin-top: 6px !important; }
+
+.cafe-brand-card { padding: var(--ko-space-4); border-block-end: 1px solid var(--cafe-line); }
+.cafe-brand-menu { padding-block: var(--ko-space-4); }
+.cafe-brand-menu + .cafe-brand-menu { border-block-start: 1px solid var(--cafe-line); }
+.cafe-brand-menu h3 { font-size: 1rem; }
+.cafe-menu-variants summary, .cafe-menu-variants a { display: flex; align-items: center; min-height: 2.75rem; }
+.cafe-menu-variants > div { padding-block: var(--ko-space-2); }

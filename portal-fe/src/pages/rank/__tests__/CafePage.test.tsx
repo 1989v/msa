@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MemoryRouter, Route, Routes, useLocation, type Location } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation, useNavigate, type Location } from 'react-router-dom';
 import CafePage, { cafeMinimumRows } from '../CafePage';
 import * as api from '../../../api/rankingApi';
 import type { CafeDrink } from '../../../api/rankingApi';
@@ -21,8 +21,8 @@ const fixture = (patch: Partial<CafeDrink> = {}): CafeDrink => ({
 function setup(path = '/cafe', props: Parameters<typeof CafePage>[0] = {}) {
   // MemoryRouter, not createMemoryRouter: the data router builds a fetch Request with jsdom's AbortSignal,
   // which Node 24's undici rejects, so every navigation silently failed in CI while passing on Node 22.
-  const router = { state: { location: undefined as unknown as Location } };
-  function LocationProbe() { router.state.location = useLocation(); return null; }
+  const router = { state: { location: undefined as unknown as Location }, navigate: (_path: string) => {} };
+  function LocationProbe() { router.state.location = useLocation(); router.navigate = useNavigate(); return null; }
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(<QueryClientProvider client={client}><MemoryRouter initialEntries={[path]}><LocationProbe /><Routes>
     <Route path="/cafe/search" element={<CafePage {...props} />} />
@@ -119,12 +119,12 @@ describe('v3 home and search', () => {
     expect(localStorage.getItem('cafe-recent-searches')).toBe('[]');
   });
   it('uses full server totals per brand while retaining other conditions', async () => {
-    vi.mocked(api.fetchCafeDrinks).mockImplementation(async filters => ({ content: filters.size === 1 ? [] : [fixture()], totalElements: filters.brand?.length ? 12 : 50, page: 0, size: filters.size ?? 20, sizeLabels: ['R', 'Tall(톨)'] }));
+    vi.mocked(api.fetchCafeDrinks).mockImplementation(async filters => ({ content: filters.size === 1 ? [] : [fixture()], totalElements: 1, menuCount: 12, brandCounts: [{ brandSlug: 'a', brandName: '브랜드', count: 12 }, { brandSlug: 'b', brandName: '다른 브랜드', count: 38 }], page: 0, size: filters.size ?? 20, sizeLabels: ['R', 'Tall(톨)'] }));
     setup('/cafe/search?q=라떼&maxSugar=10&brand=a');
     expect(await screen.findByRole('button', { name: '전체 50' })).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: '브랜드 12' })).toHaveAttribute('aria-pressed', 'true');
-    expect(api.fetchCafeDrinks).toHaveBeenCalledWith(expect.objectContaining({ q: '라떼', maxSugar: 10, brand: [], size: 1 }));
-    expect(api.fetchCafeDrinks).toHaveBeenCalledWith(expect.objectContaining({ q: '라떼', maxSugar: 10, brand: ['a'], size: 1 }));
+    expect(api.fetchCafeDrinks).toHaveBeenCalledTimes(1);
+    expect(api.fetchCafeDrinks).toHaveBeenCalledWith(expect.objectContaining({ q: '라떼', maxSugar: 10, brand: ['a'], grouped: true }));
   });
   it('uses exact-size/temperature/sort popovers and Escape restores trigger focus', async () => {
     setup('/cafe/search?q=라떼'); await screen.findByRole('list', { name: '음료 비교' });
@@ -132,7 +132,7 @@ describe('v3 home and search', () => {
     fireEvent.keyDown(screen.getByRole('group', { name: '사이즈' }), { key: 'Escape' }); expect(document.activeElement).toBe(trigger);
     fireEvent.click(trigger); fireEvent.click(screen.getByRole('button', { name: 'Tall(톨)' }));
     await waitFor(() => expect(api.fetchCafeDrinks).toHaveBeenCalledWith(expect.objectContaining({ sizeLabel: 'Tall(톨)' })));
-    fireEvent.click(screen.getByRole('button', { name: 'ICE/HOT' })); fireEvent.click(screen.getByRole('button', { name: 'HOT' }));
+    fireEvent.click(screen.getByRole('button', { name: 'ICE' })); fireEvent.click(screen.getByRole('button', { name: 'HOT' }));
     await waitFor(() => expect(api.fetchCafeDrinks).toHaveBeenCalledWith(expect.objectContaining({ temperature: 'HOT' })));
     fireEvent.click(screen.getByRole('button', { name: '정렬' })); fireEvent.click(screen.getByRole('button', { name: '카페인 높은 순' }));
     await waitFor(() => expect(api.fetchCafeDrinks).toHaveBeenCalledWith(expect.objectContaining({ sort: 'caffeine', direction: 'desc' })));
@@ -199,7 +199,7 @@ describe('v3 comparison and detail', () => {
     expect(within(table).queryByRole('button')).toBeNull();
     expect(screen.getByText('당류를 줄이고 싶다면 가브랜드, 나브랜드 바닐라라떼가 공동으로 가장 낮아요.')).toBeInTheDocument();
     expect(within(table).getByText('미공개')).toBeInTheDocument();
-    expect(api.fetchCafeComparison).toHaveBeenCalledWith('바닐라라떼', {});
+    expect(api.fetchCafeComparison).toHaveBeenCalledWith('바닐라라떼', expect.objectContaining({ basis: 'serving', direction: 'asc' }));
   });
   it('recomputes minima for selected basis and preserves a selected variant through basis changes', async () => {
     const a = fixture({ sugarG: 10, cupVolumeMl: 100, sugarPer100ml: 10 });
@@ -298,17 +298,18 @@ it('places the capability-enabled nearby row below banner and preserves drink se
   await waitFor(() => expect(api.searchCafeNearby).toHaveBeenCalledWith(expect.objectContaining({ drinkName: '라떼', location: { kind: 'CURRENT', lat: 37.5, lng: 127 } }), expect.any(AbortSignal)));
 });
 
-it('hides confirmed empty brand tabs while keeping failed and pending counts honest', async () => {
-  vi.mocked(api.fetchCafeBrands).mockResolvedValue(['empty', 'failed', 'pending'].map(brandSlug => ({ brandSlug, brandName: brandSlug, count: 1, checkedAt: '2026-10-20', sourceUrls: [] })));
-  vi.mocked(api.fetchCafeDrinks).mockImplementation(async filters => {
-    if (filters.brand?.[0] === 'failed') throw new Error('unavailable');
-    if (filters.brand?.[0] === 'pending') return new Promise(() => {});
-    return { content: [], totalElements: 0, page: 0, size: 20 };
-  });
+it('keeps grouped brand counts pending or failed without fabricating zero, then renders returned facets', async () => {
+  let reject!: (reason: Error) => void;
+  vi.mocked(api.fetchCafeDrinks).mockImplementation(() => new Promise((_resolve, no) => { reject = no; }));
   setup('/cafe/search?q=라떼');
-  expect(await screen.findByRole('button', { name: 'failed 조회 실패' })).toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: /empty/ })).toBeNull();
-  expect(screen.getByRole('button', { name: 'pending …' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '전체 …' })).toBeInTheDocument();
+  await act(async () => { reject(new Error('unavailable')); });
+  expect(await screen.findByRole('button', { name: '전체 조회 실패' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: '전체 0' })).toBeNull();
+  vi.mocked(api.fetchCafeDrinks).mockResolvedValue({ content: [], totalElements: 0, page: 0, size: 20, brandCounts: [{ brandSlug: 'found', brandName: '찾은 카페', count: 12 }] });
+  fireEvent.click(screen.getByRole('button', { name: '다시 시도' }));
+  expect(await screen.findByRole('button', { name: '찾은 카페 12' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '전체 12' })).toBeInTheDocument();
 });
 
 it('keeps zero caffeine numeric without the official-zero helper', async () => {
@@ -356,4 +357,34 @@ it.each([
   await waitFor(() => expect(api.fetchCafeDrinks).toHaveBeenCalledWith(expect.objectContaining({ group: undefined, caffeine: undefined, maxSugar: 10 })));
   expect(new URLSearchParams(router.state.location.search).has('category')).toBe(false);
   expect(within(screen.getByRole('navigation', { name: '음료 유형' })).getByRole('link', { name: '전체' })).toHaveAttribute('aria-current', 'true');
+});
+
+it('groups distinct menu names under one brand, exposes variants and expands beyond three names', async () => {
+ const menus = ['라떼', '바닐라라떼', '모카라떼', '말차라떼'].map((name, index) => {
+  const representative = fixture({ drinkKey: `menu-${index}`, drinkName: name, caffeineStatus: 'DISCLOSED' });
+  return { brandSlug: 'a', brandName: '브랜드', representative, variants: [representative, fixture({ drinkKey: `hot-${index}`, drinkName: name, temperature: 'HOT', sugarG: null })] };
+ });
+ vi.mocked(api.fetchCafeDrinks).mockResolvedValue({ content: menus.map(menu => menu.representative), totalElements: 1, page: 0, size: 20, menuCount: 4, brandGroups: [{ brandSlug: 'a', brandName: '브랜드', menus }] });
+ setup('/cafe/search?q=라떼');
+ expect(await screen.findByText('카페 1곳 · 메뉴 4개')).toBeInTheDocument();
+ const list = screen.getByRole('list', { name: '음료 비교' });
+ expect(within(list).getAllByRole('heading', { level: 3 })).toHaveLength(3);
+ expect(within(list).getAllByText('변형 2개 ⌄')).toHaveLength(3);
+ expect(within(list).queryByRole('heading', { name: '말차라떼' })).toBeNull();
+ fireEvent.click(within(list).getByRole('button', { name: '더 보기 · 메뉴 1개' }));
+ expect(within(list).getAllByRole('heading', { level: 3 })).toHaveLength(4);
+ expect(list.textContent).not.toContain('null');
+ expect(api.fetchCafeDrinks).toHaveBeenCalledWith(expect.objectContaining({ grouped: true, q: '라떼' }));
+});
+
+it('keeps grouped search and raw condition results in separate query cache entries', async () => {
+ const row = fixture();
+ vi.mocked(api.fetchCafeDrinks).mockImplementation(async filters => ({ content: [row], totalElements: 1, page: 0, size: 20,
+  ...(filters.grouped ? { brandGroups: [{ brandSlug: 'a', brandName: '브랜드', menus: [{ brandSlug: 'a', brandName: '브랜드', representative: row, variants: [row] }] }], menuCount: 1 } : {}) }));
+ const router = setup('/cafe/search?group=라떼');
+ await waitFor(() => expect(document.querySelector('.cafe-brand-card')).toBeInTheDocument());
+ await act(async () => { router.navigate('/cafe/results?group=라떼'); });
+ await waitFor(() => expect(document.querySelector('.cafe-result-card')).toBeInTheDocument());
+ expect(document.querySelector('.cafe-brand-card')).toBeNull();
+ expect(api.fetchCafeDrinks).toHaveBeenCalledWith(expect.objectContaining({ grouped: false, group: '라떼' }));
 });

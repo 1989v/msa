@@ -91,4 +91,28 @@ class CafeDrinkServiceTest : BehaviorSpec({
             }
         }
     }
+    Given("grouped search spans raw pages and hidden nutrient minima") {
+        val port = mockk<CafeDrinkRepositoryPort>()
+        val normal = CafeDrinkResponse.of(cafeItem("a", "라떼").toDomain()).copy(drinkKey = "ice-small", drinkName = "라떼", temperature = "ICE", sizeLabel = "S", cupVolumeMl = BigDecimal("250"), sugarG = BigDecimal("20"))
+        val rows = (1..201).map { normal.copy(drinkKey = "large-$it", sizeLabel = "L", cupVolumeMl = BigDecimal("500"), sugarG = BigDecimal.ONE) } + listOf(
+            normal.copy(drinkKey = "decaf", caffeineStatus = CaffeineStatus.DECAF, sugarG = BigDecimal.ZERO), normal,
+            normal.copy(drinkKey = "hot-small", temperature = "HOT", sugarG = BigDecimal("10")),
+            normal.copy(brandSlug = "b", brandName = "B", drinkKey = "b-hot", temperature = "HOT", sugarG = BigDecimal("15")))
+        every { port.search(any()) } answers { val q = firstArg<CafeDrinkQuery>(); CafeDrinkPage(rows.drop(q.page * q.size).take(q.size), rows.size.toLong(), q.page, q.size) }
+        every { port.variants("라떼") } returns rows
+        val service = CafeDrinkService(port)
+        Then("brand paging keeps all variants together and compare shares ICE/smallest/ordinary defaults with fallback") {
+            val first = service.grouped(CafeDrinkQuery(size = 1))
+            first.totalElements shouldBe 2
+            first.menuCount shouldBe 2
+            first.brandGroups!!.single().brandSlug shouldBe "b"
+            val second = service.grouped(CafeDrinkQuery(size = 1, page = 1))
+            val menu = second.brandGroups!!.single().menus.single()
+            menu.variants.size shouldBe 204
+            menu.representative.drinkKey shouldBe "ice-small"
+            service.compare("라떼", CafeDrinkQuery()).first { it.brandSlug == "a" }.representative.drinkKey shouldBe "ice-small"
+            service.compare("라떼", CafeDrinkQuery(temperature = "HOT")).first { it.brandSlug == "a" }.representative.drinkKey shouldBe "hot-small"
+        }
+    }
+
 })

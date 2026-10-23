@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchCafeAreas, fetchCafeDrinkNames, searchCafeNearby } from '../../api/rankingApi';
 import type { CafeFilters, CafeLocation, CafeNearbyResult } from '../../api/rankingApi';
 import { googleMapsDirectionsUrl } from '../place/googleMaps';
+import { nearbyFingerprint, readNearbyBrands, saveNearbyBrands } from './cafeNearbyPreferences';
 import { cafeMetric, metricNames } from './cafeView';
 
 const CafeNearbyMap = lazy(() => import('./CafeNearbyMap'));
@@ -23,6 +24,17 @@ export default function CafeNearby({ filters, drinkName, close, initialSelection
   const [province, setProvince] = useState('');
   const [radiusKm, setRadius] = useState(1);
   const [sort, setSort] = useState('distance');
+  const [direction, setDirection] = useState<'asc' | 'desc'>('asc');
+  const [storeBrands, setStoreBrands] = useState<string[]>([]);
+  const [fingerprint, setFingerprint] = useState<string | null>(null);
+  const [preferencesReady, setPreferencesReady] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    setPreferencesReady(false); setFingerprint(null); setStoreBrands([]); setSort('distance'); setDirection('asc'); setPage(0);
+    if (position) void nearbyFingerprint(position).then(key => { if (cancelled) return; setFingerprint(key); setStoreBrands(key ? readNearbyBrands(key) : []); setPreferencesReady(true); });
+    return () => { cancelled = true; };
+  }, [position]);
+  const chooseBrands = (brands: string[]) => { setStoreBrands(brands); setPage(0); setSort('distance'); setDirection('asc'); if (fingerprint) saveNearbyBrands(fingerprint, brands); };
   const [selected, setSelected] = useState<Record<string, string>>(initialSelection ?? {});
   const [page, setPage] = useState(0);
   const [changingLocation, setChangingLocation] = useState(true);
@@ -35,14 +47,14 @@ export default function CafeNearby({ filters, drinkName, close, initialSelection
   const provinces = useQuery({ queryKey: ['cafe', 'areas'], queryFn: () => fetchCafeAreas(), staleTime: 300000 });
   const districts = useQuery({ queryKey: ['cafe', 'areas', province], queryFn: () => fetchCafeAreas(province), enabled: !!province, staleTime: 300000 });
   useEffect(() => { alive.current = true; return () => { alive.current = false; locationGeneration.current++; }; }, []);
-  const clearPosition = () => { locationGeneration.current++; requestAbort.current?.abort(); setLocating(false); setPosition(null); setResult(null); setPending(false); setError(false); };
+  const clearPosition = () => { locationGeneration.current++; requestAbort.current?.abort(); setLocating(false); setPreferencesReady(false); setPosition(null); setResult(null); setPending(false); setError(false); };
   const locate = () => {
     const generation = ++locationGeneration.current;
     if (!navigator.geolocation) { setMessage('이 환경에서는 위치를 사용할 수 없습니다. 지역을 선택해 주세요.'); return; }
     setLocating(true); setMessage('');
     navigator.geolocation.getCurrentPosition(value => {
       if (!alive.current || generation !== locationGeneration.current) return;
-      setLocating(false); setChangingLocation(false); setPage(0); setPosition({ kind: 'CURRENT', lat: value.coords.latitude, lng: value.coords.longitude });
+      setLocating(false); setChangingLocation(false); setPage(0); setPreferencesReady(false); setPosition({ kind: 'CURRENT', lat: value.coords.latitude, lng: value.coords.longitude });
       if (value.coords.accuracy > 1000) setMessage('위치가 넓게 추정되었습니다. 지역 선택을 권합니다.');
     }, failure => {
       if (!alive.current || generation !== locationGeneration.current) return;
@@ -55,17 +67,17 @@ export default function CafeNearby({ filters, drinkName, close, initialSelection
     return () => window.removeEventListener('pagehide', discard);
   }, []);
   useEffect(() => {
-    if (!position || (!filters.group && !filters.q && !activeDrinkName)) return;
+    if (!position || !preferencesReady || (!filters.group && !filters.q && !activeDrinkName)) return;
     const abort = new AbortController();
     requestAbort.current = abort;
     setPending(true); setError(false); setResult(null);
     void searchCafeNearby({ location: position, radiusKm, group: Array.isArray(filters.group) ? undefined : filters.group, groups: Array.isArray(filters.group) ? filters.group : undefined, q: filters.q, drinkName: activeDrinkName,
       brands: filters.brand ?? [], temperature: filters.temperature, caffeineStatus: filters.caffeineStatus ?? [], caffeine: filters.caffeine,
-      maxSugar: filters.maxSugar, maxCaffeine: filters.maxCaffeine, maxKcal: filters.maxKcal, sizeLabel: filters.sizeLabel, basis: filters.basis ?? 'serving', sort, direction: filters.direction ?? 'asc',
+      maxSugar: filters.maxSugar, maxCaffeine: filters.maxCaffeine, maxKcal: filters.maxKcal, sizeLabel: filters.sizeLabel, basis: filters.basis ?? 'serving', sort, direction, storeBrands,
       selectedDrinkKeys: Object.values(selected), page, size: 20,
     }, abort.signal).then(data => { if (!abort.signal.aborted) setResult(data); }).catch(() => { if (!abort.signal.aborted) setError(true); }).finally(() => { if (!abort.signal.aborted) setPending(false); });
     return () => abort.abort();
-  }, [position, radiusKm, filters, activeDrinkName, sort, selected, page]);
+  }, [position, preferencesReady, radiusKm, filters, activeDrinkName, sort, direction, storeBrands, selected, page]);
   const selectedArea = position?.kind === 'AREA' ? districts.data?.find(area => area.code === position.areaCode) : undefined;
   return <section className="cafe-nearby-panel" aria-labelledby="cafe-nearby-title">
     <header><button type="button" onClick={() => { clearPosition(); close(); }}>전국 음료 비교로 돌아가기</button><p>{activeDrinkName ?? (Array.isArray(filters.group) ? filters.group.join(' · ') : filters.group) ?? filters.q ?? '음료 선택'} · 반경 {radiusKm === 0.5 ? '500m' : `${radiusKm}km`}</p></header>
@@ -73,13 +85,15 @@ export default function CafeNearby({ filters, drinkName, close, initialSelection
     {result && <Suspense fallback={<p>지도 불러오는 중…</p>}><CafeNearbyMap stores={result.items} basis={result.basis} /></Suspense>}
     <div className="cafe-nearby-sheet"><h2 id="cafe-nearby-title">{result ? `매장 ${result.totalStores ?? '상한 도달'}곳 · 브랜드 ${result.matchedBrands}개` : '주변 카페에서 음료 찾기'}</h2>
     <div className="cafe-radius" role="group" aria-label="반경">{[0.5, 1, 3].map(radius => <button type="button" key={radius} aria-pressed={radiusKm === radius} onClick={() => { setRadius(radius); setPage(0); }}>{radius === 0.5 ? '500m' : `${radius}km`}</button>)}<button type="button" onClick={() => setChangingLocation(value => !value)}>위치 변경</button></div>
-    <details className="cafe-choice"><summary>정렬: {({ distance: '가까운 순', sugar: '당류', caffeine: '카페인', kcal: '칼로리' } as Record<string,string>)[sort]}</summary>{[['distance', '가까운 순'], ['sugar', '당류'], ['caffeine', '카페인'], ['kcal', '칼로리']].map(([value, label]) => <button type="button" key={value} aria-pressed={sort === value} onClick={() => { setSort(value); setPage(0); }}>{label}</button>)}</details>
+    <details className="cafe-choice"><summary>정렬: {sort === 'distance' ? '가까운 순' : `${({ sugar: '당류', caffeine: '카페인', kcal: '칼로리' } as Record<string, string>)[sort]} ${direction === 'asc' ? '낮은 순' : '높은 순'}`}</summary><button type="button" aria-pressed={sort === 'distance'} onClick={() => { setSort('distance'); setDirection('asc'); setPage(0); }}>가까운 순</button>{(['sugar', 'caffeine', 'kcal'] as const).flatMap(metric => (['asc', 'desc'] as const).map(order => <button type="button" key={metric + order} aria-pressed={sort === metric && direction === order} onClick={() => { setSort(metric); setDirection(order); setPage(0); }}>{metricNames[metric]} {order === 'asc' ? '낮은 순' : '높은 순'}</button>))}</details>
+    {result && <div className="cafe-brand-tabs" role="group" aria-label="주변 카페 브랜드"><button type="button" aria-pressed={!storeBrands.length} onClick={() => chooseBrands([])}>전체 보기</button>{[...new Set([...(result.brandCounts ?? result.items.map(store => ({ brandSlug: store.brandSlug, brandName: store.brandName, count: 1 }))).map(brand => brand.brandSlug), ...storeBrands])].map(slug => { const brand = result.brandCounts?.find(brand => brand.brandSlug === slug); const store = result.items.find(store => store.brandSlug === slug); return <button type="button" key={slug} aria-pressed={storeBrands.includes(slug)} onClick={() => chooseBrands(storeBrands.includes(slug) ? storeBrands.filter(value => value !== slug) : [...storeBrands, slug])}>{brand?.brandName ?? store?.brandName ?? slug} {brand?.count ?? result.items.filter(store => store.brandSlug === slug).length}</button>; })}</div>}
+    {result && storeBrands.length > 0 && !result.items.length && <p role="status">선택한 브랜드의 매장이 없습니다. <button type="button" onClick={() => chooseBrands([])}>전체 보기</button></p>}
     <p className="cafe-note">수치는 브랜드 기본 레시피입니다. 매장별 판매 여부는 확인되지 않았습니다. 위치는 저장하지 않습니다.</p>
-    <details><summary>주변 비교 도움말</summary><p>현재 위치는 한 번만 사용하며 저장하지 않습니다. 매장까지의 직선거리이며 도보시간이 아닙니다. 지도는 공개 매장 위치만 표시합니다.</p><p className="cafe-note">{filters.basis === '100ml' ? '100ml당 농도' : '1회 제공량'} · 수치 정렬 {filters.direction === 'desc' ? '높은 순' : '낮은 순'} · 미확정·음료 선택 필요는 마지막</p></details>
+    <details><summary>주변 비교 도움말</summary><p>현재 위치는 한 번만 사용하며 저장하지 않습니다. 매장까지의 직선거리이며 도보시간이 아닙니다. 지도는 공개 매장 위치만 표시합니다.</p><p className="cafe-note">{filters.basis === '100ml' ? '100ml당 농도' : '1회 제공량'} · 수치 정렬 {direction === 'desc' ? '높은 순' : '낮은 순'} · 미확정·음료 선택 필요는 마지막</p></details>
     {changingLocation && <section aria-label="검색 위치 선택"><button type="button" onClick={locate} disabled={locating}>{locating ? '위치 확인 중…' : '현재 위치 사용'}</button>{locating && <button type="button" onClick={clearPosition}>위치 요청 취소</button>}
       <fieldset><legend>지역 선택 · 선택 지역 중심 기준</legend>
         <details className="cafe-choice"><summary>시도: {provinces.data?.find(area => area.code === province)?.name ?? '시도 선택'}</summary>{provinces.data?.map(area => <button type="button" key={area.code} aria-pressed={province === area.code} onClick={() => { clearPosition(); setProvince(area.code); }}>{area.name}</button>)}</details>
-        <details className="cafe-choice"><summary>시군구: {selectedArea?.name ?? '시군구 선택'}</summary>{districts.data?.map(area => <button type="button" key={area.code} aria-pressed={position?.kind === 'AREA' && position.areaCode === area.code} onClick={() => { clearPosition(); setPage(0); setPosition({ kind: 'AREA', areaCode: area.code }); setChangingLocation(false); }}>{area.name}</button>)}</details>
+        <details className="cafe-choice"><summary>시군구: {selectedArea?.name ?? '시군구 선택'}</summary>{districts.data?.map(area => <button type="button" key={area.code} aria-pressed={position?.kind === 'AREA' && position.areaCode === area.code} onClick={() => { clearPosition(); setPage(0); setPreferencesReady(false); setPosition({ kind: 'AREA', areaCode: area.code }); setChangingLocation(false); }}>{area.name}</button>)}</details>
         {(provinces.isError || districts.isError) && <p role="alert">지역 정보를 불러오지 못했습니다.</p>}{provinces.data?.length === 0 && <p>검증된 지역 중심점이 아직 없습니다. 현재 위치를 이용하거나 전국 음료를 비교해 주세요.</p>}
       </fieldset>
     </section>}

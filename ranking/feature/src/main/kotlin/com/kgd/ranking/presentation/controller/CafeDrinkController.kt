@@ -30,13 +30,14 @@ class CafeDrinkController(private val getCafeDrinks: GetCafeDrinksUseCase) {
         @RequestParam(defaultValue = "asc") direction: String,
         @RequestParam(required = false) maxKcal: BigDecimal?,
         @RequestParam(required = false) sizeLabel: String?,
+        @RequestParam(defaultValue = "false") grouped: Boolean = false,
     ): ApiResponse<CafeDrinkPage> {
         val query = try {
             CafeDrinkQuery(q, brand.orEmpty(), group?.singleOrNull(), temperature, maxSugar, maxCaffeine, caffeine, sort, page, size, basis, caffeineStatus.orEmpty(), direction, maxKcal, sizeLabel, groups = group.orEmpty())
         } catch (_: IllegalArgumentException) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid cafe filters")
         }
-        return ApiResponse.success(getCafeDrinks.execute(query))
+        return ApiResponse.success(if (grouped) getCafeDrinks.grouped(query) else getCafeDrinks.execute(query))
     }
     @GetMapping("/drinks/{drinkKey}")
     fun drink(@PathVariable drinkKey: String): ApiResponse<CafeDrinkResponse> = ApiResponse.success(
@@ -51,9 +52,10 @@ class CafeDrinkController(private val getCafeDrinks: GetCafeDrinksUseCase) {
         @RequestParam(required = false) caffeineStatus: List<CaffeineStatus>?,
         @RequestParam(required = false) maxSugar: BigDecimal?, @RequestParam(required = false) maxCaffeine: BigDecimal?,
         @RequestParam(required = false) caffeine: String?, @RequestParam(required = false) group: List<String>?,
+        @RequestParam(required = false) maxKcal: BigDecimal? = null, @RequestParam(required = false) sizeLabel: String? = null,
     ): ApiResponse<List<CafeDrinkBrandVariants>> = try {
         ApiResponse.success(getCafeDrinks.compare(name, CafeDrinkQuery(sort = sort, basis = basis, direction = direction,
-            brands = brand.orEmpty(), temperature = temperature, caffeineStatus = caffeineStatus.orEmpty(), maxSugar = maxSugar, maxCaffeine = maxCaffeine, caffeine = caffeine, groups = group.orEmpty())))
+            brands = brand.orEmpty(), temperature = temperature, caffeineStatus = caffeineStatus.orEmpty(), maxSugar = maxSugar, maxCaffeine = maxCaffeine, caffeine = caffeine, groups = group.orEmpty(), maxKcal = maxKcal, sizeLabel = sizeLabel)))
     } catch (_: IllegalArgumentException) { throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid cafe filters") }
     @GetMapping("/groups")
     fun groups(): ApiResponse<List<CafeGroupCount>> = ApiResponse.success(getCafeDrinks.groups())
