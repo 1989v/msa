@@ -496,9 +496,16 @@ class GatewayRouteConfig(
             }
             // /profile/me 는 아래 */me 보다 먼저 매칭해야 게스트도 프로필을 쓸 수 있다.
             .route("game-player-profile") { r ->
-                r.path("/api/v1/games/profile/me", "/api/v1/games/territory/tickets")
+                r.path("/api/v1/games/profile/me", "/api/v1/games/territory/tickets", "/api/v1/games/woodland/tickets")
                     .filters { f -> f.filter(authFilter.apply(gamePlayerConfig())).stripPrefix(0) }
                     .uri(CONTENT_URI)
+            }
+            // Woodland owns command/state sessions; profile ticket issuance above stays in content.
+            .route("woodland-world") { r ->
+                r.path("/api/v1/games/woodland/**")
+                    .filters { f -> f.preserveHostHeader().stripPrefix(0) }
+                    .metadata("response-timeout", -1)
+                    .uri("http://woodland:8349")
             }
             // 내 기록 — **로그인 전용**. 아래 카탈로그가 /api/v1/games/** 를 필터 없이 받으므로
             // 여기서 먼저 잡지 않으면 두 가지가 동시에 터진다: 필터가 없어 X-User-Id 가

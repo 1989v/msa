@@ -33,6 +33,7 @@ kind: Kustomization
 # 자세한 사전 작업(k3s 설치, 방화벽, ingress-nginx, cert-manager 설치)은 README 참조.
 namespace: commerce
 resources:
+  - woodland
   - ../k3s-lite
   - cert-manager/cluster-issuer-staging.yaml
   - cert-manager/cluster-issuer-prod.yaml
@@ -53,6 +54,16 @@ resources:
   # (검증은 아래 patches 의 aop-patch 가 붙을 때 시작). origin-lockdown/README.md
   - origin-lockdown/cloudflare-origin-pull-ca.yaml
 patches:
+  - target: {kind: Deployment, name: content}
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value: {name: WOODLAND_ENABLED, value: "true"}
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: WOODLAND_BRIDGE_SECRET
+          valueFrom: {secretKeyRef: {name: woodland-bridge, key: secret}}
   # ─── Origin lockdown (Cloudflare 우회 차단) — 활성 (2026-08-06) ────────────
   # 선행 조건 충족: Cloudflare SSL/TLS > Origin Server > Authenticated Origin
   # Pulls 의 **전역(Global)** 이 ON — CF 가 공유 클라이언트 인증서를 제시하며,
@@ -83,7 +94,7 @@ patches:
   - path: patches/content-single-world.yaml
     target:
       kind: Deployment
-      name: content
+      name: "^(content|woodland)$"
   # ─── 롤아웃 훈련 표식 — 날짜를 바꾸면 전 Deployment 동시 롤아웃 (ADR-0075 검증용) ──
   - path: patches/rollout-drill.yaml
     target:
@@ -391,6 +402,9 @@ patches:
         annotations:
           argocd.argoproj.io/sync-wave: "20"
 images:
+  - name: commerce/woodland
+    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/woodland
+    newTag: pending
   - name: commerce/account
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/account
     newTag: bbb42ec

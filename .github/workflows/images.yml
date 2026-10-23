@@ -88,7 +88,7 @@ jobs:
           . scripts/ci/topology.sh
 
           ALL_JVM="gateway search-batch search-consumer $TOPOLOGY_ALL_JVM"
-          ALL_DOCKER="admin-fe gifticon-fe portal-fe quant-fe quant-ingest place-ingest ranking-ingest recommendation-ml recommendation-ann search-embed"
+          ALL_DOCKER="woodland admin-fe gifticon-fe portal-fe quant-fe quant-ingest place-ingest ranking-ingest recommendation-ml recommendation-ann search-embed"
 
           # 서비스 지정 실행 — 한 개만 다시 굽고 싶을 때. 전체 폴백을 타지 않는다.
           if [[ -n "${SERVICES_INPUT// /}" ]]; then
@@ -166,6 +166,7 @@ jobs:
               recommendation-ml/*)                       DOCKER_SVCS+=" recommendation-ml" ;;
               recommendation-ann/*)                      DOCKER_SVCS+=" recommendation-ann" ;;
               admin/frontend/*)                          DOCKER_SVCS+=" admin-fe" ;;
+              portal-fe/public/games)                    DOCKER_SVCS+=" portal-fe woodland" ;;
               portal-fe/*)                               DOCKER_SVCS+=" portal-fe" ;;
               # ── 폴드 배치는 생성물이 정한다 (scripts/ci/topology.sh) ──
               # 도메인이 호스트를 옮겨도 이 파일은 안 고친다. 손으로 유지하다 deal 이 통째로
@@ -321,6 +322,7 @@ jobs:
           declare -A DOCKER_CTX=(
             [admin-fe]="admin/frontend"
             [gifticon-fe]="gifticon/frontend"
+            [woodland]="portal-fe/public/games/woodland-haven"
             [portal-fe]="portal-fe"
             [quant-fe]="quant/frontend"
             [quant-ingest]="quant/ingest"

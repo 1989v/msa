@@ -30,6 +30,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  woodland-gate:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {submodules: false}
+      - run: git submodule update --init portal-fe/public/games
+      - uses: actions/setup-node@v4
+        with: {node-version: 24}
+      - run: npm ci --ignore-scripts --no-audit --no-fund && npm test
+        working-directory: portal-fe/public/games/woodland-haven
+      - run: docker build -t woodland-verify portal-fe/public/games/woodland-haven
   compile-gate:
     name: 구조 게이트 + Kotlin/Java compile + 테스트 컴파일 (실행은 test-gate)
     runs-on: ubuntu-24.04-arm   # public repo + arm64 무료

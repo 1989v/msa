@@ -160,3 +160,8 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+
+woodland:
+  enabled: ${WOODLAND_ENABLED:false}
+  bridge:
+    secret: ${WOODLAND_BRIDGE_SECRET:}
