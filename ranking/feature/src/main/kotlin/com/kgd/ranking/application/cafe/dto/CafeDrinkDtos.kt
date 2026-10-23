@@ -144,7 +144,7 @@ data class CafeDrinkResponse(
 
 data class CafeDrinkBulkRequest(val drinks: List<CafeDrinkUpsertItem>, val parentRunId: String? = null)
 data class CafeDrinkBulkResult(val received: Int, val replacedBrands: Set<String>)
-data class CafeDrinkPage(val content: List<CafeDrinkResponse>, val totalElements: Long, val page: Int, val size: Int, val sizeLabels: List<String> = emptyList(), val brandGroups: List<CafeSearchBrand>? = null, val menuCount: Int? = null, val brandCounts: List<CafeSearchBrandCount> = emptyList())
+data class CafeDrinkPage(val content: List<CafeDrinkResponse>, val totalElements: Long, val page: Int, val size: Int, val sizeLabels: List<String> = emptyList(), val brandGroups: List<CafeSearchBrand>? = null, val menuCount: Int? = null, val brandCounts: List<CafeSearchBrandCount> = emptyList(), val excludedDecafBrandCount: Int = 0)
 data class CafeGroupCount(val group: String, val count: Long)
 data class CafeBrandCount(val brandSlug: String, val brandName: String, val count: Long, val sourceUrls: List<String>, val checkedAt: LocalDate)
 

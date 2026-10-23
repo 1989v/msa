@@ -115,4 +115,28 @@ class CafeDrinkServiceTest : BehaviorSpec({
         }
     }
 
+    Given("matching names and decaf availability across brands") {
+        val port = mockk<CafeDrinkRepositoryPort>()
+        val basic = CafeDrinkResponse.of(cafeItem("a", "라떼").toDomain()).copy(drinkName = "라떼", drinkKey = "exact")
+        val rows = listOf(basic, basic.copy(drinkName = "라떼모카", drinkKey = "prefix"),
+            basic.copy(drinkName = "바닐라라떼", drinkKey = "contains"),
+            basic.copy(drinkKey = "decaf", caffeineStatus = CaffeineStatus.DECAF),
+            basic.copy(brandSlug = "b", drinkKey = "b"))
+        every { port.search(any()) } answers { val q = firstArg<CafeDrinkQuery>(); CafeDrinkPage(rows, rows.size.toLong(), q.page, q.size) }
+        every { port.variants("라떼") } returns rows.filter { it.drinkName == "라떼" }
+        val service = CafeDrinkService(port)
+        Then("one best menu represents each brand and facets ignore brand selection") {
+            val result = service.grouped(CafeDrinkQuery(q = "라떼", brands = listOf("a")))
+            result.content.map { it.drinkKey } shouldBe listOf("exact")
+            result.brandGroups!!.single().menus.map { it.representative.drinkName } shouldBe listOf("라떼", "라떼모카", "바닐라라떼")
+            result.brandCounts.size shouldBe 2
+        }
+        Then("decaf selects an actual decaf variant and counts excluded brands") {
+            val result = service.grouped(CafeDrinkQuery(q = "라떼", caffeine = "decaf"))
+            result.content.map { it.drinkKey } shouldBe listOf("decaf")
+            result.excludedDecafBrandCount shouldBe 1
+            service.compare("라떼", CafeDrinkQuery(caffeine = "decaf")).single().representative.drinkKey shouldBe "decaf"
+        }
+    }
+
 })

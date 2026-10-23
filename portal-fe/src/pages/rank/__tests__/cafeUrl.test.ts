@@ -61,3 +61,11 @@ it('handles decaf, all, unknown categories and explicit legacy group precedence'
   expect(writeCafeFilters({ ...decaf, caffeine: undefined }).has('category')).toBe(false);
   expect(writeCafeFilters({ ...readCafeFilters(new URLSearchParams('category=coffee')), group: undefined }).has('category')).toBe(false);
 });
+
+it('shares multiple selected brands and decaf without losing query, basis or temperature', () => {
+  const filters = readCafeFilters(new URLSearchParams('q=바닐라+라떼&brand=a&brand=b&caffeine=decaf&basis=100ml&temperature=HOT'));
+  const params = writeCafeFilters(filters);
+  expect(params.getAll('brand')).toEqual(['a', 'b']);
+  expect(readCafeFilters(params)).toMatchObject({ q: '바닐라 라떼', brand: ['a', 'b'], caffeine: 'decaf', basis: '100ml', temperature: 'HOT' });
+  expect(writeCafeFilters({ ...filters, brand: [] }).has('brand')).toBe(false);
+});
