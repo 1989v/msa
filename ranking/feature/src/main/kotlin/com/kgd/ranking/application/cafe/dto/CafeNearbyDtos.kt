@@ -88,6 +88,7 @@ data class CafeNearbyItem(
             "uzi" to listOf("우지커피", "oozycoffee"),
             "mammoth" to listOf("매머드커피", "mammothcoffee"),
             "mammothexpress" to listOf("매머드익스프레스", "mammothexpress"),
+            "coffeebean" to listOf("커피빈", "coffeebean"),
         )
     }
 }
