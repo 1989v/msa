@@ -25,7 +25,7 @@ const recentKey = 'cafe-recent-searches';
 const positions = new Map<string, { scroll: number; focus: string }>();
 function readRecent(): string[] { try { const value: unknown = JSON.parse(localStorage.getItem(recentKey) ?? '[]'); return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string').slice(0, 8) : []; } catch { return []; } }
 function saveRecent(values: string[]) { try { localStorage.setItem(recentKey, JSON.stringify(values)); } catch { /* Optional history in private mode. */ } }
-const variantLabel = (drink: CafeDrink) => [drink.temperature, drink.sizeLabel?.replace(/\([^)]*\)/g, '').trim(), drink.cupVolumeMl != null && Number.isFinite(drink.cupVolumeMl) && drink.cupVolumeMl > 0 ? `${drink.cupVolumeMl}ml` : undefined, drink.caffeineStatus === 'DECAF' ? '디카페인' : undefined].filter(Boolean).join(' · ') || '기본 · 용량 미표시';
+const variantLabel = (drink: CafeDrink) => [drink.temperature, drink.sizeLabel?.replace(/\([^)]*\)/g, '').trim(), drink.cupVolumeMl != null && Number.isFinite(drink.cupVolumeMl) && drink.cupVolumeMl > 0 ? `${drink.volumeSource === 'WEIGHT_ESTIMATE' ? '≈' : ''}${drink.cupVolumeMl}ml` : undefined, drink.caffeineStatus === 'DECAF' ? '디카페인' : undefined].filter(Boolean).join(' · ') || '기본 · 용량 미표시';
 function Highlight({ text, query }: { text: string; query: string }) { const index = query ? text.toLocaleLowerCase().indexOf(query.toLocaleLowerCase()) : -1; return index < 0 ? <>{text}</> : <>{text.slice(0, index)}<mark>{text.slice(index, index + query.length)}</mark>{text.slice(index + query.length)}</>; }
 function Metric({ drink, metric, basis = 'serving' }: { drink: CafeDrink; metric: CafeMetric; basis?: 'serving' | '100ml' }) {
   const value = cafeMetric(drink, metric, basis);

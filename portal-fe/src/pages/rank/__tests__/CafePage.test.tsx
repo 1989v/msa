@@ -421,3 +421,9 @@ it('search results link every same-word drink variation so the grouped table doe
   expect(vi.mocked(api.fetchCafeDrinkNames)).toHaveBeenCalledWith('라떼');
   expect(screen.getByText(/제휴 관계가 없습니다/)).toBeInTheDocument();
 });
+
+it('marks a gram-based cup volume as an estimate in the row label', async () => {
+  vi.mocked(api.fetchCafeDrinks).mockResolvedValue({ content: [fixture({ volumeSource: 'WEIGHT_ESTIMATE', cupVolumeMl: 360, volumeMl: null, sizeLabel: 'S' })], totalElements: 1, page: 0, size: 20, sizeLabels: ['S'] });
+  setup('/cafe/search?q=라떼'); await screen.findByRole('table');
+  expect(screen.getByText('ICE · S · ≈360ml · 디카페인')).toBeInTheDocument();
+});
