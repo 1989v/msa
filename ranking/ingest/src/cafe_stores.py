@@ -42,6 +42,7 @@ BRANDS = {
  'dalkomm': ('달콤커피', ('달콤커피', 'dalkommcoffee', 'dalkomm')),
  'coffeebanhada': ('커피에반하다', ('커피에반하다', 'coffeebanhada')),
  'yogerpresso': ('요거프레소', ('요거프레소', 'yogerpresso')),
+ 'coffeebay': ('커피베이', ('커피베이', 'coffeebay')),
 }
 # Explicit collisions, affiliates and businesses that are not the target brand.
 EXCLUDE = ('스타벅스인테리어', '메가커피머신', '메가커피아카데미', '이디야커피랩교육', '파리바게뜨물류', '던킨물류')

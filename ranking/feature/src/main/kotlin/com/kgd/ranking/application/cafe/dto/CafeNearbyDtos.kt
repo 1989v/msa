@@ -92,6 +92,7 @@ data class CafeNearbyItem(
             "dalkomm" to listOf("달콤커피", "dalkommcoffee", "dalkomm"),
             "coffeebanhada" to listOf("커피에반하다", "coffeebanhada"),
             "yogerpresso" to listOf("요거프레소", "yogerpresso"),
+            "coffeebay" to listOf("커피베이", "coffeebay"),
         )
     }
 }
