@@ -159,6 +159,7 @@ describe('부분 실패 가드 — guides 섹션', () => {
     concepts: async () => [],
     deal: async () => [],
     rank: async () => [],
+    cafe: async () => [],
   };
 
   it('카드 조회가 실패하고 다른 섹션이 성공했으면 PartialSeoFailure', async () => {

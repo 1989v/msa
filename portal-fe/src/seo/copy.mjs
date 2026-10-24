@@ -1569,22 +1569,38 @@ export function rankUrl(sub = '') {
  */
 export function rankHubMeta() {
   return {
-    title: `${RANK_BRAND} — ${PORTAL_BRAND}`,
+    // 브랜드를 앞에 둔다 — 홈 화면 앱 이름이 제목 앞 구간(「1989v 랭킹」)에서 나온다.
+    title: `${RANK_SITE_NAME} — 카페 음료 성분 비교 · 주유소 최저가`,
     description:
-      '지역별 최저가 주유소 리더보드. 시군구·유종별 순위를 어제 대비 등락과 함께 확인하고, 각 주유소로 바로 길찾기하세요.',
+      '카페 음료의 카페인·당류·칼로리를 브랜드 공식 영양정보로 비교하고, 지역별 최저가 주유소 순위를 확인하는 랭킹 모음입니다.',
     canonical: rankUrl('/'),
     image: ogCardUrl(RANK_ORIGIN, 'rank'),
   };
 }
 
-/** Cafe owns its canonical entry; query combinations and individual variants stay out of the index.
- * @param {{ filtered?: boolean, detail?: boolean, drinkKey?: string, drinkName?: string }} options
+/**
+ * 음료명 비교 페이지(`/cafe/drink/:name`)를 색인하는 최소 브랜드 수.
+ * 한두 곳뿐인 메뉴는 「카페별 비교」라는 제목에 맞는 내용이 없다 — 프리렌더·sitemap·화면 noindex 가 같은 값을 쓴다.
  */
-export function cafeMeta({ filtered = false, detail = false, drinkKey = undefined, drinkName = undefined } = {}) {
+export const CAFE_INDEX_MIN_BRANDS = 5;
+
+/** Cafe owns its canonical entry; query combinations and individual variants stay out of the index.
+ * @param {{ filtered?: boolean, detail?: boolean, drinkKey?: string, drinkName?: string, brandCount?: number }} options
+ */
+export function cafeMeta({ filtered = false, detail = false, drinkKey = undefined, drinkName = undefined, brandCount = 0 } = {}) {
+  if (drinkName) {
+    return {
+      title: `${drinkName} 카페인·당류·칼로리 카페별 비교 | 1989v 랭킹`,
+      description: `카페마다 다른 ${drinkName} 성분을 비교합니다. 브랜드 공식 영양정보의 카페인·당류·칼로리를 1회 제공량과 100ml 기준으로 확인하세요.`,
+      canonical: rankUrl(`/cafe/drink/${encodeURIComponent(drinkName)}`),
+      noindex: filtered || brandCount < CAFE_INDEX_MIN_BRANDS,
+      image: ogCardUrl(RANK_ORIGIN, 'rank'),
+    };
+  }
   return {
-    title: '카페 음료 비교 · 당류·카페인·칼로리 | 1989v 랭킹',
-    description: '브랜드 공식 영양정보로 카페 음료의 당류·카페인·칼로리를 비교합니다. 1회 제공량과 100ml 기준, 디카페인과 미공개 정보를 구분해 확인하세요.',
-    canonical: rankUrl(drinkName ? `/cafe/drink/${encodeURIComponent(drinkName)}` : drinkKey ? `/cafe/drinks/${encodeURIComponent(drinkKey)}` : '/cafe'),
+    title: '카페 음료 성분 비교 · 커피 카페인·당류·칼로리 | 1989v 랭킹',
+    description: '스타벅스·메가MGC커피·컴포즈커피·빽다방·투썸플레이스 등 카페 음료와 커피의 카페인·당류·칼로리 성분을 브랜드 공식 영양정보로 비교합니다. 1회 제공량과 100ml 기준, 디카페인과 미공개를 구분합니다.',
+    canonical: rankUrl(drinkKey ? `/cafe/drinks/${encodeURIComponent(drinkKey)}` : '/cafe'),
     noindex: filtered || detail,
     image: ogCardUrl(RANK_ORIGIN, 'rank'),
   };

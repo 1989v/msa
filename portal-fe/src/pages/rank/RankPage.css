@@ -47,13 +47,6 @@
   font-size: 1rem;
 }
 
-.rank-cta {
-  align-self: flex-start;
-  padding: 0.45rem 0.9rem;
-  font-size: 0.9rem;
-  text-decoration: none;
-}
-
 .rank-captured {
   color: var(--ko-text-muted);
   font-size: 0.82rem;
@@ -125,8 +118,31 @@
 
 .rank-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--ko-space-4);
+}
+
+.rank-card--cafe {
+  position: relative;
+  overflow: hidden;
+  min-height: 9.5rem;
+  padding-right: 5.5rem;
+}
+
+.rank-card__art {
+  position: absolute;
+  right: -0.5rem;
+  bottom: -0.5rem;
+  width: 6rem;
+  height: 6rem;
+  object-fit: contain;
+}
+
+.rank-card__desc {
+  margin: 0;
+  color: var(--ko-text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.4;
 }
 
 .rank-card {
@@ -279,6 +295,9 @@
 }
 
 @media (max-width: 40rem) {
+  .rank-grid { gap: var(--ko-space-3); }
+  .rank-card { padding: var(--ko-space-4); }
+  .rank-card--cafe { padding-right: var(--ko-space-4); padding-bottom: 5.5rem; }
   .rank-row {
     grid-template-columns: 1.8rem 2.6rem 1fr auto;
     grid-template-areas:

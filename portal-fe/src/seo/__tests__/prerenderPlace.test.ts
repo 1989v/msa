@@ -722,6 +722,7 @@ describe('fetchRegionTops — 시군구 대표 조회', () => {
     concepts: async () => [],
     deal: async () => [],
     rank: async () => [],
+    cafe: async () => [],
   };
 
   it('하나가 재시도까지 실패하면 place-region-tops 섹션 실패 — 다른 섹션이 성공했으면 PartialSeoFailure', async () => {

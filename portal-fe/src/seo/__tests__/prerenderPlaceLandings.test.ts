@@ -292,6 +292,7 @@ describe('부분 실패 가드 — place-landings 섹션', () => {
     concepts: async () => [],
     deal: async () => [],
     rank: async () => [],
+    cafe: async () => [],
   };
 
   it('랜딩 조회 하나만 실패해도 섹션 실패 — 다른 섹션이 성공했으면 PartialSeoFailure', async () => {

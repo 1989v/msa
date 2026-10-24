@@ -8,7 +8,7 @@ import AppInstallMenu from '../../components/shell/AppInstallMenu';
 import Footer from '../../components/Footer';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import { useSeo } from '../../seo/useSeo';
-import { cafeMeta } from '../../seo/copy.mjs';
+import { CAFE_INDEX_MIN_BRANDS, cafeMeta } from '../../seo/copy.mjs';
 import { cafeMetric, cafeMetricValue, metricNames, metricUnits, volumeLabel, volumeExplanation, weightEstimateNote, type CafeMetric } from './cafeView';
 import { readCafeFilters, writeCafeFilters } from './cafeUrl';
 import CafeNearby from './CafeNearby';
@@ -88,7 +88,10 @@ export default function CafePage({ nearbyEnabled, onNearbyOpen }: { nearbyEnable
   useEffect(() => { setSelected({}); }, [drinkName]);
   useEffect(() => { setDetailBasis(readCafeFilters(new URLSearchParams(location.search)).basis ?? 'serving'); setDetailTab('nutrition'); }, [drinkKey, location.search]);
   useEffect(() => { if (composing) return; const timer = setTimeout(() => setSuggestion(search.trim()), 250); return () => clearTimeout(timer); }, [search, composing]);
-  useSeo(cafeMeta({ detail: !!drinkKey || !!drinkName, drinkKey, drinkName, filtered: !!location.search || filterPage || searchPage || conditionResults }));
+  // 음료명 비교는 여러 카페가 함께 파는 메뉴만 색인한다(프리렌더·nginx 와 같은 기준). 모르는 동안은 막지 않는다 — 막힌 쪽은 nginx 가 이미 noindex 를 보냈다.
+  const drinkNameInfo = useQuery({ queryKey: ['cafe', 'names', drinkName], queryFn: () => fetchCafeDrinkNames(drinkName!), enabled: !!drinkName, staleTime: 300000 });
+  const drinkBrandCount = drinkNameInfo.data ? drinkNameInfo.data.find(name => name.drinkName === drinkName)?.brandCount ?? 0 : CAFE_INDEX_MIN_BRANDS;
+  useSeo(cafeMeta({ detail: !!drinkKey, drinkKey, drinkName, brandCount: drinkBrandCount, filtered: !!location.search || filterPage || searchPage || conditionResults }));
   const capability = useQuery({ queryKey: ['cafe', 'capability'], queryFn: fetchCafeNearbyCapability, retry: false, staleTime: 60000 });
   const canNearby = nearbyEnabled ?? capability.data?.nearbyEnabled ?? false;
   const brands = useQuery({ queryKey: ['cafe', 'brands'], queryFn: fetchCafeBrands, staleTime: 300000 });

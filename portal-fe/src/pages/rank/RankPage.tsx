@@ -2,12 +2,13 @@ import AppInstallMenu from '../../components/shell/AppInstallMenu';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { fetchGasAreas, fetchRankingBoards } from '../../api/rankingApi';
+import { fetchCafeBrands, fetchGasAreas, fetchRankingBoards } from '../../api/rankingApi';
 import Footer from '../../components/Footer';
 import ThemeToggle from '../../components/ThemeToggle';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import { RANK_COVERAGE_NOTE, RANK_GAS_SOURCE, rankHubMeta } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
+import { cafeDrinkImages } from './cafeDrinkImages';
 import { capturedLabel, formatPrice } from './rankView';
 import './RankPage.css';
 
@@ -34,6 +35,8 @@ export default function RankPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const cafeBrands = useQuery({ queryKey: ['cafe', 'brands'], queryFn: fetchCafeBrands, staleTime: 5 * 60 * 1000 });
+
   const shown = useMemo(() => boards.data ?? [], [boards.data]);
   const captured = capturedLabel(shown.find((b) => b.capturedAt)?.capturedAt ?? null);
 
@@ -50,12 +53,12 @@ export default function RankPage() {
           <span className="kh-display-accent">랭킹</span> 리더보드
         </h1>
         <p className="rank-header__subtitle">
-          지역별 최저가 주유소를 매일 새로 줄 세웁니다. 어제 대비 등락을 함께 봅니다.
+          카페 음료 성분과 지역별 최저가 주유소를 줄 세워 비교합니다.
         </p>
       </header>
 
-      <Link to="/cafe" className="rank-cta kh-button-ghost">카페 음료 영양정보 비교</Link>
-      <div className="rank-toolbar">
+      {/* 지역은 주유소 보드에만 있다 — 보드가 하나도 없으면 고를 것이 없다. */}
+      {(areas.data?.length ?? 0) > 0 && <div className="rank-toolbar">
         <label className="rank-field">
           <span className="kh-section-label">지역</span>
           <select
@@ -73,18 +76,24 @@ export default function RankPage() {
           </select>
         </label>
         {captured && <span className="rank-captured kh-mono">{captured}</span>}
-      </div>
+      </div>}
 
       <main className="rank-main">
         {boards.isLoading && <p className="rank-state">불러오는 중…</p>}
         {boards.isError && (
           <div role="alert"><p className="rank-state kh-status-error">랭킹을 불러오지 못했습니다.</p><button className="kh-button" onClick={() => void boards.refetch()} disabled={boards.isFetching}>다시 불러오기</button></div>
         )}
-        {!boards.isLoading && !boards.isError && shown.length === 0 && (
-          <p className="rank-state" role="status">{scope ? '이 지역에 집계된 랭킹이 없습니다. 다른 지역을 선택해 주세요.' : '랭킹 서비스를 준비 중입니다. 아직 집계된 데이터가 없습니다.'} <a href="https://1989v.com/#services">다른 서비스 둘러보기</a></p>
+        {scope && !boards.isLoading && !boards.isError && shown.length === 0 && (
+          <p className="rank-state" role="status">이 지역에 집계된 랭킹이 없습니다. 다른 지역을 선택해 주세요.</p>
         )}
 
         <div className="rank-grid">
+          <Link className="rank-card rank-card--cafe kh-slab kh-slab-offset" to="/cafe">
+            <img className="rank-card__art" src={cafeDrinkImages['cafe-latte']} alt="" width={96} height={96} decoding="async" />
+            <span className="rank-card__scope kh-caps">{cafeBrands.data?.length ? `카페 ${cafeBrands.data.length}곳` : '카페'}</span>
+            <h2 className="rank-card__title">카페 성분 비교</h2>
+            <p className="rank-card__desc">음료별 카페인·당류·칼로리</p>
+          </Link>
           {shown.map((board) => (
             <Link key={board.slug} className="rank-card kh-slab kh-slab-offset" to={`/boards/${board.slug}`}>
               <span className="rank-card__scope kh-caps">{board.scopeName}</span>

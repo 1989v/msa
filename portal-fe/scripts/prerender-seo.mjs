@@ -91,6 +91,7 @@ import {
   RANK_GAS_SOURCE,
   rankHubMeta,
   cafeMeta,
+  CAFE_INDEX_MIN_BRANDS,
   rankUrl,
   BLOG_ORIGIN,
   BLOG_BRAND,
@@ -214,7 +215,7 @@ async function main() {
     throw new Error('index.html 에 <!--seo:start--> 마커가 없습니다');
   }
 
-  const { games, places, regions, landingList, landingResults, regionTops, guides, guideCards, blog, concepts, dealSections, rankBoards } =
+  const { games, places, regions, landingList, landingResults, regionTops, guides, guideCards, blog, concepts, dealSections, rankBoards, cafeDrinks } =
     await fetchSeoSections();
   // 속성 랜딩 — 산출물을 먼저 만들어 품질 게이트(title·description 중복)를 쓰기 전에 통과시킨다
   const landing = placeLandingPages(shell, { landings: landingList, regions, results: landingResults });
@@ -244,7 +245,7 @@ async function main() {
     }
   }
 
-  await writeRobotsAndSitemaps(games, places, regions, blog, rankBoards, dealSections, concepts, landing.pages, guidePages);
+  await writeRobotsAndSitemaps(games, places, regions, blog, rankBoards, dealSections, concepts, landing.pages, guidePages, cafeDrinks);
   await renderPortalPages(shell, concepts, { techDrills, techDrillPreloads });
   await renderTechGlossaries(shell, concepts);
   const hubPages = await renderPlaceHubs(shell, places, regions, { guidesListed: guidePages.index != null });
@@ -257,7 +258,7 @@ async function main() {
   for (const { path, html } of [...guidePages.pages, ...(guidePages.index ? [guidePages.index] : [])]) await emit(path, html);
   if (guidePages.pages.length > 0) console.log(`[seo] place 편집 페이지 프리렌더 ${guidePages.pages.length}장`);
   await renderDealHub(shell, dealSections);
-  await renderRankHub(shell, rankBoards);
+  await renderRankHub(shell, rankBoards, cafeDrinks);
   await renderAdsConsoleShell(shell);
   await renderBlogHub(shell, blog);
 
@@ -401,6 +402,16 @@ export async function fetchSeoSections(loaders = defaultSeoLoaders()) {
     console.warn(`[seo] 혜택 카탈로그 조회 실패: ${err.message}`);
   }
 
+  // 카페 음료별 비교 — 색인하는 문서라 가드 안에 둔다. 조회가 빠지면 비교 페이지가 통째로 사라진다.
+  let cafeDrinks = [];
+  try {
+    cafeDrinks = await loaders.cafe();
+    fetched.push('cafe');
+  } catch (err) {
+    failed.push('cafe');
+    console.warn(`[seo] 카페 음료 비교 조회 실패: ${err.message}`);
+  }
+
   // 랭킹은 **부분 실패 가드 밖**이다. 두 가지가 겹쳐서다:
   //   ① 보드는 첫 수집이 끝나야 생긴다 — 빈 결과가 정상 상태라 "손실"과 구분되지 않는다
   //   ② FE 빌드 시점에 백엔드가 아직 이 엔드포인트를 갖고 있지 않을 수 있다(첫 배포)
@@ -423,7 +434,7 @@ export async function fetchSeoSections(loaders = defaultSeoLoaders()) {
     );
   }
 
-  return { games, places, regions, landingList, landingResults, regionTops, guides, guideCards, blog, concepts, dealSections, rankBoards };
+  return { games, places, regions, landingList, landingResults, regionTops, guides, guideCards, blog, concepts, dealSections, rankBoards, cafeDrinks };
 }
 
 function defaultSeoLoaders() {
@@ -440,6 +451,7 @@ function defaultSeoLoaders() {
     concepts: fetchConcepts,
     deal: fetchDealSections,
     rank: fetchRankingBoardIndex,
+    cafe: fetchCafeDrinkComparisons,
   };
 }
 
@@ -900,6 +912,7 @@ async function writeRobotsAndSitemaps(
   concepts = [],
   landingPages = [],
   guidePages = { pages: [], index: null },
+  cafeDrinks = [],
 ) {
   const portalEntries = [
     ...Object.keys(PORTAL_PAGES).map((path) => ({
@@ -963,14 +976,14 @@ async function writeRobotsAndSitemaps(
   // 랭킹은 색인 대상이다 (deal 과 반대) — 링크 모음이 아니라 집계와 등락이 자체 콘텐츠이고
   // "OO구 최저가 주유소"는 검색 의도가 뚜렷하다 (ADR-0081 §8).
   await emit(`seo/${RANK_HOST}/robots.txt`, robotsTxt(RANK_ORIGIN));
-  await emit(`seo/${RANK_HOST}/sitemap.xml`, sitemapXml(rankSitemapEntries(rankBoards)));
+  await emit(`seo/${RANK_HOST}/sitemap.xml`, sitemapXml(rankSitemapEntries(rankBoards, cafeDrinks)));
 
   await emit(`seo/${GAME_HOST}/llms.txt`, gameLlmsTxt(games));
   await emit(`seo/${PORTAL_HOST}/llms.txt`, portalLlmsTxt());
   await emit(`seo/${PLACE_HOST}/llms.txt`, placeLlmsTxt(places, landingPages, guidePages));
   await emit(`seo/${BLOG_HOST}/llms.txt`, blogLlmsTxt(blog));
   await emit(`seo/${DEAL_HOST}/llms.txt`, dealLlmsTxt(dealSections));
-  await emit(`seo/${RANK_HOST}/llms.txt`, rankLlmsTxt(rankBoards));
+  await emit(`seo/${RANK_HOST}/llms.txt`, rankLlmsTxt(rankBoards, cafeDrinks));
 
   await writeAdsTxt();
 }
@@ -2142,10 +2155,30 @@ async function fetchRankingBoardIndex() {
   return Array.isArray(boards) ? boards : [];
 }
 
-function rankSitemapEntries(boards) {
+/**
+ * 여러 카페가 함께 파는 음료의 카페별 비교. 음료명 목록이 브랜드 수를 주고, 기준을 넘는 것만 비교를 받는다.
+ * 값은 카페 공식 영양정보라 수집 주기(월 단위) 사이에는 바뀌지 않는다 — 빌드 시점에 굳혀도 낡지 않는다.
+ */
+async function fetchCafeDrinkComparisons() {
+  const names = await getJson('/api/v1/ranking/cafe/drink-names');
+  const indexed = (Array.isArray(names) ? names : []).filter((n) => n.brandCount >= CAFE_INDEX_MIN_BRANDS);
+  const drinks = [];
+  for (const n of indexed) {
+    const brands = await getJson(`/api/v1/ranking/cafe/drink-names/compare?name=${encodeURIComponent(n.drinkName)}`);
+    drinks.push({ drinkName: n.drinkName, brandCount: n.brandCount, brands: Array.isArray(brands) ? brands : [] });
+  }
+  return drinks;
+}
+
+export function cafeDrinkPath(drinkName) {
+  return `/cafe/drink/${encodeURIComponent(drinkName)}`;
+}
+
+function rankSitemapEntries(boards, cafeDrinks = []) {
   return [
     { loc: rankUrl('/'), priority: '0.9' },
     { loc: rankUrl('/cafe'), priority: '0.7' },
+    ...cafeDrinks.map((d) => ({ loc: rankUrl(cafeDrinkPath(d.drinkName)), priority: '0.6' })),
     ...boards.map((b) => ({ loc: rankUrl(`/boards/${b.slug}`), priority: '0.6' })),
   ];
 }
@@ -2157,7 +2190,7 @@ function rankSitemapEntries(boards) {
  * 내보내면 크롤러가 어제 값을 오늘 문서로 읽는다. 주소는 sitemap 이 알리고, 내용은
  * 라우트 + useSeo 가 채운다.
  */
-async function renderRankHub(shell, boards = []) {
+async function renderRankHub(shell, boards = [], cafeDrinks = []) {
   const meta = rankHubMeta();
   // 보드 링크는 제목·범위만 싣는다 — 값(가격·순위)은 매일 바뀌어 프리렌더에 굳히면 크롤러가
   // 어제 값을 오늘 문서로 읽는다. 주소를 아는 것과 값을 아는 것은 다른 일이다.
@@ -2176,21 +2209,70 @@ async function renderRankHub(shell, boards = []) {
     jsonLd: [websiteJsonLd({ name: RANK_SITE_NAME, url: RANK_ORIGIN })],
     body: shellBody(
       `<h1>${escapeHtml(RANK_BRAND)}</h1><p>${escapeHtml(meta.description)}</p>` +
-        `<p>${escapeHtml(RANK_COVERAGE_NOTE)} ${escapeHtml(RANK_GAS_SOURCE)}</p>` +
-        (boardLinks ? `<h2>보드</h2><ul>${boardLinks}</ul>` : ''),
+        `<h2><a href="/cafe">카페 음료 성분 비교</a></h2><p>커피와 카페 음료의 카페인·당류·칼로리를 브랜드 공식 영양정보로 비교합니다.</p>` +
+        cafeDrinkLinks(cafeDrinks) +
+        (boardLinks ? `<h2>주유소 최저가</h2><p>${escapeHtml(RANK_COVERAGE_NOTE)} ${escapeHtml(RANK_GAS_SOURCE)}</p><ul>${boardLinks}</ul>` : ''),
     ),
   });
   await emit(`prerender/_hosts/${RANK_HOST}.html`, html);
-  await emit(`prerender/_hosts/${RANK_HOST}/cafe.html`, renderCafeHtml(shell));
+  await emit(`prerender/_hosts/${RANK_HOST}/cafe.html`, renderCafeHtml(shell, cafeDrinks));
+  for (const drink of cafeDrinks) {
+    // nginx 는 디코딩한 경로로 파일을 찾는다 — 파일 이름은 음료명 그대로다.
+    if (drink.drinkName.includes('/')) continue;
+    await emit(`prerender/_hosts/${RANK_HOST}/cafe/drink/${drink.drinkName}.html`, renderCafeDrinkHtml(shell, drink));
+  }
+}
+
+function cafeDrinkLinks(cafeDrinks = []) {
+  if (cafeDrinks.length === 0) return '';
+  const items = cafeDrinks
+    .map((d) => `<li><a href="${escapeHtml(cafeDrinkPath(d.drinkName))}">${escapeHtml(d.drinkName)} 카페별 비교</a> · 카페 ${d.brandCount}곳</li>`)
+    .join('');
+  return `<h2>많이 비교하는 음료</h2><ul>${items}</ul>`;
 }
 
 /** Host-scoped route HTML follows ADR-0062's nginx _hosts/$host lookup. */
-export function renderCafeHtml(shell) {
+export function renderCafeHtml(shell, cafeDrinks = []) {
   const meta = cafeMeta();
   return compose(shell, {
     lang: 'ko', title: meta.title, description: meta.description, canonical: meta.canonical,
     siteName: RANK_SITE_NAME, image: meta.image,
-    body: shellBody('<h1>카페 음료 비교</h1><p>' + escapeHtml(meta.description) + '</p><h2>당류, 카페인, 칼로리 한눈에 비교해 보세요!</h2><p><a href="/cafe/search">음료 검색</a> · <a href="/cafe/filter">조건별로 찾아보기</a></p><p>공식 기본 레시피 기준 · 미공개는 0이 아닙니다. 디카페인은 0mg와 다릅니다.</p>'),
+    body: shellBody('<h1>카페 음료 성분 비교</h1><p>' + escapeHtml(meta.description) + '</p><h2>당류, 카페인, 칼로리 한눈에 비교해 보세요!</h2><p><a href="/cafe/search">음료 검색</a> · <a href="/cafe/filter">조건별로 찾아보기</a></p>' + cafeDrinkLinks(cafeDrinks) + '<p>공식 기본 레시피 기준 · 미공개는 0이 아닙니다. 디카페인은 0mg와 다릅니다.</p>'),
+  });
+}
+
+function cafeCaffeineText(row) {
+  if (row.caffeineStatus === 'DECAF') return '디카페인';
+  if (row.caffeineStatus === 'UNDISCLOSED' || row.caffeineMg == null) return '미공개';
+  return `${Number(row.caffeineMg)}mg`;
+}
+
+function cafeAmount(value, unit) {
+  return value == null ? '미공개' : `${Number(value)}${unit}`;
+}
+
+/** 음료 하나의 카페별 비교 — 화면(`/cafe/drink/:name`)과 같은 비교 API 의 대표 메뉴를 표로 싣는다. */
+export function renderCafeDrinkHtml(shell, drink) {
+  const meta = cafeMeta({ drinkName: drink.drinkName, brandCount: drink.brandCount });
+  const rows = drink.brands
+    .map((b) => {
+      const r = b.representative ?? {};
+      const basis = [r.temperature, r.sizeLabel, r.cupVolumeMl != null ? `${Number(r.cupVolumeMl)}ml` : null].filter(Boolean).join(' · ');
+      return `<tr><th scope="row">${escapeHtml(b.brandName)}</th><td>${escapeHtml(r.menuName ?? '')}</td><td>${escapeHtml(basis || '기본')}</td>` +
+        `<td>${escapeHtml(cafeCaffeineText(r))}</td><td>${escapeHtml(cafeAmount(r.sugarG, 'g'))}</td><td>${escapeHtml(cafeAmount(r.kcal, 'kcal'))}</td></tr>`;
+    })
+    .join('');
+  return compose(shell, {
+    lang: 'ko', title: meta.title, description: meta.description, canonical: meta.canonical,
+    siteName: RANK_SITE_NAME, image: meta.image,
+    body: shellBody(
+      `<h1>${escapeHtml(drink.drinkName)} 카페별 비교</h1><p>${escapeHtml(meta.description)}</p>` +
+        `<table><caption>카페 ${drink.brandCount}곳의 대표 ${escapeHtml(drink.drinkName)} · 1회 제공량 기준</caption>` +
+        `<thead><tr><th scope="col">카페</th><th scope="col">메뉴</th><th scope="col">온도·사이즈</th><th scope="col">카페인</th><th scope="col">당류</th><th scope="col">칼로리</th></tr></thead>` +
+        `<tbody>${rows}</tbody></table>` +
+        '<p>공식 기본 레시피 기준 · 미공개는 0이 아닙니다. 디카페인은 0mg와 다릅니다.</p>' +
+        '<p><a href="/cafe">카페 음료 성분 비교</a> · <a href="/cafe/search">다른 음료 검색</a></p>',
+    ),
   });
 }
 
@@ -2216,15 +2298,17 @@ async function renderAdsConsoleShell(shell) {
  * rank 의 AEO 진입 문서. 6개 색인 호스트 중 유일하게 없었다 (2026-09-13 실측 404).
  * 보드 목록은 sitemap 이 갖고, 여기는 무엇을 어디서 보면 되는지만 적는다.
  */
-function rankLlmsTxt(boards = []) {
+function rankLlmsTxt(boards = [], cafeDrinks = []) {
   const list = boards.slice(0, 40).map((b) => `- [${b.title}](${rankUrl(`/boards/${b.slug}`)})`).join('\n');
+  const drinks = cafeDrinks.map((d) => `- [${d.drinkName} 카페별 비교](${rankUrl(cafeDrinkPath(d.drinkName))})`).join('\n');
   return [
     `# ${RANK_SITE_NAME}`,
     '',
-    '> 무엇이든 줄 세워 보여주는 리더보드. 첫 보드는 지역별 최저가 주유소 — 시군구·유종별 순위를 어제 대비 등락과 함께 매일 갱신한다.',
+    '> 무엇이든 줄 세워 보여주는 리더보드. 카페 음료의 카페인·당류·칼로리를 브랜드 공식 영양정보로 비교하고, 지역별 최저가 주유소 순위를 보여준다.',
     '',
     '## 시작점',
     `- [허브](${RANK_ORIGIN}/)`,
+    `- [카페 음료 성분 비교](${RANK_ORIGIN}/cafe)`,
     `- [전체 URL 목록](${RANK_ORIGIN}/sitemap.xml)`,
     '',
     '## 데이터',
@@ -2232,6 +2316,7 @@ function rankLlmsTxt(boards = []) {
     `- ${RANK_GAS_SOURCE}`,
     '- 순위는 현재값이 아니라 스냅샷 원장이다 — 등락은 이전 스냅샷과의 차이다',
     '',
+    ...(drinks ? ['## 카페 음료 비교', drinks, ''] : []),
     ...(list ? ['## 보드', list, ''] : []),
   ].join('\n');
 }
