@@ -1,6 +1,7 @@
 package com.kgd.ranking.domain.cafe.model
 
 import java.math.BigDecimal
+import java.math.RoundingMode
 
 enum class VolumeSource { ROW, BRAND_SIZE_TABLE, WEIGHT_ESTIMATE, NONE, ADMIN_VERIFIED }
 
@@ -19,6 +20,10 @@ object CupVolumes {
     private const val TWOSOME_ICE_REGULAR_ML = 414
     private const val TWOSOME_LARGE_ML = 473
     private const val TWOSOME_MAX_ML = 591
+
+    // Cup sizes published as "20oz" (uzi) are cup capacities, converted at 1 US fl oz = 29.5735ml.
+    private val ounces = Regex("""^(\d+(?:\.\d+)?)\s*oz$""", RegexOption.IGNORE_CASE)
+    private val ML_PER_OUNCE = BigDecimal("29.5735")
 
     // "1회 제공량(g) 310" (dunkin), "총 내용량: 600g" (parisbaguette), "컵용량 : 30g" (ediya); "mg" never matches.
     private val grams = Regex("""\(g\)\s*(\d+(?:\.\d+)?)|(\d+(?:\.\d+)?)\s*g(?![a-z])""", RegexOption.IGNORE_CASE)
@@ -42,6 +47,9 @@ object CupVolumes {
             else -> null
         } else null
         if (ml != null) return CupVolume(ml.toBigDecimal(), VolumeSource.BRAND_SIZE_TABLE)
+        ounces.find(sizeLabel.orEmpty().trim())?.groupValues?.get(1)?.toBigDecimal()?.let {
+            if (it.signum() > 0) return CupVolume(it.multiply(ML_PER_OUNCE).setScale(0, RoundingMode.HALF_UP), VolumeSource.BRAND_SIZE_TABLE)
+        }
         // A basis listing several sizes ("R) 316g, G) 437g …") cannot say which one this row is.
         val weight = grams.findAll(servingBasis.orEmpty()).toList().singleOrNull()?.groupValues?.drop(1)?.firstOrNull { it.isNotEmpty() }?.toBigDecimal()
         return if (weight != null && weight.signum() > 0) CupVolume(weight, VolumeSource.WEIGHT_ESTIMATE) else CupVolume(null, VolumeSource.NONE)
