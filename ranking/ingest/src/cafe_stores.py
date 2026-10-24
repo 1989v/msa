@@ -39,6 +39,7 @@ BRANDS = {
  'mammoth': ('매머드커피', ('매머드커피', 'mammothcoffee')),
  'mammothexpress': ('매머드익스프레스', ('매머드익스프레스', 'mammothexpress')),
  'coffeebean': ('커피빈', ('커피빈', 'coffeebean')),
+ 'dalkomm': ('달콤커피', ('달콤커피', 'dalkommcoffee', 'dalkomm')),
 }
 # Explicit collisions, affiliates and businesses that are not the target brand.
 EXCLUDE = ('스타벅스인테리어', '메가커피머신', '메가커피아카데미', '이디야커피랩교육', '파리바게뜨물류', '던킨물류')
