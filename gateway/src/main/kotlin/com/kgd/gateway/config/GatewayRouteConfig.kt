@@ -739,6 +739,13 @@ class GatewayRouteConfig(
             // 공유용 단축 주소 (ADR-0106). 대상을 가진 도메인이 302 로 답한다 — 이력서는 atlas,
             // 관광지·게임·글은 content. 인증 필터를 걸지 않으므로 클라이언트가 붙인 X-User-Id 가
             // 지워지지 않는다. 그래서 클릭 기록(익명 쓰기)의 리미터 키는 헤더를 보지 않는 ipKeyResolver 다.
+            // 랭킹 고정 별칭 `/r/cafe` — `/r` 은 이력서 접두사지만 이력서 코드는 언제나 10자라 겹치지 않는다.
+            // `/r/**` 보다 먼저 선언해야 한다 — 선언 순서가 곧 우선순위다.
+            .route("short-link-rank") { r ->
+                r.path("/r/cafe")
+                    .filters { f -> f.requestRateLimiter { config -> shortLinkLimit(config) }.stripPrefix(0) }
+                    .uri(CONTENT_URI)
+            }
             .route("short-link-resume") { r ->
                 r.path("/r", "/r/**")
                     .filters { f -> f.requestRateLimiter { config -> shortLinkLimit(config) }.stripPrefix(0) }

@@ -17,5 +17,6 @@ data class ShortLinkProperties(
     val placeOrigin: String = "https://place.1989v.com",
     val gameOrigin: String = "https://game.1989v.com",
     val blogOrigin: String = "https://blog.1989v.com",
+    val rankOrigin: String = "https://rank.1989v.com",
     val expose: Boolean = false,
 )

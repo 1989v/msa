@@ -50,6 +50,11 @@ class ShortLinkRouteSpec(
             routes.getValue("short-link-resume").uri.host shouldBe "atlas"
             routes.getValue("short-link-content").uri.host shouldBe "content"
         }
+        Then("랭킹 별칭 /r/cafe 는 content 로 가고 이력서 /r/** 보다 먼저 맞는다") {
+            routes.getValue("short-link-rank").uri.host shouldBe "content"
+            val ids = routeLocator.routes.map { it.id }.collectList().block().orEmpty()
+            (ids.indexOf("short-link-rank") < ids.indexOf("short-link-resume")) shouldBe true
+        }
         Then("인증 필터가 없다 — 받은 사람은 로그인하지 않는다") {
             listOf("short-link-resume", "short-link-content").forEach { id ->
                 routes.getValue(id).filters.any { it.toString().contains("Authentication") } shouldBe false
