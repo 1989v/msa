@@ -17,7 +17,7 @@ from urllib.parse import urlencode, quote, unquote
 from urllib.request import urlopen
 from src import ranking_client
 
-RULE_VERSION = 'cafe-alias-v1'
+RULE_VERSION = 'cafe-alias-v2'
 BASE = 'https://apis.data.go.kr/B553077/api/open/sdsc2'
 # Nationwide category pagination includes bakery/donut stores. Official KSIC retail classes.
 CATEGORIES = ('I21201', 'I21001')  # coffee shops / bakeries (2023 classification)
@@ -31,6 +31,7 @@ BRANDS = {
  'theventi': ('더벤티', ('더벤티', 'theventi')),
  'dunkin': ('던킨', ('던킨도너츠', '던킨', 'dunkindonuts', 'dunkin')),
  'parisbaguette': ('파리바게뜨', ('파리바게뜨', '파리바게트', 'parisbaguette')),
+ 'gongcha': ('공차', ('공차', 'gongcha')),
 }
 # Explicit collisions, affiliates and businesses that are not the target brand.
 EXCLUDE = ('스타벅스인테리어', '메가커피머신', '메가커피아카데미', '이디야커피랩교육', '파리바게뜨물류', '던킨물류')

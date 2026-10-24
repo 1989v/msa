@@ -580,7 +580,7 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 
 ## 9. 카페 음료 — 브랜드 공식 영양정보
 
-기준일 **2026-10-20**, 9브랜드 1,922행. 공식 공개 목록·상세의 기본 레시피와 공개 영양표만 사용하며
+기준일 **2026-10-20**(공차 2026-10-24), 10브랜드 2,191행. 공식 공개 목록·상세의 기본 레시피와 공개 영양표만 사용하며
 로그인·주문·매장 선택을 통한 조회는 하지 않았다. 수집 완료된 JSONL을 `cafe_load.py`가 내부 API로
 브랜드별 적재한다. 사용자 조회 중 외부 호출은 없다. API 키는 필요하지 않다.
 
@@ -595,6 +595,7 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | 더벤티 | 231 | [공식 홈페이지](https://www.theventi.co.kr/) | 공식 상세 텍스트, 온도·공개 사이즈별 분리 | 미확인 | 미확인 | 2026-10-20 |
 | 던킨(한국) | 139 | [공식 커피](https://www.dunkindonuts.co.kr/menu?cat=6) · [음료](https://www.dunkindonuts.co.kr/menu?cat=3) | 공개 목록 연결 상세 74문서의 사이즈별 표 | 미확인 | 연결 해피포인트 약관의 명시 금지 미확인 | 2026-10-20 |
 | 파리바게뜨 | 75 | [공식 커피·음료](https://www.paris.co.kr/products/?cat1=%EC%BB%A4%ED%94%BC-%EC%9D%8C%EB%A3%8C) | 공식 공개 Ajax 목록·상세 텍스트, 빙수 제외 | 미확인 | 일반 메뉴수집 금지 미확인·이메일수집 금지와 구분 | 2026-10-20 |
+| 공차 | 269 | [영양정보 전체보기](https://www.gong-cha.co.kr/brand/menu/product_nutrition?category=001001) · [공식 메뉴](https://www.gong-cha.co.kr/brand/menu/product?category=001001) | 공개 GET 통합 영양표 + 목록 연결 상세(요거티·1L), 당도 0% 기본 레시피 | 미확인 | 미확인 | 2026-10-24 |
 
 **라이선스 및 자동수집 명시 금지 조항 미확인은 이용 허락을 뜻하지 않는다.** 약관 확인 범위는 수집 당시
 로컬 `ranking/ingest/data/cafe/sources.md`에 기록했다. 원천 파일은 `.gitignore`로 공개 저장소에서 제외한다.
@@ -625,6 +626,7 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | starbucks | `www.starbucks.co.kr/favicon.ico` (256px 층) |
 | theventi | `www.theventi.co.kr/new2022/assets/images/sub/v-logo-purple.png` (40px, 파비콘과 같은 V) |
 | twosome | `www.twosome.co.kr/resources/images/common/favicon3.ico` |
+| gongcha | `www.gong-cha.co.kr/favicon/apple-touch-icon.png` (180px → 96px) |
 
 ## 관련
 

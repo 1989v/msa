@@ -5,7 +5,7 @@ from src import cafe_stores as c
 class CafeStoreTests(unittest.TestCase):
  def row(self,name='스타벅스',sid='real-1',code='I21201'):
   return dict(bizesId=sid,bizesNm=name,brchNm='강남점',indsSclsCd=code,lat='37.5',lon='127.0',signguCd='11680',rdnmAdr='서울',unknown={'preserve':True})
- def test_nine_aliases_and_collisions(self):
+ def test_brand_aliases_and_collisions(self):
   for slug,(name,aliases) in c.BRANDS.items():
    for alias in aliases:
     with self.subTest(slug=slug,alias=alias): self.assertEqual((slug,'CONFIRMED'),c.mapping(self.row(alias+' 강남점')))
