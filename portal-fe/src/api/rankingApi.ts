@@ -89,7 +89,7 @@ export interface CafeDrink {
   officialSourceUrl?: string; officialCheckedAt?: string;
   correctionEvidence?: Record<string, { evidenceUrl: string; evidenceCheckedAt: string; reason: string }>; priceKrw: number | null; priceNote: string | null;
   allergens: string | null; sourceUrl: string; checkedAt: string; notes: string | null;
-  cupVolumeMl: number | null; volumeSource: 'ROW' | 'BRAND_SIZE_TABLE' | 'NONE' | 'ADMIN_VERIFIED'; kcalPer100ml: number | null;
+  cupVolumeMl: number | null; volumeSource: 'ROW' | 'BRAND_SIZE_TABLE' | 'WEIGHT_ESTIMATE' | 'NONE' | 'ADMIN_VERIFIED'; kcalPer100ml: number | null;
   drinkGroup: string; sugarPer100ml: number | null; caffeinePer100ml: number | null;
 }
 export interface CafeDrinkPage { content: CafeDrink[]; totalElements: number; page: number; size: number; sizeLabels?: string[]; brandGroups?: CafeSearchBrand[]; menuCount?: number; brandCounts?: CafeBrandFacet[]; excludedDecafBrandCount?: number }

@@ -412,3 +412,12 @@ it('keeps the added decaf control off condition results', async () => {
  await screen.findByRole('list', { name: '음료 비교' });
  expect(screen.queryByRole('button', { name: '디카페인' })).toBeNull();
 });
+
+it('search results link every same-word drink variation so the grouped table does not hide them', async () => {
+  vi.mocked(api.fetchCafeDrinkNames).mockResolvedValue([{ drinkName: '카페라떼', brandCount: 9, rowCount: 30 }, { drinkName: '바닐라라떼', brandCount: 8, rowCount: 20 }]);
+  setup('/cafe/search?q=라떼'); await screen.findByRole('table');
+  const related = await screen.findByRole('navigation', { name: '「라떼」 관련 음료' });
+  expect(within(related).getByRole('link', { name: /바닐라라떼/ })).toHaveAttribute('href', `/cafe/drink/${encodeURIComponent('바닐라라떼')}`);
+  expect(vi.mocked(api.fetchCafeDrinkNames)).toHaveBeenCalledWith('라떼');
+  expect(screen.getByText(/제휴 관계가 없습니다/)).toBeInTheDocument();
+});

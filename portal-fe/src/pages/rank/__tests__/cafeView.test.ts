@@ -39,3 +39,15 @@ it('never leaks nonfinite or missing values through metadata labels', () => {
   expect(caffeineLabel({ caffeineStatus: 'DISCLOSED', caffeineMg: NaN })).toBe('수치 미확정');
   expect(caffeineLabel({ caffeineStatus: 'DECAF', caffeineMg: undefined as unknown as null })).toBe('디카페인 · 수치 미확정');
 });
+
+describe('중량 기준 추정 용량', () => {
+  it('g만 공개된 음료는 100ml당 값 앞에 ≈를 붙이고 용량 출처를 밝힌다', async () => {
+    const { cafeMetric } = await import('../cafeView');
+    const drink = { sugarG: 31, caffeineMg: 156, kcal: 15, sugarPer100ml: 10, caffeinePer100ml: 50.3226, kcalPer100ml: 4.8387, cupVolumeMl: 310, volumeSource: 'WEIGHT_ESTIMATE', caffeineStatus: 'DISCLOSED', servingBasis: '1회 제공량(g) 310', sizeLabel: 'S' } as unknown as Parameters<typeof cafeMetric>[0];
+    expect(cafeMetric(drink, 'sugar', '100ml').amount).toBe('≈10');
+    expect(cafeMetric(drink, 'caffeine', '100ml').amount).toBe('≈50.3');
+    expect(cafeMetric(drink, 'sugar', 'serving').amount).toBe('31');
+    expect(cafeMetric({ ...drink, volumeSource: 'ROW' }, 'sugar', '100ml').amount).toBe('10');
+    expect(volumeLabel(drink)).toBe('S · 310g(≈310ml 추정)');
+  });
+});

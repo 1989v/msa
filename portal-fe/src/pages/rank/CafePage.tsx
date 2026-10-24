@@ -9,7 +9,7 @@ import Footer from '../../components/Footer';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import { useSeo } from '../../seo/useSeo';
 import { cafeMeta } from '../../seo/copy.mjs';
-import { cafeMetric, cafeMetricValue, metricNames, metricUnits, volumeLabel, volumeExplanation, type CafeMetric } from './cafeView';
+import { cafeMetric, cafeMetricValue, metricNames, metricUnits, volumeLabel, volumeExplanation, weightEstimateNote, type CafeMetric } from './cafeView';
 import { readCafeFilters, writeCafeFilters } from './cafeUrl';
 import CafeNearby from './CafeNearby';
 import { CafeSources } from './CafeSources';
@@ -20,6 +20,7 @@ import CafeCategoryChips from './CafeCategoryChips';
 import './CafePage.css';
 
 const metrics: CafeMetric[] = ['sugar', 'caffeine', 'kcal'];
+const trademarkNote = '카페 상호와 로고는 각 권리자의 상표이며, 이 서비스는 해당 브랜드와 제휴 관계가 없습니다.';
 const recentKey = 'cafe-recent-searches';
 const positions = new Map<string, { scroll: number; focus: string }>();
 function readRecent(): string[] { try { const value: unknown = JSON.parse(localStorage.getItem(recentKey) ?? '[]'); return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string').slice(0, 8) : []; } catch { return []; } }
@@ -101,6 +102,7 @@ export default function CafePage({ nearbyEnabled, onNearbyOpen }: { nearbyEnable
   // Compare returns all same-name variants; detail choices never depend on one paginated search.
   const detailVariants = useQuery({ queryKey: ['cafe', 'variants', detail.data?.drinkName], queryFn: () => fetchCafeComparison(detail.data!.drinkName!, {}), enabled: !!drinkKey && !!detail.data?.drinkName, retry: false });
   const names = useQuery({ queryKey: ['cafe', 'names', suggestion], queryFn: () => fetchCafeDrinkNames(suggestion), enabled: (landing || searchOpen || searchPage) && !composing, staleTime: 300000 });
+  const relatedNames = useQuery({ queryKey: ['cafe', 'names', filters.q ?? ''], queryFn: () => fetchCafeDrinkNames(filters.q ?? ''), enabled: searchPage && !!filters.q, staleTime: 300000 });
   const popularNames = useQuery({ queryKey: ['cafe', 'names', ''], queryFn: () => fetchCafeDrinkNames(''), enabled: landing, staleTime: 300000 });
   const basis = filters.basis ?? 'serving';
   const rows = (comparison.data ?? []).map(brand => brand.variants.find(variant => variant.drinkKey === selected[brand.brandSlug]) ?? brand.representative);
@@ -143,7 +145,7 @@ export default function CafePage({ nearbyEnabled, onNearbyOpen }: { nearbyEnable
       <section className="cafe-popular"><div className="cafe-section-heading"><h2>인기 검색 음료</h2><Link to="/cafe/search">더보기 ›</Link></div><nav aria-label="많이 찾는 음료">{popular.map(name => <Link key={name.drinkName} to={`/cafe/drink/${encodeURIComponent(name.drinkName)}`}><span className="cafe-popular-art"><CafeCup name={name.drinkName} /></span><strong>{name.drinkName}</strong><small>{name.brandCount}개 브랜드</small></Link>)}</nav>{popularNames.isPending && <p role="status">인기 음료를 불러오는 중…</p>}{popularNames.isError && <p role="alert">인기 음료를 불러오지 못했습니다. <button onClick={() => void popularNames.refetch()}>다시 시도</button></p>}</section>
       <section><div className="cafe-section-heading"><h2>조건별로 찾아보기</h2><Link to="/cafe/filter">전체 조건 ›</Link></div><div className="cafe-quick">{[{ name: '당류 낮은 음료', caption: '≤10g', patch: { maxSugar: 10 }, icon: <CafeConditionIcon kind="sugar" />, tone: 'green' }, { name: '저카페인 음료', caption: '≤50mg', patch: { maxCaffeine: 50 }, icon: <CafeConditionIcon kind="caffeine" />, tone: 'cream' }, { name: '저칼로리 음료', caption: '≤200kcal', patch: { maxKcal: 200 }, icon: <CafeConditionIcon kind="kcal" />, tone: 'pink' }].map(tile => <button className={`cafe-quick-${tile.tone}`} key={tile.name} onClick={() => goResults(tile.patch)}><span aria-hidden="true">{tile.icon}</span><strong>{tile.name}</strong><small>({tile.caption})</small></button>)}</div></section>
       {groups.isError && <p role="alert">유형을 불러오지 못했습니다. <button onClick={() => void groups.refetch()}>다시 시도</button></p>}
-      <details className="cafe-source-card"><summary>공식 영양정보 · 출처 안내</summary><p>공식 기본 레시피 기준 · 미공개는 0이 아닙니다. 디카페인은 0mg와 다릅니다.</p>{brands.data?.map(brand => <p key={brand.brandSlug}>{brand.brandName} · <time>{brand.checkedAt}</time> · {brand.sourceUrls[0] && <><a href={`${new URL(brand.sourceUrls[0]).origin}/`} target="_blank" rel="noopener noreferrer">공식 사이트 ↗</a> · </>}메뉴 {new Set(brand.sourceUrls).size}개 페이지에서 확인</p>)}{brands.isError && <button onClick={() => void brands.refetch()}>출처 다시 시도</button>}</details>
+      <details className="cafe-source-card"><summary>공식 영양정보 · 출처 안내</summary><p>공식 기본 레시피 기준 · 미공개는 0이 아닙니다. 디카페인은 0mg와 다릅니다.</p><p className="cafe-note">{trademarkNote}</p>{brands.data?.map(brand => <p key={brand.brandSlug}>{brand.brandName} · <time>{brand.checkedAt}</time> · {brand.sourceUrls[0] && <><a href={`${new URL(brand.sourceUrls[0]).origin}/`} target="_blank" rel="noopener noreferrer">공식 사이트 ↗</a> · </>}메뉴 {new Set(brand.sourceUrls).size}개 페이지에서 확인</p>)}{brands.isError && <button onClick={() => void brands.refetch()}>출처 다시 시도</button>}</details>
     </> : drinkName ? <>
       {toolbar('메뉴 비교', '/cafe', true)}
       <section className="cafe-comparison-hero"><div className="cafe-hero-art"><CafeCup name={drinkName} group={rows[0]?.drinkGroup} eager /></div><div><h2>{comparisonTitle}<br />카페별 비교</h2><p>같은 메뉴도 카페마다<br />영양정보가 달라요!</p></div></section>
@@ -185,13 +187,15 @@ export default function CafePage({ nearbyEnabled, onNearbyOpen }: { nearbyEnable
       {listControls}
       {groups.isError && <p className="cafe-note">유형 정보 조회 실패 <button onClick={() => void groups.refetch()}>유형 다시 시도</button></p>}
       <div className="cafe-result-heading"><span role="status">{drinks.isPending ? '음료를 불러오는 중…' : drinks.isError ? '검색 결과를 확인할 수 없습니다' : !conditionResults ? `카페 ${drinks.data?.totalElements ?? 0}곳 · 메뉴 ${drinks.data?.menuCount ?? drinks.data?.content.length ?? 0}개` : `검색 결과 ${drinks.data?.totalElements ?? 0}개`}</span><small>{basis === 'serving' ? '1회 제공량 기준' : '100ml당 기준'}</small></div>
+      {searchPage && !!filters.q && !!relatedNames.data?.length && <nav className="cafe-related-names" aria-label={`「${filters.q}」 관련 음료`}><span>관련 음료</span>{relatedNames.data.map(name => <Link key={name.drinkName} to={`/cafe/drink/${encodeURIComponent(name.drinkName)}`} onClick={() => remember(name.drinkName)}>{name.drinkName} <small>{name.brandCount}곳</small></Link>)}</nav>}
       {!!drinks.data?.excludedDecafBrandCount && <p className="cafe-note">디카페인 없는 카페 {drinks.data.excludedDecafBrandCount}곳 제외</p>}
       {drinks.isPending ? <div aria-busy="true" className="cafe-loading">{[1, 2, 3].map(row => <div key={row} />)}</div> : drinks.isError ? <p role="alert">음료를 불러오지 못했습니다. <button onClick={() => void drinks.refetch()}>다시 시도</button></p> : !drinks.data?.content.length ? <div className="cafe-empty"><p>조건에 맞는 음료가 없습니다.</p><Link to="/cafe/filter">조건 변경</Link><Link to="/cafe/search">조건 초기화</Link></div> : <>
         {!conditionResults ? <CompactRows rows={drinks.data.brandGroups?.map(brand => brand.menus[0]?.representative).filter((row): row is CafeDrink => !!row) ?? drinks.data.content} basis={basis} identity={identity} /> : <ol className="cafe-cards" aria-label="음료 비교">{drinks.data.content.map(drink => <li key={drink.drinkKey}><Link className="cafe-result-card" id={`drink-${drink.drinkKey}`} to={`/cafe/drinks/${drink.drinkKey}?basis=${basis}`} state={{ returnTo: identity }} onClick={() => positions.set(identity, { scroll: window.scrollY, focus: `drink-${drink.drinkKey}` })}><div className="cafe-card-art"><CafeCup name={drink.menuName} group={drink.drinkGroup} /></div><div className="cafe-card-content"><div className="cafe-card-heading"><CafeBrandBadge slug={drink.brandSlug} name={drink.brandName} /><div><span>{drink.brandName}</span><h2>{drink.menuName}</h2></div></div><p className="cafe-card-size">{variantLabel(drink)}</p><MetricCells drink={drink} basis={basis} muted={conditionResults} /></div></Link></li>)}</ol>}
         <nav aria-label="결과 페이지" className="cafe-pagination"><button disabled={!filters.page} onClick={() => setParams(writeCafeFilters({ ...filters, page: (filters.page ?? 0) - 1 }))}>이전</button><span>{(filters.page ?? 0) + 1} 페이지</span><button disabled={((filters.page ?? 0) + 1) * (filters.size ?? 20) >= drinks.data.totalElements} onClick={() => setParams(writeCafeFilters({ ...filters, page: (filters.page ?? 0) + 1 }))}>다음</button></nav>
       </>}
-      {basis === '100ml' && !!drinks.data?.content.length && <p className="cafe-note">공개된 양수 용량이 있는 음료만 100ml당 산출할 수 있습니다. 산출 불가는 0이 아닙니다.</p>}
+      {basis === '100ml' && !!drinks.data?.content.length && <p className="cafe-note">공개된 양수 용량이 있는 음료만 100ml당 산출할 수 있습니다. 산출 불가는 0이 아닙니다. {weightEstimateNote}</p>}
       {nearby}
+      {!conditionResults && <p className="cafe-note cafe-trademark-note">{trademarkNote}</p>}
     </>}
     {shareMessage && <p role="status" className="cafe-share-message">{shareMessage}</p>}
     {!nearbyOpen && !filterPage && <Footer />}

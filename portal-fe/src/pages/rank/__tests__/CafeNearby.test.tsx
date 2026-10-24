@@ -148,3 +148,15 @@ it('ignores a late location hash after the user switches to an area', async () =
  expect(api.searchCafeNearby).toHaveBeenCalledTimes(1);
  expect(api.searchCafeNearby).toHaveBeenLastCalledWith(expect.objectContaining({ location: { kind: 'AREA', areaCode: '1168000000' } }), expect.any(AbortSignal));
 });
+
+it('shows the store list first, keeps the map behind a toggle and folds alternative options', async () => {
+ const drink = (key: string, menuName: string) => ({ drinkKey: key, menuName, temperature: 'ICE', sizeLabel: 'R', sugarG: 10, caffeineMg: 100, kcal: 150, caffeineStatus: 'DISCLOSED', cupVolumeMl: 414, volumeSource: 'ROW', checkedAt: '2026-10-20' }) as unknown as NonNullable<CafeNearbyResult['items'][number]['selectedDrink']>;
+ vi.mocked(api.searchCafeNearby).mockResolvedValue({ ...empty, totalStores: 1, matchedBrands: 1, items: [{ storeKey: 's', brandSlug: 'starbucks', brandName: '스타벅스', storeName: '스타벅스', branchName: '강남점', displayName: '스타벅스 강남점', address: '서울', latitude: 37.5, longitude: 127, distanceM: 100, mappingStatus: 'CONFIRMED', selectedDrink: drink('a', '카페 라떼'), variants: [drink('a', '카페 라떼'), drink('b', '아이스 카페 라떼')], selectionRequired: false, autoSelected: true, sourceAsOf: null, menuAvailability: 'UNVERIFIED' }] });
+ setup(); fireEvent.click(screen.getByRole('button', { name: '현재 위치 사용' }));
+ await act(async () => { getPosition.mock.calls[0][0]({ coords: { latitude: 37.51, longitude: 127.01, accuracy: 10 } }); });
+ await screen.findByRole('list', { name: '주변 매장' });
+ expect(screen.queryByLabelText('매장 위치 지도')).not.toBeInTheDocument();
+ expect(screen.getByText('다른 옵션 1개').closest('details')).not.toHaveAttribute('open');
+ fireEvent.click(screen.getByRole('button', { name: '지도 보기' }));
+ expect(await screen.findByLabelText('매장 위치 지도')).toBeInTheDocument();
+});

@@ -141,9 +141,13 @@ class RankingAdminAcceptanceTest : BehaviorSpec({
             shouldThrow<IllegalArgumentException> { service.correct(key(a), patch(key(a), mapOf("brandSlug" to FieldChange("SET", "x"))), 27) }
             shouldThrow<IllegalArgumentException> { service.correct(key(a), patch(key(a), mapOf("kcal" to FieldChange("SET", "1.00001"))), 27) }
         }
-        Then("undisclosed caffeine cannot be estimated and grams never become ml") {
+        Then("undisclosed caffeine cannot be estimated and grams become only a marked volume estimate") {
             val a = cafeItem("a", "메뉴", CaffeineStatus.UNDISCLOSED).copy(volumeMl = null, servingBasis = "300g")
-            load(a); query.find(key(a))!!.cupVolumeMl shouldBe null
+            load(a)
+            val stored = query.find(key(a))!!
+            stored.cupVolumeMl!!.compareTo(java.math.BigDecimal("300")) shouldBe 0
+            stored.volumeSource shouldBe VolumeSource.WEIGHT_ESTIMATE
+            stored.volumeMl shouldBe null
             shouldThrow<IllegalArgumentException> { service.correct(key(a), patch(key(a), mapOf("caffeineMg" to FieldChange("SET", "0"))), 27) }
         }
     }

@@ -237,3 +237,31 @@
 
 .cafe-compact-name::after { content: ""; position: absolute; inset: 0; }
 .cafe-compact-name:focus-visible::after { outline: 2px solid var(--cafe-cta); outline-offset: 2px; }
+
+.cafe-related-names { display: flex; gap: 6px; align-items: center; overflow-x: auto; padding-bottom: 6px; margin-bottom: 10px; scrollbar-width: thin; }
+.cafe-related-names > span { flex-shrink: 0; font-size: 12px; color: var(--cafe-muted); }
+.cafe-related-names a { flex-shrink: 0; white-space: nowrap; font-size: 12px; padding: 8px 12px; border-radius: 999px; background: var(--cafe-soft); color: var(--cafe-text); text-decoration: none; }
+.cafe-related-names small { color: var(--cafe-muted); }
+.cafe-nearby-sheet h2 small { font-size: 12px; font-weight: 400; color: var(--cafe-muted); }
+.cafe-nearby-controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-block: 10px 6px; }
+.cafe-nearby-controls > .cafe-choice[open] { flex-basis: 100%; order: 1; }
+.cafe-nearby-controls > .cafe-choice[open] > button { margin: 6px 6px 0 0; font-size: 12px; }
+.cafe-nearby-controls > * { flex-shrink: 0; }
+.cafe-nearby-controls .cafe-radius { margin: 0; flex-wrap: nowrap; }
+.cafe-nearby-controls > button, .cafe-nearby-controls summary { font-size: 12px; white-space: nowrap; }
+.cafe-nearby-controls > .cafe-choice > summary { list-style: none; min-height: 44px; display: flex; align-items: center; padding: 0 14px; border: 1px solid var(--cafe-line); border-radius: 999px; cursor: pointer; }
+.cafe-nearby-controls > .cafe-choice > summary::-webkit-details-marker { display: none; }
+.cafe-nearby-list .cafe-meta { overflow-wrap: anywhere; }
+.cafe-nearby-list > li { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.cafe-nearby-list > li p, .cafe-nearby-list > li details { margin: 0; }
+.cafe-nearby-list .cafe-meta { margin: 0; font-size: 12px; }
+.cafe-store-options summary, .cafe-store-source summary { font-size: 12px; color: var(--cafe-muted); cursor: pointer; }
+.cafe-store-more { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.cafe-store-more summary { min-height: 44px; display: flex; align-items: center; }
+.cafe-store-more details[open] { flex-basis: 100%; }
+/* Centered with auto margins inside the shell's column flex, the page would size to its widest chip row. */
+.cafe-page { width: 100%; }
+.cafe-store-more summary { list-style: none; cursor: pointer; }
+.cafe-store-more summary::-webkit-details-marker { display: none; }
+.cafe-store-more summary::before { content: '▸'; margin-right: 4px; }
+.cafe-store-more details[open] > summary::before { content: '▾'; }

@@ -8,9 +8,11 @@ export const caffeineLabel = (drink: Pick<CafeDrink, 'caffeineMg' | 'caffeineSta
 };
 
 export const volumeExplanation = '공식 브랜드 사이즈표 기준 컵 용량입니다. 실제 음료량은 다를 수 있습니다.';
-export const volumeLabel = (drink: Pick<CafeDrink, 'sizeLabel' | 'cupVolumeMl' | 'servingBasis'>): string => {
+export const weightEstimateNote = '중량(g)만 공개된 음료는 1g≈1ml로 추정해 100ml당 값 앞에 ≈를 붙입니다.';
+export const volumeLabel = (drink: Pick<CafeDrink, 'sizeLabel' | 'cupVolumeMl' | 'servingBasis'> & Partial<Pick<CafeDrink, 'volumeSource'>>): string => {
   const weight = drink.servingBasis?.match(/제공량\s*\(g\)\s*(\d+(?:\.\d+)?)/i)?.[1] ?? drink.servingBasis?.match(/(?:^|[^\d.])(\d+(?:\.\d+)?)\s*g(?:$|[^a-z])/i)?.[1];
-  const amount = drink.cupVolumeMl != null && Number.isFinite(drink.cupVolumeMl) && drink.cupVolumeMl > 0 ? `${drink.cupVolumeMl}ml` : weight ? `${weight}g` : '용량 미표시';
+  const amount = drink.volumeSource === 'WEIGHT_ESTIMATE' && weight ? `${weight}g(≈${drink.cupVolumeMl}ml 추정)`
+    : drink.cupVolumeMl != null && Number.isFinite(drink.cupVolumeMl) && drink.cupVolumeMl > 0 ? `${drink.cupVolumeMl}ml` : weight ? `${weight}g` : '용량 미표시';
   return drink.sizeLabel ? `${drink.sizeLabel} · ${amount}` : amount;
 };
 
@@ -25,8 +27,9 @@ export function cafeMetric(drink: CafeDrink, metric: CafeMetric, basis: 'serving
   const value = basis === '100ml'
     ? { sugar: drink.sugarPer100ml, caffeine: drink.caffeinePer100ml, kcal: drink.kcalPer100ml }[metric]
     : { sugar: drink.sugarG, caffeine: drink.caffeineMg, kcal: drink.kcal }[metric];
+  const estimated = basis === '100ml' && drink.volumeSource === 'WEIGHT_ESTIMATE';
   return {
-    amount: value == null || !Number.isFinite(value) ? (metric === 'caffeine' ? '미확정' : '미공개') : formatCafeNumber(value),
+    amount: value == null || !Number.isFinite(value) ? (metric === 'caffeine' ? '미확정' : '미공개') : `${estimated ? '≈' : ''}${formatCafeNumber(value)}`,
     unit: value == null || !Number.isFinite(value) ? undefined : metricUnits[metric],
     status: metric === 'caffeine' ? (drink.caffeineStatus === 'DECAF' ? '디카페인' : undefined) : undefined,
   };

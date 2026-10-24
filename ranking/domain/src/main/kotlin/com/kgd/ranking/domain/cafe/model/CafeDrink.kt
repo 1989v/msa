@@ -44,7 +44,7 @@ data class CafeDrink(
 ) {
     val drinkName: String get() = DrinkNames.normalize(displayName ?: menuName)
     val drinkGroup: String get() = effectiveGroup ?: DrinkGroups.classify(menuName)
-    private val cupVolume get() = if (volumeOverridden) CupVolume(effectiveVolume, effectiveVolumeSource ?: if (effectiveVolume == null) VolumeSource.NONE else VolumeSource.ADMIN_VERIFIED) else CupVolumes.resolve(brandSlug, volumeMl, servingBasis, sizeLabel, temperature)
+    private val cupVolume get() = if (volumeOverridden) CupVolume(effectiveVolume, effectiveVolumeSource ?: if (effectiveVolume == null) VolumeSource.NONE else VolumeSource.ADMIN_VERIFIED) else CupVolumes.resolve(brandSlug, volumeMl, servingBasis, sizeLabel, temperature, sourceCategory)
     val cupVolumeMl: BigDecimal? get() = cupVolume.ml
     val volumeSource: VolumeSource get() = cupVolume.source
     val kcalPer100ml: BigDecimal? get() = per100ml(kcal)
