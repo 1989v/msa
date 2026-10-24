@@ -86,6 +86,8 @@ data class CafeNearbyItem(
             "hollys" to listOf("할리스커피", "할리스", "hollyscoffee", "hollys"),
             "pascucci" to listOf("카페파스쿠찌", "파스쿠찌", "caffepascucci", "pascucci"),
             "uzi" to listOf("우지커피", "oozycoffee"),
+            "mammoth" to listOf("매머드커피", "mammothcoffee"),
+            "mammothexpress" to listOf("매머드익스프레스", "mammothexpress"),
         )
     }
 }

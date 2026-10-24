@@ -36,6 +36,8 @@ BRANDS = {
  'hollys': ('할리스', ('할리스커피', '할리스', 'hollyscoffee', 'hollys')),
  'pascucci': ('파스쿠찌', ('카페파스쿠찌', '파스쿠찌', 'caffepascucci', 'pascucci')),
  'uzi': ('우지커피', ('우지커피', 'oozycoffee')),
+ 'mammoth': ('매머드커피', ('매머드커피', 'mammothcoffee')),
+ 'mammothexpress': ('매머드익스프레스', ('매머드익스프레스', 'mammothexpress')),
 }
 # Explicit collisions, affiliates and businesses that are not the target brand.
 EXCLUDE = ('스타벅스인테리어', '메가커피머신', '메가커피아카데미', '이디야커피랩교육', '파리바게뜨물류', '던킨물류')

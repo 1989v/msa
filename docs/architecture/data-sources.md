@@ -580,7 +580,7 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 
 ## 9. 카페 음료 — 브랜드 공식 영양정보
 
-기준일 **2026-10-20**(공차·폴바셋·할리스·파스쿠찌·우지커피 2026-10-24), 14브랜드 2,800행. 공식 공개 목록·상세의 기본 레시피와 공개 영양표만 사용하며
+기준일 **2026-10-20**(공차·폴바셋·할리스·파스쿠찌·우지커피·매머드커피·매머드익스프레스 2026-10-24), 16브랜드 3,159행. 공식 공개 목록·상세의 기본 레시피와 공개 영양표만 사용하며
 로그인·주문·매장 선택을 통한 조회는 하지 않았다. 수집 완료된 JSONL을 `cafe_load.py`가 내부 API로
 브랜드별 적재한다. 사용자 조회 중 외부 호출은 없다. API 키는 필요하지 않다.
 
@@ -600,6 +600,8 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | 할리스 | 115 | [COFFEE](https://www.hollys.co.kr/menu/espresso.do) · [라떼·티](https://www.hollys.co.kr/menu/signature.do) · [할리치노](https://www.hollys.co.kr/menu/hollyccino.do) · [스무디](https://www.hollys.co.kr/menu/juice.do) · [스파클링](https://www.hollys.co.kr/menu/tea.do) | 분류 HTML 내장 영양표, 영양 기준 사이즈만, 빙수·아포가토 제외 | 미확인 | 미확인 | 2026-10-24 |
 | 파스쿠찌 | 127 | [커피(HOT)](https://www.pascucci.co.kr/product/productList.asp?typeCode=00100020) 외 8분류 목록 | 목록 data-productseq → 공개 상세 POST 응답의 사이즈별 문자열, 제공량 g(≈ 추정)·공식 표시 가격, 아포가또 제외 | 미확인 | 미확인 | 2026-10-24 |
 | 우지커피 | 213 | [영양성분 안내 (2026-09 기준)](https://oozycoffee.com/83/?q=YToxOntzOjEyOiJrZXl3b3JkX3R5cGUiO3M6MzoiYWxsIjt9&bmode=view&idx=18209046&t=board) | 공식 공지 이미지 판독(두 번 판독 대조 2,556칸), 사이즈 oz 원문(컵용량은 1oz=29.5735ml 로 바꿔 BRAND_SIZE_TABLE) | 미확인 | 미확인 | 2026-10-24 |
+| 매머드커피 | 185 | [메뉴 소개](https://www.mmthcoffee.com/sub/menu/list.html) | 공개 목록에 걸린 상세 HTML 영양표(GET 235회·1.3초 간격), 푸드·RTD·MD·원액 제외, 사이즈 oz 원문(컵용량은 1oz=29.5735ml 로 바꿔 BRAND_SIZE_TABLE) | 미확인 | 미확인(robots.txt 없음) | 2026-10-24 |
+| 매머드익스프레스 | 174 | [메뉴 소개](https://www.mmthcoffee.com/sub/menu/list.html) | 매머드커피와 같은 사이트의 익스프레스 메뉴 — 공통 제품도 브랜드별로 따로 둔다 | 미확인 | 미확인(robots.txt 없음) | 2026-10-24 |
 
 **라이선스 및 자동수집 명시 금지 조항 미확인은 이용 허락을 뜻하지 않는다.** 약관 확인 범위는 수집 당시
 로컬 `ranking/ingest/data/cafe/sources.md`에 기록했다. 원천 파일은 `.gitignore`로 공개 저장소에서 제외한다.
@@ -637,6 +639,9 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | hollys | `www.hollys.co.kr/websrc/images/layout/logo_210302.gif` (헤더 로고, 정사각 여백 → 96px) — 공식 favicon 은 16px 뿐이라 |
 | pascucci | `www.pascucci.co.kr/lib/images/common/foot_logo2.png` (70px P 심볼 → 96px) — 공식 favicon 은 16px 뿐이라 |
 | uzi | `cdn.imweb.me/thumbnail/20220214/f6125f8d094a4.png` (oozycoffee.com 이 건 196px icon → 96px) |
+| mammoth | `www.mmthcoffee.com/img/favicon.png` (50px → 96px) |
+
+매머드익스프레스는 공식 로고가 298×21 가로 글자뿐이라 원형 배지에서 읽히지 않는다 — 글자 배지를 쓴다.
 
 ## 관련
 
