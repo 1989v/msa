@@ -32,6 +32,7 @@ BRANDS = {
  'dunkin': ('던킨', ('던킨도너츠', '던킨', 'dunkindonuts', 'dunkin')),
  'parisbaguette': ('파리바게뜨', ('파리바게뜨', '파리바게트', 'parisbaguette')),
  'gongcha': ('공차', ('공차', 'gongcha')),
+ 'paulbassett': ('폴바셋', ('폴바셋', '바리스타폴바셋', 'paulbassett')),
 }
 # Explicit collisions, affiliates and businesses that are not the target brand.
 EXCLUDE = ('스타벅스인테리어', '메가커피머신', '메가커피아카데미', '이디야커피랩교육', '파리바게뜨물류', '던킨물류')

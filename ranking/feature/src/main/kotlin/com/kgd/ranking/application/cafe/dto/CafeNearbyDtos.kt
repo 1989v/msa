@@ -82,6 +82,7 @@ data class CafeNearbyItem(
             "dunkin" to listOf("던킨도너츠", "던킨", "dunkindonuts", "dunkin"),
             "parisbaguette" to listOf("파리바게뜨", "파리바게트", "parisbaguette"),
             "gongcha" to listOf("공차", "gongcha"),
+            "paulbassett" to listOf("폴바셋", "바리스타폴바셋", "paulbassett"),
         )
     }
 }
