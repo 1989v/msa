@@ -1,3 +1,4 @@
+import type React from 'react';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -7,7 +8,7 @@ import * as api from '../../../api/rankingApi';
 vi.mock('../../../api/rankingApi', () => ({ fetchGasAreas: vi.fn(), fetchRankingBoards: vi.fn(), fetchCafeBrands: vi.fn() }));
 vi.mock('../../../components/ThemeToggle', () => ({ default: () => <span>테마</span> }));
 vi.mock('../../../components/shell/AppInstallMenu', () => ({ default: () => null }));
-vi.mock('../../../components/Footer', () => ({ default: () => <footer>출처 안내</footer> }));
+vi.mock('../../../components/Footer', () => ({ default: ({ children }: { children?: React.ReactNode }) => <footer>{children}</footer> }));
 vi.mock('../../../hooks/useHeritageSurface', () => ({ useHeritageSurface: () => {} }));
 function setup() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -26,4 +27,5 @@ it('shows the cafe comparison as a card with a drink image instead of an empty-s
   expect(await screen.findByText('카페 3곳')).toBeTruthy();
   expect(screen.queryByText(/준비 중/)).toBeNull();
   expect(screen.queryByLabelText(/지역/)).toBeNull();
+  expect(screen.queryByText(/오피넷/)).toBeNull();
 });

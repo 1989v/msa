@@ -114,9 +114,12 @@ export default function RankPage() {
         </div>
       </main>
 
+      {/* 주유소 범위·출처 안내는 주유소 보드가 있을 때만 — 없는데 보이면 화면에 없는 데이터를 설명한다 */}
       <Footer>
-        <p>{RANK_COVERAGE_NOTE}</p>
-        <p>{RANK_GAS_SOURCE}</p>
+        {shown.length > 0 && <>
+          <p>{RANK_COVERAGE_NOTE}</p>
+          <p>{RANK_GAS_SOURCE}</p>
+        </>}
       </Footer>
     </div>
   );

@@ -140,6 +140,7 @@
 
 .rank-card__desc {
   margin: 0;
+  word-break: keep-all;
   color: var(--ko-text-secondary);
   font-size: 0.85rem;
   line-height: 1.4;
@@ -150,7 +151,7 @@
   flex-direction: column;
   gap: var(--ko-space-2);
   padding: var(--ko-space-5);
-  color: inherit;
+  /* 글자색은 판(.kh-slab)이 정한다 — inherit 를 두면 라이트 모드에서 어두운 판 위에 어두운 제목이 된다 */
   text-decoration: none;
 }
 
@@ -161,6 +162,7 @@
 
 .rank-card__title {
   margin: 0;
+  word-break: keep-all;
   font-size: 1.05rem;
   line-height: 1.3;
 }
