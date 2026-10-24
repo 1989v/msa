@@ -79,6 +79,9 @@ spec:
       # 재시도하지 않는다 — 5분 뒤 다음 틱이 온다. 실패한 워치독이 파드를 쌓으면
       # 단일 노드에서 그 자체가 문제가 된다.
       backoffLimit: 0
+      # 평소 4초면 끝난다. API 서버가 응답을 안 주면 Forbid 때문에 다음 틱이 전부 건너뛰어지므로
+      # 2분에서 끊는다 — 막힌 것을 푸는 물건이 스스로 막히면 안 된다.
+      activeDeadlineSeconds: 120
       ttlSecondsAfterFinished: 600
       template:
         metadata:
@@ -118,7 +121,7 @@ spec:
 
                   for app in $APPS; do
                     url="$API/apis/argoproj.io/v1alpha1/namespaces/$NS/applications/$app"
-                    json=$(curl -sS --fail --cacert "$SA/ca.crt" -H "Authorization: Bearer $TOKEN" "$url") || {
+                    json=$(curl -sS --fail --connect-timeout 5 --max-time 20 --cacert "$SA/ca.crt" -H "Authorization: Bearer $TOKEN" "$url") || {
                       echo "[watchdog] $app 조회 실패 — 건너뜀"; continue; }
 
                     # status.operationState 이후만 본다. 앞쪽 .operation 과 .spec 에는 "phase" 가
@@ -146,7 +149,7 @@ spec:
                     if [ "$age" -gt "$THRESHOLD_SECONDS" ]; then
                       echo "[watchdog] $app 동기화가 ${age}s 째 Running (임계 ${THRESHOLD_SECONDS}s) — 작업을 끊는다"
                       # /operation 제거 = argocd app terminate-op. 다음 자동 동기화가 최신 리비전으로 다시 건다.
-                      if curl -sS --fail --cacert "$SA/ca.crt" -H "Authorization: Bearer $TOKEN" \
+                      if curl -sS --fail --connect-timeout 5 --max-time 20 --cacert "$SA/ca.crt" -H "Authorization: Bearer $TOKEN" \
                            -X PATCH -H "Content-Type: application/json-patch+json" \
                            --data '[{"op":"remove","path":"/operation"}]' "$url" >/dev/null; then
                         stuck=$((stuck+1))
