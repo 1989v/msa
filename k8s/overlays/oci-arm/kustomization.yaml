@@ -422,7 +422,7 @@ images:
     newTag: 77da8f0
   - name: commerce/content
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/content
-    newTag: 99aaf8d
+    newTag: 16714ba
   - name: commerce/engagement
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/engagement
     newTag: 77da8f0
@@ -446,7 +446,7 @@ images:
     newTag: 9a6adac
   - name: commerce/ranking-ingest
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/ranking-ingest
-    newTag: 99aaf8d
+    newTag: 16714ba
   - name: commerce/recommendation-ann
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/recommendation-ann
     newTag: 6a1889c
