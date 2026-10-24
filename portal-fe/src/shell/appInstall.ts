@@ -18,7 +18,10 @@ export function installPath(pathname: string): string {
 
 /** Nginx does not URL-decode $arg_*. Fixed 16 UTF-16 units become JSON \uXXXX escapes. */
 export function installName(title: string): string {
-  const short = Array.from(title.split(/\s+[|—]\s+/)[0]).filter(char => char.charCodeAt(0) >= 32 && !(char.charCodeAt(0) >= 127 && char.charCodeAt(0) <= 159)).join('').trim().slice(0, 16).replace(/[\uD800-\uDBFF]$/, '').padEnd(16, ' ');
+  // The app name is the title's first part; a part longer than 16 units ends at its last word instead of mid-word.
+  const first = Array.from(title.split(/\s+[|—·]\s+/)[0]).filter(char => char.charCodeAt(0) >= 32 && !(char.charCodeAt(0) >= 127 && char.charCodeAt(0) <= 159)).join('').trim();
+  const cut = first.slice(0, 16);
+  const short = (first.length > 16 && first[16] !== ' ' && cut.lastIndexOf(' ') > 0 ? cut.slice(0, cut.lastIndexOf(' ')) : cut).replace(/[\uD800-\uDBFF]$/, '').padEnd(16, ' ');
   return Array.from({ length: 16 }, (_, i) => short.charCodeAt(i).toString(16).padStart(4, '0')).join('');
 }
 

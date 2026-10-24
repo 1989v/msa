@@ -30,6 +30,8 @@ beforeEach(() => {
   vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+const decode = (hex: string) => String.fromCharCode(...hex.match(/.{4}/g)!.map(unit => parseInt(unit, 16))).trimEnd();
+
 describe('page installation', () => {
   it.each(['//evil.com', '/%2f%2fevil', '/x/../secret', '/..', '/d/token', '/shared/AbCd012345', '/party/ABCD', '/en/party/ABCD', '/resume/d/token', '/oauth/callback', '/%0A', '/%ZZ', '/%FF', '/%61', '/%2E', '/%2522', '/x?token=secret', '/' + 'x'.repeat(512)])('rejects %s', path => expect(installPath(path)).toBe('/'));
   it('keeps Korean paths and bounded page names', () => {
@@ -39,6 +41,9 @@ describe('page installation', () => {
     const escaped = installName('검색 | 1989v').match(/.{4}/g)!.map(unit => '\\u' + unit).join('');
     expect(JSON.parse('"' + escaped + '"').trim()).toBe('검색');
     expect(installName('검색 | 1989v')).toHaveLength(64);
+    expect(decode(installName('카페 음료 성분 비교 · 커피 카페인·당류·칼로리 | 1989v 랭킹'))).toBe('카페 음료 성분 비교');
+    expect(decode(installName('아메리카노 카페인·당류·칼로리 카페별 비교 | 1989v 랭킹'))).toBe('아메리카노 카페인·당류·칼로리');
+    expect(decode(installName('1989v 랭킹 — 카페 음료 성분 비교'))).toBe('1989v 랭킹');
   });
   it.each(['/search/', '/s/', '/SEARCH'])('preserves legacy identity for %s', path => {
     setup(path); expect(document.querySelector('link[rel="manifest"]')?.getAttribute('href')).toBe('/search.webmanifest');
