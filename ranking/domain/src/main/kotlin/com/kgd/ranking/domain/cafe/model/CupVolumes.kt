@@ -42,7 +42,8 @@ object CupVolumes {
             else -> null
         } else null
         if (ml != null) return CupVolume(ml.toBigDecimal(), VolumeSource.BRAND_SIZE_TABLE)
-        val weight = grams.find(servingBasis.orEmpty())?.groupValues?.drop(1)?.firstOrNull { it.isNotEmpty() }?.toBigDecimal()
+        // A basis listing several sizes ("R) 316g, G) 437g …") cannot say which one this row is.
+        val weight = grams.findAll(servingBasis.orEmpty()).toList().singleOrNull()?.groupValues?.drop(1)?.firstOrNull { it.isNotEmpty() }?.toBigDecimal()
         return if (weight != null && weight.signum() > 0) CupVolume(weight, VolumeSource.WEIGHT_ESTIMATE) else CupVolume(null, VolumeSource.NONE)
     }
 }

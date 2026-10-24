@@ -33,6 +33,7 @@ BRANDS = {
  'parisbaguette': ('파리바게뜨', ('파리바게뜨', '파리바게트', 'parisbaguette')),
  'gongcha': ('공차', ('공차', 'gongcha')),
  'paulbassett': ('폴바셋', ('폴바셋', '바리스타폴바셋', 'paulbassett')),
+ 'hollys': ('할리스', ('할리스커피', '할리스', 'hollyscoffee', 'hollys')),
 }
 # Explicit collisions, affiliates and businesses that are not the target brand.
 EXCLUDE = ('스타벅스인테리어', '메가커피머신', '메가커피아카데미', '이디야커피랩교육', '파리바게뜨물류', '던킨물류')

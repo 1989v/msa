@@ -83,6 +83,7 @@ data class CafeNearbyItem(
             "parisbaguette" to listOf("파리바게뜨", "파리바게트", "parisbaguette"),
             "gongcha" to listOf("공차", "gongcha"),
             "paulbassett" to listOf("폴바셋", "바리스타폴바셋", "paulbassett"),
+            "hollys" to listOf("할리스커피", "할리스", "hollyscoffee", "hollys"),
         )
     }
 }

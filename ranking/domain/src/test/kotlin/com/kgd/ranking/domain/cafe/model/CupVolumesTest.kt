@@ -58,6 +58,7 @@ class CupVolumesTest : BehaviorSpec({
             }
             drink.copy(brandSlug = "parisbaguette", servingBasis = "총 내용량: 제품 뒷면참조g").volumeSource shouldBe VolumeSource.NONE
             drink.copy(brandSlug = "dunkin", servingBasis = "카페인 120mg").volumeSource shouldBe VolumeSource.NONE
+            drink.copy(brandSlug = "hollys", servingBasis = "1회 제공량 HOT - R) 316g, G) 437g / ICED - R) 369g 기준").volumeSource shouldBe VolumeSource.NONE
         }
         Then("투썸 프라페는 온도가 비어도 ICE R 용량을 쓴다") {
             val frappe = drink.copy(sizeLabel = "R", sourceCategory = "TROPICAL FRAPPE")
