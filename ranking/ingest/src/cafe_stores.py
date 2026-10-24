@@ -17,7 +17,7 @@ from urllib.parse import urlencode, quote, unquote
 from urllib.request import urlopen
 from src import ranking_client
 
-RULE_VERSION = 'cafe-alias-v2'
+RULE_VERSION = 'cafe-alias-v3'
 BASE = 'https://apis.data.go.kr/B553077/api/open/sdsc2'
 # Nationwide category pagination includes bakery/donut stores. Official KSIC retail classes.
 CATEGORIES = ('I21201', 'I21001')  # coffee shops / bakeries (2023 classification)
@@ -39,6 +39,8 @@ BRANDS = {
 }
 # Explicit collisions, affiliates and businesses that are not the target brand.
 EXCLUDE = ('스타벅스인테리어', '메가커피머신', '메가커피아카데미', '이디야커피랩교육', '파리바게뜨물류', '던킨물류')
+# Operating-company names registered next to the trade name (엠즈씨드폴바셋MBC몰파크점).
+OPERATORS = ('엠즈씨드',)
 
 def normalize(value):
  return re.sub(r'[\s·._()\-]', '', unicodedata.normalize('NFKC', str(value or '')).casefold())
@@ -46,6 +48,7 @@ def normalize(value):
 def mapping(row, categories=CATEGORIES):
  name = normalize(row.get('bizesNm'))
  if any(normalize(value) in name for value in EXCLUDE): return None, 'UNMAPPED'
+ for operator in OPERATORS: name = name.replace(normalize(operator), '')
  mentions = [slug for slug, (_, aliases) in BRANDS.items() if any(normalize(alias) in name for alias in aliases)]
  if len(mentions) != 1: return None, 'REVIEW' if mentions else 'UNMAPPED'
  slug = mentions[0]
@@ -56,7 +59,7 @@ def mapping(row, categories=CATEGORIES):
  branch = normalize(row.get('brchNm'))
  suspicious = any(word in suffix for word in ('풍카페','스타일','컨셉','머신','인테리어','물류','학원','아카데미','교육','유통','용품'))
  # 상가정보는 상호에 지역명을 붙이고 지점명을 따로 두는 일이 흔하다(메가엠지씨커피서대문경희궁 / 자이점).
- located = branch.endswith('점') and re.fullmatch(r'[가-힣0-9]{1,12}', suffix) is not None
+ located = branch.endswith('점') and re.fullmatch(r'[가-힣0-9a-z]{1,12}', suffix) is not None
  approved_suffix = not suffix or suffix == branch or suffix.endswith(('점','dt','d/t')) or located
  code = str(row.get('indsSclsCd') or '')
  return slug, 'CONFIRMED' if code in categories and approved_suffix and not suspicious else 'REVIEW'

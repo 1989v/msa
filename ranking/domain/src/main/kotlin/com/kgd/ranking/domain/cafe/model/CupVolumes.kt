@@ -20,6 +20,7 @@ object CupVolumes {
     private const val TWOSOME_ICE_REGULAR_ML = 414
     private const val TWOSOME_LARGE_ML = 473
     private const val TWOSOME_MAX_ML = 591
+    private val icedOnly = listOf("FRAPPE", "ICE BLENDED")
 
     // Cup sizes published as "20oz" (uzi) are cup capacities, converted at 1 US fl oz = 29.5735ml.
     private val ounces = Regex("""^(\d+(?:\.\d+)?)\s*oz$""", RegexOption.IGNORE_CASE)
@@ -41,8 +42,8 @@ object CupVolumes {
             "R" -> when (temperature?.uppercase()) {
                 "HOT" -> TWOSOME_HOT_REGULAR_ML
                 "ICE" -> TWOSOME_ICE_REGULAR_ML
-                // Frappes are served iced only; the source leaves their temperature blank.
-                else -> if (sourceCategory.orEmpty().contains("FRAPPE", ignoreCase = true)) TWOSOME_ICE_REGULAR_ML else null
+                // Frappes and "ICE BLENDED" are served iced only; the source leaves their temperature blank.
+                else -> if (icedOnly.any { sourceCategory.orEmpty().contains(it, ignoreCase = true) }) TWOSOME_ICE_REGULAR_ML else null
             }
             else -> null
         } else null

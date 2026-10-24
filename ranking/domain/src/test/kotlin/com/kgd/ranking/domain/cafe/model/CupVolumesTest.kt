@@ -64,6 +64,7 @@ class CupVolumesTest : BehaviorSpec({
             val frappe = drink.copy(sizeLabel = "R", sourceCategory = "TROPICAL FRAPPE")
             frappe.cupVolumeMl shouldBe BigDecimal("414")
             frappe.volumeSource shouldBe VolumeSource.BRAND_SIZE_TABLE
+            drink.copy(sizeLabel = "R", sourceCategory = "ICE BLENDED").cupVolumeMl shouldBe BigDecimal("414")
             drink.copy(sizeLabel = "R", sourceCategory = "THE OTHERS").volumeSource shouldBe VolumeSource.NONE
         }
         Then("oz 로 공개한 컵 크기는 ml 로 바꿔 크기 표 용량으로 쓴다") {

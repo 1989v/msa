@@ -609,8 +609,9 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 표시되지 않아 전부 null이다. `-`·불검출·단위 누락·상충값은 0으로 추정하지 않는다.
 공식 카페인 0은 ZERO, 공식 디카페인은 DECAF, 수치 공개는 DISCLOSED, 미공개는 UNDISCLOSED다.
 원두별 복수값·상충·단위 누락으로 수치를 확정하지 못한 공개 자료는 DISCLOSED이면서 수치 null일 수 있다.
-원천 `volume_ml`은 보존하고 `cup_volume_ml`·`volume_source`는 원천 ml/빽다방 컵용량 원문(ROW), 투썸 공식 사이즈표·oz 사이즈 표기의 ml 환산(BRAND_SIZE_TABLE, 온도 칸이 빈 프라페는 ICE R), 중량 추정(WEIGHT_ESTIMATE), 미확정(NONE)으로 구분한다.
+원천 `volume_ml`은 보존하고 `cup_volume_ml`·`volume_source`는 원천 ml/빽다방 컵용량 원문(ROW), 투썸 공식 사이즈표·oz 사이즈 표기의 ml 환산(BRAND_SIZE_TABLE, 온도 칸이 빈 프라페·ICE BLENDED 는 ICE R), 중량 추정(WEIGHT_ESTIMATE), 미확정(NONE)으로 구분한다.
 당류·카페인·열량 100ml당 값은 양수 컵용량으로 파생한다. 브랜드가 g만 공개한 음료(던킨·파리바게뜨·이디야 일부)는 1g≈1ml로 추정해 WEIGHT_ESTIMATE로 저장하고 화면은 그 100ml당 값 앞에 ≈를 붙인다 — 원천 `volume_ml`은 비운 채로 둔다. 매장별 판매·커스텀 옵션은 보증하지 않는다.
+미확정(NONE)으로 남는 것은 공식이 용량을 공개하지 않은 행이다 — 스타벅스 일부 상세는 원본 값이 `STANDARD: "0"`·`UNIT: ""` 라 공식 화면에도 용량이 없고, 투썸 공지는 온도를 비운 R 행(HOT 355 / ICE 414 로 갈림)과 S·D·SHORT·ONE SIZE 의 용량을 적지 않는다.
 
 ### 9-1. 카페 로고 (`portal-fe/public/cafe/brands/<slug>.png`)
 

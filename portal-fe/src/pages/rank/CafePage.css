@@ -78,6 +78,7 @@
 .cafe-brand-tabs button { flex-shrink: 0; white-space: nowrap; border: 0; background: var(--cafe-soft); font-size: 12px; padding: 8px 12px; }
 .cafe-controls { display: flex; gap: 6px; align-items: center; margin-block: 10px 12px; }
 .cafe-controls > .cafe-icon-button { border: 1px solid var(--cafe-line); background: var(--cafe-surface); }
+.cafe-controls .cafe-decaf-toggle { white-space: nowrap; flex-shrink: 0; }
 .cafe-popover { position: relative; min-width: 0; }
 .cafe-popover > button { display: flex; gap: 8px; justify-content: space-between; align-items: center; white-space: nowrap; max-width: 100%; font-size: 13px; padding: 8px 12px; }
 .cafe-popover > button > span { flex-shrink: 0; }

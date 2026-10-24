@@ -35,7 +35,7 @@ object CafeCorrectionProjection {
     }
     fun dependencies(source: CafeDrink, field: String): Map<String, String?> = when (field) {
         "drinkGroup" -> linkedMapOf("menuName" to source.menuName, "sourceCategory" to source.sourceCategory, "classificationRuleVersion" to "classification-v1")
-        "volumeMl" -> linkedMapOf("volumeMl" to source.volumeMl?.stripTrailingZeros()?.toPlainString(), "servingBasis" to source.servingBasis, "temperature" to source.temperature.orEmpty(), "sizeLabel" to source.sizeLabel.orEmpty(), "volumeRuleVersion" to "volume-v2")
+        "volumeMl" -> linkedMapOf("volumeMl" to source.volumeMl?.stripTrailingZeros()?.toPlainString(), "servingBasis" to source.servingBasis, "temperature" to source.temperature.orEmpty(), "sizeLabel" to source.sizeLabel.orEmpty(), "volumeRuleVersion" to "volume-v3")
         else -> linkedMapOf("sourceValue" to value(source, field)?.let { if (field in numericFields) it.toBigDecimal().stripTrailingZeros().toPlainString() else it }, "servingBasis" to if (field in numericFields) source.servingBasis else null)
     }
     fun validateSource(source: CafeDrink) {
@@ -49,7 +49,7 @@ object CafeCorrectionProjection {
     }
     fun baseline(source: CafeDrink, field: String): String = when (field) {
         "drinkGroup" -> listOf(source.menuName, source.sourceCategory, "classification-v1").toString()
-        "volumeMl" -> listOf(source.volumeMl?.stripTrailingZeros()?.toPlainString(), source.servingBasis, source.temperature.orEmpty(), source.sizeLabel.orEmpty(), "volume-v2").toString()
+        "volumeMl" -> listOf(source.volumeMl?.stripTrailingZeros()?.toPlainString(), source.servingBasis, source.temperature.orEmpty(), source.sizeLabel.orEmpty(), "volume-v3").toString()
         else -> listOf(value(source, field)?.let { if (field in numericFields) it.toBigDecimal().stripTrailingZeros().toPlainString() else it }, if (field in numericFields) source.servingBasis else null).toString()
     }
     fun value(source: CafeDrink, field: String): String? = when (field) {

@@ -19,6 +19,10 @@ class CafeStoreTests(unittest.TestCase):
   self.assertEqual(('mega','REVIEW'),c.mapping(dict(located,brchNm=None)))
   self.assertEqual(('mega','REVIEW'),c.mapping(dict(located,bizesNm='메가커피바리스타학원',brchNm='본점')))
   self.assertEqual(('starbucks','REVIEW'),c.mapping(self.row('카페스타벅스풍')))
+  self.assertEqual(('paulbassett','CONFIRMED'),c.mapping(dict(located,bizesNm='폴바셋구로G',brchNm='타워점')))
+  self.assertEqual(('paulbassett','CONFIRMED'),c.mapping(self.row('엠즈씨드폴바셋MBC몰파크점')))
+  self.assertEqual(('paulbassett','CONFIRMED'),c.mapping(self.row('폴바셋한국경제신문사점엠즈씨드')))
+  self.assertEqual(('paulbassett','REVIEW'),c.mapping(dict(self.row('폴바셋GFC'),brchNm=None)))
   self.assertEqual('REVIEW',c.project(self.row('스타벅스 투썸플레이스'))['mappingStatus'])
  def test_raw_and_branch_preserved(self):
   raw=self.row(); p=c.project(raw)
