@@ -4,7 +4,7 @@
 
 | 파일 | 언제 | 하는 일 |
 |---|---|---|
-| `gate.mjs` | 완성을 주장하기 전, 큰 변경 뒤 | 헤드리스 크롬에서 실제 입력으로 17축을 재고 `verifications/gate-report.{json,md}` + 스크린샷. `--only A,B` 로 부분 실행(완성 판정엔 불인정) |
+| `gate.mjs` | 완성을 주장하기 전, 큰 변경 뒤 | 헤드리스 크롬에서 실제 입력으로 18축을 재고 `verifications/gate-report.{json,md}` + 스크린샷. `--only A,B` 로 부분 실행(완성 판정엔 불인정) |
 | `play.mjs` | 만들면서 수시로 | `shot` / `keys` / `touch` / `fps` / `eval` — 장면 하나, 입력 시퀀스 하나를 파일·수치로 |
 | `lint.mjs` | 파일을 고칠 때마다(PostToolUse 훅) | 실제 사고를 낸 패턴 F/W. F 는 막힌다 |
 | `stop-hook.mjs` | 세션을 끝내려 할 때(Stop 훅) | BLOCKED.md → 봉인 → 리포트(전체·최신·PASS) → 스크린샷 눈검사 순으로 대조. 미달이면 사유와 함께 막는다. 같은 소스에서 3번 막히면 무한 루프 방지로 허용 |
@@ -19,6 +19,6 @@
 ## 축 목록 (gate.mjs)
 
 BOOT · CONSOLE · CONTROLS_KEY · FPS_DESKTOP · DIFF_IDLE · DIFF_MASH · CONTENT_STAGES · CONTENT_ENEMIES · CONTENT_BOSS ·
-CONTENT_SKILLS · AUDIO · FEEL · HIT · MOBILE_PORTRAIT · MOBILE_TOUCH · MOBILE_LANDSCAPE · MOBILE_FPS
+CONTENT_SKILLS · AUDIO · FEEL · HIT · MOBILE_PORTRAIT · MOBILE_TOUCH · MOBILE_LANDSCAPE · MOBILE_FPS · HEAP
 
 `basis` 열이 `self-reported` 인 축(FEEL · CONTENT_SKILLS · 보스 phases · 소리 목록)은 게임의 선언을 재는 것이다. 측정값과 같은 초록으로 읽지 않는다 — 그래서 스크린샷 눈검사가 완성의 정의에 따로 있다.

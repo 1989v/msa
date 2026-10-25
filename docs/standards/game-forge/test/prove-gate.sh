@@ -45,6 +45,7 @@ mutate same-stage    CONTENT_STAGES  CONTENT_STAGES  "sky: '#6b3d2a', ground: '#
 mutate silent        AUDIO           AUDIO           "function tone(freq, ms, type = 'square', gain = 0.08, slide = 0) {=>function tone(freq, ms, type = 'square', gain = 0.08, slide = 0) { return;"
 mutate uncaught      CONSOLE         CONSOLE         "resize(); reset(1);=>setTimeout(() => { throw new Error('boom'); }, 300); resize(); reset(1);"
 mutate no-hit        HIT             HIT             "Math.abs(e.x - p.x) < 70=>Math.abs(e.x - p.x) < 0"
+mutate leak          HEAP            HEAP            "function warp(id) {=>function warp(id) { (window.__leak ||= []).push(new Array(2e6).fill(0.5));"
 
 # 3) Stop 훅 — 크롬 없이. 기준선(PASS 리포트) 위에서 순서대로.
 hook() { ( cd "$BASE" && printf '{"cwd":"%s","stop_hook_active":false}' "$BASE" | CLAUDE_PROJECT_DIR="$BASE" node forge/stop-hook.mjs ); }

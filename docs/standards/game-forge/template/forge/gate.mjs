@@ -24,7 +24,7 @@ const SEED = Number(arg('--seed', 20260915));
 const want = (axis) => !ONLY || ONLY.some((o) => axis.startsWith(o) || o.startsWith(axis)); // 'MOBILE' 그룹 검사와 'MOBILE_TOUCH' 개별 지정 양쪽
 
 const ALL_AXES = ['BOOT', 'CONSOLE', 'CONTROLS_KEY', 'FPS_DESKTOP', 'DIFF_IDLE', 'DIFF_MASH', 'CONTENT_STAGES', 'CONTENT_ENEMIES',
-  'CONTENT_BOSS', 'CONTENT_SKILLS', 'AUDIO', 'FEEL', 'HIT', 'MOBILE_PORTRAIT', 'MOBILE_TOUCH', 'MOBILE_LANDSCAPE', 'MOBILE_FPS'];
+  'CONTENT_BOSS', 'CONTENT_SKILLS', 'AUDIO', 'FEEL', 'HIT', 'MOBILE_PORTRAIT', 'MOBILE_TOUCH', 'MOBILE_LANDSCAPE', 'MOBILE_FPS', 'HEAP'];
 const MOVE_ACTIONS = /^(left|right|up|down|jump|move|walk|run|forward|back|backward)$/i;
 
 const report = { startedAt: new Date().toISOString(), seed: SEED, partial: !!ONLY, sourceHash: sourceHash(ROOT), thresholds: T, axes: [], screenshots: [] };
@@ -107,6 +107,18 @@ async function runDesktop(browser) {
         measured: { stages: stages.length, minPairDiff: minDiff === Infinity ? null : +minDiff.toFixed(1), minPair, unreachable, blank },
         threshold: { stages: `>=${T.stages_min}`, minPairDiff: `>=${T.stage_distinct_diff_min}` }, evidence: stages.map((s) => `stage-${s.id}.png`),
         note: !okCount ? '스테이지 수 미달' : !okDiff ? '스테이지 화면이 서로 같다' : unreachable.length ? 'warp 불가 스테이지' : blank.length ? '빈 화면 스테이지' : '' });
+    }
+
+    // HEAP — 모든 스테이지를 두 바퀴 돈다. 첫 바퀴에 캐시가 차는 것은 괜찮지만, 둘째 바퀴에서 또 늘면
+    // 떠난 스테이지(청크)를 비우지 않는 것이다. 폰 브라우저는 메모리를 넘기면 탭을 말없이 죽인다
+    if (want('HEAP')) {
+      await page.send('HeapProfiler.enable');
+      const heapMb = async () => { await page.send('HeapProfiler.collectGarbage'); const { usedSize } = await page.send('Runtime.getHeapUsage'); return +(usedSize / 1048576).toFixed(1); };
+      const lap = async () => { for (const st of stages) { await freshPlay(page, st.id); await page.forge('step', 120); } return heapMb(); };
+      const startMb = await heapMb(); const lap1Mb = await lap(); const lap2Mb = await lap();
+      const regrowMb = +(lap2Mb - lap1Mb).toFixed(1);
+      axis('HEAP', { status: stages.length && regrowMb <= T.heap_regrow_mb_max ? 'PASS' : 'FAIL', measured: { startMb, lap1Mb, lap2Mb, regrowMb }, threshold: { regrowMb: `<=${T.heap_regrow_mb_max}` },
+        note: !stages.length ? '스테이지 선언 없음' : regrowMb > T.heap_regrow_mb_max ? '스테이지를 다시 돌 때마다 힙이 는다 — 떠난 스테이지의 개체·캐시·리스너를 비우지 않는다' : '' });
     }
 
     // CONTENT_ENEMIES — spawn 이 전부 되고 state 에 그 type 이 나타나야 한다 -----------

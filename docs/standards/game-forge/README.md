@@ -28,7 +28,7 @@ cd ~/games/thunder-edge && claude --dangerously-skip-permissions     # 프롬프
 | 층 | 어디 | 성격 |
 |---|---|---|
 | **프롬프트** | `PROMPT.md`(점화) · `template/CLAUDE.md`(지속) · `BRIEF.md`(목표) | *읽히길 바라는 것.* 역할·상한 금지·품질 순서·리듬 |
-| **게이트** | `forge/gate.mjs` + `thresholds.json` = **완성의 정의** | 17축을 헤드리스 크롬에서 **실제 입력**으로 잰다. 미달이면 완성이 아니다 |
+| **게이트** | `forge/gate.mjs` + `thresholds.json` = **완성의 정의** | 18축을 헤드리스 크롬에서 **실제 입력**으로 잰다. 미달이면 완성이 아니다 |
 | **집행** | `.claude/settings.json` 훅 3종 — PostToolUse 린트 · **Stop 훅** · SessionStart 복구 | *지켜지는 것.* 게이트 미통과·옛 리포트·봉인 훼손·스크린샷 미검토면 **세션이 끝나지 않는다** |
 
 근거는 이전 제작의 실측 둘이다. ① 기존 맥락을 아는 세션은 그 관습에 앵커링돼 낮은 품질에 수렴한다 — 그래서 클린룸.
@@ -55,8 +55,8 @@ cd ~/games/thunder-edge && claude --dangerously-skip-permissions     # 프롬프
 
 | | 상태 |
 |---|---|
-| 게이트 17축이 픽스처에서 전부 PASS (통과 가능한 게이트) | ✅ `test/prove-gate.sh` 기준선, 전체 실행 약 22초 |
-| 회귀 10종이 **기대한 축을 정확히** FAIL 시킴 (BOOT·키·터치·버튼·무피해·너무 쉬움·같은 화면·무음·예외·헛스윙) | ✅ 23/23 OK |
+| 게이트 18축이 픽스처에서 전부 PASS (통과 가능한 게이트) | ✅ `test/prove-gate.sh` 기준선, 전체 실행 약 22초 |
+| 회귀 11종이 **기대한 축을 정확히** FAIL 시킴 (BOOT·키·터치·버튼·무피해·너무 쉬움·같은 화면·무음·예외·헛스윙·힙 누수) | ✅ 24/24 OK (HEAP 2026-10-25: 기준선 재증가 0MB, 누수 주입 76.3MB) |
 | Stop 훅 8상황 (리뷰 없음 block · 완비 allow · 소스 변경 block · 부분 실행 block · 봉인 훼손 block · 재봉인 allow · 3회 막힘 valve · BLOCKED.md allow) | ✅ |
 | 린트 F 3종 + 정상 파일 통과, 훅 stdin 경로 | ✅ |
 | `play.mjs` 5명령 · SessionStart 복구 출력 · 크롬 잔류 0 | ✅ |

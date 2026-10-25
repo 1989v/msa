@@ -10,7 +10,7 @@
 
 ## 완성의 정의 — Stop 훅이 이 순서로 대조한다
 
-1. `node forge/gate.mjs` **전체 실행**이 PASS. 축 17개, 문턱은 `forge/thresholds.json` — **하한**이지 목표가 아니다
+1. `node forge/gate.mjs` **전체 실행**이 PASS. 축 18개, 문턱은 `forge/thresholds.json` — **하한**이지 목표가 아니다
 2. 게이트가 만든 **스크린샷을 전부 Read 로 보고** `verifications/visual-review.md` 를 쓴다 — 게이트 실행 *이후에*, 한 장에 한 줄(파일명 · 보이는 것 · 결함)
 3. 봉인(`forge/.seal`)이 유지된다. 게이트·문턱을 고쳤으면 `node forge/seal.mjs --reason "<왜>"` — 사유는 `verifications/seal-log.md` 에 남아 사용자가 본다
 
@@ -31,6 +31,7 @@
 - `window.__forge` — `forge/step-api.md`. **이것이 없으면 검증도 완성도 없다.** 첫 실행 가능 시점에 가장 먼저 붙인다
 - 입력은 이벤트에서 **상태만 기록**하고 판정은 `step` 안에서. 난수는 시드 RNG 하나(`reset(seed)`). `alert/prompt/confirm` 금지
 - 에셋: `assets/STYLE.md` 가 스타일 바이블. 프로바이더는 `BRIEF.md` 가 정한다(기본 `procedural` — 코드 드로잉 + WebAudio 합성)
+- 맵·스테이지는 지금 필요한 것만 메모리에 둔다 — 떠난 스테이지(청크)의 개체·캐시·리스너는 비우고, 다음 것은 경계에 닿기 전에 미리 만든다. HEAP 축이 모든 스테이지를 두 바퀴 돌아 둘째 바퀴의 힙 증가를 잰다
 - 모바일: **세로·가로 둘 다.** 캔버스 `touch-action: none`. 조작은 `controls().touch` 로 선언하고 게이트가 실제 터치로 누른다
 - 한국어 UI. 게임 용어는 한국 통용("스테이지 N", "N면" 금지)
 
