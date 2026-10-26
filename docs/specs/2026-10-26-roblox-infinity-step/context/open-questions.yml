@@ -1,0 +1,11 @@
+questions:
+  - id: revival-destination
+    stage: optional-preference
+    status: closed
+    question: Return to region entrance or last individual platform?
+    answer: last-safe-platform-before-fall
+  - id: live-product
+    stage: pre-release
+    status: deferred
+    question: Roblox experience owner, Developer Product ID and approved price
+    default: live-purchases-disabled

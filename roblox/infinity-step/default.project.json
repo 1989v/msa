@@ -1,0 +1,9 @@
+{
+  "name": "InfinityStep",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {"InfinityStep": {"$path": "src/shared", "Action": {"$className": "RemoteEvent"}, "State": {"$className": "RemoteEvent"}}},
+    "ServerScriptService": {"InfinityStep": {"$path": "src/server"}},
+    "StarterPlayer": {"StarterPlayerScripts": {"$path": "src/client"}}
+  }
+}

@@ -1,0 +1,2150 @@
+<?xml version='1.0' encoding='utf-8'?>
+<roblox version="4">
+  <External>null</External>
+  <External>nil</External>
+  <Item class="Workspace" referent="RBX0001">
+    <Properties>
+      <string name="Name">Workspace</string>
+      <float name="Gravity">104</float>
+      <float name="FallenPartsDestroyHeight">-60</float>
+      <Ref name="CurrentCamera">RBX0053</Ref>
+    </Properties>
+    <Item class="Model" referent="RBX0002">
+      <Properties>
+        <string name="Name">Course</string>
+      </Properties>
+      <Item class="Part" referent="RBX0003">
+        <Properties>
+          <string name="Name">Start</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>18.0</X>
+            <Y>4</Y>
+            <Z>16.0</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>0.0</X>
+            <Y>-2.0</Y>
+            <Z>0.0</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.11372549019607843</R>
+            <G>0.11372549019607843</G>
+            <B>0.12156862745098039</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+        <Item class="BillboardGui" referent="RBX0004">
+          <Properties>
+            <string name="Name">PlatformLabel</string>
+            <Vector3 name="StudsOffset">
+              <X>0</X>
+              <Y>4</Y>
+              <Z>0</Z>
+            </Vector3>
+            <UDim2 name="Size">
+              <XS>0</XS>
+              <XO>190</XO>
+              <YS>0</YS>
+              <YO>48</YO>
+            </UDim2>
+            <float name="MaxDistance">130</float>
+          </Properties>
+          <Item class="TextLabel" referent="RBX0005">
+            <Properties>
+              <string name="Name">Title</string>
+              <UDim2 name="Size">
+                <XS>1</XS>
+                <XO>0</XO>
+                <YS>1</YS>
+                <YO>0</YO>
+              </UDim2>
+              <string name="Text">01 / START</string>
+              <float name="TextSize">18</float>
+              <float name="BackgroundTransparency">1</float>
+              <Color3 name="TextColor3">
+                <R>0.9764705882352941</R>
+                <G>0.9725490196078431</G>
+                <B>0.9490196078431372</B>
+              </Color3>
+            </Properties>
+          </Item>
+        </Item>
+      </Item>
+      <Item class="Part" referent="RBX0006">
+        <Properties>
+          <string name="Name">Crate</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>12.0</X>
+            <Y>4</Y>
+            <Z>12.0</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>12.0</X>
+            <Y>4.0</Y>
+            <Z>0.0</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.11372549019607843</R>
+            <G>0.11372549019607843</G>
+            <B>0.12156862745098039</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+        <Item class="BillboardGui" referent="RBX0007">
+          <Properties>
+            <string name="Name">PlatformLabel</string>
+            <Vector3 name="StudsOffset">
+              <X>0</X>
+              <Y>4</Y>
+              <Z>0</Z>
+            </Vector3>
+            <UDim2 name="Size">
+              <XS>0</XS>
+              <XO>190</XO>
+              <YS>0</YS>
+              <YO>48</YO>
+            </UDim2>
+            <float name="MaxDistance">130</float>
+          </Properties>
+          <Item class="TextLabel" referent="RBX0008">
+            <Properties>
+              <string name="Name">Title</string>
+              <UDim2 name="Size">
+                <XS>1</XS>
+                <XO>0</XO>
+                <YS>1</YS>
+                <YO>0</YO>
+              </UDim2>
+              <string name="Text">01 / CRATE</string>
+              <float name="TextSize">18</float>
+              <float name="BackgroundTransparency">1</float>
+              <Color3 name="TextColor3">
+                <R>0.9764705882352941</R>
+                <G>0.9725490196078431</G>
+                <B>0.9490196078431372</B>
+              </Color3>
+            </Properties>
+          </Item>
+        </Item>
+      </Item>
+      <Item class="Part" referent="RBX0009">
+        <Properties>
+          <string name="Name">Awning</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>12.0</X>
+            <Y>4</Y>
+            <Z>12.0</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>24.0</X>
+            <Y>10.0</Y>
+            <Z>0.0</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.11372549019607843</R>
+            <G>0.11372549019607843</G>
+            <B>0.12156862745098039</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+        <Item class="BillboardGui" referent="RBX0010">
+          <Properties>
+            <string name="Name">PlatformLabel</string>
+            <Vector3 name="StudsOffset">
+              <X>0</X>
+              <Y>4</Y>
+              <Z>0</Z>
+            </Vector3>
+            <UDim2 name="Size">
+              <XS>0</XS>
+              <XO>190</XO>
+              <YS>0</YS>
+              <YO>48</YO>
+            </UDim2>
+            <float name="MaxDistance">130</float>
+          </Properties>
+          <Item class="TextLabel" referent="RBX0011">
+            <Properties>
+              <string name="Name">Title</string>
+              <UDim2 name="Size">
+                <XS>1</XS>
+                <XO>0</XO>
+                <YS>1</YS>
+                <YO>0</YO>
+              </UDim2>
+              <string name="Text">01 / AWNING</string>
+              <float name="TextSize">18</float>
+              <float name="BackgroundTransparency">1</float>
+              <Color3 name="TextColor3">
+                <R>0.9764705882352941</R>
+                <G>0.9725490196078431</G>
+                <B>0.9490196078431372</B>
+              </Color3>
+            </Properties>
+          </Item>
+        </Item>
+      </Item>
+      <Item class="Part" referent="RBX0012">
+        <Properties>
+          <string name="Name">Exterior</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>12.0</X>
+            <Y>4</Y>
+            <Z>14.0</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>36.0</X>
+            <Y>16.0</Y>
+            <Z>0.0</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.16862745098039217</R>
+            <G>0.29411764705882354</G>
+            <B>0.38823529411764707</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+        <Item class="BillboardGui" referent="RBX0013">
+          <Properties>
+            <string name="Name">PlatformLabel</string>
+            <Vector3 name="StudsOffset">
+              <X>0</X>
+              <Y>4</Y>
+              <Z>0</Z>
+            </Vector3>
+            <UDim2 name="Size">
+              <XS>0</XS>
+              <XO>190</XO>
+              <YS>0</YS>
+              <YO>48</YO>
+            </UDim2>
+            <float name="MaxDistance">130</float>
+          </Properties>
+          <Item class="TextLabel" referent="RBX0014">
+            <Properties>
+              <string name="Name">Title</string>
+              <UDim2 name="Size">
+                <XS>1</XS>
+                <XO>0</XO>
+                <YS>1</YS>
+                <YO>0</YO>
+              </UDim2>
+              <string name="Text">02 / EXTERIOR</string>
+              <float name="TextSize">18</float>
+              <float name="BackgroundTransparency">1</float>
+              <Color3 name="TextColor3">
+                <R>0.9764705882352941</R>
+                <G>0.9725490196078431</G>
+                <B>0.9490196078431372</B>
+              </Color3>
+            </Properties>
+          </Item>
+        </Item>
+      </Item>
+      <Item class="Part" referent="RBX0015">
+        <Properties>
+          <string name="Name">Vent</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>12.0</X>
+            <Y>4</Y>
+            <Z>12.0</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>48.0</X>
+            <Y>22.0</Y>
+            <Z>0.0</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.11372549019607843</R>
+            <G>0.11372549019607843</G>
+            <B>0.12156862745098039</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+        <Item class="BillboardGui" referent="RBX0016">
+          <Properties>
+            <string name="Name">PlatformLabel</string>
+            <Vector3 name="StudsOffset">
+              <X>0</X>
+              <Y>4</Y>
+              <Z>0</Z>
+            </Vector3>
+            <UDim2 name="Size">
+              <XS>0</XS>
+              <XO>190</XO>
+              <YS>0</YS>
+              <YO>48</YO>
+            </UDim2>
+            <float name="MaxDistance">130</float>
+          </Properties>
+          <Item class="TextLabel" referent="RBX0017">
+            <Properties>
+              <string name="Name">Title</string>
+              <UDim2 name="Size">
+                <XS>1</XS>
+                <XO>0</XO>
+                <YS>1</YS>
+                <YO>0</YO>
+              </UDim2>
+              <string name="Text">02 / VENT</string>
+              <float name="TextSize">18</float>
+              <float name="BackgroundTransparency">1</float>
+              <Color3 name="TextColor3">
+                <R>0.9764705882352941</R>
+                <G>0.9725490196078431</G>
+                <B>0.9490196078431372</B>
+              </Color3>
+            </Properties>
+          </Item>
+        </Item>
+      </Item>
+      <Item class="Part" referent="RBX0018">
+        <Properties>
+          <string name="Name">Balcony</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>12.0</X>
+            <Y>4</Y>
+            <Z>12.0</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>60.0</X>
+            <Y>28.0</Y>
+            <Z>0.0</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.11372549019607843</R>
+            <G>0.11372549019607843</G>
+            <B>0.12156862745098039</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+        <Item class="BillboardGui" referent="RBX0019">
+          <Properties>
+            <string name="Name">PlatformLabel</string>
+            <Vector3 name="StudsOffset">
+              <X>0</X>
+              <Y>4</Y>
+              <Z>0</Z>
+            </Vector3>
+            <UDim2 name="Size">
+              <XS>0</XS>
+              <XO>190</XO>
+              <YS>0</YS>
+              <YO>48</YO>
+            </UDim2>
+            <float name="MaxDistance">130</float>
+          </Properties>
+          <Item class="TextLabel" referent="RBX0020">
+            <Properties>
+              <string name="Name">Title</string>
+              <UDim2 name="Size">
+                <XS>1</XS>
+                <XO>0</XO>
+                <YS>1</YS>
+                <YO>0</YO>
+              </UDim2>
+              <string name="Text">02 / BALCONY</string>
+              <float name="TextSize">18</float>
+              <float name="BackgroundTransparency">1</float>
+              <Color3 name="TextColor3">
+                <R>0.9764705882352941</R>
+                <G>0.9725490196078431</G>
+                <B>0.9490196078431372</B>
+              </Color3>
+            </Properties>
+          </Item>
+        </Item>
+      </Item>
+      <Item class="Part" referent="RBX0021">
+        <Properties>
+          <string name="Name">Roof</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>12.0</X>
+            <Y>4</Y>
+            <Z>14.0</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>72.0</X>
+            <Y>34.0</Y>
+            <Z>0.0</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.16862745098039217</R>
+            <G>0.29411764705882354</G>
+            <B>0.38823529411764707</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+        <Item class="BillboardGui" referent="RBX0022">
+          <Properties>
+            <string name="Name">PlatformLabel</string>
+            <Vector3 name="StudsOffset">
+              <X>0</X>
+              <Y>4</Y>
+              <Z>0</Z>
+            </Vector3>
+            <UDim2 name="Size">
+              <XS>0</XS>
+              <XO>190</XO>
+              <YS>0</YS>
+              <YO>48</YO>
+            </UDim2>
+            <float name="MaxDistance">130</float>
+          </Properties>
+          <Item class="TextLabel" referent="RBX0023">
+            <Properties>
+              <string name="Name">Title</string>
+              <UDim2 name="Size">
+                <XS>1</XS>
+                <XO>0</XO>
+                <YS>1</YS>
+                <YO>0</YO>
+              </UDim2>
+              <string name="Text">03 / ROOF</string>
+              <float name="TextSize">18</float>
+              <float name="BackgroundTransparency">1</float>
+              <Color3 name="TextColor3">
+                <R>0.9764705882352941</R>
+                <G>0.9725490196078431</G>
+                <B>0.9490196078431372</B>
+              </Color3>
+            </Properties>
+          </Item>
+        </Item>
+      </Item>
+      <Item class="Part" referent="RBX0024">
+        <Properties>
+          <string name="Name">Tank</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>12.0</X>
+            <Y>4</Y>
+            <Z>12.0</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>84.0</X>
+            <Y>40.0</Y>
+            <Z>0.0</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.11372549019607843</R>
+            <G>0.11372549019607843</G>
+            <B>0.12156862745098039</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+        <Item class="BillboardGui" referent="RBX0025">
+          <Properties>
+            <string name="Name">PlatformLabel</string>
+            <Vector3 name="StudsOffset">
+              <X>0</X>
+              <Y>4</Y>
+              <Z>0</Z>
+            </Vector3>
+            <UDim2 name="Size">
+              <XS>0</XS>
+              <XO>190</XO>
+              <YS>0</YS>
+              <YO>48</YO>
+            </UDim2>
+            <float name="MaxDistance">130</float>
+          </Properties>
+          <Item class="TextLabel" referent="RBX0026">
+            <Properties>
+              <string name="Name">Title</string>
+              <UDim2 name="Size">
+                <XS>1</XS>
+                <XO>0</XO>
+                <YS>1</YS>
+                <YO>0</YO>
+              </UDim2>
+              <string name="Text">03 / TANK</string>
+              <float name="TextSize">18</float>
+              <float name="BackgroundTransparency">1</float>
+              <Color3 name="TextColor3">
+                <R>0.9764705882352941</R>
+                <G>0.9725490196078431</G>
+                <B>0.9490196078431372</B>
+              </Color3>
+            </Properties>
+          </Item>
+        </Item>
+      </Item>
+      <Item class="Part" referent="RBX0027">
+        <Properties>
+          <string name="Name">Finish</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>12.0</X>
+            <Y>4</Y>
+            <Z>16.0</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>96.0</X>
+            <Y>46.0</Y>
+            <Z>0.0</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.16862745098039217</R>
+            <G>0.29411764705882354</G>
+            <B>0.38823529411764707</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+        <Item class="BillboardGui" referent="RBX0028">
+          <Properties>
+            <string name="Name">PlatformLabel</string>
+            <Vector3 name="StudsOffset">
+              <X>0</X>
+              <Y>4</Y>
+              <Z>0</Z>
+            </Vector3>
+            <UDim2 name="Size">
+              <XS>0</XS>
+              <XO>190</XO>
+              <YS>0</YS>
+              <YO>48</YO>
+            </UDim2>
+            <float name="MaxDistance">130</float>
+          </Properties>
+          <Item class="TextLabel" referent="RBX0029">
+            <Properties>
+              <string name="Name">Title</string>
+              <UDim2 name="Size">
+                <XS>1</XS>
+                <XO>0</XO>
+                <YS>1</YS>
+                <YO>0</YO>
+              </UDim2>
+              <string name="Text">03 / FINISH / FINISH</string>
+              <float name="TextSize">18</float>
+              <float name="BackgroundTransparency">1</float>
+              <Color3 name="TextColor3">
+                <R>0.9764705882352941</R>
+                <G>0.9725490196078431</G>
+                <B>0.9490196078431372</B>
+              </Color3>
+            </Properties>
+          </Item>
+        </Item>
+      </Item>
+    </Item>
+    <Item class="SpawnLocation" referent="RBX0030">
+      <Properties>
+        <string name="Name">Spawn</string>
+        <bool name="Anchored">true</bool>
+        <bool name="CanCollide">true</bool>
+        <Vector3 name="size">
+          <X>6</X>
+          <Y>1</Y>
+          <Z>6</Z>
+        </Vector3>
+        <CoordinateFrame name="CFrame">
+          <X>0</X>
+          <Y>0.5</Y>
+          <Z>0</Z>
+          <R00>1</R00>
+          <R01>0</R01>
+          <R02>0</R02>
+          <R10>0</R10>
+          <R11>1</R11>
+          <R12>0</R12>
+          <R20>0</R20>
+          <R21>0</R21>
+          <R22>1</R22>
+        </CoordinateFrame>
+        <Color3 name="Color">
+          <R>0.7019607843137254</R>
+          <G>0.5450980392156862</G>
+          <B>0.42745098039215684</B>
+        </Color3>
+        <token name="Material">256</token>
+        <bool name="Neutral">true</bool>
+        <float name="Duration">0</float>
+      </Properties>
+    </Item>
+    <Item class="Model" referent="RBX0031">
+      <Properties>
+        <string name="Name">UrbanBackdrop</string>
+      </Properties>
+      <Item class="Part" referent="RBX0032">
+        <Properties>
+          <string name="Name">Facade0</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>15</X>
+            <Y>24</Y>
+            <Z>8</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>0</X>
+            <Y>12</Y>
+            <Z>-17</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.0392156862745098</R>
+            <G>0.0392156862745098</G>
+            <B>0.0392156862745098</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+      </Item>
+      <Item class="Part" referent="RBX0033">
+        <Properties>
+          <string name="Name">Window0_0</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>2</X>
+            <Y>3</Y>
+            <Z>0.3</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>-4</X>
+            <Y>13</Y>
+            <Z>-12.8</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.7019607843137254</R>
+            <G>0.5450980392156862</G>
+            <B>0.42745098039215684</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+      </Item>
+      <Item class="Part" referent="RBX0034">
+        <Properties>
+          <string name="Name">Window0_1</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>2</X>
+            <Y>3</Y>
+            <Z>0.3</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>0</X>
+            <Y>13</Y>
+            <Z>-12.8</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.7019607843137254</R>
+            <G>0.5450980392156862</G>
+            <B>0.42745098039215684</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+      </Item>
+      <Item class="Part" referent="RBX0035">
+        <Properties>
+          <string name="Name">Window0_2</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>2</X>
+            <Y>3</Y>
+            <Z>0.3</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>4</X>
+            <Y>13</Y>
+            <Z>-12.8</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.7019607843137254</R>
+            <G>0.5450980392156862</G>
+            <B>0.42745098039215684</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+      </Item>
+      <Item class="Part" referent="RBX0036">
+        <Properties>
+          <string name="Name">Facade1</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>15</X>
+            <Y>34</Y>
+            <Z>8</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>18</X>
+            <Y>17</Y>
+            <Z>-17</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.0392156862745098</R>
+            <G>0.0392156862745098</G>
+            <B>0.0392156862745098</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+      </Item>
+      <Item class="Part" referent="RBX0037">
+        <Properties>
+          <string name="Name">Window1_0</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>2</X>
+            <Y>3</Y>
+            <Z>0.3</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>14</X>
+            <Y>18</Y>
+            <Z>-12.8</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.7019607843137254</R>
+            <G>0.5450980392156862</G>
+            <B>0.42745098039215684</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+      </Item>
+      <Item class="Part" referent="RBX0038">
+        <Properties>
+          <string name="Name">Window1_1</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>2</X>
+            <Y>3</Y>
+            <Z>0.3</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>18</X>
+            <Y>18</Y>
+            <Z>-12.8</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.7019607843137254</R>
+            <G>0.5450980392156862</G>
+            <B>0.42745098039215684</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+      </Item>
+      <Item class="Part" referent="RBX0039">
+        <Properties>
+          <string name="Name">Window1_2</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>2</X>
+            <Y>3</Y>
+            <Z>0.3</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>22</X>
+            <Y>18</Y>
+            <Z>-12.8</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.7019607843137254</R>
+            <G>0.5450980392156862</G>
+            <B>0.42745098039215684</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+      </Item>
+      <Item class="Part" referent="RBX0040">
+        <Properties>
+          <string name="Name">Facade2</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>15</X>
+            <Y>44</Y>
+            <Z>8</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>36</X>
+            <Y>22</Y>
+            <Z>-17</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.0392156862745098</R>
+            <G>0.0392156862745098</G>
+            <B>0.0392156862745098</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+      </Item>
+      <Item class="Part" referent="RBX0041">
+        <Properties>
+          <string name="Name">Window2_0</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>2</X>
+            <Y>3</Y>
+            <Z>0.3</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>32</X>
+            <Y>23</Y>
+            <Z>-12.8</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.7019607843137254</R>
+            <G>0.5450980392156862</G>
+            <B>0.42745098039215684</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+      </Item>
+      <Item class="Part" referent="RBX0042">
+        <Properties>
+          <string name="Name">Window2_1</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>2</X>
+            <Y>3</Y>
+            <Z>0.3</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>36</X>
+            <Y>23</Y>
+            <Z>-12.8</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.7019607843137254</R>
+            <G>0.5450980392156862</G>
+            <B>0.42745098039215684</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+      </Item>
+      <Item class="Part" referent="RBX0043">
+        <Properties>
+          <string name="Name">Window2_2</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>2</X>
+            <Y>3</Y>
+            <Z>0.3</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>40</X>
+            <Y>23</Y>
+            <Z>-12.8</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.7019607843137254</R>
+            <G>0.5450980392156862</G>
+            <B>0.42745098039215684</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+      </Item>
+      <Item class="Part" referent="RBX0044">
+        <Properties>
+          <string name="Name">Facade3</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>15</X>
+            <Y>54</Y>
+            <Z>8</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>54</X>
+            <Y>27</Y>
+            <Z>-17</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.0392156862745098</R>
+            <G>0.0392156862745098</G>
+            <B>0.0392156862745098</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+      </Item>
+      <Item class="Part" referent="RBX0045">
+        <Properties>
+          <string name="Name">Window3_0</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>2</X>
+            <Y>3</Y>
+            <Z>0.3</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>50</X>
+            <Y>28</Y>
+            <Z>-12.8</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.7019607843137254</R>
+            <G>0.5450980392156862</G>
+            <B>0.42745098039215684</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+      </Item>
+      <Item class="Part" referent="RBX0046">
+        <Properties>
+          <string name="Name">Window3_1</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>2</X>
+            <Y>3</Y>
+            <Z>0.3</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>54</X>
+            <Y>28</Y>
+            <Z>-12.8</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.7019607843137254</R>
+            <G>0.5450980392156862</G>
+            <B>0.42745098039215684</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+      </Item>
+      <Item class="Part" referent="RBX0047">
+        <Properties>
+          <string name="Name">Window3_2</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>2</X>
+            <Y>3</Y>
+            <Z>0.3</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>58</X>
+            <Y>28</Y>
+            <Z>-12.8</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.7019607843137254</R>
+            <G>0.5450980392156862</G>
+            <B>0.42745098039215684</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+      </Item>
+      <Item class="Part" referent="RBX0048">
+        <Properties>
+          <string name="Name">Facade4</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>15</X>
+            <Y>64</Y>
+            <Z>8</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>72</X>
+            <Y>32</Y>
+            <Z>-17</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.0392156862745098</R>
+            <G>0.0392156862745098</G>
+            <B>0.0392156862745098</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+      </Item>
+      <Item class="Part" referent="RBX0049">
+        <Properties>
+          <string name="Name">Window4_0</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>2</X>
+            <Y>3</Y>
+            <Z>0.3</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>68</X>
+            <Y>33</Y>
+            <Z>-12.8</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.7019607843137254</R>
+            <G>0.5450980392156862</G>
+            <B>0.42745098039215684</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+      </Item>
+      <Item class="Part" referent="RBX0050">
+        <Properties>
+          <string name="Name">Window4_1</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>2</X>
+            <Y>3</Y>
+            <Z>0.3</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>72</X>
+            <Y>33</Y>
+            <Z>-12.8</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.7019607843137254</R>
+            <G>0.5450980392156862</G>
+            <B>0.42745098039215684</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+      </Item>
+      <Item class="Part" referent="RBX0051">
+        <Properties>
+          <string name="Name">Window4_2</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>2</X>
+            <Y>3</Y>
+            <Z>0.3</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>76</X>
+            <Y>33</Y>
+            <Z>-12.8</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.7019607843137254</R>
+            <G>0.5450980392156862</G>
+            <B>0.42745098039215684</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+      </Item>
+      <Item class="Part" referent="RBX0052">
+        <Properties>
+          <string name="Name">FinishBeacon</string>
+          <bool name="Anchored">true</bool>
+          <bool name="CanCollide">true</bool>
+          <Vector3 name="size">
+            <X>1</X>
+            <Y>6</Y>
+            <Z>1</Z>
+          </Vector3>
+          <CoordinateFrame name="CFrame">
+            <X>96.0</X>
+            <Y>51.0</Y>
+            <Z>-5</Z>
+            <R00>1</R00>
+            <R01>0</R01>
+            <R02>0</R02>
+            <R10>0</R10>
+            <R11>1</R11>
+            <R12>0</R12>
+            <R20>0</R20>
+            <R21>0</R21>
+            <R22>1</R22>
+          </CoordinateFrame>
+          <Color3 name="Color">
+            <R>0.6352941176470588</R>
+            <G>0.13725490196078433</G>
+            <B>0.11372549019607843</B>
+          </Color3>
+          <token name="Material">256</token>
+        </Properties>
+      </Item>
+    </Item>
+    <Item class="Camera" referent="RBX0053">
+      <Properties>
+        <string name="Name">Camera</string>
+        <CoordinateFrame name="CFrame">
+          <X>36</X>
+          <Y>42</Y>
+          <Z>100</Z>
+          <R00>1</R00>
+          <R01>0</R01>
+          <R02>0</R02>
+          <R10>0</R10>
+          <R11>1</R11>
+          <R12>0</R12>
+          <R20>0</R20>
+          <R21>0</R21>
+          <R22>1</R22>
+        </CoordinateFrame>
+        <CoordinateFrame name="Focus">
+          <X>36</X>
+          <Y>22</Y>
+          <Z>0</Z>
+          <R00>1</R00>
+          <R01>0</R01>
+          <R02>0</R02>
+          <R10>0</R10>
+          <R11>1</R11>
+          <R12>0</R12>
+          <R20>0</R20>
+          <R21>0</R21>
+          <R22>1</R22>
+        </CoordinateFrame>
+        <token name="CameraType">5</token>
+        <float name="FieldOfView">70</float>
+      </Properties>
+    </Item>
+  </Item>
+  <Item class="Lighting" referent="RBX0054">
+    <Properties>
+      <string name="Name">Lighting</string>
+      <float name="ClockTime">16</float>
+      <float name="Brightness">2</float>
+    </Properties>
+  </Item>
+  <Item class="ReplicatedStorage" referent="RBX0055">
+    <Properties>
+      <string name="Name">ReplicatedStorage</string>
+    </Properties>
+    <Item class="Folder" referent="RBX0056">
+      <Properties>
+        <string name="Name">InfinityStep</string>
+      </Properties>
+      <Item class="RemoteEvent" referent="RBX0057">
+        <Properties>
+          <string name="Name">Action</string>
+        </Properties>
+      </Item>
+      <Item class="RemoteEvent" referent="RBX0058">
+        <Properties>
+          <string name="Name">State</string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="RBX0064">
+        <Properties>
+          <string name="Name">ChargeInput</string>
+          <ProtectedString name="Source">-- Identity-based ownership prevents the movement thumb from releasing held jump.
+local ChargeInput={}
+function ChargeInput.begin(s,input)
+    if s.owner~=nil or input==nil then return false end
+    s.owner=input
+    return true
+end
+function ChargeInput.finish(s,input)
+    if s.owner==nil or s.owner~=input then return false end
+    s.owner=nil
+    return true
+end
+function ChargeInput.cancel(s)
+    local active=s.owner~=nil
+    s.owner=nil
+    return active
+end
+return ChargeInput
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="RBX0065">
+        <Properties>
+          <string name="Name">Course</string>
+          <ProtectedString name="Source">-- All coordinates are studs. Runtime and place builder read the same authored data.
+local Course = { version=1 }
+Course.regions = {
+    { name = "01 / ALLEY", x = 0, y = 0, z = 0 },
+    { name = "02 / EXTERIOR", x = 36, y = 18, z = 0 },
+    { name = "03 / ROOF", x = 72, y = 36, z = 0 },
+}
+Course.platforms = {
+    { id="Start", x=0, y=0, z=0, sx=18, sz=16, region=1 },
+    { id="Crate", x=12, y=6, z=0, sx=12, sz=12, region=1 },
+    { id="Awning", x=24, y=12, z=0, sx=12, sz=12, region=1 },
+    { id="Exterior", x=36, y=18, z=0, sx=12, sz=14, region=2 },
+    { id="Vent", x=48, y=24, z=0, sx=12, sz=12, region=2 },
+    { id="Balcony", x=60, y=30, z=0, sx=12, sz=12, region=2 },
+    { id="Roof", x=72, y=36, z=0, sx=12, sz=14, region=3 },
+    { id="Tank", x=84, y=42, z=0, sx=12, sz=12, region=3 },
+    { id="Finish", x=96, y=48, z=0, sx=12, sz=16, region=3 },
+}
+function Course.platform(id)
+    for _, p in Course.platforms do if p.id == id then return p end end
+    return nil
+end
+return Course
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="RBX0066">
+        <Properties>
+          <string name="Name">Fall</string>
+          <ProtectedString name="Source">-- Character epochs and offer serials are server-owned. Death carries only the snapshot.
+local Fall = {}
+function Fall.new()
+    return { epoch=0, serial=0, safeRegion=1, safeId="Start", safeY=0, peak=0 }
+end
+function Fall.clear(s)
+    s.serial += 1
+    s.snapshot = nil
+    s.offer = nil
+    s.suppressed = true
+end
+function Fall.character(s, preserveDeath)
+    s.epoch += 1
+    s.serial += 1
+    s.offer = nil
+    s.safeRegion, s.safeId, s.safeY, s.peak = 1, "Start", 0, 0
+    if not preserveDeath then s.snapshot = nil end
+    if s.snapshot then
+        s.offer = { token=s.serial, epoch=s.epoch, region=s.snapshot.region, platformId=s.snapshot.platformId }
+    end
+end
+function Fall.land(s, platform)
+    if not platform then return end
+    -- Only a new ascent above the departure clears the original descent snapshot.
+    if s.snapshot and platform.y &gt; s.snapshot.y + 1 then Fall.clear(s) end
+    s.safeRegion, s.safeId, s.safeY = platform.region, platform.id, platform.y
+    s.suppressed=false
+    s.peak = math.max(s.peak, platform.y)
+end
+function Fall.sample(s, y, descending)
+    if descending and not s.suppressed and not s.snapshot and s.safeY &gt; 0 then
+        s.snapshot = { region=s.safeRegion, platformId=s.safeId, y=s.safeY }
+    end
+    if s.snapshot and s.snapshot.y - y &gt;= 10 and not s.offer then
+        s.serial += 1
+        s.offer = { token=s.serial, epoch=s.epoch, region=s.snapshot.region, platformId=s.snapshot.platformId }
+    end
+end
+function Fall.death(s)
+    if not s.suppressed and not s.snapshot and s.safeY &gt; 0 then s.snapshot={region=s.safeRegion,platformId=s.safeId,y=s.safeY} end
+    s.offer=nil
+end
+function Fall.valid(s, token, epoch)
+    return s.offer ~= nil and s.offer.token == token and s.offer.epoch == epoch and s.epoch == epoch
+end
+return Fall
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="RBX0067">
+        <Properties>
+          <string name="Name">HudLayout</string>
+          <ProtectedString name="Source">-- Coordinates use the ScreenGui device-safe content rectangle, in pixels.
+local HudLayout={}
+function HudLayout.compute(width,height,modal)
+    local compact=height&lt;520
+    local function rect(x,y,w,h) return {x=x,y=y,w=w,h=h} end
+    local result={
+        compact=compact,modal=modal,
+        status=rect(8,8,width-16,compact and 40 or 72),
+        meter=rect(8,compact and 56 or 88,math.min(240,width-16),compact and 28 or 40),
+        help=rect(8,132,width-16,36),
+        jump=rect(width-112,height-(compact and 216 or 240),96,compact and 56 or 72),
+        restart=rect(width-144,height-(compact and 148 or 304),128,48),
+        panel=rect(16,math.max(compact and 56 or 176,math.floor((height-180)/2)),width-32,180),
+    }
+    local p=result.panel
+    result.use=rect(p.x+8,p.y+72,p.w/2-12,48)
+    result.dismiss=rect(p.x+p.w/2+4,p.y+72,p.w/2-12,48)
+    result.buy=rect(p.x+8,p.y+128,p.w-16,48)
+    return result
+end
+function HudLayout.status(data,compact)
+    if data.error then
+        return "STORAGE ERROR · retrying\n"..string.sub(tostring(data.error),1,compact and 32 or 90)
+    end
+    if compact then
+        return string.format("%s · Height %.0f / Best %.0f\n%s tickets: %d%s",data.region,data.current,data.best,data.test and "TEST" or "Revival",data.balance,data.locked and " · recovering" or "")
+    end
+    return string.format("INFINITY STEP / %s\nHeight %.0f · Best %.0f · %s tickets: %d%s",data.region,data.current,data.best,data.test and "TEST" or "Revival",data.balance,data.locked and " · recovering safely" or "")
+end
+return HudLayout
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="RBX0068">
+        <Properties>
+          <string name="Name">Jump</string>
+          <ProtectedString name="Source">-- Source reference: Leap.cs. Four studs per source unit; levels are 1-based here.
+local Jump = { Gravity = 104, HoldStep = 0.12, MaxHold = 1.2 }
+function Jump.finite(n)
+    return type(n) == "number" and n == n and math.abs(n) &lt; math.huge
+end
+function Jump.level(seconds)
+    return math.clamp(math.floor(math.clamp(seconds, 0, Jump.MaxHold) / Jump.HoldStep + 1e-7) + 1, 1, 5)
+end
+function Jump.speeds(level)
+    local t = (math.clamp(level, 1, 5) - 1) / 4
+    return 30 + 34 * t, 6 + 34 * t
+end
+function Jump.direction(x, z)
+    if not Jump.finite(x) or not Jump.finite(z) then return nil end
+    local length = math.sqrt(x*x + z*z)
+    if length &lt; 0.01 or length &gt; 1.1 then return nil end
+    return x / length, z / length
+end
+function Jump.release(started, now, grounded, x, z)
+    if not started or not grounded or not Jump.finite(now) or now &lt; started then return nil end
+    local dx, dz = Jump.direction(x, z)
+    if not dx then return nil end
+    local level = Jump.level(now - started)
+    local vy, vx = Jump.speeds(level)
+    return { x = dx * vx, y = vy, z = dz * vx, level = level }
+end
+-- Descending intersection with target height; used to verify authored route.
+function Jump.landing(level, rise)
+    local vy, vx = Jump.speeds(level)
+    local disc = vy*vy - 2*Jump.Gravity*rise
+    if disc &lt; 0 then return nil end
+    local seconds = (vy + math.sqrt(disc)) / Jump.Gravity
+    return vx * seconds, seconds
+end
+return Jump
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="RBX0069">
+        <Properties>
+          <string name="Name">Theme</string>
+          <ProtectedString name="Source">-- Central mapping from root DESIGN.md §12 (k-heritage arcade).
+-- RGB tuples keep this module executable outside Roblox. No UI/world inline colors.
+return {
+    ink={10,10,10}, giwa={29,29,31}, hanji={249,248,242},
+    yeonji={162,35,29}, ocher={179,139,109}, celadon={43,75,99},
+    textSize=16, titleSize=24, touch=48, gap=8, radius=4,
+}
+</ProtectedString>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+  <Item class="ServerScriptService" referent="RBX0059">
+    <Properties>
+      <string name="Name">ServerScriptService</string>
+    </Properties>
+    <Item class="Folder" referent="RBX0060">
+      <Properties>
+        <string name="Name">InfinityStep</string>
+      </Properties>
+      <Item class="ModuleScript" referent="RBX0070">
+        <Properties>
+          <string name="Name">Delivery</string>
+          <ProtectedString name="Source">-- Placement/freeze boundaries are synchronous. Only atomic storage calls may yield.
+local Delivery = {}
+function Delivery.run(ledger, key, record, character, current, freeze, place)
+    local pending=record.pending
+    if not pending then return record end
+    if current()~=character then return nil,"Character replaced; delivery retained" end
+    -- Never trust a cached pending record: acquire ownership of the live operation.
+    local owned,claimError=ledger:claim(key,pending.id)
+    if not owned then return nil,claimError end
+    pending=owned.pending
+    if current()~=character then return nil,"Character replaced during claim; delivery retained" end
+    freeze(character,true)
+    local ok, delivered=pcall(place,character,pending.target)
+    if not ok or not delivered then return nil,"Placement failed; delivery retained" end
+    if current()~=character then return nil,"Character replaced; delivery retained" end
+    local ack,err=ledger:ack(key,pending.id,function() return current()==character end)
+    if not ack then return nil,err end
+    if ack.pending then return nil,"Delivery pending" end
+    if current()~=character then
+        -- UpdateAsync may commit and then yield before returning. Hand the completed
+        -- delivery to the replacement before unlocking; never teleport the stale body.
+        local replacement=current()
+        if not replacement then return nil,"Waiting for replacement character",pending end
+        freeze(replacement,true)
+        local placed,safe=pcall(place,replacement,pending.target)
+        if not placed or not safe or current()~=replacement then
+            return nil,"Replacement placement pending",pending
+        end
+        freeze(replacement,false)
+    else freeze(character,false) end
+    return ack
+end
+return Delivery
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="RBX0071">
+        <Properties>
+          <string name="Name">Ingress</string>
+          <ProtectedString name="Source">local Ingress={}
+function Ingress.allow(s,now)
+    local elapsed=math.max(0,now-(s.ingressAt or now))
+    s.ingressAt=now
+    s.tokens=math.min(20,(s.tokens or 20)+elapsed*15)
+    if s.tokens&lt;1 then return false end
+    s.tokens-=1
+    return true
+end
+return Ingress
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="RBX0072">
+        <Properties>
+          <string name="Name">Ledger</string>
+          <ProtectedString name="Source">-- update(key, transform) must be atomic (DataStore UpdateAsync in live adapter).
+-- Never cache and save an entire record. Transforms may be retried by Roblox.
+local Ledger = {}
+Ledger.__index = Ledger
+local function fresh(old)
+    if old == nil then return {version=1,balance=0,receipts={},uses={}} end
+    assert(type(old)=="table" and old.version==1 and type(old.balance)=="number"
+        and old.balance&gt;=0 and old.balance%1==0 and type(old.receipts)=="table"
+        and type(old.uses)=="table", "Invalid stored record; refusing defaults")
+    local copy = table.clone(old)
+    copy.receipts, copy.uses = table.clone(old.receipts), table.clone(old.uses)
+    if old.pending then copy.pending=table.clone(old.pending) end
+    return copy
+end
+function Ledger.new(update, validTarget, clock, owner)
+    return setmetatable({update=update, validTarget=validTarget, clock=clock or os.time, owner=owner or "local"}, Ledger)
+end
+function Ledger:mutate(key, transform)
+    local ok, value = pcall(self.update, tostring(key), function(old)
+        return transform(fresh(old))
+    end)
+    if not ok then return nil, tostring(value) end
+    return value
+end
+function Ledger:load(key)
+    return self:mutate(key, function(r) return r end)
+end
+function Ledger:grant(key, purchaseId)
+    if type(purchaseId)~="string" or #purchaseId==0 then return nil,"Invalid receipt" end
+    return self:mutate(key, function(r)
+        if not r.receipts[purchaseId] then
+            r.receipts[purchaseId]=true
+            r.balance+=1
+        end
+        return r
+    end)
+end
+function Ledger:reserve(key, operation, target)
+    if type(operation)~="string" or #operation==0 or type(target)~="table" or not self.validTarget(target) then
+        return nil,"Invalid operation or authored platform"
+    end
+    local r, err = self:mutate(key,function(record)
+        if record.pending or record.uses[operation] or record.balance&lt;=0 then return record end
+        record.balance-=1
+        record.uses[operation]=true
+        record.pending={id=operation,target=table.clone(target),owner=self.owner,leaseUntil=self.clock()+30}
+        return record
+    end)
+    if not r then return nil,err end
+    if not r.pending or r.pending.id~=operation then return nil,"Another delivery pending, used operation, or no tickets" end
+    return r
+end
+function Ledger:claim(key, operation)
+    local r,err=self:mutate(key,function(record)
+        local p=record.pending
+        if p and p.id==operation and (p.owner==self.owner or (p.leaseUntil or 0)&lt;self.clock()) then
+            p.owner=self.owner;p.leaseUntil=self.clock()+30
+        end
+        return record
+    end)
+    if not r then return nil,err end
+    local p=r.pending
+    if not p or p.id~=operation or p.owner~=self.owner or p.leaseUntil&lt;=self.clock() then
+        return nil,"Delivery owned by another session, expired or completed"
+    end
+    return r
+end
+function Ledger:ack(key, operation, stillCurrent)
+    return self:mutate(key,function(r)
+        if r.pending and r.pending.id==operation and r.pending.owner==self.owner and r.pending.leaseUntil&gt;self.clock() and (not stillCurrent or stillCurrent()) then r.pending=nil end
+        return r
+    end)
+end
+return Ledger
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="Script" referent="RBX0073">
+        <Properties>
+          <string name="Name">Main</string>
+          <ProtectedString name="Source">local Players=game:GetService("Players")
+local Run=game:GetService("RunService")
+local Replicated=game:GetService("ReplicatedStorage")
+local DataStores=game:GetService("DataStoreService")
+local Marketplace=game:GetService("MarketplaceService")
+local Http=game:GetService("HttpService")
+local Shared=Replicated:WaitForChild("InfinityStep")
+local Jump=require(Shared.Jump)
+local Course=require(Shared.Course)
+local Fall=require(Shared.Fall)
+local Ledger=require(script.Parent.Ledger)
+local Delivery=require(script.Parent.Delivery)
+local Receipt=require(script.Parent.Receipt)
+local Ingress=require(script.Parent.Ingress)
+local PRODUCT_ID=0 -- Configure only after private published receipt verification.
+local STUDIO=Run:IsStudio()
+local remote=Shared:WaitForChild("Action")
+local state=Shared:WaitForChild("State")
+local store=not STUDIO and DataStores:GetDataStore("InfinityStepTickets_v1") or nil
+local memory={}
+local ledger=Ledger.new(function(key,transform)
+    if STUDIO then
+        if not memory[key] then memory[key]={version=1,balance=3,receipts={},uses={}} end
+        memory[key]=transform(memory[key])
+        return memory[key]
+    end
+    return store:UpdateAsync(key,transform)
+end,function(target) return target.courseVersion==Course.version and Course.platform(target.platformId)~=nil end,os.time,Http:GenerateGUID(false))
+local sessions={}
+local productPrice=nil
+if not STUDIO and PRODUCT_ID&gt;0 then
+    task.spawn(function()
+        local ok,info=pcall(Marketplace.GetProductInfo,Marketplace,PRODUCT_ID,Enum.InfoType.Product)
+        if ok and type(info.PriceInRobux)=="number" and info.IsForSale~=false then productPrice=info.PriceInRobux end
+    end)
+end
+workspace.Gravity=Jump.Gravity
+local function rootOf(character) return character and character:FindFirstChild("HumanoidRootPart") end
+local function freeze(character,enabled)
+    local root=rootOf(character)
+    if root then root.Anchored=enabled; root.AssemblyLinearVelocity=Vector3.zero; root.AssemblyAngularVelocity=Vector3.zero end
+end
+local function place(character,destination)
+    local target=destination.courseVersion==Course.version and Course.platform(destination.platformId)
+    local root=rootOf(character)
+    if not target or not root or not character.Parent then return false end
+    character:PivotTo(CFrame.new(target.x,target.y+5,target.z))
+    root.AssemblyLinearVelocity=Vector3.zero
+    root.AssemblyAngularVelocity=Vector3.zero
+    return true
+end
+local function notify(player,s)
+    if not player.Parent then return end
+    state:FireClient(player,{
+        epoch=s.fall.epoch,region=Course.regions[s.fall.safeRegion].name,
+        current=s.height or 0,best=s.best or 0,balance=s.record and s.record.balance or 0,
+        offer=s.fall.offer,test=STUDIO,error=s.error,
+        locked=s.locked,purchase=not STUDIO and s.loaded and PRODUCT_ID&gt;0 and productPrice~=nil,
+        product=PRODUCT_ID,price=productPrice,
+    })
+end
+local function recover(player,s,character)
+    if s.busy then return end
+    s.busy=true
+    if s.handoff then
+        -- ACK committed before its yielding call returned to a replacement character.
+        -- Complete the session-local obligation before any new progress/debit.
+        if s.character~=character or not place(character,s.handoff.target) then s.busy=false;return end
+        s.handoff=nil
+    end
+    local record,err=ledger:load(player.UserId)
+    if s.character~=character then s.busy=false; return end
+    if record then
+        s.loaded=true; s.record=record
+        if record.pending then
+            s.locked=true
+            record,err,s.handoff=Delivery.run(ledger,player.UserId,record,character,function() return s.character end,freeze,place)
+            if record then s.record=record; Fall.clear(s.fall) end
+        else freeze(character,false) end
+    end
+    if record and s.character==character then s.locked=false; s.error=nil else s.error=err or "Storage unavailable; retrying safely" end
+    s.busy=false
+    notify(player,s)
+end
+local function ground(character,root)
+    local params=RaycastParams.new()
+    params.FilterType=Enum.RaycastFilterType.Exclude
+    params.FilterDescendantsInstances={character}
+    local hit=workspace:Raycast(root.Position,Vector3.new(0,-4.2,0),params)
+    if hit and hit.Normal.Y&gt;0.8 then return hit.Instance end
+    return nil
+end
+local function launch(s,root,hum,x,z)
+    local velocity=Jump.release(s.charge,os.clock(),ground(s.character,root)~=nil,x,z)
+    s.charge=nil; hum.WalkSpeed=12
+    if not velocity then return end
+    s.flight=Vector3.new(velocity.x,0,velocity.z)
+    s.flightAt=os.clock()
+    root:SetNetworkOwner(nil)
+    hum:ChangeState(Enum.HumanoidStateType.Jumping)
+    root.AssemblyLinearVelocity=Vector3.new(velocity.x,velocity.y,velocity.z)
+end
+remote.OnServerEvent:Connect(function(player,action,payload)
+    local s=sessions[player]
+    if not s or not Ingress.allow(s,os.clock()) then return end
+    if action=="sync" then notify(player,s); return end
+    if type(payload)~="table" or payload.epoch~=s.fall.epoch or s.busy or s.locked then return end
+    local now=os.clock()
+    if action~="release" and now-(s.lastAction or 0)&lt;0.06 then return end
+    s.lastAction=now
+    local root=rootOf(s.character)
+    local hum=s.character and s.character:FindFirstChildOfClass("Humanoid")
+    if not root or not hum or hum.Health&lt;=0 then return end
+    if action=="start" then
+        local x,z=Jump.direction(payload.x,payload.z)
+        if not s.charge and not s.flight and x and ground(s.character,root) then
+            s.charge=now;s.direction={x,z};hum.WalkSpeed=4
+        end
+    elseif action=="release" then
+        if not s.charge then return end
+        launch(s,root,hum,payload.x,payload.z)
+    elseif action=="dismiss" then Fall.clear(s.fall)
+    elseif action=="restart" then
+        Fall.clear(s.fall);s.charge=nil;s.flight=nil;hum.WalkSpeed=12
+        place(s.character,{courseVersion=Course.version,platformId="Start"});s.fall.safeRegion=1;s.fall.safeY=0
+    elseif action=="use" and Fall.valid(s.fall,payload.token,payload.epoch) and s.loaded then
+        local character=s.character
+        local target={courseVersion=Course.version,platformId=s.fall.offer.platformId}
+        local operation=Http:GenerateGUID(false)
+        s.busy=true;s.locked=true;freeze(character,true)
+        local record,err=ledger:reserve(player.UserId,operation,target)
+        if record then
+            s.record=record
+            Fall.clear(s.fall)
+            if s.character==character then
+                record,err,s.handoff=Delivery.run(ledger,player.UserId,record,character,function() return s.character end,freeze,place)
+                if record then s.record=record end
+            else record=nil;err="Delivery retained for current character" end
+        end
+        s.busy=false
+        if record and s.character==character then s.locked=false;s.error=nil
+        elseif s.character==character then
+            s.error=err
+            -- A rejected reservation must also check for a competing pending delivery before unlocking.
+        end
+        s.charge=nil;s.flight=nil
+    elseif action=="purchase" and not STUDIO and s.loaded and PRODUCT_ID&gt;0 and productPrice then
+        Marketplace:PromptProductPurchase(player,PRODUCT_ID)
+    end
+    notify(player,s)
+end)
+Marketplace.ProcessReceipt=function(receipt)
+    local granted=Receipt.process(receipt,PRODUCT_ID,function(id)
+        local p=Players:GetPlayerByUserId(id)
+        return p~=nil and sessions[p]~=nil and sessions[p].loaded
+    end,ledger)
+    if granted then
+        local p=Players:GetPlayerByUserId(receipt.PlayerId)
+        local s=p and sessions[p]
+        if s then
+            -- Refresh via atomic read; never replace newer grants with a stale save.
+            local record,err=ledger:load(p.UserId)
+            if record then s.record=record else s.error=err end
+            notify(p,s)
+        end
+    end
+    return granted and Enum.ProductPurchaseDecision.PurchaseGranted or Enum.ProductPurchaseDecision.NotProcessedYet
+end
+local function addPlayer(player)
+    local s={fall=Fall.new(),locked=true,loaded=false,best=0}
+    sessions[player]=s
+    local function spawn(character)
+        local root=character:WaitForChild("HumanoidRootPart")
+        local hum=character:WaitForChild("Humanoid")
+        s.character=character;s.charge=nil;s.flight=nil;s.locked=true
+        Fall.character(s.fall,s.died==true);s.died=false
+        hum.UseJumpPower=true;hum.JumpPower=0;hum.WalkSpeed=12
+        hum:SetStateEnabled(Enum.HumanoidStateType.Jumping,false)
+        freeze(character,true)
+        hum.Died:Connect(function()
+            if s.character~=character then return end
+            Fall.death(s.fall);s.died=true;s.charge=nil;s.flight=nil
+        end)
+        recover(player,s,character)
+    end
+    player.CharacterAdded:Connect(spawn)
+    if player.Character then task.spawn(spawn,player.Character) end
+end
+Players.PlayerAdded:Connect(addPlayer)
+for _,player in Players:GetPlayers() do addPlayer(player) end
+Players.PlayerRemoving:Connect(function(player)
+    local s=sessions[player]
+    if s then s.character=nil end
+    sessions[player]=nil -- No whole-record exit save; all operations are already durable.
+end)
+local tickAccum=0
+Run.Heartbeat:Connect(function(dt)
+    tickAccum+=dt
+    local send=tickAccum&gt;=0.15
+    if send then tickAccum=0 end
+    for player,s in sessions do
+        local root=rootOf(s.character)
+        local hum=s.character and s.character:FindFirstChildOfClass("Humanoid")
+        if not root or not hum then continue end
+        if s.locked then
+            if not s.busy and os.clock()-(s.retryAt or 0)&gt;2 then
+                s.retryAt=os.clock();task.spawn(recover,player,s,s.character)
+            end
+            continue
+        end
+        if hum.Health&lt;=0 then continue end
+        if s.charge and os.clock()-s.charge&gt;=Jump.MaxHold then launch(s,root,hum,s.direction[1],s.direction[2]) end
+        local floor=ground(s.character,root)
+        local velocity=root.AssemblyLinearVelocity
+        if s.flight then
+            hum:Move(Vector3.zero,false)
+            if floor and os.clock()-s.flightAt&gt;0.15 and velocity.Y&lt;2 then
+                s.flight=nil;root:SetNetworkOwnershipAuto()
+            else
+                -- Sweep forward to stop against walls; never CFrame through collision solids.
+                local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude;params.FilterDescendantsInstances={s.character}
+                local hit=workspace:Raycast(root.Position,s.flight*math.max(dt,0.03)+(s.flight.Magnitude&gt;0.01 and s.flight.Unit*1.2 or Vector3.zero),params)
+                if hit and math.abs(hit.Normal.Y)&lt;0.7 then s.flight=Vector3.zero end
+                root.AssemblyLinearVelocity=Vector3.new(s.flight.X,velocity.Y,s.flight.Z)
+            end
+        elseif not floor then
+            -- Walking off an edge also commits horizontal momentum until contact.
+            s.flight=Vector3.new(velocity.X,0,velocity.Z);s.flightAt=os.clock();root:SetNetworkOwner(nil)
+        end
+        if floor and math.abs(velocity.Y)&lt;2 then
+            if s.floor==floor then s.stable=(s.stable or 0)+dt else s.floor=floor;s.stable=0 end
+            if s.stable&gt;=0.12 then Fall.land(s.fall,Course.platform(floor.Name)) end
+        else s.floor=nil;s.stable=0 end
+        s.height=math.max(0,root.Position.Y-3)
+        s.best=math.max(s.best,s.height)
+        Fall.sample(s.fall,s.height,velocity.Y &lt; -2)
+        if root.Position.Y &lt; -35 then hum.Health=0 end
+        if send then notify(player,s) end
+    end
+end)
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="RBX0074">
+        <Properties>
+          <string name="Name">Receipt</string>
+          <ProtectedString name="Source">local Receipt = {}
+-- Acknowledgement decisions are plain booleans; Roblox enum conversion is at the edge.
+function Receipt.process(receipt, productId, online, ledger)
+    if productId==0 or receipt.ProductId~=productId or not online(receipt.PlayerId) then return false end
+    local record=ledger:grant(receipt.PlayerId,receipt.PurchaseId)
+    return record~=nil
+end
+return Receipt
+</ProtectedString>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+  <Item class="StarterPlayer" referent="RBX0061">
+    <Properties>
+      <string name="Name">StarterPlayer</string>
+    </Properties>
+    <Item class="StarterPlayerScripts" referent="RBX0062">
+      <Properties>
+        <string name="Name">StarterPlayerScripts</string>
+      </Properties>
+      <Item class="LocalScript" referent="RBX0075">
+        <Properties>
+          <string name="Name">Hud</string>
+          <ProtectedString name="Source">local Players=game:GetService("Players")
+local Input=game:GetService("UserInputService")
+local Action=game:GetService("ContextActionService")
+local Run=game:GetService("RunService")
+local Shared=game:GetService("ReplicatedStorage"):WaitForChild("InfinityStep")
+local Jump=require(Shared.Jump)
+local ChargeInput=require(Shared.ChargeInput)
+local HudLayout=require(Shared.HudLayout)
+local Course=require(Shared.Course)
+local Theme=require(Shared.Theme)
+local remote=Shared:WaitForChild("Action")
+local state=Shared:WaitForChild("State")
+local player=Players.LocalPlayer
+local function color(name) return Color3.fromRGB(table.unpack(Theme[name])) end
+local gui=Instance.new("ScreenGui")
+gui.Name="InfinityStepHUD";gui.ResetOnSpawn=false;gui.IgnoreGuiInset=false
+gui.ScreenInsets=Enum.ScreenInsets.DeviceSafeInsets
+gui.Parent=player:WaitForChild("PlayerGui")
+local canvas=Instance.new("Frame")
+canvas.Size=UDim2.fromScale(1,1);canvas.BackgroundTransparency=1;canvas.Parent=gui
+local function text(parent,kind,label,size,pos)
+    local item=Instance.new(kind)
+    item.Text=label;item.Size=size;item.Position=pos
+    item.Font=Enum.Font.GothamMedium;item.TextSize=Theme.textSize
+    item.TextColor3=color("hanji");item.BackgroundColor3=color("giwa")
+    item.BorderSizePixel=0;item.TextWrapped=true;item.Parent=parent
+    return item
+end
+local status=text(canvas,"TextLabel","INFINITY STEP / connecting",UDim2.new(1,-32,0,72),UDim2.fromOffset(16,12))
+local meter=text(canvas,"TextLabel","[ ] [ ] [ ] [ ] [ ]",UDim2.fromOffset(240,40),UDim2.new(0.5,-120,0,88))
+local help=text(canvas,"TextLabel","WASD / stick · hold SPACE / JUMP · release to commit",UDim2.new(1,-32,0,36),UDim2.fromOffset(16,132))
+help.TextSize=14
+local jump=text(canvas,"TextButton","HOLD\nJUMP",UDim2.fromOffset(96,72),UDim2.new(1,-116,1,-240))
+jump.BackgroundColor3=color("yeonji")
+local panel=Instance.new("Frame")
+panel.Size=UDim2.new(1,-32,0,180);panel.Position=UDim2.fromOffset(16,176)
+panel.BackgroundColor3=color("giwa");panel.Visible=false;panel.Parent=canvas
+local destination=text(panel,"TextLabel","",UDim2.new(1,-16,0,64),UDim2.fromOffset(8,0))
+local use=text(panel,"TextButton","Use 1 ticket",UDim2.new(0.5,-12,0,48),UDim2.fromOffset(8,72))
+use.BackgroundColor3=color("celadon")
+local dismiss=text(panel,"TextButton","Continue free",UDim2.new(0.5,-12,0,48),UDim2.new(0.5,4,0,72))
+local buy=text(panel,"TextButton","Purchases unavailable",UDim2.new(1,-16,0,48),UDim2.fromOffset(8,128))
+local restart=text(canvas,"TextButton","Restart free",UDim2.fromOffset(128,48),UDim2.new(1,-144,1,-304))
+local data={epoch=0,locked=true,balance=0}
+local held=nil
+local inputOwner={}
+local function reflow()
+    local size=canvas.AbsoluteSize
+    if size.X&lt;=0 or size.Y&lt;=0 then return end
+    local layout=HudLayout.compute(size.X,size.Y,data.offer~=nil)
+    for name,item in {status=status,meter=meter,help=help,jump=jump,restart=restart,panel=panel} do
+        local r=layout[name]
+        item.Position=UDim2.fromOffset(r.x,r.y);item.Size=UDim2.fromOffset(r.w,r.h)
+    end
+    status.TextSize=layout.compact and 14 or Theme.textSize
+    if data.region then status.Text=HudLayout.status(data,layout.compact) end
+    help.Visible=not layout.compact and not layout.modal
+    meter.Visible=not layout.modal
+    jump.Visible=not layout.modal;restart.Visible=not layout.modal
+end
+canvas:GetPropertyChangedSignal("AbsoluteSize"):Connect(reflow)
+reflow()
+local function send(action,extra)
+    local payload=extra or {};payload.epoch=data.epoch
+    remote:FireServer(action,payload)
+end
+local function direction()
+    local character=player.Character
+    local hum=character and character:FindFirstChildOfClass("Humanoid")
+    local dir=hum and hum.MoveDirection or Vector3.zero
+    if dir.Magnitude&lt;0.01 then
+        local camera=workspace.CurrentCamera
+        dir=camera and camera.CFrame.LookVector or Vector3.new(1,0,0)
+    end
+    dir=Vector3.new(dir.X,0,dir.Z)
+    if dir.Magnitude&lt;0.01 then dir=Vector3.new(1,0,0) end
+    return dir.Unit
+end
+local function begin(input)
+    if held or data.locked or not ChargeInput.begin(inputOwner,input) then return end
+    held=os.clock()
+    local dir=direction();send("start",{x=dir.X,z=dir.Z})
+end
+local function finish(input,forced)
+    local accepted=forced and ChargeInput.cancel(inputOwner) or ChargeInput.finish(inputOwner,input)
+    if not held or not accepted then return end
+    held=nil
+    local dir=direction();send("release",{x=dir.X,z=dir.Z})
+end
+Action:BindActionAtPriority("InfinityCharge",function(_,inputState)
+    if inputState==Enum.UserInputState.Begin then begin("bound")
+    elseif inputState==Enum.UserInputState.End or inputState==Enum.UserInputState.Cancel then finish("bound") end
+    return Enum.ContextActionResult.Sink
+end,false,3000,Enum.KeyCode.Space,Enum.KeyCode.ButtonA)
+jump.InputBegan:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then begin(input) end
+end)
+Input.InputEnded:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then finish(input) end
+end)
+Input.WindowFocusReleased:Connect(function() finish(nil,true) end)
+use.Activated:Connect(function() if data.offer and data.balance&gt;0 then send("use",{token=data.offer.token}) end end)
+dismiss.Activated:Connect(function() send("dismiss") end)
+restart.Activated:Connect(function() send("restart") end)
+buy.Activated:Connect(function() if data.purchase and not data.locked then send("purchase") end end)
+state.OnClientEvent:Connect(function(nextData)
+    if data.epoch~=nextData.epoch or nextData.locked then held=nil;ChargeInput.cancel(inputOwner) end
+    data=nextData
+    help.Text=data.error and ("Storage: "..data.error) or "WASD / stick · hold SPACE / JUMP · release to commit"
+    panel.Visible=data.offer~=nil
+    if data.offer then destination.Text="Return to "..data.offer.platformId.." / "..Course.regions[data.offer.region].name.."?\nOptional · continue without spending" end
+    use.Text=data.balance&gt;0 and "Use 1 ticket" or "No tickets available"
+    use.Active=data.balance&gt;0 and not data.locked
+    buy.Text=data.purchase and ("Buy 1 ticket · "..tostring(data.price).." Robux") or (data.test and "STUDIO · 3 test tickets · purchases disabled" or "Purchases unavailable")
+    buy.Active=data.purchase==true and not data.locked
+    reflow()
+end)
+Run.RenderStepped:Connect(function()
+    local level=held and Jump.level(os.clock()-held) or 0
+    local segments={}
+    for i=1,5 do segments[i]=i&lt;=level and "[■]" or "[ ]" end
+    meter.Text=table.concat(segments," ")
+    if held and os.clock()-held&gt;=Jump.MaxHold then finish(nil,true) end
+end)
+player.CharacterAdded:Connect(function() held=nil;ChargeInput.cancel(inputOwner);send("sync") end)
+send("sync")
+</ProtectedString>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+  <Item class="StarterGui" referent="RBX0063">
+    <Properties>
+      <string name="Name">StarterGui</string>
+    </Properties>
+  </Item>
+</roblox>
