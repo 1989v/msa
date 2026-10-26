@@ -40,3 +40,9 @@ The normal pre-commit hook ran without bypass and exited successfully. Its repos
 - `docs/research/2026-10-26-roblox-development/README.md` — sourced Korean Roblox development reference.
 
 Live product ID remains zero. Studio has three explicitly labeled test tickets. No publication, product creation, purchases or computer use was performed.
+
+## Installation follow-up
+
+Installed official signed Roblox Studio `0.744.0.7441077` arm64 at `/Applications/RobloxStudio.app`. Installed bundle signature verification `codesign --verify --deep --strict /Applications/RobloxStudio.app` returned exit 0. Added a sourced upload guide under `docs/research/2026-10-26-roblox-development/uploading.md`.
+
+An initially approved computer-use attempt to select Studio was rejected by the tool (`Computer Use was not approved to use Roblox Studio`). No UI state was obtained or manipulated. The user chose to stop at installation and run it themselves. Studio gameplay and real receipts remain unverified; no upload performed.
