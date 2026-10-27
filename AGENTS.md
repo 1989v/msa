@@ -2,6 +2,10 @@
 
 **On conflict**: AGENTS.md wins over plugin/skill defaults.
 
+## 로블록스 이식
+
+`roblox/` 작업 전 [로블록스 지속 작업 원칙](roblox/AGENTS.md)을 읽는다. 원작 게임의 아이디어를 보존하되 웹 UI·조작을 복제하지 않고 로블록스 경험으로 새로 설계한다.
+
 ## Marine Command 작업 범위·토큰 절약
 
 `portal-fe/public/games/marine-command/` 작업은 사용자 합의인 [작은 범위 확인 원칙](docs/specs/2026-10-01-marine-origin/context/iteration-policy.md)을 먼저 따른다. 초반 문제는 초반 구간만 수정·확인하고 사용자 확인 후 범위를 확대한다. 시안 요청 단계에서는 게임 코드를 변경하지 않는다.
