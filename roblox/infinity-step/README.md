@@ -1,50 +1,60 @@
-# Infinity Step / Roblox first course
+# 인피니티 스탭 — 로블록스용 구성
 
-An editable, standalone Roblox prototype: nine urban platforms across Alley, Exterior and Roof. Charged jumps commit their horizontal trajectory. Falling remains costly; continuing and ground respawning are always free. Optional tickets return to the **last stably landed platform before the fall**, at its authored safe center, as requested. This is independent of the browser game and MSA services.
+**힘과 방향을 정한 충전 점프로 도시에서 블랙홀까지 오르는 게임**입니다. 7개 고도 구간, 달리기, 방향을 고정한 도약, 걸어서 떨어질 때의 조향, 매달림·벽 등반과 스태미나, 실패하면 아래로 떨어지는 위험을 유지했습니다. 원작 발판의 개수·좌표·총 높이를 그대로 복제하는 대신 Roblox의 Part·TrussPart·재질·충돌·스트리밍을 사용해 다시 구성했습니다.
 
-## Open and play
+현재 기본 맵은 196개 주경로점과 총423개 네이티브 부품으로 구성됩니다. 뒷골목의 컨테이너에서 배수관/외벽 → 옥상 → 유리 마천루와 곤돌라 → 철골/비계 → 성에 낀 통신 잔해 → 블랙홀 목표로 올라갑니다. 경로는 넓게 방향을 바꾸며 진행합니다. 이 개수는 원작 재현의 합격 기준이 아닙니다.
 
-1. Install Roblox Studio, then open `dist/InfinityStep.rbxlx` using File → Open from File.
-2. The place already contains the visible course, spawn, camera and exact editable source scripts. Press Play.
-3. Use WASD or the mobile stick to walk and aim. Hold Space or HOLD JUMP, then release. Five segments fill at 0.12-second steps; holding 1.2 seconds launches automatically. Gamepad A also charges. Walking slows while charging. You cannot steer in flight.
-4. Reach FINISH. Restart free returns to the start. After a substantial fall, choose Use 1 ticket or Continue free. A receipt adds inventory only; it never teleports you. Falling into the void returns to the ground start for free.
+## 열고 시작하기
 
-Studio explicitly labels its **three TEST tickets**, stored in memory for that server run. Studio cannot initiate real purchases, even if a product ID is configured. Stop/Play resets test inventory. No live product was created, published or purchased.
+1. Roblox Studio에서 `dist/InfinityStep.rbxlx`를 **File → Open from File**로 엽니다.
+2. 편집 화면의 시작 안내와 경로를 확인한 뒤 **플레이 ▶**를 누릅니다.
+3. WASD/모바일 스틱으로 이동합니다. **C 또는 Space를 누르고 있다가 놓으면** 점프합니다. 0.12초 간격의5단 차지이며1.2초에는 자동 도약합니다.
+4. **Z/Shift**를 누르면 달립니다. 달려서 뛰면 수평 도약이18% 길어집니다. 도약한 뒤에는 방향을 바꿀 수 없습니다. **뛰기 전에 방향과 거리를 정해야 합니다**. 걸어서 떨어진 경우에는 조향할 수 있습니다.
+5. 손이 닿는 모서리에는 자동으로 매달립니다. **C/Space**로 올라서고 **X**로 놓습니다. 배수관 등반벽에는 공중에서 **X**로 붙고 벽을 향해 이동하면 오릅니다. 매달림/등반은 체력을 소모합니다.
+6. 우클릭을 누르고 드래그하면 위·아래와 주변을 살필 수 있습니다. 모바일에서는 오른쪽 화면 드래그로 시점을 움직이며 점프/잡기/달리기 버튼을 씁니다. 게임패드A로 차지 점프합니다.
+7. 정상의 마지막 착지면에 안정적으로 서면 도달 상태를 표시합니다. 떨어지면 아래 구조물이나 지면에서 무료로 계속할 수 있습니다. 큰 낙하 뒤에는 마지막 안정 발판으로 부활권1장을 쓸지 명시적으로 선택합니다.
 
-Suggested route: each next ledge is 12 studs right and 6 studs up. Try a medium charge from a few studs behind the forward edge. Executable reach checks include avatar body clearance and landing margin, but real movement tuning still needs Studio traversal.
+**실제 Studio에서 열기/플레이·API·물리·터치·화면은 아직 검증하지 못했습니다.** 위는 구현된 조작 안내이며 실제 플레이 통과를 주장하지 않습니다. 컴퓨터 사용 도구의 접근 거절을 우회하지 않았습니다.
 
-## Files and rebuild
+## 진행과 부활
 
-- `src/shared`: actual jump equations, course, fall/offer lifecycle and centralized DESIGN.md theme mapping.
-- `src/server`: Roblox adapters, receipt processing, atomic ledger, deferred delivery and ingress limiting.
-- `src/client`: PC/touch HUD with safe device insets and 48px minimum actions.
-- `default.project.json`: optional Rojo source mapping. Rojo is not required; its mapping covers scripts, while the Python builder authors the static world as well.
-- `tools/build_place.py`: deterministic Python standard-library builder, with course geometry and palette read from source.
-- `tests/run.luau`: actual source module tests, using injected atomic storage/character/delivery boundaries.
+고도·최고고도·낙하횟수·정상기록을 한글로 표시합니다. 저장은 현재 고도와 최고 기록을 분리합니다. 이어하기는 저장된 현재 고도 이하의 경로에서 시작하며 최고 발판을 무료 체크포인트로 사용하지 않습니다. 주기 저장과 정상 종료 저장 사이의 서버 강제종료에서는 마지막 저장 이후 진행이 손실될 수 있습니다. 현재 고도 저장에는 세션 소유권/epoch와 샘플 순서 검사가 있어 이전 서버의 종료 저장이나 오래된 재시도가 새 세션의 낮아진 고도를 덮지 못합니다. 접속마다 새 진행 핸들과 소유권을 발급하고 퇴장 핸들을 닫으므로 A→B→A 서버 재접속이나 같은 서버 재접속도 이전 epoch를 재사용하지 않습니다.
 
-From repository root:
+일반 진행 저장소는 `InfinityStepProgress_v2`이며 부활권 장부 `InfinityStepTickets_v1`과 분리됩니다. 현재 맵은 고정 시드20261028/보통 난이도입니다. 생성기는 다른 시드/보통·어려움을 결정적으로 생성하고 자동검사하지만 **날짜별 런타임 맵 교체와 난이도 선택 UI는 미지원**입니다. 정상 이후에는 같은 탑에서 기록 도전을 계속할 수 있으며 **무한 탑 연장은 미지원**입니다.
+
+부활권은 추락 직전 마지막 안정 착지 발판으로만 이동합니다. 낮은 곳에 내려섰다고 기존 목적지가 바뀌지 않습니다. 사망 뒤에도 선택권을 새 캐릭터에 연결합니다. 구매는 재고만 지급하며 자동 부활하지 않습니다. 사용시 한 번만 원자 차감하고 전달 의무를 함께 저장하므로 중단/재접속 후 추가 차감 없이 복구합니다. 이동 후 저장 확인이 실패하면 안전하게 잠근 채 재시도합니다. 다른 서버의 오래된 전달은 임대로 차단합니다.
+
+v1의 예전9발판에서 이미 예약한 전달은 해당 예약이 있을 때만 정확한 옛 좌표에 `LegacyDelivery` 임시 받침을 만듭니다. 새 지형/천장과 겹쳐 안전하게 전달할 수 없으면 임의 목적지로 바꾸거나 권리를 지우지 않고 실패 상태로 보존합니다. 일반 맵에는 예전9발판이 없습니다. 움직이는 발판은 현재 위치를 사용하며 무너진 발판은 재생될 때까지 기다립니다.
+
+## 과금 상태
+
+`Main.server.luau`의 **PRODUCT_ID=0**으로 실제 구매는 비활성입니다. Studio는 서버당3장의 **테스트 부활권**을 메모리에 제공하며 실판매/실데이터 접근을 켜지 않습니다. 실제 상품 생성·업로드·공개·판매는 하지 않았습니다.
+
+영수증의 구매ID와 지급을 하나의 `UpdateAsync`에서 처리합니다. 중복 영수증, 지연/접속 종료, 저장 실패, 사용자 취소는 재고를 임의로 소모하지 않습니다. 실제 상품을 별도로 설정하는 출시 단계에서는 비공개 경험과 테스트 계정으로 영수증·취소·복구를 실제 Roblox에서 검증해야 합니다. 가격은 Roblox 상품정보를 받아 표시하며 하드코딩하지 않습니다. 영수증/사용ID 기록은 정확한 중복 방지를 위해 현재 무기한 보존하므로 대규모 출시 전 저장 크기 정책이 필요합니다.
+
+## 파일 생성과 검사
+
+이미 생성된 `.rbxlx`를 여는 데 Unity/.NET/Luau CLI 설치는 필요하지 않습니다. 기본 빌더도 Python 표준 라이브러리와 체크인된 네이티브 맵 스냅샷만 사용합니다.
 
 ```sh
 python3 roblox/infinity-step/tools/build_place.py
+```
+
+생성기를 수정하면 공식 Luau CLI로 실제 생성 결과를 다시 내보낸 뒤 검사합니다.
+
+```sh
+LUAU_BIN=/private/tmp/roblox-infinity-step-tools/luau python3 roblox/infinity-step/tools/generate_native.py
 LUAU_BIN=/private/tmp/roblox-infinity-step-tools/luau python3 roblox/infinity-step/tools/verify.py
 ```
 
-The verifier requires official `luau` and sibling `luau-compile` / `luau-analyze` (tested with official luau-lang release 0.744). Set `LUAU_BIN` to your local executable path. It fails if these are missing. It executes actual modules, compiles every Luau source/test, rejects undefined globals outside an explicit Roblox allowlist, checks exact embedded scripts and service classes, and compares deterministic rebuilds. Compilation establishes syntax/bytecode validity, **not** Roblox API type correctness.
+검사에는 공식Luau CLI와 같은 위치의 `luau-compile`/`luau-analyze`가 필요합니다(검증 기준0.744). 실제 Generator/Jump/Traverse/Terrain/Progress/Fall/Ledger/Delivery 모듈을 실행합니다. 여러 시드/난이도의 경로 연결, 앞면의 몸통 여유/착지 폭, 무버 높이 끝점, 차지/조향/스태미나/붕괴, 저장·영수증·원자차감·복구와 XML의 정확한 소스 포함/결정적 생성을 검사합니다. Roblox API 타입과 물리엔진 실행을 대신하지 않습니다.
 
-## Storage and purchase configuration
+`src/shared/Generator.luau`가 순수 생성기이고 `Course.luau`가 기본 고정 설정입니다. `data/native-course.json`은 같은 실제 Luau 코드에서 생성한 기본빌드용 스냅샷이며 관련 소스 해시가 다르면 빌더가 거부합니다. `default.project.json`은 선택적인 Rojo 소스 매핑입니다. Rojo 없이도 XML에 전체 소스와 월드가 들어 있습니다. 모든 서버 충돌 지형은 유지하며 Roblox의 클라이언트 스트리밍(최소128/목표320stud)을 사용합니다. 실제 네트워크/프레임 비용은 미측정입니다.
 
-`src/server/Main.server.luau` has `PRODUCT_ID=0`; purchases stay unavailable. Live tickets use DataStore `InfinityStepTickets_v1`, with atomic `UpdateAsync` transformations. One receipt purchase ID and its one-ticket grant are committed together. No client purchase-finished callback grants inventory. Failed/unknown/offline receipts return NotProcessedYet.
+## 원작과의 관계와 남은 확인
 
-Use reserves one server-generated operation and atomically debits once, recording a pending destination `{platformId, courseVersion}`. A concurrent session cannot reserve another while delivery is pending. Each recovery atomically claims the current operation with a session owner and 30-second lease; expired sessions cannot replay cached placements. A reconnect may wait for that lease to expire. Disconnect/crash after debit recovers on next spawn without another debit. Controls freeze until delivery and durable acknowledgement succeed; acknowledgement errors retry automatically. Receipt grants interleaved with acknowledgement are preserved. If a character changes after acknowledgement commits but before its yielding call returns, a local handoff places the replacement before unlocking; a not-yet-ready replacement stays frozen for recovery. Failed loads/invalid records never become default live records. Existing pending destinations with a changed course version stop safely with a visible error; author a migration before changing the course version in a published experience.
+원작 Tower/Climber/Biome/Pal/Leap/KgdTraverse/KgdOrbitCam에서 충전 도약의 규칙, 스태미나, 밤 골목에서 우주까지의 구간·팔레트·58도 궤도 시점을 참고했습니다. 현재는 각색한 규모와 네이티브 덩이, 기본 Roblox 캐릭터를 사용합니다. Unity의 메시 장식·애니메이션·음향·연속 경사면은 그대로 이식하지 않았습니다. 바람은 현재 맵에서 비활성이고 상층의 중력 변화만 연결했습니다. 골목/배경은 단순한 네이티브 실루엣이므로 원작 화면과 같다고 주장하지 않습니다.
 
-A fall snapshot survives lower landings and death. Death respawns at ground and issues a fresh character-bound offer. Dismissal suppresses the same descent; new safe landings allow later independent falls. A new ascent clears the old offer. Clients supply input and an offer token only, never strength, platform ID or CFrame.
+선택적인 원본 C# 추출 도구와 `data/original-normal-20261028.json`은 분석 참고 자료로만 보존합니다. 기본 생성/검사/플레이에는 포함되거나 요구되지 않습니다. Unity 배치 실행은 라이선스 부재로 실패했고, 독립 .NET 수학 어댑터로 원본 알고리즘을 평가한 자료라는 한계는 [참고 도구 안내](tools/original/README.md)에 기록했습니다.
 
-Before live sales, a separately authorized release must create a repeatable Developer Product granting one ticket, configure its ID, publish a private test experience, enable permitted DataStore access, fetch successful live product information, and verify Roblox receipt retries/cancellation/offline delivery and recovery with separate test accounts. Prices come from `GetProductInfo`; none are hard-coded. Product information, data loading and non-Studio mode must all permit purchases. Do not enable Studio access to production data for this mock mode.
-
-Receipt and used-operation histories are deliberately retained indefinitely for exact deduplication in this bounded prototype. Before a large public release, design partitioning/retention within DataStore size limits without losing receipt deduplication. Server validation, ingress limiting, known-platform grounding and server-owned flights are prototype protections, not competitive anti-cheat certification.
-
-## Verification limits and manual checklist
-
-Automated checks cover five charge strengths, complete authored route reach, malformed inputs, ground-only falls, last-platform snapshots, lower landing/death/dismiss/new-ascent lifecycle, duplicate/deferred receipts, storage failures, repeated/competing reservations, debit crash recovery, failed placement/acknowledgement, interleaved grants and character replacement.
-
-**Not yet verified in Roblox runtime:** opening the XML in Studio, API compatibility, actual humanoid physics/side and underside collision, the default camera, full route traversal, mobile stick/hold feel and safe-inset layout, two live clients, live persistence and Marketplace receipts. No Studio or Roblox executable was available and no computer-use approval was granted. Test those manually before publication; this deliverable does not claim production readiness.
+수동으로 남은 검사는 Studio 파일 열기/시작 카메라, 전체 구간 이동·점프·모서리/벽 충돌·매달림·끌어올리기, 모바일 스틱/액션·안전 여백, 아래로 추락할 때 스트리밍, 무버/붕괴/얼음의 조작감, 실제 저장 실패와 재접속, 두 클라이언트, 실영수증입니다. **파일/모듈 검증과 실제 플레이 검증은 별개입니다.**

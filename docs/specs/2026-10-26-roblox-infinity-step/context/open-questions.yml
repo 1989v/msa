@@ -9,3 +9,23 @@ questions:
     status: deferred
     question: Roblox experience owner, Developer Product ID and approved price
     default: live-purchases-disabled
+  - id: original-fidelity
+    stage: closure
+    status: resolved-by-amendment
+    question: 기술 샘플과 원작 이식의 완료 기준 혼동
+    answer: 2026-10-28 명세 개정에 따라 원작 기준 복원 및 실제 플레이 확인을 구분한다.
+  - id: runtime-ui-access
+    stage: pre-runtime-acceptance
+    status: blocked
+    question: 스튜디오 및 웹 원작 직접 플레이 도구 접근
+    answer: 이전 명시적 거절 상태. 파일/비대화형 구현 검증은 진행하지만 실제 플레이 확인은 미검증으로 유지한다.
+  - id: original-export-license
+    stage: impl-discovery
+    status: resolved-by-amendment
+    question: 원작 지형의 Unity 비대화형 평가가 라이선스 부재로 종료 코드198을 반환함
+    answer: 라이선스 우회 금지. 원본 생성 로직과 수학 어댑터를 사용하는 독립 C# 호스트 대안을 부모가 승인하고 증거 수준을 구분한다.
+  - id: fidelity-versus-adaptation
+    stage: closure
+    status: resolved-by-user
+    question: 원작 재현이 좌표와 개수의 일치를 뜻하는가
+    answer: 아니오. 게임 구성과 아이디어를 유지하며 로블록스 네이티브 구성과 성능에 최적화해 이식한다. spec.md 최우선 개정 적용.

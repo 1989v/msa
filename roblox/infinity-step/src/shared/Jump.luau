@@ -32,4 +32,22 @@ function Jump.landing(level, rise)
     local seconds = (vy + math.sqrt(disc)) / Jump.Gravity
     return vx * seconds, seconds
 end
+-- Leap.Solve, scaled x4. Checks front body clearance and both landing margins.
+function Jump.solve(level,rise,gap,targetSpan,backSpan,gravityScale,wind)
+    local g=Jump.Gravity*math.max(0.1,gravityScale)
+    local vy,vx=Jump.speeds(level);vx+=wind
+    if vx<1.2 then return nil end
+    local disc=vy*vy-2*g*rise
+    if disc<0 then return nil end
+    local air=(vy+math.sqrt(disc))/g;local land=vx*air
+    local lo=math.max(0,land-gap-targetSpan+2.8-0.04)
+    local hi=math.min(backSpan,land-gap-2.4)
+    if lo>hi then return nil end
+    local center=math.clamp(land-gap-targetSpan*0.5,lo,hi)
+    for _,back in {center,hi,(center+hi)*0.5,lo,(lo+center)*0.5} do
+        local te=math.max(0.01,(back+gap-1.8)/vx)
+        if vy*te-0.5*g*te*te>=rise+2.2 then return back,air end
+    end
+    return nil
+end
 return Jump

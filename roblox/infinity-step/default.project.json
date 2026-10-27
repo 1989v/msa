@@ -2,8 +2,35 @@
   "name": "InfinityStep",
   "tree": {
     "$className": "DataModel",
-    "ReplicatedStorage": {"InfinityStep": {"$path": "src/shared", "Action": {"$className": "RemoteEvent"}, "State": {"$className": "RemoteEvent"}}},
-    "ServerScriptService": {"InfinityStep": {"$path": "src/server"}},
-    "StarterPlayer": {"StarterPlayerScripts": {"$path": "src/client"}}
+    "ReplicatedStorage": {
+      "InfinityStep": {
+        "$path": "src/shared",
+        "Action": {
+          "$className": "RemoteEvent"
+        },
+        "State": {
+          "$className": "RemoteEvent"
+        }
+      }
+    },
+    "ServerScriptService": {
+      "InfinityStep": {
+        "$path": "src/server"
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "$path": "src/client"
+      }
+    },
+    "Workspace": {
+      "$className": "Workspace",
+      "$properties": {
+        "Gravity": 104,
+        "StreamingEnabled": true,
+        "StreamingMinRadius": 128,
+        "StreamingTargetRadius": 320
+      }
+    }
   }
 }
