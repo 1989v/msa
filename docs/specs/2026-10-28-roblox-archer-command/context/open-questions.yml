@@ -1,0 +1,18 @@
+closed:
+  - q: 대상 게임이 archer-outbreak(유니티)인가 marine-command 인가
+    a: marine-command (https://game.1989v.com/games/marine-command). 사용자 명시 2026-10-28.
+  - q: 첫 범위
+    a: 시작 분지 전부 (사냥·고용·강화·채집·탑·주둔·합성·Q/E·웨이브·패배·저장). 분지 밖은 다음 단계.
+  - q: 표현
+    a: 3D 파트 지형 + 탑다운 고정 카메라. 원작 PNG 업로드 없음.
+  - q: 인원
+    a: 서버당 1~2인 협동. 두 번째 입장 시 coop 전환.
+  - q: 구현 주체
+    a: 이 세션 직접 (AGENTS.md 의 Codex 분담은 사용자가 이번에 해제).
+  - q: 원작 그대로 옮기는가, Roblox 에 맞추는가
+    a: 로블록스 구성에 최적화하며 전환 (사용자 추가 지시). 규칙·수치는 보존.
+  - q: 공개 서버에서 모르는 사람이 들어오면 coop 이 되는가
+    a: 호스트 수락 뒤에만. 수락 전은 관전. (security F2 반영)
+  - q: 원작 초반 밸런스가 봇 전멸인데 이식판에서 완화하는가
+    a: 아니오. 원작 그대로 재현한다. 밸런스는 원작에서 먼저 바꾼다. (verifications/original-bot.md)
+open: []

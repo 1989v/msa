@@ -1,0 +1,9 @@
+{
+  "name": "ArcherCommand",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {"ArcherCommand": {"$path": "src/shared", "Command": {"$className": "RemoteEvent"}, "State": {"$className": "RemoteEvent"}, "Actors": {"$className": "RemoteEvent"}, "Lobby": {"$className": "RemoteEvent"}, "Event": {"$className": "RemoteEvent"}}},
+    "ServerScriptService": {"ArcherCommand": {"$path": "src/server"}},
+    "StarterPlayer": {"StarterPlayerScripts": {"$path": "src/client"}}
+  }
+}
