@@ -1,36 +1,20 @@
 {
-  "name": "InfinityStep",
+  "name": "InfinityStepNative",
   "tree": {
     "$className": "DataModel",
+    "Workspace": {"$ignoreUnknownInstances": true},
+    "Lighting": {"$ignoreUnknownInstances": true},
     "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
       "InfinityStep": {
         "$path": "src/shared",
-        "Action": {
-          "$className": "RemoteEvent"
-        },
-        "State": {
-          "$className": "RemoteEvent"
-        }
+        "Action": {"$className": "RemoteEvent"}
       }
     },
-    "ServerScriptService": {
-      "InfinityStep": {
-        "$path": "src/server"
-      }
-    },
+    "ServerScriptService": {"InfinityStepServer": {"$path": "src/server"}},
     "StarterPlayer": {
-      "StarterPlayerScripts": {
-        "$path": "src/client"
-      }
-    },
-    "Workspace": {
-      "$className": "Workspace",
-      "$properties": {
-        "Gravity": 104,
-        "StreamingEnabled": true,
-        "StreamingMinRadius": 128,
-        "StreamingTargetRadius": 320
-      }
+      "$properties": {"CharacterWalkSpeed": 16, "CharacterUseJumpPower": true, "CharacterJumpPower": 52},
+      "StarterPlayerScripts": {"$path": "src/client"}
     }
   }
 }

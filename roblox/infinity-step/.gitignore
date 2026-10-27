@@ -1,2 +1,5 @@
+!dist/
+dist/*
+!dist/InfinityStep.rbxlx
+!dist/world-manifest.json
 __pycache__/
-*.pyc

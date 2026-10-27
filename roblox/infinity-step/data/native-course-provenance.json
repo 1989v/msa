@@ -1,8 +1,0 @@
-{
-  "generator": "actual pure Luau Generator.build",
-  "sources": {
-    "src/shared/Generator.luau": "67a82509c3770361fe080e28e5dc9221acb69a9338f8347a06fd05e9c2456de0",
-    "src/shared/Course.luau": "399fa26cce7f68b567309d4953d4973dffcce2ca1ccc7aa00109cdfe4d8e452b",
-    "src/shared/Jump.luau": "95150b517320aa0a4b0b85142c557e9120e2240f3874b0d692bb11f17cffac48"
-  }
-}
