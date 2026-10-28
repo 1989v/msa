@@ -135,8 +135,25 @@ game:BindToClose(function() persist() end)
 -- ───────── 시작·재시작 ─────────
 local function recruitPoint() return Config.SITES.barracks + Vector3.new(0, 0, Config.BASE.recruitWalkOut) end
 
+-- 치료사 NPC. 제단 위에 한 번 세우고 원정이 바뀌어도 그대로 둔다.
+local healer = nil
+local function ensureHealer()
+	if healer and healer.model.Parent then return end
+	local model, hum, root = Rigs.makeHealer()
+	-- 제단 기둥이 자리 한가운데라 본진 쪽으로 3.5 스터드 비켜 선다
+	local site, base = Config.SITES.healer, Config.SITES.base
+	local toBase = Vector3.new(base.X - site.X, 0, base.Z - site.Z).Unit
+	local stand = Vector3.new(site.X, 0, site.Z) + toBase * 3.5
+	local y = Npc.groundY(stand.X, stand.Z) + 3
+	model:PivotTo(CFrame.lookAt(Vector3.new(stand.X, y, stand.Z), Vector3.new(base.X, y, base.Z)))
+	model.Parent = World:FindFirstChild("Healer") or World
+	Rigs.animate(model, hum, false)
+	healer = { model = model, hum = hum, root = root, aura = root:FindFirstChild("Aura") }
+end
+
 local function startGame(mode)
 	Rigs.ready()
+	ensureHealer()
 	Npc.clear(); Towers.clear()
 	local eco = Rules.newEconomy()
 	if mode == "continue" then
@@ -171,7 +188,7 @@ local function startGame(mode)
 		end
 	end
 	session.phase = "playing"
-	toast(if mode == "continue" then "원정을 이어간다" else "활잡이 하나, 금화 0. 동쪽 사냥터에서 시작한다")
+	toast(if mode == "continue" then "원정을 이어간다" else string.format("군자금 %d · 먼저 공업을 두 번 올린다", Config.START.gold))
 end
 
 -- ───────── 명령 ─────────
@@ -246,8 +263,13 @@ Command.OnServerEvent:Connect(function(player, name, args)
 end)
 
 -- ───────── 틱 ─────────
+-- 튜토리얼: 강화부터. 조건이 맞는 순간 한 번씩 안내하고, 핫바에서 누를 버튼(hint)을 밝힌다.
 local tutorialSteps = {
-	{ key = "upgrade", text = "금화가 모이면 공업·방업을 올린다", when = function(e) return e.gold >= 80 and e.upgrades.attack == 0 end },
+	{ key = "attack1", hint = "attack", text = "핫바의 「공업」을 눌러 올린다 · 화살 피해 +2", when = function(e) return e.upgrades.attack == 0 end },
+	{ key = "attack2", hint = "attack", text = "한 번 더 「공업」 · 군자금은 강화에 쓴다", when = function(e) return e.upgrades.attack == 1 end },
+	{ key = "armor1", hint = "armor", text = "「방업」을 올리면 받는 피해가 1 준다", when = function(e) return e.upgrades.attack >= 2 and e.upgrades.armor == 0 end },
+	{ key = "hunt", text = "동쪽 사냥터의 좀비를 잡아 금화를 번다 · 다치면 치료사(초록 고리) 곁으로", when = function(e) return e.upgrades.attack >= 2 and e.upgrades.armor >= 1 end },
+	{ key = "healer", text = "체력이 줄었다 · 치료사 곁에 서면 빨리 낫는다", when = function(e, ctx) return ctx.lowHealth end },
 	{ key = "carpenter", text = "목수(500)를 고용하면 채집으로 금화가 들어온다", when = function(e) return e.gold >= 500 and e.counts.carpenter == 0 end },
 	{ key = "archer", text = "활잡이(700)를 고용해 원정대를 키운다", when = function(e) return e.gold >= 700 and e.counts.archer == 0 end },
 	{ key = "tower", text = "방어탑(220)을 세우고 가까이 가서 활잡이를 주둔시킨다", when = function(e) return e.gold >= 220 and e.counts.archer >= 1 and Towers.count() == 0 end },
@@ -261,21 +283,37 @@ RunService.Heartbeat:Connect(function(dt)
 	if session.phase == "playing" then
 		Npc.update(dt)
 		Campaign.update(dt)
-		-- 치료사 고리
+		-- 치료사 곁 회복. 낫고 있는 대상엔 1초마다 회복 연출을 보낸다.
 		healTick += dt
+		local lowHealth = false
 		if healTick >= 0.25 then
 			local h = Config.BASE.healerRadius
+			local healing = false
+			local function heal(model, hum, root)
+				if Rules.flatDistance(root.Position, Config.SITES.healer) > h or hum.Health >= hum.MaxHealth then return end
+				hum.Health = math.min(hum.MaxHealth, hum.Health + Config.BASE.healPerSecond * healTick)
+				healing = true
+				local last = model:GetAttribute("HealFxAt") or 0
+				if os.clock() - last >= 1 then model:SetAttribute("HealFxAt", os.clock()); Fx:FireAllClients("heal", model) end
+			end
 			for _, player in Players:GetPlayers() do
 				local c = player.Character; local hum = c and c:FindFirstChildOfClass("Humanoid"); local root = c and c:FindFirstChild("HumanoidRootPart")
-				if hum and root and hum.Health > 0 and Rules.flatDistance(root.Position, Config.SITES.healer) <= h then hum.Health = math.min(hum.MaxHealth, hum.Health + Config.BASE.healPerSecond * healTick) end
+				if hum and root and hum.Health > 0 then
+					heal(c, hum, root)
+					if hum.Health < hum.MaxHealth * 0.6 then lowHealth = true end
+				end
 			end
 			for _, a in Npc.allAllies() do
-				if not a.dead and Rules.flatDistance(a.root.Position, Config.SITES.healer) <= h then a.hum.Health = math.min(a.hum.MaxHealth, a.hum.Health + Config.BASE.healPerSecond * healTick) end
+				if not a.dead then heal(a.model, a.hum, a.root) end
 			end
+			if healer and healer.aura then healer.aura.Rate = healing and 14 or 3 end
 			healTick = 0
 		end
+		local ctx = { lowHealth = lowHealth }
+		session.hint = nil
 		for _, step in tutorialSteps do
-			if not session.tutorial[step.key] and step.when(session.eco) then session.tutorial[step.key] = true; toast(step.text) end
+			if not session.tutorial[step.key] and step.when(session.eco, ctx) then session.tutorial[step.key] = true; toast(step.text) end
+			if step.hint and not session.hint and step.when(session.eco, ctx) then session.hint = step.hint end
 		end
 		session.saveTimer += dt
 		if session.saveTimer >= Config.SAVE.intervalSeconds then session.saveTimer = 0; persist() end
@@ -288,7 +326,7 @@ RunService.Heartbeat:Connect(function(dt)
 			phase = session.phase, hostId = session.host and session.host.UserId or 0, saveInfo = session.saveInfo, memoryOnly = Save.isMemoryOnly(),
 			gold = math.floor(session.eco.gold), upgrades = session.eco.upgrades, counts = session.eco.counts, alive = c,
 			base = { hp = math.floor(session.baseHp), max = session.baseMax }, towers = Towers.count(),
-			campaign = Campaign.snapshot(), skillIn = math.max(0, session.skillReadyAt - os.clock()),
+			campaign = Campaign.snapshot(), skillIn = math.max(0, session.skillReadyAt - os.clock()), hint = session.hint,
 			prices = { archer = Rules.price("archer"), longbow = Rules.price("longbow"), carpenter = Rules.price("carpenter"), tower = Config.TOWER.cost, attack = Rules.upgradeCost("attack", session.eco.upgrades.attack), armor = Rules.upgradeCost("armor", session.eco.upgrades.armor) },
 		})
 	end

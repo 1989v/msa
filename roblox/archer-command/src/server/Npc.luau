@@ -30,6 +30,13 @@ folder.Name = "Npcs"; folder.Parent = workspace
 local allies, enemies, structures, players = {}, {}, {}, {}
 local flat = Rules.flatDistance
 local now = os.clock
+local rng = Random.new()
+
+-- 무리가 한 줄로 서지 않게: 개체마다 목적지를 조금씩 비켜 잡고(wobble) 몇 초마다 다시 뽑는다.
+local function newWobble()
+	local a, r = rng:NextNumber(0, math.pi * 2), rng:NextNumber(0, Config.SWARM.wobbleRadius)
+	return Vector3.new(math.cos(a) * r, 0, math.sin(a) * r)
+end
 
 local groundParams = RaycastParams.new()
 groundParams.FilterType = Enum.RaycastFilterType.Include
@@ -58,9 +65,11 @@ function Npc.spawnEnemy(kind, position, role, group)
 	model:PivotTo(CFrame.new(position.X, y + (def.flying and def.altitude or 3), position.Z))
 	model.Parent = folder
 	ownPhysics(model)
-	local ent = { kind = kind, def = def, model = model, hum = hum, root = root, role = role, group = group, home = Vector3.new(position.X, y, position.Z), retarget = 0, moveTimer = 0, lastAttack = 0, lastPos = root.Position, stuckTimer = 0, hp = def.maxHealth }
+	local ent = { kind = kind, def = def, model = model, hum = hum, root = root, role = role, group = group, home = Vector3.new(position.X, y, position.Z), retarget = 0, moveTimer = 0, lastAttack = 0, lastPos = root.Position, stuckTimer = 0, hp = def.maxHealth, wobble = newWobble(), wobbleAt = now() + rng:NextNumber(0, Config.SWARM.wobbleSeconds) }
 	enemies[model] = ent
 	if hum then
+		-- 같은 속도로 걸으면 열을 맞춘 것처럼 보인다. 개체마다 속도를 흔든다.
+		hum.WalkSpeed = def.walkSpeed * (1 + Config.SWARM.speedJitter * rng:NextNumber(-1, 1))
 		hum.Died:Connect(function() Npc.killEnemy(ent) end)
 	end
 	return ent
@@ -168,20 +177,21 @@ function Npc.clear()
 end
 
 -- ───────── 사격 ─────────
-local function shoot(fromPos, ent, damage, color)
+-- shooter 는 쏜 모델. NPC 는 서버가 공격 모션을 재생하고, 플레이어 캐릭터는 Fx 를 받은 그 클라이언트가 재생한다.
+local function shoot(fromPos, ent, damage, color, shooter)
 	if not alive(ent) then return end
 	local toPos = ent.root.Position + Vector3.new(0, 1, 0)
 	local travel = (toPos - fromPos).Magnitude / Config.ARROW.speed
-	fx("arrow", fromPos, toPos, travel, color)
+	fx("arrow", fromPos, toPos, travel, color, shooter)
 	task.delay(travel, function()
 		if alive(ent) then Npc.damageEnemy(ent, damage, ent.root.Position) end
 	end)
 end
 
-local function shootStructure(fromPos, s, damage)
+local function shootStructure(fromPos, s, damage, color, shooter)
 	local toPos = s.model:GetPivot().Position + Vector3.new(0, 4, 0)
 	local travel = (toPos - fromPos).Magnitude / Config.ARROW.speed
-	fx("arrow", fromPos, toPos, travel)
+	fx("arrow", fromPos, toPos, travel, color, shooter)
 	task.delay(travel, function()
 		if s.model.Parent then Npc.hooks.structureDamage(s.model, damage) end
 	end)
@@ -308,7 +318,8 @@ local function updateEnemy(ent, dt, list, t)
 	local target = ent.target
 	local def = ent.def
 	if target and target.hum and target.hum.Health <= 0 then target = nil; ent.target = nil end
-	local dest = target and target.pos or (flat(ent.home, root.Position) > 4 and ent.home or nil)
+	if ent.wobbleAt <= t then ent.wobbleAt = t + Config.SWARM.wobbleSeconds; ent.wobble = newWobble() end
+	local dest = target and (target.pos + ent.wobble) or (flat(ent.home, root.Position) > 4 and ent.home or nil)
 	if def.flying then
 		local goal = dest or root.Position
 		local dir = Vector3.new(goal.X - root.Position.X, 0, goal.Z - root.Position.Z)
@@ -341,14 +352,19 @@ local function updateEnemy(ent, dt, list, t)
 	end
 	if target and t - ent.lastAttack >= def.cooldown and flat(target.pos, root.Position) <= def.attackRange + target.radius + 0.5 then
 		ent.lastAttack = t
+		Rigs.attack(ent.model, ent.hum)
 		if def.spitSpeed then
 			local from = root.Position + Vector3.new(0, 1.5, 0)
 			local travel = (target.pos - from).Magnitude / def.spitSpeed
 			fx("spit", from, target.pos, travel)
 			task.delay(travel, function() if alive(ent) then applyEnemyDamage(target, def.damage) end end)
 		else
-			fx("melee", root.Position, target.pos)
-			applyEnemyDamage(target, def.damage)
+			-- 휘두르는 모션이 닿는 시점에 맞춘다
+			task.delay(0.25, function()
+				if not alive(ent) then return end
+				fx("melee", root.Position, target.pos)
+				applyEnemyDamage(target, def.damage)
+			end)
 		end
 	end
 end
@@ -368,7 +384,8 @@ local function updateCombatAlly(ent, dt, t, up)
 		ent.lastShot = t
 		local from = root.Position + Vector3.new(0, 1.6, 0)
 		local damage = Rules.attackDamage(ent.def.damage, up.attack)
-		if enemy then shoot(from, enemy, damage, ent.kind) else shootStructure(from, structure, damage) end
+		if enemy then shoot(from, enemy, damage, ent.kind, ent.model) else shootStructure(from, structure, damage, ent.kind, ent.model) end
+		Rigs.attack(ent.model, ent.hum)
 		local aim = enemy and enemy.root.Position or structure.model:GetPivot().Position
 		if ent.garrison or ent.hum.MoveDirection.Magnitude < 0.1 then root.CFrame = CFrame.lookAt(root.Position, Vector3.new(aim.X, root.Position.Y, aim.Z)) end
 	end
@@ -442,7 +459,7 @@ local function updatePlayers(t, up)
 				p.lastShot = t
 				local from = root.Position + Vector3.new(0, 1.6, 0)
 				local damage = Rules.attackDamage(Config.PLAYER.damage, up.attack)
-				if enemy then shoot(from, enemy, damage, "player") else shootStructure(from, structure, damage) end
+				if enemy then shoot(from, enemy, damage, "player", char) else shootStructure(from, structure, damage, "player", char) end
 			end
 		end
 	end

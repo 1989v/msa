@@ -28,3 +28,18 @@ LUAU_BIN=/private/tmp/roblox-infinity-step-tools/luau python3 gate_proof.py <작
 16/16 RED, proof exit=0. 주입 전 원본은 exit=0(status.md 의 출력).
 
 이 게이트가 재는 것은 구조(코드·XML)다. 카메라가 실제로 가깝게 보이는지, 광원이 밝은지, 화살이 눈에 띄는지는 Studio 에서 눈으로 봐야 한다(UNVERIFIED 줄).
+
+## 2차 — 플레이 피드백 반영 게이트 4종, 주입 4/4 빨강 (2026-10-29)
+
+사용자가 Studio 에서 본 결함 넷(공격 모션 없음 · 좀비 한 줄 · 초반 과난이도 · 치료사 식별 불가)을 구조 게이트로 더했다. 스크립트는 스크래치패드 `gate_proof2.py`(레포에 두지 않음).
+
+| 주입 | 기대 게이트 | exit | 첫 빨간 줄 |
+|---|---|---|---|
+| Q NPC 공격 모션 호출(`Rigs.attack`) 제거 | attack motion | 1 | `FAIL attack motion: NPC archers and zombies play an Action-priority attack track on the server, the local player plays toolslash on its own character when its arrow Fx arrives` |
+| R 목적지 흔들림(`target.pos + ent.wobble`) 제거 | swarm spread | 1 | `FAIL swarm spread: waves enter from 4 bowl edges, per-enemy WalkSpeed jitter 0.25, destination wobble 6 studs re-rolled every few seconds` |
+| S 치료 속도 20 → 6 | healer is a visible NPC | 1 | `FAIL healer is a visible NPC: HumanoidDescription avatar with name sign, green light, aura particles, tag Healer; heal 6 hp/s near it with per-second heal Fx` |
+| T State 에서 튜토리얼 `hint` 제거 | upgrade-first opening | 1 | `FAIL upgrade-first opening: 300 starting gold, first wave at 75s, tutorial step 1 points at the attack-upgrade button and the HUD pulses it` |
+
+R 은 첫 시도에서 **초록**이었다 — 게이트가 `ent.wobble` 문자열 존재만 봐서 할당문이 남아 있으면 통과했다. 목적지 식 `(target.pos + ent.wobble)` 자체를 보도록 고친 뒤 빨강. 안 물리는 게이트를 켰다고 하지 않았다.
+
+4/4 RED, proof exit=0. 주입 전 원본 exit=0(status.md 2차 출력).

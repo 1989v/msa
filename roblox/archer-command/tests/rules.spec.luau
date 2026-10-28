@@ -13,7 +13,8 @@ check(Rules.upgradeCost("attack", 30) == nil and Rules.upgradeCost("zzz", 0) == 
 
 -- 고용: 금화 부족 → GOLD, 성공 시 차감과 수 증가
 local eco = Rules.newEconomy()
-local ok, why = Rules.hire(eco, "archer"); check(not ok and why == "GOLD" and eco.gold == 0, "금화 없으면 거부하고 상태 불변")
+check(eco.gold == Config.START.gold and Config.START.gold >= Rules.upgradeCost("attack", 0) + Rules.upgradeCost("attack", 1) + Rules.upgradeCost("armor", 0), "시작 군자금으로 공업 둘·방업 하나")
+local ok, why = Rules.hire(eco, "archer"); check(not ok and why == "GOLD" and eco.gold == Config.START.gold, "금화 부족이면 거부하고 상태 불변")
 eco.gold = 1400
 ok = Rules.hire(eco, "archer"); check(ok and eco.gold == 700 and eco.counts.archer == 1, "고용 차감")
 ok = Rules.hire(eco, "archer"); check(ok and eco.gold == 0 and eco.counts.archer == 2, "두 번째 고용")
@@ -44,7 +45,8 @@ check(Rules.damageTaken(8, 0) == 8 and Rules.damageTaken(8, 3) == 5 and Rules.da
 
 -- 웨이브 구성: 단조 증가, 첫 웨이브는 작게
 local w1, w2, w3 = Rules.waveComposition(1), Rules.waveComposition(2), Rules.waveComposition(3)
-check(w1.zombie == 10 and w1.plague == 0 and w1.bat == 0 and Rules.waveTotal(1) == 10, "첫 웨이브 좀비 10")
+check(w1.zombie == 6 and w1.plague == 0 and w1.bat == 0 and Rules.waveTotal(1) <= 8, "첫 웨이브 좀비 6, 8 이하")
+check(Config.WAVES.firstAt >= 60 and #Config.WAVES.entries >= 3 and Config.SWARM.speedJitter > 0, "첫 웨이브 60초 뒤, 입구 셋 이상, 속도 흔들림")
 check(w2.plague == 1 and w3.bat == 2 and Rules.waveTotal(3) > Rules.waveTotal(2) and Rules.waveTotal(2) > Rules.waveTotal(1), "웨이브 증가")
 for i = 1, 12 do check(Rules.waveTotal(i) <= Config.LIMITS.enemies, "12 웨이브까지 동시 상한 이하") end
 

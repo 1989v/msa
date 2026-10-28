@@ -35,3 +35,11 @@
 1. `tests/rules.spec.luau` 가 실제 `Config`·`Rules` 를 실행해 가격·강화·합성·웨이브 구성·탑 배치 판정을 검사한다.
 2. 구조 게이트(`tools/verify.py`): 모든 Luau 컴파일 · 미지 전역 · 빌더 결정성 · 서비스 배치 · 에셋 스크립트 0 · provenance 해시 일치 · **네이티브 검사**(기본 카메라가 기본값이고 Scriptable 은 전환 함수 안에만 있다 · 캐릭터 PointLight 가 있다 · 화살 연출에 Trail·ParticleEmitter·Sound 가 있다 · 키 이름 안내 문자열이 없다 · 적 템플릿이 Humanoid 리그다 · 동시 적 상한 ≤ 60).
 3. Studio 실행·물리·애니메이션·터치·2인·DataStore 는 UNVERIFIED 로 남기고 사용자가 확인한다. 첫 60초(본진·첫 웨이브·화살·조명·카메라)를 먼저 보여 준다.
+
+## 2차 피드백 반영 (2026-10-29)
+사용자가 Studio 에서 본 결함: ① 공격 모션 없음 ② 좀비가 열 맞춰 한 줄로 옴 ③ 초반이 너무 어려움(튜토리얼로 강화부터) ④ 치료사가 누군지 모름(NPC 를 두고 곁에서 빠르게 회복).
+- 공격 모션: Roblox 기본 Animate 의 `toolslash` 를 공격 트랙으로(활 당기기 전용은 Roblox 소유에 없다). NPC 는 서버, 플레이어 자신은 클라이언트가 재생(플레이어 캐릭터 애니메이션은 그 클라이언트가 재생해야 복제된다).
+- 산개: `Config.WAVES.entries` 네 입구 + `Config.SWARM`(속도 흔들림·목적지 흔들림). 개체 수·상한은 그대로.
+- 초반: `Config.START.gold` 300, 첫 웨이브 75초·6마리, 튜토리얼 단계에 `hint` 를 붙여 HUD 가 버튼을 깜빡인다.
+- 치료사: `Rigs.makeHealer()` NPC, `Config.BASE.healPerSecond` 20, 회복 Fx.
+- 검사: 네이티브 게이트 4종 추가(attack motion · swarm spread · healer NPC · upgrade-first opening), 규칙 단언 44→46.

@@ -116,6 +116,29 @@ clock = float(lighting.find("./Properties/float[@name='ClockTime']").text)
 tech = lighting.find("./Properties/token[@name='Technology']").text
 gate((clock >= 19 or clock <= 5) and tech == '4' and has(lighting, 'Atmosphere') and has(lighting, 'BloomEffect'),
      f'night lighting preset: ClockTime {clock:g}, Technology Future, Atmosphere + Bloom (visual result is Studio-only)')
+# 6. 플레이 피드백(2026-10-29)으로 더한 조건: 공격 모션 · 무리 산개 · 치료사 NPC · 강화 먼저 튜토리얼
+npc = (ROOT / 'src/server/Npc.luau').read_text(); main = (ROOT / 'src/server/Main.server.luau').read_text(); camp_src = (ROOT / 'src/server/Campaign.luau').read_text()
+attack_fn = re.search(r'function Rigs\.attack\(model, hum\)(.*?)\nend\n', rigs, re.S)
+gate(attack_fn and ':Play(' in attack_fn.group(1) and 'attack = "rbxassetid://' in rigs and 'AnimationPriority.Action' in rigs
+     and npc.count('Rigs.attack(') >= 2 and 'ToolSlashAnim' in fx and 'AnimationPriority.Action' in fx and 'shooter == player.Character' in fx,
+     'attack motion: NPC archers and zombies play an Action-priority attack track on the server, the local player plays toolslash on its own character when its arrow Fx arrives')
+entries = re.search(r'entries = \{((?:\s*vec\([^)]*\),?)+)\s*\}', cfg)
+n_entries = len(re.findall(r'vec\(', entries.group(1))) if entries else 0
+jitter = re.search(r'speedJitter = ([\d.]+)', cfg); wobble = re.search(r'wobbleRadius = ([\d.]+)', cfg)
+gate(n_entries >= 3 and jitter and float(jitter.group(1)) > 0 and wobble and float(wobble.group(1)) >= 3
+     and 'entries[random:NextInteger(1, #entries)]' in camp_src and 'def.walkSpeed * (1 + Config.SWARM.speedJitter' in npc and '(target.pos + ent.wobble)' in npc,
+     f'swarm spread: waves enter from {n_entries} bowl edges, per-enemy WalkSpeed jitter {jitter.group(1) if jitter else "?"}, destination wobble {wobble.group(1) if wobble else "?"} studs re-rolled every few seconds')
+heal_fn = re.search(r'function Rigs\.makeHealer\(\)(.*?)\nend\n', rigs, re.S)
+hps = re.search(r'healPerSecond = (\d+)', cfg)
+gate(heal_fn and 'BillboardGui' in heal_fn.group(1) and 'AddTag(model, "Healer")' in heal_fn.group(1) and 'addLight(' in heal_fn.group(1) and 'ParticleEmitter' in heal_fn.group(1)
+     and 'ensureHealer()' in main and 'FireAllClients("heal"' in main and 'function handlers.heal' in fx and hps and int(hps.group(1)) >= 15,
+     f'healer is a visible NPC: HumanoidDescription avatar with name sign, green light, aura particles, tag Healer; heal {hps.group(1) if hps else "?"} hp/s near it with per-second heal Fx')
+steps = re.search(r'local tutorialSteps = \{(.*?)\n\}', main, re.S)
+first = re.search(r'\{ key = "(\w+)", hint = "(\w+)"', steps.group(1)) if steps else None
+start_gold = re.search(r'START = \{ gold = (\d+)', cfg); first_at = re.search(r'firstAt = (\d+)', cfg)
+gate(first and first.group(2) == 'attack' and 'hint = session.hint' in main and 's.hint' in client_text['Hud.client.luau'] and 'UIStroke' in client_text['Hud.client.luau']
+     and start_gold and int(start_gold.group(1)) >= 280 and first_at and int(first_at.group(1)) >= 60,
+     f'upgrade-first opening: {start_gold.group(1) if start_gold else "?"} starting gold, first wave at {first_at.group(1) if first_at else "?"}s, tutorial step 1 points at the attack-upgrade button and the HUD pulses it')
 world = next(n for n in items if n.attrib['class'] == 'Workspace')
 embedded = sum(1 for n in world.iter('Item') if n.attrib['class'] == 'Model' and n.find("./Properties/string[@name='Name']").text in ('Model', 'castleInteriorTorch', 'castleInteriorWell', 'landscapeFence', 'Skeleton', 'Flowers', 'Castle_Roof_2'))
 prompts = sum(1 for n in world.iter('Item') if n.attrib['class'] == 'ProximityPrompt')
@@ -128,6 +151,7 @@ for line in [
     'arrow/trail visibility and sound IDs audible, PointLight look under Future lighting, Atmosphere density by eye',
     'default camera feel vs quarter-view toggle, touch tap placement, pinch zoom, ProximityPrompt panels',
     '2 players, host handoff, DataStore UpdateAsync outside Studio, BindToClose save',
-    'balance: first wave survivable with kiting near the healer — numbers in Config.luau are a first guess',
+    'balance: upgrade-first opening and 6-zombie first wave at 75s — numbers in Config.luau are a second guess after one play session',
+    'attack track visually reads as a bow shot (toolslash is a swing), swarm spread by eye, healer NPC pose on the shrine ring',
 ]:
     print('UNVERIFIED: ' + line)

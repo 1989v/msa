@@ -7,7 +7,7 @@ local Rules = {}
 export type Economy = { gold: number, upgrades: { attack: number, armor: number }, counts: { [string]: number } }
 
 function Rules.newEconomy(): Economy
-	return { gold = 0, upgrades = { attack = 0, armor = 0 }, counts = { archer = 0, longbow = 0, hero = 0, carpenter = 0 } }
+	return { gold = Config.START.gold, upgrades = { attack = 0, armor = 0 }, counts = { archer = 0, longbow = 0, hero = 0, carpenter = 0 } }
 end
 
 function Rules.price(kind: string): number?
@@ -76,10 +76,10 @@ function Rules.damageTaken(raw: number, armorLevel: number): number
 	return math.max(1, raw - Config.UPGRADES.armor.reductionPerLevel * armorLevel)
 end
 
--- 웨이브 n(1부터)의 구성. 수는 줄이고 개체는 키운 규모.
+-- 웨이브 n(1부터)의 구성. 수는 줄이고 개체는 키운 규모. 첫 웨이브는 활잡이 하나가 치료사 곁에서 버틸 만큼 작다.
 function Rules.waveComposition(n: number): { zombie: number, plague: number, bat: number }
 	return {
-		zombie = 10 + 3 * (n - 1),
+		zombie = 6 + 3 * (n - 1),
 		plague = math.floor(n / 2),
 		bat = if n >= 3 then 2 + (n - 3) else 0,
 	}

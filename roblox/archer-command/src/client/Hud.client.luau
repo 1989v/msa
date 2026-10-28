@@ -66,8 +66,15 @@ for i, d in defs do
 	local b = button(hotbar, d.title, UDim2.fromOffset(BTN, BTN), UDim2.fromOffset(8 + (i - 1) * (BTN + 8), 6))
 	b.TextSize = 13
 	local sub = label(b, d.sub, UDim2.new(1, 0, 0, 14), UDim2.new(0, 0, 1, -16), 11, Theme.warning, Enum.TextXAlignment.Center)
-	hot[d.key] = { b = b, sub = sub }
+	-- 튜토리얼이 가리키는 버튼은 테두리가 깜빡인다
+	local ring = Instance.new("UIStroke"); ring.Thickness = 3; ring.Color = Theme.warning; ring.Transparency = 1; ring.Parent = b
+	hot[d.key] = { b = b, sub = sub, ring = ring }
 end
+local hint = nil
+game:GetService("RunService").RenderStepped:Connect(function()
+	local pulse = 0.25 + 0.5 * (0.5 + 0.5 * math.sin(os.clock() * 5))
+	for key, h in hot do h.ring.Transparency = if key == hint then pulse else 1 end
+end)
 
 -- ───────── 관리 패널 ─────────
 local panel = frame(gui, UDim2.fromOffset(300, 300), UDim2.new(0.5, -150, 0.5, -150)); panel.Visible = false
@@ -239,6 +246,7 @@ State.OnClientEvent:Connect(function(s)
 		b.BackgroundColor3 = ok and Theme.primary or Theme.surface2
 	end
 	hot.tower.b.BackgroundColor3 = s.gold >= Config.TOWER.cost and Theme.surface2 or Theme.surface1
+	hint = playing and s.hint or nil
 	if s.phase == "lobby" then
 		center.Visible = true; primaryBtn.Visible = isHost; secondaryBtn.Visible = isHost and s.saveInfo == "ok"
 		primaryBtn.Text = "새 원정"

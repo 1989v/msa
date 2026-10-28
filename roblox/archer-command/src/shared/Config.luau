@@ -11,6 +11,8 @@ end
 local Config = {}
 
 Config.PLAYER = { walkSpeed = 16, maxHealth = 140, range = 30, damage = 16, fireInterval = 0.8, lightRange = 28, lightBrightness = 1.4 }
+-- 시작 군자금: 첫 웨이브 전에 공업 둘·방업 하나를 올릴 만큼(튜토리얼이 그 순서로 이끈다).
+Config.START = { gold = 300 }
 
 Config.UNITS = {
 	archer = { label = "활잡이", cost = 700, walkSpeed = 15, maxHealth = 90, range = 28, damage = 14, fireInterval = 0.9, combat = true },
@@ -28,10 +30,11 @@ Config.UPGRADES = {
 
 Config.CARPENTER = { gatherSeconds = 3, woodGold = 10, oreGold = 16, buildSeconds = 8, repairPerSecond = 6 }
 Config.TOWER = { label = "방어탑", cost = 220, maxHealth = 400, garrison = 2, heightBonus = 6, minSpacing = 10, maxDistanceFromPlayer = 40 }
-Config.BASE = { maxHealth = 2000, coopBonus = 1000, healerRadius = 14, healPerSecond = 6, recruitWalkOut = 6 }
+-- 치료사 NPC 곁(healerRadius)에서는 초당 healPerSecond 만큼 빠르게 회복한다.
+Config.BASE = { maxHealth = 2000, coopBonus = 1000, healerRadius = 14, healPerSecond = 20, recruitWalkOut = 6 }
 
 Config.ENEMIES = {
-	zombie = { label = "좀비", maxHealth = 60, damage = 8, walkSpeed = 11, attackRange = 4, cooldown = 1.4, reward = 12, flying = false },
+	zombie = { label = "좀비", maxHealth = 48, damage = 6, walkSpeed = 11, attackRange = 4, cooldown = 1.4, reward = 15, flying = false },
 	plague = { label = "역병 좀비", maxHealth = 48, damage = 10, walkSpeed = 10, attackRange = 16, cooldown = 2.5, reward = 20, flying = false, spitSpeed = 40 },
 	bat = { label = "박쥐", maxHealth = 24, damage = 5, walkSpeed = 20, attackRange = 3, cooldown = 1.0, reward = 8, flying = true, altitude = 5 },
 	brute = { label = "거구 좀비", maxHealth = 240, damage = 18, walkSpeed = 9, attackRange = 5, cooldown = 1.8, reward = 60, flying = false },
@@ -59,10 +62,15 @@ Config.SITES = {
 Config.BOWL = { minX = -32, maxX = 176, minZ = -160, maxZ = 40 }
 Config.HILL = { center = vec(20, -30, -114), radius = 40 }
 
-Config.HUNT = { count = 4, respawnSeconds = 12, kind = "zombie" }
+Config.HUNT = { count = 5, respawnSeconds = 8, kind = "zombie" }
 Config.CAMP = { composition = { zombie = 6, plague = 2, bat = 2 }, reward = 250, respawnSeconds = 60, counterattack = 6 }
 Config.OUTPOST = { guard = "brute", towerHealth = 500, reward = 300 }
-Config.WAVES = { firstAt = 25, interval = 40, batch = 6, batchGap = 0.5 }
+-- 웨이브는 분지 가장자리 여러 입구에서 조금씩 흩어져 들어온다. 한 줄로 몰려오지 않게 입구를 섞고(entries), 개체마다 속도·목적지를 흔든다(SWARM).
+Config.WAVES = {
+	firstAt = 75, interval = 50, batch = 4, batchGap = 0.9, spread = 14,
+	entries = { vec(165, 0, -30), vec(150, 0, 28), vec(160, 0, -130), vec(72, 0, -150) },
+}
+Config.SWARM = { speedJitter = 0.25, wobbleRadius = 6, wobbleSeconds = 3 }
 
 Config.LIMITS = { enemies = 60, allies = 24, carpenters = 8, towers = 8, players = 2 }
 Config.SAVE = { intervalSeconds = 60, storeName = "ArcherCommandNative_v1" }

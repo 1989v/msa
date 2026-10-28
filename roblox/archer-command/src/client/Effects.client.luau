@@ -136,9 +136,40 @@ local function showBanner(text, color)
 	task.delay(1.8, function() if banner.Text == text then TweenService:Create(banner, TweenInfo.new(0.6), { TextTransparency = 1, TextStrokeTransparency = 1 }):Play() end end)
 end
 
+-- ───────── 내 캐릭터의 공격 모션 ─────────
+-- 플레이어 캐릭터의 애니메이션은 그 클라이언트가 재생해야 모두에게 복제된다. 기본 Animate 의 도구 휘두르기(toolslash)를 쓴다.
+local myAttack = nil
+local function playMyAttack(to)
+	local char = player.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	if not hum or hum.Health <= 0 then return end
+	if not myAttack or myAttack.char ~= char then
+		local animate = char:FindFirstChild("Animate")
+		local slash = animate and animate:FindFirstChild("toolslash") and animate.toolslash:FindFirstChild("ToolSlashAnim")
+		local anim = Instance.new("Animation"); anim.AnimationId = slash and slash.AnimationId or "rbxassetid://522635514"
+		local animator = hum:FindFirstChildOfClass("Animator") or Instance.new("Animator", hum)
+		local ok, track = pcall(function() return animator:LoadAnimation(anim) end)
+		if not ok then return end
+		track.Priority = Enum.AnimationPriority.Action; track.Looped = false
+		myAttack = { char = char, track = track }
+	end
+	if myAttack.track.IsPlaying then myAttack.track:Stop(0) end
+	myAttack.track:Play(0.05)
+	-- 서 있을 때는 표적을 향해 돈다(움직일 때는 기본 AutoRotate 가 진행 방향을 잡는다)
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if root and hum.MoveDirection.Magnitude < 0.1 then root.CFrame = CFrame.lookAt(root.Position, Vector3.new(to.X, root.Position.Y, to.Z)) end
+end
+
 -- ───────── 이벤트 ─────────
 local handlers = {}
-function handlers.arrow(from, to, travel, kind) arrow(from, to, travel, kind) end
+function handlers.arrow(from, to, travel, kind, shooter)
+	arrow(from, to, travel, kind)
+	if shooter and shooter == player.Character then playMyAttack(to) end
+end
+function handlers.heal(model)
+	if not model then return end
+	burst(model:GetPivot().Position + Vector3.new(0, 1.5, 0), SPARK, Theme.healing, 0.9, 4, 6)
+end
 function handlers.spit(from, to, travel)
 	local glob = part(Vector3.new(0.6, 0.6, 0.6), Theme.plague, Enum.Material.Neon); glob.Shape = Enum.PartType.Ball; glob.Position = from
 	TweenService:Create(glob, TweenInfo.new(travel, Enum.EasingStyle.Linear), { Position = to }):Play()

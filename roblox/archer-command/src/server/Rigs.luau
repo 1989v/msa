@@ -12,8 +12,9 @@ local Assets = ServerStorage:WaitForChild("ArcherAssets")
 local Rigs = {}
 
 -- 애니메이션 ID. R15 는 첫 플레이어 캐릭터의 Animate 스크립트에서 읽는다(아바타 기본값과 같은 것을 쓰기 위해).
--- R6(클래식 Zombie·BlockRig)은 Roblox 기본 R6 Animate 의 ID. 재생 여부는 Studio 에서 확인한다.
-local R6_ANIM = { idle = "rbxassetid://180435571", walk = "rbxassetid://180426354" }
+-- R6(클래식 Zombie·BlockRig)은 Roblox 기본 R6 Animate 의 ID. 공격은 기본 도구 휘두르기(toolslash)를 쓴다 — 활 당기기 전용 애니메이션은 Roblox 소유에 없다.
+local R6_ANIM = { idle = "rbxassetid://180435571", walk = "rbxassetid://180426354", attack = "rbxassetid://129967390" }
+local R15_ATTACK_FALLBACK = "rbxassetid://522635514"
 local r15Anim = nil
 
 local function readR15Anim(character)
@@ -21,7 +22,8 @@ local function readR15Anim(character)
 	if not animate then return end
 	local idle = animate:FindFirstChild("idle") and animate.idle:FindFirstChild("Animation1")
 	local walk = animate:FindFirstChild("walk") and animate.walk:FindFirstChild("WalkAnim")
-	if idle and walk then r15Anim = { idle = idle.AnimationId, walk = walk.AnimationId } end
+	local slash = animate:FindFirstChild("toolslash") and animate.toolslash:FindFirstChild("ToolSlashAnim")
+	if idle and walk then r15Anim = { idle = idle.AnimationId, walk = walk.AnimationId, attack = slash and slash.AnimationId or R15_ATTACK_FALLBACK } end
 end
 Players.PlayerAdded:Connect(function(player)
 	player.CharacterAdded:Connect(function(character)
@@ -168,28 +170,78 @@ function Rigs.setupPlayer(character)
 	return hum, root
 end
 
--- 걷기/대기 애니메이션. Animator 트랙을 모델마다 한 번만 만든다.
+-- 걷기/대기/공격 애니메이션. Animator 트랙을 모델마다 한 번만 만든다. 공격은 Action 우선순위라 걷기 위에 겹쳐 보인다.
 local tracks = setmetatable({}, { __mode = "k" })
+local function ensureTracks(model, hum)
+	local set = tracks[model]
+	if set then return set end
+	local animator = hum:FindFirstChildOfClass("Animator") or Instance.new("Animator", hum)
+	local ids = if hum.RigType == Enum.HumanoidRigType.R15 then r15Anim else R6_ANIM
+	if not ids then return nil end
+	set = {}
+	for name, id in ids do
+		local anim = Instance.new("Animation"); anim.AnimationId = id
+		local ok, track = pcall(function() return animator:LoadAnimation(anim) end)
+		if ok then
+			track.Looped = name ~= "attack"
+			if name == "attack" then track.Priority = Enum.AnimationPriority.Action end
+			set[name] = track
+		end
+	end
+	tracks[model] = set
+	return set
+end
+
 function Rigs.animate(model, hum, moving)
 	if not hum then return end
-	local set = tracks[model]
-	if not set then
-		local animator = hum:FindFirstChildOfClass("Animator") or Instance.new("Animator", hum)
-		local ids = if hum.RigType == Enum.HumanoidRigType.R15 then r15Anim else R6_ANIM
-		if not ids then return end
-		set = {}
-		for name, id in ids do
-			local anim = Instance.new("Animation"); anim.AnimationId = id
-			local ok, track = pcall(function() return animator:LoadAnimation(anim) end)
-			if ok then track.Looped = true; set[name] = track end
-		end
-		tracks[model] = set
-	end
+	local set = ensureTracks(model, hum)
+	if not set then return end
 	local want = if moving then "walk" else "idle"
 	for name, track in set do
+		if name == "attack" then continue end
 		if name == want then if not track.IsPlaying then track:Play(0.15) end
 		elseif track.IsPlaying then track:Stop(0.15) end
 	end
+end
+
+-- 공격 모션 한 번(활 쏘기·좀비 휘두르기). 서버 NPC 용. 플레이어 자신은 클라이언트가 같은 ID 로 재생한다.
+function Rigs.attack(model, hum)
+	if not hum or hum.Health <= 0 then return end
+	local set = ensureTracks(model, hum)
+	local track = set and set.attack
+	if not track then return end
+	if track.IsPlaying then track:Stop(0) end
+	track:Play(0.05)
+end
+
+-- 치료사 NPC. 본진 북동쪽 제단 위에 서서 움직이지 않는다. 이름표·초록 광원·회복 파티클로 누가 치료사인지 보인다.
+function Rigs.makeHealer()
+	Rigs.ready()
+	local model = allyTemplate:Clone()
+	model.Name = "Healer"
+	setBodyColors(model, Color3.fromRGB(204, 160, 120), Color3.fromRGB(236, 240, 232), Color3.fromRGB(204, 160, 120), Color3.fromRGB(96, 150, 120))
+	local hum = prepareHumanoid(model, 0, 1000, "치료사")
+	hum.NameDisplayDistance = 120
+	hum.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
+	local root = model:FindFirstChild("HumanoidRootPart")
+	root.Anchored = true
+	addLight(root, 20, 1.2, Theme.healing)
+	local aura = Instance.new("ParticleEmitter")
+	aura.Texture = "rbxasset://textures/particles/sparkles_main.dds"; aura.Color = ColorSequence.new(Theme.healing)
+	aura.LightEmission = 0.9; aura.LightInfluence = 0; aura.Rate = 3; aura.Lifetime = NumberRange.new(0.8, 1.4); aura.Speed = NumberRange.new(2, 4)
+	aura.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(1, 0) }); aura.SpreadAngle = Vector2.new(60, 60)
+	aura.Name = "Aura"; aura.Parent = root
+	local head = model:FindFirstChild("Head")
+	if head then
+		local sign = Instance.new("BillboardGui")
+		sign.Name = "Sign"; sign.Size = UDim2.fromOffset(200, 44); sign.StudsOffset = Vector3.new(0, 3.2, 0); sign.AlwaysOnTop = false; sign.MaxDistance = 90
+		local text = Instance.new("TextLabel")
+		text.Size = UDim2.fromScale(1, 1); text.BackgroundTransparency = 1; text.Text = "치료사 · 곁에 서면 빨리 낫는다"
+		text.Font = Theme.font; text.TextSize = 16; text.TextColor3 = Theme.healing; text.TextStrokeTransparency = 0.4; text.Parent = sign
+		sign.Parent = head
+	end
+	CollectionService:AddTag(model, "Healer")
+	return model, hum, root
 end
 
 return Rigs

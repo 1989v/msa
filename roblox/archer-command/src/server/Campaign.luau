@@ -95,13 +95,15 @@ function Campaign.update(dt)
 	-- 대기열 방출: 상한 안에서 묶음 단위
 	state.spawnTimer -= dt
 	if #state.queue > 0 and state.spawnTimer <= 0 then
-		state.spawnTimer = Config.WAVES.batchGap
+		state.spawnTimer = Config.WAVES.batchGap * random:NextNumber(0.5, 1.5)
 		local released = 0
 		while #state.queue > 0 and released < Config.WAVES.batch and Npc.counts().enemies < Config.LIMITS.enemies do
 			local kind = table.remove(state.queue, 1)
-			local role, origin = "wave", SITES.wave_entry
-			if state.counterPending and state.counterPending > 0 then state.counterPending -= 1; role, origin = "counter", SITES.camp end
-			Npc.spawnEnemy(kind, scatter(origin, 5), role, role)
+			-- 입구를 매번 다르게 고르고 넓게 흩어 놓는다. 한 곳에서 같은 길로 오면 한 줄로 보인다.
+			local entries = Config.WAVES.entries
+			local role, origin, spread = "wave", entries[random:NextInteger(1, #entries)], Config.WAVES.spread
+			if state.counterPending and state.counterPending > 0 then state.counterPending -= 1; role, origin, spread = "counter", SITES.camp, 8 end
+			Npc.spawnEnemy(kind, scatter(origin, spread), role, role)
 			released += 1
 		end
 	end

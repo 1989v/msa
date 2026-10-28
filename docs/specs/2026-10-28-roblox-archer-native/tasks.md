@@ -7,3 +7,4 @@
 - [x] 3 클라이언트: `Camera.client.luau`(기본 + 쿼터뷰 전환) · `Effects.client.luau`(화살·섬광·명중·피해 숫자·사망 페이드·소리) · `Hud.client.luau`
 - [x] 4 빌더 `tools/build.py`(Terrain 은 런타임, Roblox 소유 XML 모델 내장·스크립트 제거·배치, 목책·천막·탑 템플릿·게이트·Remotes·Lighting) · `tools/verify.py` 네이티브 게이트 · 게이트 증명
 - [x] 5 README · ASSETS · status · 하네스 원장 · 메모리 · 커밋
+- [x] 6 (2026-10-29) 플레이 피드백 4건: 공격 모션 트랙 · 웨이브 입구 4곳+속도/목적지 흔들림 · 군자금 300/첫 웨이브 75초 6마리/강화 먼저 튜토리얼(핫바 깜빡임) · 치료사 NPC(이름표·광원·오라)와 초당 20 회복 — 게이트 4종 추가, 주입 4/4 RED
