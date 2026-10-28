@@ -10,7 +10,11 @@ import com.kgd.game.domain.catalog.model.GameTag
 import com.kgd.game.domain.catalog.model.Genre
 import com.kgd.game.domain.catalog.model.LoadType
 import com.kgd.game.domain.catalog.model.Orientation
+import com.kgd.game.domain.catalog.model.GamePlatform
+import com.kgd.game.domain.catalog.model.PlatformReleaseStatus
 import java.time.Instant
+
+data class GamePlatformLinkDto(val platform: GamePlatform, val url: String, val releaseStatus: PlatformReleaseStatus)
 
 data class GameSummaryDto(
     val id: Long,
@@ -26,9 +30,11 @@ data class GameSummaryDto(
     val playCount: Long,
     val ratingAvg: Double,
     val ratingCount: Long,
+    val availablePlatforms: List<GamePlatform> = emptyList(),
 ) {
     companion object {
-        fun of(game: Game, stats: GameStats?): GameSummaryDto = GameSummaryDto(
+        fun of(game: Game, stats: GameStats?, availablePlatforms: List<GamePlatform> = emptyList()): GameSummaryDto = GameSummaryDto(
+            availablePlatforms = availablePlatforms,
             id = game.id ?: 0,
             slug = game.slug,
             title = game.title,
@@ -112,6 +118,7 @@ data class GameDetailDto(
      * (`kgd.common.short-link.expose`)이 꺼져 있으면 null 이다 — FE 는 그때 현재 주소를 쓴다.
      */
     val shortUrl: String? = null,
+    val platformLinks: List<GamePlatformLinkDto> = emptyList(),
 ) {
     companion object {
         fun of(game: Game, stats: GameStats?): GameDetailDto = GameDetailDto(

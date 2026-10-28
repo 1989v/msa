@@ -39,7 +39,7 @@ class EstimatedMinutesTest : BehaviorSpec({
         val records = mockk<MemberGameRecordPort>()
         every { records.recentDurations(any(), any()) } returns durations
         every { stats.findByGameId(any()) } returns null
-        return GameQueryService(games, stats, mockk<GameCollectionRepositoryPort>(), records, ShortLinks(ShortLinkProperties())) to games
+        return GameQueryService(games, stats, mockk<GameCollectionRepositoryPort>(), records, ShortLinks(ShortLinkProperties()), mockk(relaxed = true)) to games
     }
 
     Given("세션 표본이 모자라면") {

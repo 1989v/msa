@@ -24,7 +24,7 @@ vi.mock('../../../api/gameApi', async (importOriginal) => {
     fetchReleaseNotes: vi.fn(async () => []),
     fetchFavoriteCount: vi.fn(async () => 0),
     startGameSession: vi.fn(),
-    endGameSession: vi.fn(),
+    endGameSession: vi.fn(async () => undefined),
     rateGame: vi.fn(),
   };
 });
@@ -47,6 +47,7 @@ import {
   fetchGameDetail,
   fetchSimilarGames,
   fetchLeaderboard,
+  startGameSession,
 } from '../../../api/gameApi';
 import GameDetailPage from '../GameDetailPage';
 
@@ -159,4 +160,22 @@ it('only marble-race fills the desktop visible viewport while playing and restor
     expect(other.container.querySelector('.game-stage')).not.toHaveClass('is-immersive', 'is-marble-race');
     other.unmount();
   } finally { view.unmount(); vi.unstubAllGlobals(); }
+});
+
+it('external edition click leaves the web session idle; web Play keeps entry URL and hides editions', async () => {
+  vi.clearAllMocks();
+  vi.mocked(fetchGameDetail).mockResolvedValue({ ...DETAIL, orientation: 'BOTH', platformLinks: [{ platform: 'ROBLOX', url: 'https://www.roblox.com/games/123', releaseStatus: 'BETA' }] } as never);
+  vi.mocked(fetchSimilarGames).mockResolvedValue([]);
+  vi.mocked(fetchLeaderboard).mockResolvedValue([]);
+  vi.mocked(startGameSession).mockResolvedValue({ sessionKey: 'session', gameSlug: DETAIL.slug, startedAt: '' });
+  const view = renderPage();
+  const anchor = await uiScreen.findByRole('link', { name: /로블록스 버전/ });
+  fireEvent.click(anchor);
+  expect(startGameSession).not.toHaveBeenCalled();
+  expect(view.container.querySelector('iframe')).toBeNull();
+  fireEvent.click(uiScreen.getByRole('button', { name: /플레이$/ }));
+  await waitFor(() => expect(startGameSession).toHaveBeenCalledTimes(1));
+  expect(uiScreen.queryByRole('link', { name: /로블록스 버전/ })).toBeNull();
+  expect(view.container.querySelector('iframe')).toHaveAttribute('src', DETAIL.entryUrl);
+  expect(fetchGameDetail).toHaveBeenCalledTimes(1);
 });

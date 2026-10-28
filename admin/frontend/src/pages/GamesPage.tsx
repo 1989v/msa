@@ -1,3 +1,4 @@
+import PlatformReleasesPanel from './games/PlatformReleasesPanel';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createColumnHelper, useReactTable, getCoreRowModel } from '@tanstack/react-table';
@@ -299,6 +300,8 @@ function GameEditForm({ detail, onClose }: { detail: AdminGameDetail; onClose: (
         </label>
         <Input id="game-entry" value={detail.entryUrl} readOnly disabled />
       </div>
+
+      <PlatformReleasesPanel slug={slug} playable={detail.status === 'BETA' || detail.status === 'PUBLISHED'} />
 
       <SeoNotice />
 

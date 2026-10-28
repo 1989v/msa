@@ -1,5 +1,7 @@
 package com.kgd.game.application.catalog.service
 
+import com.kgd.game.application.catalog.port.GamePlatformReleasePort
+import com.kgd.game.application.catalog.dto.GamePlatformLinkDto
 import com.kgd.common.shortlink.ShortCode
 import com.kgd.common.shortlink.ShortLinkPrefix
 import com.kgd.common.shortlink.ShortLinks
@@ -26,14 +28,14 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-@Transactional(readOnly = true)
-@Qualifier("gameTransactionManager")
+@Transactional(transactionManager = "gameTransactionManager", readOnly = true)
 class GameQueryService(
     private val gameRepository: GameRepositoryPort,
     private val statsRepository: GameStatsRepositoryPort,
     private val collectionRepository: GameCollectionRepositoryPort,
     private val records: com.kgd.game.application.play.port.MemberGameRecordPort,
     private val shortLinks: ShortLinks,
+    private val platformReleases: GamePlatformReleasePort,
 ) : ListGamesUseCase, GetGameDetailUseCase, GetSimilarGamesUseCase, GetGameCollectionsUseCase {
     companion object {
         private const val COLLECTION_SIZE = 10
@@ -70,7 +72,8 @@ class GameQueryService(
     override fun execute(query: ListGamesUseCase.Query): Page<GameSummaryDto> {
         val games = gameRepository.search(query.tag, query.genre, query.sort, PageRequest.of(query.page, query.size))
         val statsByGameId = statsOf(games.content)
-        return games.map { GameSummaryDto.of(it, statsByGameId[it.id]) }
+        val platforms = publicReleases(games.content)
+        return games.map { GameSummaryDto.of(it, statsByGameId[it.id], platforms[it.id].orEmpty().map { r -> r.platform }) }
     }
 
     override fun execute(query: GetGameDetailUseCase.Query): GameDetailDto {
@@ -78,6 +81,7 @@ class GameQueryService(
         val gameId = game.id
         val base = GameDetailDto.of(game, gameId?.let { statsRepository.findByGameId(it) })
         return base.copy(
+            platformLinks = publicReleases(listOf(game))[gameId].orEmpty().map { GamePlatformLinkDto(it.platform, requireNotNull(it.canonicalUrl()), it.releaseStatus) },
             estimatedMinutes = gameId?.let { estimateMinutes(it) },
             playerMode = if (base.tags.any { it.equals("multiplayer", ignoreCase = true) }) "MULTI" else "SINGLE",
             shortUrl = gameId?.let { shortLinks.exposedShortUrl(ShortLinkPrefix.GAME, ShortCode.encode(it)) },
@@ -104,13 +108,15 @@ class GameQueryService(
         val gameId = game.id ?: return emptyList()
         val similar = gameRepository.findSimilar(gameId, SIMILAR_LIMIT)
         val statsByGameId = statsOf(similar)
-        return similar.map { GameSummaryDto.of(it, statsByGameId[it.id]) }
+        val platforms = publicReleases(similar)
+        return similar.map { GameSummaryDto.of(it, statsByGameId[it.id], platforms[it.id].orEmpty().map { r -> r.platform }) }
     }
 
     /** 노출 순서는 display_order 그대로 — 중복 제거만 [DEDUPE_PRIORITY] 순서로 돈다. 빈 행은 뺀다. */
     override fun execute(): List<GameCollectionDto> {
         val active = collectionRepository.findActive()
         val gamesBySlug = dedupedGames(active)
+        val platforms = publicReleases(gamesBySlug.values.flatten())
         return active.mapNotNull { collection ->
             val games = gamesBySlug[collection.slug].orEmpty()
             if (games.isEmpty()) return@mapNotNull null
@@ -119,7 +125,7 @@ class GameQueryService(
                 slug = collection.slug,
                 title = collection.title,
                 type = collection.type,
-                games = games.map { GameSummaryDto.of(it, statsByGameId[it.id]) },
+                games = games.map { GameSummaryDto.of(it, statsByGameId[it.id], platforms[it.id].orEmpty().map { r -> r.platform }) },
             )
         }
     }
@@ -178,6 +184,10 @@ class GameQueryService(
         if (!game.isPlayable()) throw GameNotFoundException(slug)
         return game
     }
+
+    private fun publicReleases(games: List<Game>) =
+        platformReleases.findByGameIds(games.filter { it.isPlayable() }.mapNotNull { it.id }.distinct())
+            .filter { it.isPublic() }.groupBy { it.gameId }
 
     private fun statsOf(games: List<Game>) =
         statsRepository.findByGameIds(games.mapNotNull { it.id }).associateBy { it.gameId }

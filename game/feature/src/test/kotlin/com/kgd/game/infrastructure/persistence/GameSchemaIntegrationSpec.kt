@@ -1,5 +1,11 @@
 package com.kgd.game.infrastructure.persistence
 
+import com.kgd.game.infrastructure.persistence.catalog.repository.GamePlatformReleaseJpaRepository
+import com.kgd.game.infrastructure.persistence.catalog.entity.GamePlatformReleaseJpaEntity
+import com.kgd.game.domain.catalog.model.PlatformReleaseStatus
+import com.kgd.game.domain.catalog.model.PlatformAudience
+import com.kgd.game.domain.catalog.model.GamePlatformRelease
+import com.kgd.game.domain.catalog.model.GamePlatform
 import com.kgd.game.application.catalog.port.GameSearchCriteria
 import com.kgd.game.application.catalog.dto.GameSort
 import com.kgd.game.domain.catalog.model.EngineType
@@ -131,6 +137,7 @@ private fun publicCriteria(tag: String? = null, sort: GameSort = GameSort.TRENDI
     disabledReason = "Docker 미연결 — Testcontainers MySQL 사용 불가",
 )
 class GameSchemaIntegrationSpec(
+    @Autowired private val platformReleases: GamePlatformReleaseJpaRepository,
     @Autowired private val gameRepository: GameJpaRepository,
     @Autowired private val queryRepository: GameQueryRepository,
     @Autowired private val tagMapRepository: GameTagMapJpaRepository,
@@ -150,6 +157,30 @@ class GameSchemaIntegrationSpec(
 ) : BehaviorSpec({
 
     val pageable = PageRequest.of(0, 10)
+
+    Given("platform edition persistence") {
+        Then("round-trips string Place IDs, enforces uniqueness and permits clearing a draft")
+            .config(enabledIf = { dockerAvailable }) {
+                val gameId = requireNotNull(gameRepository.findBySlug("snake")?.id)
+                val release = GamePlatformRelease(gameId,
+                    GamePlatform.ROBLOX, "12345678901234567890",
+                    PlatformReleaseStatus.BETA,
+                    PlatformAudience.PUBLIC)
+                val saved = platformReleases.saveAndFlush(GamePlatformReleaseJpaEntity.fromDomain(release))
+                try {
+                    val loaded = platformReleases.findByGameIdIn(listOf(gameId)).single()
+                    loaded.toDomain().platformRef shouldBe "12345678901234567890"
+                    loaded.toDomain().isPublic() shouldBe true
+                    shouldThrow<DataIntegrityViolationException> {
+                        platformReleases.saveAndFlush(GamePlatformReleaseJpaEntity.fromDomain(release))
+                    }
+                    loaded.replace(release.copy(platformRef = null, releaseStatus = PlatformReleaseStatus.DRAFT))
+                    platformReleases.saveAndFlush(loaded)
+                    platformReleases.findByGameIdIn(listOf(gameId)).single().toDomain().platformRef shouldBe null
+                } finally { platformReleases.deleteById(requireNotNull(saved.id)) }
+            }
+    }
+
 
     Given("game 전용 Flyway 가 적용된 game_db") {
         When("마이그레이션이 끝나면") {

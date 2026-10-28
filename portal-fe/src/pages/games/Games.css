@@ -2057,3 +2057,13 @@
 .game-play-guide { display: grid; gap: 1rem; margin-block: 1.5rem; font-size: 1rem; line-height: 1.7; }
 .game-play-guide dt { color: var(--ko-text-primary); font-weight: 600; }
 .game-play-guide dd { color: var(--ko-text-secondary); margin: 0; max-width: 65ch; }
+
+/* External platform editions remain secondary to the web play action. */
+.game-platform-badge { display: inline-block; font-size: 0.75rem; color: var(--ko-text-secondary); }
+.game-platform-links { width: 100%; text-align: center; margin-block: var(--ko-space-3); }
+.game-platform-link-row { display: flex; align-items: center; justify-content: center; gap: var(--ko-space-2); }
+.game-platform-link { display: inline-flex; align-items: center; justify-content: center; gap: var(--ko-space-2); min-height: 44px; padding: var(--ko-space-2) var(--ko-space-4); border: 1px solid var(--ko-border-default); border-radius: 6px; color: var(--ko-text-primary); text-decoration: none; }
+.game-platform-link:hover { background: var(--ko-surface-2); }
+.game-platform-link:focus-visible { outline: var(--ko-focus-ring); outline-offset: 3px; }
+.game-platform-links p { margin-top: var(--ko-space-2); font-size: 0.75rem; color: var(--ko-text-muted); }
+@media (max-width: 640px) { .game-platform-link { flex: 1; } }

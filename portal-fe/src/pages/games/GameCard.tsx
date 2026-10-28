@@ -52,6 +52,7 @@ export default function GameCard({ game, lang }: { game: GameSummary; lang?: Gam
           {title}
           <span className="game-card-genre">{genreLabel(game.genre, gameLang)}</span>
         </h3>
+        {game.availablePlatforms?.includes('ROBLOX') && <span className="game-platform-badge">Roblox <span aria-hidden="true">↗</span></span>}
         <div className="game-card-meta">
           {game.ratingCount > 0 ? (
             <span className="game-card-rating">

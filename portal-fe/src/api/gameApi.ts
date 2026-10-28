@@ -80,7 +80,11 @@ export function displayDescription(
   return descriptionOf(game, lang);
 }
 
+export type GamePlatform = 'ROBLOX';
+export interface GamePlatformLink { platform: GamePlatform; url: string; releaseStatus: 'BETA' | 'RELEASED'; }
+
 export interface GameSummary {
+  availablePlatforms?: GamePlatform[];
   id: number;
   slug: string;
   title: string;
@@ -129,6 +133,7 @@ export function isBeta(game: Pick<GameSummary, 'status' | 'tags'>): boolean {
 }
 
 export interface GameDetail extends GameSummary {
+  platformLinks?: GamePlatformLink[];
   /**
    * 실제 세션 길이의 중앙값(분). 표본이 적으면 null 이고 화면은 그 줄을 그리지 않는다.
    * **목록 응답에는 없다** — Summary 에 두면 아무도 안 채워 틀린 값이 나간다.

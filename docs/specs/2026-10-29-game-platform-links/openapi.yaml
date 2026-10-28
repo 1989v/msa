@@ -1,0 +1,126 @@
+openapi: 3.0.3
+info:
+  title: Game platform releases (additive catalog contract)
+  version: 1.0.0
+paths:
+  /api/v1/admin/games/{slug}/platform-releases:
+    parameters:
+      - $ref: '#/components/parameters/slug'
+    get:
+      summary: List platform releases, including private drafts
+      description: Existing gateway game-admin route requires ROLE_ADMIN. Missing game returns 404.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Existing ApiResponse wrapper; data is an array (empty when unregistered).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data, error]
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/AdminPlatformRelease' }
+                  error: { nullable: true }
+        '401': { description: Authentication required }
+        '403': { description: ROLE_ADMIN required }
+        '404': { description: Game not found (ApiResponse error) }
+  /api/v1/admin/games/{slug}/platform-releases/{platform}:
+    parameters:
+      - $ref: '#/components/parameters/slug'
+      - name: platform
+        in: path
+        required: true
+        schema: { type: string, enum: [ROBLOX] }
+    put:
+      summary: Create or fully replace the current platform release
+      description: >-
+        Existing gateway game-admin route requires ROLE_ADMIN. Input accepts a positive decimal Place ID
+        string or an exact HTTPS roblox.com/www.roblox.com games URL, optionally followed by a game slug.
+        Credentials, explicit ports, query strings and fragments are rejected. Only the extracted ID is stored.
+        DRAFT or DISABLED may clear platformRef with null; BETA and RELEASED require it.
+        This operation does not change the web entry URL or start a play session.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PlatformReleaseInput' }
+      responses:
+        '200':
+          description: Saved release in the existing ApiResponse wrapper
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data, error]
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/AdminPlatformRelease' }
+                  error: { nullable: true }
+        '400': { description: Invalid platform, ID, URL, state, audience, or missing required launch ID (ApiResponse INVALID_INPUT) }
+        '401': { description: Authentication required }
+        '403': { description: ROLE_ADMIN required }
+        '404': { description: Game not found (ApiResponse error) }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  parameters:
+    slug:
+      name: slug
+      in: path
+      required: true
+      schema: { type: string }
+  schemas:
+    PlatformReleaseInput:
+      type: object
+      required: [platformRef, releaseStatus, audience]
+      properties:
+        platformRef:
+          type: string
+          nullable: true
+          description: Place ID as a string (up to 64 digits) or a supported official game URL; never a Universe ID.
+        releaseStatus: { type: string, enum: [DRAFT, BETA, RELEASED, DISABLED] }
+        audience: { type: string, enum: [PUBLIC, INVITE_ONLY] }
+    AdminPlatformRelease:
+      allOf:
+        - $ref: '#/components/schemas/PlatformReleaseInput'
+        - type: object
+          required: [platform, url, visible]
+          properties:
+            platform: { type: string, enum: [ROBLOX] }
+            platformRef: { type: string, nullable: true, maxLength: 64, pattern: '^[1-9][0-9]{0,63}$' }
+            url:
+              type: string
+              nullable: true
+              description: Server-generated canonical https://www.roblox.com/games/{PlaceID}, or null.
+            visible:
+              type: boolean
+              description: Parent game is BETA/PUBLISHED, platform release is BETA/RELEASED, audience PUBLIC, and ID valid.
+    GameSummaryAdditions:
+      type: object
+      required: [availablePlatforms]
+      properties:
+        availablePlatforms:
+          type: array
+          default: []
+          uniqueItems: true
+          items: { type: string, enum: [ROBLOX] }
+          description: Public platforms only; shared by listing, collections and similar-game summaries. No URLs here.
+    GameDetailAdditions:
+      type: object
+      required: [platformLinks]
+      properties:
+        platformLinks:
+          type: array
+          default: []
+          items:
+            type: object
+            required: [platform, url, releaseStatus]
+            properties:
+              platform: { type: string, enum: [ROBLOX] }
+              url: { type: string, pattern: '^https://www\.roblox\.com/games/[1-9][0-9]{0,63}$' }
+              releaseStatus: { type: string, enum: [BETA, RELEASED] }
+          description: Same public policy as availablePlatforms; frontend tolerates omission during rolling deployment.

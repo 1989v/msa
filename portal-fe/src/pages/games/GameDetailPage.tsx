@@ -1,3 +1,4 @@
+import GamePlatformLinks from './GamePlatformLinks';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { Link, useLocation, useParams } from 'react-router-dom';
@@ -465,6 +466,7 @@ export default function GameDetailPage() {
               ▶ {lang === 'en' ? 'Play' : '플레이'}
             </button>
             </div>
+            <GamePlatformLinks links={game.platformLinks} lang={lang} />
             <ul className="game-stage-facts">
               <li>{genreLabel(game.genre, lang)}</li>
               <li>{gamePlayerLabel(game, lang)}</li>

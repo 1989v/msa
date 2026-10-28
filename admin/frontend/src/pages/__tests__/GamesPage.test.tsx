@@ -10,6 +10,7 @@ vi.mock('@/api/games', async () => {
   const actual = await vi.importActual<typeof gamesApi>('@/api/games');
   return {
     ...actual,
+    fetchPlatformReleases: vi.fn(async () => []),
     fetchAdminGames: vi.fn(),
     fetchAdminGame: vi.fn(),
     fetchGameTags: vi.fn(),

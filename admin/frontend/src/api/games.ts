@@ -269,3 +269,17 @@ export async function grantPrivateGameAccess(
 export async function revokePrivateGameAccess(slug: string, memberId: number): Promise<void> {
   await apiClient.delete(`${ADMIN_BASE}/private/${encodeURIComponent(slug)}/members/${memberId}`);
 }
+
+// Only canonical Place IDs are stored by the server; input URLs are never persisted.
+export type PlatformReleaseStatus = 'DRAFT' | 'BETA' | 'RELEASED' | 'DISABLED';
+export type PlatformAudience = 'PUBLIC' | 'INVITE_ONLY';
+export interface PlatformReleaseInput { platformRef: string | null; releaseStatus: PlatformReleaseStatus; audience: PlatformAudience; }
+export interface PlatformRelease extends PlatformReleaseInput { platform: 'ROBLOX'; url: string | null; visible: boolean; }
+export async function fetchPlatformReleases(slug: string): Promise<PlatformRelease[]> {
+  const res = await apiClient.get<ApiResponse<PlatformRelease[]>>(`${ADMIN_BASE}/${encodeURIComponent(slug)}/platform-releases`);
+  return res.data.data;
+}
+export async function putPlatformRelease(slug: string, input: PlatformReleaseInput): Promise<PlatformRelease> {
+  const res = await apiClient.put<ApiResponse<PlatformRelease>>(`${ADMIN_BASE}/${encodeURIComponent(slug)}/platform-releases/ROBLOX`, input);
+  return res.data.data;
+}
