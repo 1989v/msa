@@ -149,20 +149,22 @@ describe('방문 요약 골든 (서버 렌더 패리티)', () => {
     expect(new Set(rendered.map((c) => c.name)).size).toBe(rendered.length);
   });
 
-  it('「정보 없음」 칸과 채워진 칸, 배지 줄이 있는 사례와 없는 사례가 모두 있다', () => {
-    const values = rendered.flatMap((c) => c.output.rows.map((r) => r.value));
-    expect(values).toContain('정보 없음');
-    expect(values).toContain('Not provided');
+  it('칸이 빠진 사례와 채워진 사례, 배지 줄이 있는 사례와 없는 사례가 모두 있다', () => {
+    const counts = rendered.map((c) => c.output.rows.length);
+    expect(Math.min(...counts)).toBeLessThan(Math.max(...counts));
+    expect(rendered.every((c) => c.output.rows.every((r) => r.value !== '정보 없음' && r.value !== 'Not provided'))).toBe(true);
     expect(rendered.some((c) => c.output.badgeLine != null)).toBe(true);
     expect(rendered.some((c) => c.output.badgeLine == null)).toBe(true);
   });
 
   it.each(['ko', 'en'])('주차 여부가 미상이어도 요금을 보이며 빈 원문은 요금으로 만들지 않는다: %s', (lang) => {
-    const parking = (key: string) => rendered.find((c) => c.name === `${lang}-parking-${key}`)!.output.rows[3].value;
+    const label = lang === 'en' ? 'Parking' : '주차';
+    const parking = (key: string) =>
+      rendered.find((c) => c.name === `${lang}-parking-${key}`)!.output.rows.find((r) => r.label === label)?.value;
     expect(parking('fee-only')).toBe(`${lang === 'en' ? 'Parking fee' : '주차요금'}: 소형 2,000원\n<추가> & 500원`);
     expect(parking('with-parking')).toContain('First hour free');
-    expect(parking('blank-fee')).toBe(lang === 'en' ? 'Not provided' : '정보 없음');
-    for (let index = 0; index < 5; index++) expect(parking(`missing-${index}`)).toBe(lang === 'en' ? 'Not provided' : '정보 없음');
+    expect(parking('blank-fee')).toBeUndefined();
+    for (let index = 0; index < 5; index++) expect(parking(`missing-${index}`)).toBeUndefined();
     for (const [index, value] of ['무료', '없음', '현장 문의'].entries()) expect(parking(`meaningful-${index}`)).toBe(`${lang === 'en' ? 'Parking fee' : '주차요금'}: ${value}`);
   });
 

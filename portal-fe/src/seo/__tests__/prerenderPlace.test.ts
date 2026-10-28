@@ -207,25 +207,25 @@ describe('robots — 크롤러 정책', () => {
   });
 });
 
-describe('정적 sitemap — 행사 제외 · 숙박 등재 조건', () => {
-  // 검색 응답 모양 그대로 — indexDoc 을 거친 뒤 sitemap 항목이 된다
+describe('정적 sitemap — 상세 등재 조건(티어 A + 방문 정보 칸)', () => {
+  // 검색 응답 모양 그대로 — indexDoc 을 거친 뒤 sitemap 항목이 된다. 기본은 티어 A 이고 방문 정보 칸이 둘이다
   const api = (id: string, over: Record<string, unknown>) => ({
-    id, title: `문서 ${id}`, category: 'nature', contentTypeId: '12', overview: '개요가 있다', imageUrl: 'p.jpg', ...over,
+    id, title: `문서 ${id}`, category: 'nature', contentTypeId: '12', overview: '개요가 있다', imageUrl: 'p.jpg',
+    googlePlaceId: 'g', useTime: '09:00~18:00', restDate: '매주 월요일', ...over,
   });
   const raw = {
     ko: [
       api('sight', {}),
-      api('course', { category: 'course', contentTypeId: '25', imageUrl: null }),
+      api('course', { category: 'course', contentTypeId: '25' }),
       api('event', { category: 'festival', contentTypeId: '15' }),
-      api('stay-full', { category: 'stay', contentTypeId: '32' }),
-      api('stay-no-photo', { category: 'stay', contentTypeId: '32', imageUrl: null }),
-      api('stay-no-overview', { category: 'stay', contentTypeId: '32', overview: '' }),
-      // 분류는 stay 지만 유형은 레포츠 — 기존 조건(개요만) 그대로
-      api('camping', { category: 'stay', contentTypeId: '28', imageUrl: null }),
+      api('stay', { category: 'stay', contentTypeId: '32' }),
+      api('shop', { category: 'shopping', contentTypeId: '38' }),
+      api('no-place-id', { googlePlaceId: null }),
+      api('one-fact', { restDate: null }),
+      api('blank-facts', { useTime: '-', restDate: '정보 없음' }),
     ],
     en: [
       api('event-en', { category: 'festival', contentTypeId: '85' }),
-      api('stay-en-no-photo', { category: 'stay', contentTypeId: '80', imageUrl: null }),
       api('sight-en', { contentTypeId: '76' }),
     ],
   };
@@ -235,14 +235,13 @@ describe('정적 sitemap — 행사 제외 · 숙박 등재 조건', () => {
   const locs = placeDetailSitemapEntries(places).map((e: { loc: string }) => e.loc);
   const has = (path: string) => locs.includes(`https://place.1989v.com${path}`);
 
-  it('입력에 행사가 있어도 출력에는 행사 URL 이 없다 — 같은 출력에 관광지·코스는 있다', () => {
-    expect(raw.ko.some((a) => a.contentTypeId === '15')).toBe(true);
-    expect(raw.en.some((a) => a.contentTypeId === '85')).toBe(true);
+  it('티어 A 이고 방문 정보 칸이 둘 이상인 관광지만 싣는다', () => {
+    expect(locs).toEqual(['https://place.1989v.com/attractions/sight', 'https://place.1989v.com/en/attractions/sight-en']);
+  });
+
+  it('입력에 행사가 있어도 출력에는 행사 URL 이 없다', () => {
     expect(has('/attractions/event')).toBe(false);
     expect(has('/en/attractions/event-en')).toBe(false);
-    expect(has('/attractions/sight')).toBe(true);
-    expect(has('/attractions/course')).toBe(true);
-    expect(has('/en/attractions/sight-en')).toBe(true);
   });
 
   it('행사는 허브 링크·지역 대표 재료에도 남지 않는다(indexDoc 이 뺀다)', () => {
@@ -250,22 +249,23 @@ describe('정적 sitemap — 행사 제외 · 숙박 등재 조건', () => {
     expect(places.ko.map((d) => d.id)).not.toContain('event');
   });
 
-  it('숙박(32·80)은 개요와 대표 사진이 둘 다 있을 때만 싣는다', () => {
-    expect(has('/attractions/stay-full')).toBe(true);
-    expect(has('/attractions/stay-no-photo')).toBe(false);
-    expect(has('/attractions/stay-no-overview')).toBe(false);
-    expect(has('/en/attractions/stay-en-no-photo')).toBe(false);
+  it('관광 분류가 아닌 문서(코스·숙박·쇼핑)와 place_id 없는 문서는 싣지 않는다', () => {
+    for (const id of ['course', 'stay', 'shop', 'no-place-id']) expect(has(`/attractions/${id}`), id).toBe(false);
   });
 
-  it('대조: 사진 없는 레포츠 캠핑장(분류 stay · 유형 28)은 개요만으로 계속 실린다', () => {
-    expect(has('/attractions/camping')).toBe(true);
+  it('방문 정보 칸이 하나뿐이거나 「-」·「정보 없음」만 있으면 싣지 않는다', () => {
+    expect(places.ko.find((d) => d.id === 'one-fact')?.visitFacts).toBe(1);
+    expect(places.ko.find((d) => d.id === 'blank-facts')?.visitFacts).toBe(0);
+    expect(has('/attractions/one-fact')).toBe(false);
+    expect(has('/attractions/blank-facts')).toBe(false);
   });
 });
 
 describe('정적 sitemap — 관광지 상세 hreflang(언어 대체 짝)', () => {
   // 검색 응답 모양 그대로 — indexDoc 이 alternateId 를 들고 와야 sitemap 이 짝을 안다
   const api = (id: string, contentTypeId: string, over: Record<string, unknown> = {}) => ({
-    id, title: `문서 ${id}`, category: 'history', contentTypeId, overview: '개요가 있다', imageUrl: 'p.jpg', ...over,
+    id, title: `문서 ${id}`, category: 'history', contentTypeId, overview: '개요가 있다', imageUrl: 'p.jpg',
+    googlePlaceId: 'g', useTime: '09:00~18:00', restDate: '매주 월요일', ...over,
   });
   const docs = (list: Array<Record<string, unknown>>) =>
     list.map((a) => indexDoc(a, '11')).filter((d): d is Record<string, unknown> & { id: string } => d != null);
@@ -462,7 +462,7 @@ describe('isTierA — 핵심 sitemap 의 상세 기준', () => {
 describe('place sitemap — 핵심(core) 분리', () => {
   const api = (id: string, over: Record<string, unknown> = {}) => ({
     id, title: `문서 ${id}`, category: 'nature', contentTypeId: '12', overview: '개요', imageUrl: 'p.jpg',
-    googlePlaceId: 'ChIJ', ...over,
+    googlePlaceId: 'ChIJ', useTime: '09:00~18:00', restDate: '매주 월요일', ...over,
   });
   const docs = (list: Array<Record<string, unknown>>) =>
     list.map((a) => indexDoc(a, '11')).filter((d): d is Record<string, unknown> & { id: string } => d != null);
@@ -485,20 +485,20 @@ describe('place sitemap — 핵심(core) 분리', () => {
     fs.filter(([n]) => n !== 'sitemap.xml' || fs.length === 1).flatMap(([, xml]) => urlLocs(xml)).sort();
   const P = (path: string) => `https://place.1989v.com${path}`;
 
-  it('색인 순서는 core → 나머지 → 행사, hub 파일은 없다', () => {
+  it('색인 순서는 core → 행사, 티어 A 아닌 상세 파일과 hub 파일은 없다', () => {
     expect(indexLocs(files)).toEqual([
       P('/sitemap-places-core.xml'),
-      P('/sitemap-places-1.xml'),
       P('/sitemap-places-events.xml'),
     ]);
+    expect(files.map(([n]) => n)).not.toContain('sitemap-places-1.xml');
     expect(files.map(([n]) => n)).not.toContain('sitemap-places-hub.xml');
   });
 
-  it('티어 A 상세와 허브 항목은 core 에만, 나머지 상세는 core 에 없다', () => {
+  it('티어 A 상세와 허브 항목만 core 에 — 티어 A 아닌 상세는 어느 sitemap 에도 없다', () => {
     const core = urlLocs(fileOf(files, 'sitemap-places-core.xml'));
-    const rest = urlLocs(fileOf(files, 'sitemap-places-1.xml'));
     expect(core).toEqual([P('/'), P('/regions/11'), P('/attractions/A1'), P('/attractions/A2'), P('/en/attractions/E1')]);
-    expect(rest.sort()).toEqual([P('/attractions/N1'), P('/attractions/N2'), P('/attractions/N3'), P('/en/attractions/EN1')].sort());
+    for (const id of ['N1', 'N2', 'N3']) expect(allUrlLocs(files)).not.toContain(P(`/attractions/${id}`));
+    expect(allUrlLocs(files)).not.toContain(P('/en/attractions/EN1'));
   });
 
   it('집합 동일성 — 모든 urlset 의 <loc> 멀티셋 = 입력 허브 ∪ 상세, 중복 0', () => {
@@ -512,7 +512,7 @@ describe('place sitemap — 핵심(core) 분리', () => {
     const chunk = 3;
     // 허브 2 + 티어 A 3 = 5 > 3
     const over = placeSitemapFiles(hub, detail, chunk);
-    expect(indexLocs(over).slice(0, 3)).toEqual([P('/sitemap-places-core.xml'), P('/sitemap-places-core-2.xml'), P('/sitemap-places-1.xml')]);
+    expect(indexLocs(over)).toEqual([P('/sitemap-places-core.xml'), P('/sitemap-places-core-2.xml'), P('/sitemap-places-events.xml')]);
     expect(urlLocs(fileOf(over, 'sitemap-places-core.xml'))).toHaveLength(chunk);
     const got = allUrlLocs(over);
     expect(got).toEqual([...hub, ...detail].map((e) => e.loc).sort());
@@ -550,7 +550,8 @@ describe('place sitemap — 상세 lastmod', () => {
     process.env.TZ = TZ;
   });
   const api = (id: string, over: Record<string, unknown>) => ({
-    id, title: id, category: 'nature', contentTypeId: '12', overview: '개요', ...over,
+    id, title: id, category: 'nature', contentTypeId: '12', overview: '개요', imageUrl: 'p.jpg', googlePlaceId: 'g',
+    useTime: '09:00~18:00', restDate: '매주 월요일', ...over,
   });
   const lastmodOf = (over: Record<string, unknown>) => {
     const item = indexDoc(api('x', over), '11')!;
@@ -605,10 +606,13 @@ describe('시군구 대표 관광지 — 내부 링크 깊이', () => {
   const htmlOf = (path: string) => pages.find((p) => p.path === path)!.html;
   const attrLinks = (html: string) => [...html.matchAll(/<a href="\/attractions\/([^"]+)">/g)].map((m) => m[1]);
 
-  it('시군구 페이지에 대표 최대 10곳 — 색인에 없는 id · 개요 없는 문서는 빠지고 티어 A 가 먼저', () => {
-    const links = attrLinks(htmlOf('prerender/regions/11680.html'));
-    expect(links).toHaveLength(10);
-    expect(links).toEqual(Array.from({ length: 10 }, (_, i) => `s${12 + i}`));
+  it('시군구 페이지에 대표 10곳 + 더 보기 — 색인에 없는 id · 개요 없는 문서는 빠지고 티어 A 가 먼저', () => {
+    const html = htmlOf('prerender/regions/11680.html');
+    const links = attrLinks(html);
+    expect(links).toEqual([...Array.from({ length: 12 }, (_, i) => `s${12 + i}`), 'plain1', 'plain2']);
+    const [top, more] = html.split('<h2>관광지 더 보기</h2>');
+    expect(attrLinks(top)).toEqual(Array.from({ length: 10 }, (_, i) => `s${12 + i}`));
+    expect(attrLinks(more)).toEqual(['s22', 's23', 'plain1', 'plain2']);
     expect(links).not.toContain('ghost');
     expect(links).not.toContain('no-ov');
   });
@@ -654,8 +658,8 @@ describe('시군구 대표 관광지 — 내부 링크 깊이', () => {
   it('빌드 로그 재료 — 티어 A 중 깊이 3 안 N/M', () => {
     const all = [...placeHubPages(SHELL, { ko: [], en: [] }, regions), ...pages];
     const tierA = places.ko.filter((d) => isTierA(d)).length;
-    // 시도 대표 s0~s9 + 강남 대표 s12~s21 = 20곳
-    expect(placeLinkDepth(all, places).ko).toEqual({ within: 20, total: tierA });
+    // 시도 대표 s0~s9 + 강남 대표·더 보기 s12~s23 = 22곳
+    expect(placeLinkDepth(all, places).ko).toEqual({ within: 22, total: tierA });
   });
 
   it('스위치가 꺼져 있으면 시군구 페이지 랜딩 링크 0, indexed 랜딩은 그 시군구 페이지에만', () => {
@@ -678,7 +682,7 @@ describe('fetchRegionTops — 시군구 대표 조회', () => {
     en: [seoul, { ...gangnam }],
   };
 
-  it('시군구마다 1회 — 관광 분류 · 시도 2자리 · 시군구 3자리 · size 30', async () => {
+  it('시군구마다 1회 — 관광 분류 · 시도 2자리 · 시군구 3자리 · size 100', async () => {
     const paths: string[] = [];
     const get = async (path: string) => {
       paths.push(path);
@@ -692,7 +696,7 @@ describe('fetchRegionTops — 시군구 대표 조회', () => {
     expect(q.get('category')).toBe('nature,history,culture,leisure');
     expect(q.get('sidoCode')).toBe('11');
     expect(q.get('sigunguCode')).toBe('680');
-    expect(q.get('size')).toBe('30');
+    expect(q.get('size')).toBe('100');
     expect(paths[0]).toContain('category=nature,history,culture,leisure');
     expect(tops.get('ko/11680')).toEqual([{ id: 'x' }]);
     expect(tops.get('en/11680')).toEqual([{ id: 'x' }]);

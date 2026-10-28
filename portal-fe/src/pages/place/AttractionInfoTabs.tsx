@@ -99,77 +99,83 @@ export default function AttractionInfoTabs({
           </button>
         ))}
       </div>
-      <section
-        role="tabpanel"
-        className="place-info-panel"
-        aria-label={title[current]}
-        data-place-section={current === 'access' ? 'barrier-free' : current}
-        data-open={accessOpen || undefined}
-      >
-        {current === 'visit' && (
-          <>
-            {address && <p className="place-detail-addr place-info-addr">{address}</p>}
-            {(badges.length > 0 || wellness) && (
-              <ul className="place-chip-list">
-                {badges.map((b) => (
-                  <li key={b} className="place-info-chip">{b}</li>
-                ))}
-                {wellness && <li className="place-info-chip" data-place-section="wellness">{wellness}</li>}
-              </ul>
-            )}
-            {hasRegion && (
-              <ul className="place-chip-list place-info-region" data-place-section="region">
-                {phrase && <li className="place-info-chip">{phrase}</li>}
-                {hub && (
-                  <li>
-                    <Link className="place-info-chip place-info-chip-link" to={hub.to}>
-                      {hub.label}
-                    </Link>
-                  </li>
-                )}
-                {samePlace.length > 0 && <li className="place-info-chip place-info-chip-mark">{L.composite}</li>}
-                {samePlace.map((s) => (
-                  <li key={s.id}>
-                    <Link className="place-info-chip place-info-chip-link" to={attractionPath(lang, s.id)}>
-                      {L.sameAs((s.contentTypeId && L.kind[s.contentTypeId]) || L.other)}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </>
-        )}
-        {current === 'access' && (
-          <>
+      {/* 고르지 않은 탭도 DOM 에 두고 숨긴다 — 조건부로 그리면 크롤러가 JS 를 돌린 화면에서 그 탭 내용(무장애 상세 등)이 사라진다 */}
+      {tabs.includes('visit') && (
+        <section
+          role="tabpanel"
+          className="place-info-panel"
+          aria-label={title.visit}
+          data-place-section="visit"
+          hidden={current !== 'visit'}
+        >
+          {address && <p className="place-detail-addr place-info-addr">{address}</p>}
+          {(badges.length > 0 || wellness) && (
             <ul className="place-chip-list">
-              {accessIcons.map((b) => (
+              {badges.map((b) => (
                 <li key={b} className="place-info-chip">{b}</li>
               ))}
-              {accessRows.length > 0 && (
+              {wellness && <li className="place-info-chip" data-place-section="wellness">{wellness}</li>}
+            </ul>
+          )}
+          {hasRegion && (
+            <ul className="place-chip-list place-info-region" data-place-section="region">
+              {phrase && <li className="place-info-chip">{phrase}</li>}
+              {hub && (
                 <li>
-                  <button
-                    type="button"
-                    className="place-info-chip place-info-chip-button"
-                    aria-expanded={accessOpen}
-                    onClick={() => setAccessOpen((v) => !v)}
-                  >
-                    {accessOpen ? L.fold : BARRIER_FREE_DETAILS[lang](accessRows.length)}
-                  </button>
+                  <Link className="place-info-chip place-info-chip-link" to={hub.to}>
+                    {hub.label}
+                  </Link>
                 </li>
               )}
-            </ul>
-            {/* 원천 문장은 펼치기 전에도 DOM 에 둔다 — 고치지 않은 원문이 읽기 도구·검색에 닿게 */}
-            <dl className="place-detail-info-list place-info-detail" hidden={!accessOpen}>
-              {accessRows.map((r) => (
-                <div className="place-detail-info-row" key={r.key}>
-                  <dt>{r.label}</dt>
-                  <dd>{r.value}</dd>
-                </div>
+              {samePlace.length > 0 && <li className="place-info-chip place-info-chip-mark">{L.composite}</li>}
+              {samePlace.map((s) => (
+                <li key={s.id}>
+                  <Link className="place-info-chip place-info-chip-link" to={attractionPath(lang, s.id)}>
+                    {L.sameAs((s.contentTypeId && L.kind[s.contentTypeId]) || L.other)}
+                  </Link>
+                </li>
               ))}
-            </dl>
-          </>
-        )}
-      </section>
+            </ul>
+          )}
+        </section>
+      )}
+      {tabs.includes('access') && (
+        <section
+          role="tabpanel"
+          className="place-info-panel"
+          aria-label={title.access}
+          data-place-section="barrier-free"
+          data-open={accessOpen || undefined}
+          hidden={current !== 'access'}
+        >
+          <ul className="place-chip-list">
+            {accessIcons.map((b) => (
+              <li key={b} className="place-info-chip">{b}</li>
+            ))}
+            {accessRows.length > 0 && (
+              <li>
+                <button
+                  type="button"
+                  className="place-info-chip place-info-chip-button"
+                  aria-expanded={accessOpen}
+                  onClick={() => setAccessOpen((v) => !v)}
+                >
+                  {accessOpen ? L.fold : BARRIER_FREE_DETAILS[lang](accessRows.length)}
+                </button>
+              </li>
+            )}
+          </ul>
+          {/* 원천 문장은 펼치기 전에도 DOM 에 둔다 — 고치지 않은 원문이 읽기 도구·검색에 닿게 */}
+          <dl className="place-detail-info-list place-info-detail" hidden={!accessOpen}>
+            {accessRows.map((r) => (
+              <div className="place-detail-info-row" key={r.key}>
+                <dt>{r.label}</dt>
+                <dd>{r.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
     </div>
   );
 }

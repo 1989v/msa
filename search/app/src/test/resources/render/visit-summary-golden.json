@@ -35,26 +35,6 @@
             "value": "<어린이> 무료 / 어른 \"3,000원\""
           },
           {
-            "label": "이용시간",
-            "value": "정보 없음"
-          },
-          {
-            "label": "쉬는 날",
-            "value": "정보 없음"
-          },
-          {
-            "label": "주차",
-            "value": "정보 없음"
-          },
-          {
-            "label": "반려동물",
-            "value": "정보 없음"
-          },
-          {
-            "label": "무장애",
-            "value": "정보 없음"
-          },
-          {
             "label": "확인 상태",
             "value": "출처: 한국관광공사 TourAPI · 원천 갱신일: 2026-09-30 · 수집일: 정보 없음"
           }
@@ -95,26 +75,6 @@
           {
             "label": "Admission",
             "value": "<어린이> 무료 / 어른 \"3,000원\""
-          },
-          {
-            "label": "Hours",
-            "value": "Not provided"
-          },
-          {
-            "label": "Closed",
-            "value": "Not provided"
-          },
-          {
-            "label": "Parking",
-            "value": "Not provided"
-          },
-          {
-            "label": "Pets",
-            "value": "Not provided"
-          },
-          {
-            "label": "Accessibility",
-            "value": "Not provided"
           },
           {
             "label": "Data status",
@@ -158,26 +118,6 @@
             "value": "<어린이> 무료 / 어른 \"3,000원\""
           },
           {
-            "label": "이용시간",
-            "value": "정보 없음"
-          },
-          {
-            "label": "쉬는 날",
-            "value": "정보 없음"
-          },
-          {
-            "label": "주차",
-            "value": "정보 없음"
-          },
-          {
-            "label": "반려동물",
-            "value": "정보 없음"
-          },
-          {
-            "label": "무장애",
-            "value": "정보 없음"
-          },
-          {
             "label": "확인 상태",
             "value": "출처: 정보 없음 · 원천 갱신일: 정보 없음 · 수집일: 정보 없음"
           }
@@ -217,26 +157,6 @@
           {
             "label": "Admission",
             "value": "<어린이> 무료 / 어른 \"3,000원\""
-          },
-          {
-            "label": "Hours",
-            "value": "Not provided"
-          },
-          {
-            "label": "Closed",
-            "value": "Not provided"
-          },
-          {
-            "label": "Parking",
-            "value": "Not provided"
-          },
-          {
-            "label": "Pets",
-            "value": "Not provided"
-          },
-          {
-            "label": "Accessibility",
-            "value": "Not provided"
           },
           {
             "label": "Data status",
@@ -280,26 +200,6 @@
             "value": "어른 3,000원\n어린이 <무료>"
           },
           {
-            "label": "이용시간",
-            "value": "정보 없음"
-          },
-          {
-            "label": "쉬는 날",
-            "value": "정보 없음"
-          },
-          {
-            "label": "주차",
-            "value": "정보 없음"
-          },
-          {
-            "label": "반려동물",
-            "value": "정보 없음"
-          },
-          {
-            "label": "무장애",
-            "value": "정보 없음"
-          },
-          {
             "label": "확인 상태",
             "value": "출처: 한국관광공사 TourAPI · 원천 갱신일: 2026-09-30 · 수집일: 정보 없음"
           }
@@ -339,26 +239,6 @@
           {
             "label": "Admission",
             "value": "어른 3,000원\n어린이 <무료>"
-          },
-          {
-            "label": "Hours",
-            "value": "Not provided"
-          },
-          {
-            "label": "Closed",
-            "value": "Not provided"
-          },
-          {
-            "label": "Parking",
-            "value": "Not provided"
-          },
-          {
-            "label": "Pets",
-            "value": "Not provided"
-          },
-          {
-            "label": "Accessibility",
-            "value": "Not provided"
           },
           {
             "label": "Data status",
@@ -401,26 +281,6 @@
             "value": "어른 3,000원\n어린이 <무료>"
           },
           {
-            "label": "이용시간",
-            "value": "정보 없음"
-          },
-          {
-            "label": "쉬는 날",
-            "value": "정보 없음"
-          },
-          {
-            "label": "주차",
-            "value": "정보 없음"
-          },
-          {
-            "label": "반려동물",
-            "value": "정보 없음"
-          },
-          {
-            "label": "무장애",
-            "value": "정보 없음"
-          },
-          {
             "label": "확인 상태",
             "value": "출처: 정보 없음 · 원천 갱신일: 정보 없음 · 수집일: 정보 없음"
           }
@@ -461,26 +321,6 @@
             "value": "어른 3,000원\n어린이 <무료>"
           },
           {
-            "label": "Hours",
-            "value": "Not provided"
-          },
-          {
-            "label": "Closed",
-            "value": "Not provided"
-          },
-          {
-            "label": "Parking",
-            "value": "Not provided"
-          },
-          {
-            "label": "Pets",
-            "value": "Not provided"
-          },
-          {
-            "label": "Accessibility",
-            "value": "Not provided"
-          },
-          {
             "label": "Data status",
             "value": "Source: Not provided · Source updated: Not provided · Collected: Not provided"
           }
@@ -516,30 +356,6 @@
       },
       "output": {
         "rows": [
-          {
-            "label": "요금",
-            "value": "정보 없음"
-          },
-          {
-            "label": "이용시간",
-            "value": "정보 없음"
-          },
-          {
-            "label": "쉬는 날",
-            "value": "정보 없음"
-          },
-          {
-            "label": "주차",
-            "value": "정보 없음"
-          },
-          {
-            "label": "반려동물",
-            "value": "정보 없음"
-          },
-          {
-            "label": "무장애",
-            "value": "정보 없음"
-          },
           {
             "label": "확인 상태",
             "value": "출처: 한국관광공사 TourAPI · 원천 갱신일: 2026-09-30 · 수집일: 정보 없음"
@@ -577,30 +393,6 @@
       "output": {
         "rows": [
           {
-            "label": "Admission",
-            "value": "Not provided"
-          },
-          {
-            "label": "Hours",
-            "value": "Not provided"
-          },
-          {
-            "label": "Closed",
-            "value": "Not provided"
-          },
-          {
-            "label": "Parking",
-            "value": "Not provided"
-          },
-          {
-            "label": "Pets",
-            "value": "Not provided"
-          },
-          {
-            "label": "Accessibility",
-            "value": "Not provided"
-          },
-          {
             "label": "Data status",
             "value": "Source: Korea Tourism Organization TourAPI · Source updated: 2026-09-30 · Collected: Not provided"
           }
@@ -636,30 +428,6 @@
       "output": {
         "rows": [
           {
-            "label": "요금",
-            "value": "정보 없음"
-          },
-          {
-            "label": "이용시간",
-            "value": "정보 없음"
-          },
-          {
-            "label": "쉬는 날",
-            "value": "정보 없음"
-          },
-          {
-            "label": "주차",
-            "value": "정보 없음"
-          },
-          {
-            "label": "반려동물",
-            "value": "정보 없음"
-          },
-          {
-            "label": "무장애",
-            "value": "정보 없음"
-          },
-          {
             "label": "확인 상태",
             "value": "출처: 정보 없음 · 원천 갱신일: 정보 없음 · 수집일: 정보 없음"
           }
@@ -694,30 +462,6 @@
       },
       "output": {
         "rows": [
-          {
-            "label": "Admission",
-            "value": "Not provided"
-          },
-          {
-            "label": "Hours",
-            "value": "Not provided"
-          },
-          {
-            "label": "Closed",
-            "value": "Not provided"
-          },
-          {
-            "label": "Parking",
-            "value": "Not provided"
-          },
-          {
-            "label": "Pets",
-            "value": "Not provided"
-          },
-          {
-            "label": "Accessibility",
-            "value": "Not provided"
-          },
           {
             "label": "Data status",
             "value": "Source: Not provided · Source updated: Not provided · Collected: Not provided"
@@ -761,10 +505,6 @@
       "output": {
         "rows": [
           {
-            "label": "요금",
-            "value": "정보 없음"
-          },
-          {
             "label": "이용시간",
             "value": "09:00~18:00\n입장 마감 17:00"
           },
@@ -779,10 +519,6 @@
           {
             "label": "반려동물",
             "value": "반려동물 동반 가능"
-          },
-          {
-            "label": "무장애",
-            "value": "정보 없음"
           },
           {
             "label": "확인 상태",
@@ -824,10 +560,6 @@
       "output": {
         "rows": [
           {
-            "label": "Admission",
-            "value": "Not provided"
-          },
-          {
             "label": "Hours",
             "value": "10:00~23:00"
           },
@@ -842,10 +574,6 @@
           {
             "label": "Pets",
             "value": "Pets allowed in some areas"
-          },
-          {
-            "label": "Accessibility",
-            "value": "Not provided"
           },
           {
             "label": "Data status",
@@ -887,28 +615,12 @@
       "output": {
         "rows": [
           {
-            "label": "요금",
-            "value": "정보 없음"
-          },
-          {
-            "label": "이용시간",
-            "value": "정보 없음"
-          },
-          {
             "label": "쉬는 날",
             "value": "설·추석 당일 (다음날 대신 휴무)"
           },
           {
-            "label": "주차",
-            "value": "정보 없음"
-          },
-          {
             "label": "반려동물",
             "value": "소형견 & 목줄 필수"
-          },
-          {
-            "label": "무장애",
-            "value": "정보 없음"
           },
           {
             "label": "확인 상태",
@@ -954,24 +666,8 @@
       "output": {
         "rows": [
           {
-            "label": "요금",
-            "value": "정보 없음"
-          },
-          {
-            "label": "이용시간",
-            "value": "정보 없음"
-          },
-          {
             "label": "쉬는 날",
             "value": "매주 쉬는 요일 없음\n명절 당일"
-          },
-          {
-            "label": "주차",
-            "value": "정보 없음"
-          },
-          {
-            "label": "반려동물",
-            "value": "정보 없음"
           },
           {
             "label": "무장애",
@@ -1015,30 +711,6 @@
       },
       "output": {
         "rows": [
-          {
-            "label": "Admission",
-            "value": "Not provided"
-          },
-          {
-            "label": "Hours",
-            "value": "Not provided"
-          },
-          {
-            "label": "Closed",
-            "value": "Not provided"
-          },
-          {
-            "label": "Parking",
-            "value": "Not provided"
-          },
-          {
-            "label": "Pets",
-            "value": "Not provided"
-          },
-          {
-            "label": "Accessibility",
-            "value": "Not provided"
-          },
           {
             "label": "Data status",
             "value": "Source: Korea Tourism Organization GoCamping · Source updated: 2026-09-30 · Collected: Not provided"
@@ -1093,18 +765,6 @@
             "value": "매주 월요일 휴무\n매주 월요일\n1월 1일"
           },
           {
-            "label": "주차",
-            "value": "정보 없음"
-          },
-          {
-            "label": "반려동물",
-            "value": "정보 없음"
-          },
-          {
-            "label": "무장애",
-            "value": "정보 없음"
-          },
-          {
             "label": "확인 상태",
             "value": "출처: 한국관광공사 TourAPI · 원천 갱신일: 2026-09-30 · 수집일: 정보 없음"
           }
@@ -1138,10 +798,6 @@
             "value": "무료"
           },
           {
-            "label": "이용시간",
-            "value": "정보 없음"
-          },
-          {
             "label": "쉬는 날",
             "value": "매주 화요일"
           },
@@ -1152,10 +808,6 @@
           {
             "label": "반려동물",
             "value": "불가"
-          },
-          {
-            "label": "무장애",
-            "value": "정보 없음"
           },
           {
             "label": "확인 상태",
@@ -1194,28 +846,8 @@
       "output": {
         "rows": [
           {
-            "label": "요금",
-            "value": "정보 없음"
-          },
-          {
-            "label": "이용시간",
-            "value": "정보 없음"
-          },
-          {
-            "label": "쉬는 날",
-            "value": "정보 없음"
-          },
-          {
             "label": "주차",
             "value": "주차요금: 소형 2,000원\n<추가> & 500원"
-          },
-          {
-            "label": "반려동물",
-            "value": "정보 없음"
-          },
-          {
-            "label": "무장애",
-            "value": "정보 없음"
           },
           {
             "label": "확인 상태",
@@ -1255,28 +887,8 @@
       "output": {
         "rows": [
           {
-            "label": "요금",
-            "value": "정보 없음"
-          },
-          {
-            "label": "이용시간",
-            "value": "정보 없음"
-          },
-          {
-            "label": "쉬는 날",
-            "value": "정보 없음"
-          },
-          {
             "label": "주차",
             "value": "주차 가능\nAvailable\n주차요금: First hour free"
-          },
-          {
-            "label": "반려동물",
-            "value": "정보 없음"
-          },
-          {
-            "label": "무장애",
-            "value": "정보 없음"
           },
           {
             "label": "확인 상태",
@@ -1315,30 +927,6 @@
       "output": {
         "rows": [
           {
-            "label": "요금",
-            "value": "정보 없음"
-          },
-          {
-            "label": "이용시간",
-            "value": "정보 없음"
-          },
-          {
-            "label": "쉬는 날",
-            "value": "정보 없음"
-          },
-          {
-            "label": "주차",
-            "value": "정보 없음"
-          },
-          {
-            "label": "반려동물",
-            "value": "정보 없음"
-          },
-          {
-            "label": "무장애",
-            "value": "정보 없음"
-          },
-          {
             "label": "확인 상태",
             "value": "출처: 정보 없음 · 원천 갱신일: 2026-09-30 · 수집일: 정보 없음"
           }
@@ -1374,30 +962,6 @@
       },
       "output": {
         "rows": [
-          {
-            "label": "요금",
-            "value": "정보 없음"
-          },
-          {
-            "label": "이용시간",
-            "value": "정보 없음"
-          },
-          {
-            "label": "쉬는 날",
-            "value": "정보 없음"
-          },
-          {
-            "label": "주차",
-            "value": "정보 없음"
-          },
-          {
-            "label": "반려동물",
-            "value": "정보 없음"
-          },
-          {
-            "label": "무장애",
-            "value": "정보 없음"
-          },
           {
             "label": "확인 상태",
             "value": "출처: 정보 없음 · 원천 갱신일: 2026-09-30 · 수집일: 정보 없음"
@@ -1435,30 +999,6 @@
       "output": {
         "rows": [
           {
-            "label": "요금",
-            "value": "정보 없음"
-          },
-          {
-            "label": "이용시간",
-            "value": "정보 없음"
-          },
-          {
-            "label": "쉬는 날",
-            "value": "정보 없음"
-          },
-          {
-            "label": "주차",
-            "value": "정보 없음"
-          },
-          {
-            "label": "반려동물",
-            "value": "정보 없음"
-          },
-          {
-            "label": "무장애",
-            "value": "정보 없음"
-          },
-          {
             "label": "확인 상태",
             "value": "출처: 정보 없음 · 원천 갱신일: 2026-09-30 · 수집일: 정보 없음"
           }
@@ -1494,30 +1034,6 @@
       },
       "output": {
         "rows": [
-          {
-            "label": "요금",
-            "value": "정보 없음"
-          },
-          {
-            "label": "이용시간",
-            "value": "정보 없음"
-          },
-          {
-            "label": "쉬는 날",
-            "value": "정보 없음"
-          },
-          {
-            "label": "주차",
-            "value": "정보 없음"
-          },
-          {
-            "label": "반려동물",
-            "value": "정보 없음"
-          },
-          {
-            "label": "무장애",
-            "value": "정보 없음"
-          },
           {
             "label": "확인 상태",
             "value": "출처: 정보 없음 · 원천 갱신일: 2026-09-30 · 수집일: 정보 없음"
@@ -1555,30 +1071,6 @@
       "output": {
         "rows": [
           {
-            "label": "요금",
-            "value": "정보 없음"
-          },
-          {
-            "label": "이용시간",
-            "value": "정보 없음"
-          },
-          {
-            "label": "쉬는 날",
-            "value": "정보 없음"
-          },
-          {
-            "label": "주차",
-            "value": "정보 없음"
-          },
-          {
-            "label": "반려동물",
-            "value": "정보 없음"
-          },
-          {
-            "label": "무장애",
-            "value": "정보 없음"
-          },
-          {
             "label": "확인 상태",
             "value": "출처: 정보 없음 · 원천 갱신일: 2026-09-30 · 수집일: 정보 없음"
           }
@@ -1614,30 +1106,6 @@
       },
       "output": {
         "rows": [
-          {
-            "label": "요금",
-            "value": "정보 없음"
-          },
-          {
-            "label": "이용시간",
-            "value": "정보 없음"
-          },
-          {
-            "label": "쉬는 날",
-            "value": "정보 없음"
-          },
-          {
-            "label": "주차",
-            "value": "정보 없음"
-          },
-          {
-            "label": "반려동물",
-            "value": "정보 없음"
-          },
-          {
-            "label": "무장애",
-            "value": "정보 없음"
-          },
           {
             "label": "확인 상태",
             "value": "출처: 정보 없음 · 원천 갱신일: 2026-09-30 · 수집일: 정보 없음"
@@ -1675,28 +1143,8 @@
       "output": {
         "rows": [
           {
-            "label": "요금",
-            "value": "정보 없음"
-          },
-          {
-            "label": "이용시간",
-            "value": "정보 없음"
-          },
-          {
-            "label": "쉬는 날",
-            "value": "정보 없음"
-          },
-          {
             "label": "주차",
             "value": "주차요금: 무료"
-          },
-          {
-            "label": "반려동물",
-            "value": "정보 없음"
-          },
-          {
-            "label": "무장애",
-            "value": "정보 없음"
           },
           {
             "label": "확인 상태",
@@ -1735,28 +1183,8 @@
       "output": {
         "rows": [
           {
-            "label": "요금",
-            "value": "정보 없음"
-          },
-          {
-            "label": "이용시간",
-            "value": "정보 없음"
-          },
-          {
-            "label": "쉬는 날",
-            "value": "정보 없음"
-          },
-          {
             "label": "주차",
             "value": "주차요금: 없음"
-          },
-          {
-            "label": "반려동물",
-            "value": "정보 없음"
-          },
-          {
-            "label": "무장애",
-            "value": "정보 없음"
           },
           {
             "label": "확인 상태",
@@ -1795,28 +1223,8 @@
       "output": {
         "rows": [
           {
-            "label": "요금",
-            "value": "정보 없음"
-          },
-          {
-            "label": "이용시간",
-            "value": "정보 없음"
-          },
-          {
-            "label": "쉬는 날",
-            "value": "정보 없음"
-          },
-          {
             "label": "주차",
             "value": "주차요금: 현장 문의"
-          },
-          {
-            "label": "반려동물",
-            "value": "정보 없음"
-          },
-          {
-            "label": "무장애",
-            "value": "정보 없음"
           },
           {
             "label": "확인 상태",
@@ -1855,28 +1263,8 @@
       "output": {
         "rows": [
           {
-            "label": "Admission",
-            "value": "Not provided"
-          },
-          {
-            "label": "Hours",
-            "value": "Not provided"
-          },
-          {
-            "label": "Closed",
-            "value": "Not provided"
-          },
-          {
             "label": "Parking",
             "value": "Parking fee: 소형 2,000원\n<추가> & 500원"
-          },
-          {
-            "label": "Pets",
-            "value": "Not provided"
-          },
-          {
-            "label": "Accessibility",
-            "value": "Not provided"
           },
           {
             "label": "Data status",
@@ -1916,28 +1304,8 @@
       "output": {
         "rows": [
           {
-            "label": "Admission",
-            "value": "Not provided"
-          },
-          {
-            "label": "Hours",
-            "value": "Not provided"
-          },
-          {
-            "label": "Closed",
-            "value": "Not provided"
-          },
-          {
             "label": "Parking",
             "value": "Parking available\nAvailable\nParking fee: First hour free"
-          },
-          {
-            "label": "Pets",
-            "value": "Not provided"
-          },
-          {
-            "label": "Accessibility",
-            "value": "Not provided"
           },
           {
             "label": "Data status",
@@ -1976,30 +1344,6 @@
       "output": {
         "rows": [
           {
-            "label": "Admission",
-            "value": "Not provided"
-          },
-          {
-            "label": "Hours",
-            "value": "Not provided"
-          },
-          {
-            "label": "Closed",
-            "value": "Not provided"
-          },
-          {
-            "label": "Parking",
-            "value": "Not provided"
-          },
-          {
-            "label": "Pets",
-            "value": "Not provided"
-          },
-          {
-            "label": "Accessibility",
-            "value": "Not provided"
-          },
-          {
             "label": "Data status",
             "value": "Source: Not provided · Source updated: 2026-09-30 · Collected: Not provided"
           }
@@ -2035,30 +1379,6 @@
       },
       "output": {
         "rows": [
-          {
-            "label": "Admission",
-            "value": "Not provided"
-          },
-          {
-            "label": "Hours",
-            "value": "Not provided"
-          },
-          {
-            "label": "Closed",
-            "value": "Not provided"
-          },
-          {
-            "label": "Parking",
-            "value": "Not provided"
-          },
-          {
-            "label": "Pets",
-            "value": "Not provided"
-          },
-          {
-            "label": "Accessibility",
-            "value": "Not provided"
-          },
           {
             "label": "Data status",
             "value": "Source: Not provided · Source updated: 2026-09-30 · Collected: Not provided"
@@ -2096,30 +1416,6 @@
       "output": {
         "rows": [
           {
-            "label": "Admission",
-            "value": "Not provided"
-          },
-          {
-            "label": "Hours",
-            "value": "Not provided"
-          },
-          {
-            "label": "Closed",
-            "value": "Not provided"
-          },
-          {
-            "label": "Parking",
-            "value": "Not provided"
-          },
-          {
-            "label": "Pets",
-            "value": "Not provided"
-          },
-          {
-            "label": "Accessibility",
-            "value": "Not provided"
-          },
-          {
             "label": "Data status",
             "value": "Source: Not provided · Source updated: 2026-09-30 · Collected: Not provided"
           }
@@ -2155,30 +1451,6 @@
       },
       "output": {
         "rows": [
-          {
-            "label": "Admission",
-            "value": "Not provided"
-          },
-          {
-            "label": "Hours",
-            "value": "Not provided"
-          },
-          {
-            "label": "Closed",
-            "value": "Not provided"
-          },
-          {
-            "label": "Parking",
-            "value": "Not provided"
-          },
-          {
-            "label": "Pets",
-            "value": "Not provided"
-          },
-          {
-            "label": "Accessibility",
-            "value": "Not provided"
-          },
           {
             "label": "Data status",
             "value": "Source: Not provided · Source updated: 2026-09-30 · Collected: Not provided"
@@ -2216,30 +1488,6 @@
       "output": {
         "rows": [
           {
-            "label": "Admission",
-            "value": "Not provided"
-          },
-          {
-            "label": "Hours",
-            "value": "Not provided"
-          },
-          {
-            "label": "Closed",
-            "value": "Not provided"
-          },
-          {
-            "label": "Parking",
-            "value": "Not provided"
-          },
-          {
-            "label": "Pets",
-            "value": "Not provided"
-          },
-          {
-            "label": "Accessibility",
-            "value": "Not provided"
-          },
-          {
             "label": "Data status",
             "value": "Source: Not provided · Source updated: 2026-09-30 · Collected: Not provided"
           }
@@ -2275,30 +1523,6 @@
       },
       "output": {
         "rows": [
-          {
-            "label": "Admission",
-            "value": "Not provided"
-          },
-          {
-            "label": "Hours",
-            "value": "Not provided"
-          },
-          {
-            "label": "Closed",
-            "value": "Not provided"
-          },
-          {
-            "label": "Parking",
-            "value": "Not provided"
-          },
-          {
-            "label": "Pets",
-            "value": "Not provided"
-          },
-          {
-            "label": "Accessibility",
-            "value": "Not provided"
-          },
           {
             "label": "Data status",
             "value": "Source: Not provided · Source updated: 2026-09-30 · Collected: Not provided"
@@ -2336,28 +1560,8 @@
       "output": {
         "rows": [
           {
-            "label": "Admission",
-            "value": "Not provided"
-          },
-          {
-            "label": "Hours",
-            "value": "Not provided"
-          },
-          {
-            "label": "Closed",
-            "value": "Not provided"
-          },
-          {
             "label": "Parking",
             "value": "Parking fee: 무료"
-          },
-          {
-            "label": "Pets",
-            "value": "Not provided"
-          },
-          {
-            "label": "Accessibility",
-            "value": "Not provided"
           },
           {
             "label": "Data status",
@@ -2396,28 +1600,8 @@
       "output": {
         "rows": [
           {
-            "label": "Admission",
-            "value": "Not provided"
-          },
-          {
-            "label": "Hours",
-            "value": "Not provided"
-          },
-          {
-            "label": "Closed",
-            "value": "Not provided"
-          },
-          {
             "label": "Parking",
             "value": "Parking fee: 없음"
-          },
-          {
-            "label": "Pets",
-            "value": "Not provided"
-          },
-          {
-            "label": "Accessibility",
-            "value": "Not provided"
           },
           {
             "label": "Data status",
@@ -2456,28 +1640,8 @@
       "output": {
         "rows": [
           {
-            "label": "Admission",
-            "value": "Not provided"
-          },
-          {
-            "label": "Hours",
-            "value": "Not provided"
-          },
-          {
-            "label": "Closed",
-            "value": "Not provided"
-          },
-          {
             "label": "Parking",
             "value": "Parking fee: 현장 문의"
-          },
-          {
-            "label": "Pets",
-            "value": "Not provided"
-          },
-          {
-            "label": "Accessibility",
-            "value": "Not provided"
           },
           {
             "label": "Data status",

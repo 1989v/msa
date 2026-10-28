@@ -27,8 +27,9 @@ describe('initial routing from the App route declarations', () => {
 });
 it('preserves source lines and deduplicates identical parking information', () => {
   const summary = visitSummary({ useTime: 'Summer: 09:00–18:00<br>Winter: 09:00–17:00', attrParking: true, parking: 'Parking available' } as unknown as Attraction, 'en');
-  expect(summary.rows[1].value).toBe('Summer: 09:00–18:00\nWinter: 09:00–17:00');
-  expect(summary.rows[3].value).toBe('Parking available');
+  const cell = (label: string) => summary.rows.find((r) => r.label === label)?.value;
+  expect(cell('Hours')).toBe('Summer: 09:00–18:00\nWinter: 09:00–17:00');
+  expect(cell('Parking')).toBe('Parking available');
 });
 it('uses the actual PREOPEN status and resumes a normal link on OPEN', () => {
   const pending = siteFooter('en', [{ code: 'rank', status: 'PREOPEN' }]);

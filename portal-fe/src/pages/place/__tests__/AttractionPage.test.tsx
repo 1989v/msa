@@ -235,6 +235,22 @@ describe('AttractionPage 새 섹션', () => {
     expect(infoTabs()).toEqual(['방문 정보', '접근성 정보']);
   });
 
+  it('고르지 않은 탭의 내용도 DOM 에 숨겨 둔다 — 방문 정보 탭이 열려 있어도 무장애 원문이 문서에 있다', async () => {
+    vi.mocked(fetchAttraction).mockResolvedValue({
+      ...enriched,
+      barrierFree: ['WHEELCHAIR'],
+      barrierFreeDetail: { exit: '주출입구는 경사로가 있어 휠체어 접근 가능함' },
+    });
+    renderAt('/attractions/100');
+    await screen.findByRole('tabpanel', { name: '방문 정보' });
+
+    const access = document.querySelector<HTMLElement>('[role=tabpanel][data-place-section="barrier-free"]')!;
+    expect(access).not.toBeVisible();
+    expect(access).toHaveTextContent('주출입구는 경사로가 있어 휠체어 접근 가능함');
+    expect(await openInfoTab('접근성 정보')).toBe(access);
+    expect(document.querySelector('[role=tabpanel][data-place-section="visit"]')).not.toBeVisible();
+  });
+
   it('접근성·웰니스 정보가 없으면 절이 없고 출처는 TourAPI 만이다', async () => {
     vi.mocked(fetchAttraction).mockResolvedValue(enriched);
     renderAt('/attractions/100');
@@ -1373,7 +1389,7 @@ describe('AttractionPage 첫 화면 — 방문 요약 · 행동 줄', () => {
     expect(within(nav).queryByRole('link', { name: '종로구' })).toBeNull();
   });
 
-  it('방문 요약은 일곱 칸을 표 순서로 — 값이 없는 칸은 「정보 없음」', async () => {
+  it('방문 요약은 표 순서로 — 값이 없는 칸은 줄째 빠지고 「확인 상태」는 남는다', async () => {
     vi.mocked(fetchAttraction).mockResolvedValue(first);
     renderAt('/attractions/100');
     await screen.findByRole('heading', { level: 1 });
@@ -1383,8 +1399,6 @@ describe('AttractionPage 첫 화면 — 방문 요약 · 행동 줄', () => {
       ['이용시간', '09:00~18:00'],
       ['쉬는 날', '매주 화요일 휴무'],
       ['주차', '주차 가능'],
-      ['반려동물', '정보 없음'],
-      ['무장애', '정보 없음'],
       ['확인 상태', '출처: 정보 없음 · 원천 갱신일: 정보 없음 · 수집일: 정보 없음'],
     ]);
     expect(badgeLine()).toBe('유모차 대여 없음 · 많이 클릭한 곳');
@@ -1497,7 +1511,7 @@ describe('AttractionPage 첫 화면 — 방문 요약 · 행동 줄', () => {
     renderAt('/en/attractions/100');
     await screen.findByRole('heading', { level: 1 });
 
-    expect(summaryRows().map(([label]) => label)).toEqual(['Admission', 'Hours', 'Closed', 'Parking', 'Pets', 'Accessibility', 'Data status']);
+    expect(summaryRows().map(([label]) => label)).toEqual(['Admission', 'Hours', 'Closed', 'Parking', 'Data status']);
     expect(within(actions()).getByRole('link', { name: 'Open in Google Maps' })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Breadcrumb' })).toBeInTheDocument();
   });

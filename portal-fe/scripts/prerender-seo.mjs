@@ -20,7 +20,6 @@ import {
   attractionPath,
   marketIndexMeta,
   PLACE_EVENT_TYPES,
-  PLACE_STAY_TYPES,
   placeItemListJsonLd,
   regionMeta,
   regionIntro,
@@ -1034,18 +1033,15 @@ function blogAuthorHandles(blog) {
  * (2026-08-31 AdSense 반려 사유). 개요 수집 배치가 채우면 조건이 저절로 참이 되어
  * 다시 실린다 — 지운 것이 아니라 문을 조건부로 만든 것이다.
  *
- * 숙박(유형 32·80)은 개요와 대표 사진이 둘 다 있을 때만 싣는다 — 본문이 개요와 입·퇴실 원문뿐인 얇은 페이지다.
- * 기준은 유형 코드다: 분류 stay 인 레포츠 캠핑장(유형 28) 등 기존 행의 조건은 그대로 개요뿐이다.
+ * 싣는 상세는 티어 A 이면서 방문 정보 칸이 VISIT_FACTS_MIN 이상인 것뿐이다. 나머지(쇼핑·음식·숙박·사진 없는 문서 등)는
+ * 지역 페이지 링크로 닿을 수 있게 두되 sitemap 으로 크롤링을 부르지 않는다 — 6만 URL 을 알린 새 도메인에서
+ * 대부분이 「크롤링됨 - 현재 색인 미생성」으로 남아, 색인될 만한 페이지에 크롤링을 모으려는 것이다.
  * 행사는 여기 오지 않는다 — indexDoc 이 뺀다(빌드 사이에 낡는다. 행사 URL 은 동적 sitemap 몫).
  * @param {{ ko?: Array<Record<string, any>>, en?: Array<Record<string, any>> }} places indexDoc 결과
+ * @param {(a: Record<string, any>) => boolean} [listable] 싣는 조건 — 시장 지도 항목이 따로 준다
  */
-export function placeDetailSitemapEntries(places) {
-  const listed = Object.fromEntries(
-    LANGS.map((lang) => [
-      lang,
-      (places[lang] ?? []).filter((a) => a.hasOverview && (!PLACE_STAY_TYPES.includes(a.contentTypeId) || a.imageUrl)),
-    ]),
-  );
+export function placeDetailSitemapEntries(places, listable = (a) => isTierA(a) && a.visitFacts >= VISIT_FACTS_MIN) {
+  const listed = Object.fromEntries(LANGS.map((lang) => [lang, (places[lang] ?? []).filter(listable)]));
   const listedIds = Object.fromEntries(LANGS.map((lang) => [lang, new Set(listed[lang].map((a) => a.id))]));
   return LANGS.flatMap((lang) => {
     const other = lang === 'en' ? 'ko' : 'en';
@@ -1074,7 +1070,8 @@ export async function fetchMarketSitemapContentIds(get = getJson) {
 export function marketMapSitemapEntries(places, marketContentIds) {
   const ids = new Set(marketContentIds.map(String));
   const eligible = Object.fromEntries(LANGS.map(lang => [lang, (places[lang] ?? []).filter(a => ids.has(String(a.contentId)))]));
-  return placeDetailSitemapEntries(eligible).map(entry => ({
+  // 시장 지도는 가게 배치가 본문이라 상세의 티어 A 조건을 걸지 않는다 — 개요만 있으면 싣는다
+  return placeDetailSitemapEntries(eligible, a => a.hasOverview).map(entry => ({
     ...entry, loc: `${entry.loc}/market`, priority: '0.6',
     ...(entry.alternates ? { alternates: entry.alternates.map(link => ({ ...link, href: `${link.href}/market` })) } : {}),
   }));
@@ -1309,6 +1306,8 @@ export function indexDoc(a, sidoCode) {
     // 티어 A 판정 재료(isTierA). place_id 는 값이 아니라 유무만 싣는다 — 짝 판정과 같이 공백뿐이면 없음
     category: a.category ?? null,
     hasGooglePlaceId: Boolean(a.googlePlaceId?.trim()),
+    // 방문 요약에 값이 있는 칸 수 — sitemap 조건(VISIT_FACTS_MIN). 대부분 빈 페이지는 템플릿만 남은 얇은 페이지다
+    visitFacts: visitFactCount(a),
     // sitemap 의 lastmod. 원천 수정일이 없는 문서는 그냥 비운다 — 빌드일을 대신 적으면
     // 6만 URL 이 배포마다 전부 "갱신됨"이 되어 신호가 신호이길 그만둔다.
     modifiedAt: a.modifiedAt ?? null,
@@ -1318,6 +1317,23 @@ export function indexDoc(a, sidoCode) {
     contentUpdatedAt: a.contentUpdatedAt ?? null,
   };
 }
+
+/** 방문 요약 칸 중 원천 값이 있어야 하는 칸 — 요금 · 이용시간 · 쉬는 날 · 주차 · 반려동물 */
+const VISIT_FACT_FIELDS = [['feeText', 'useFee'], ['useTime'], ['restDate'], ['parking'], ['petAcmpyType']];
+const BLANK_FACT = new Set(['', '-', 'n/a', '정보 없음', 'not provided']);
+
+/** @param {Record<string, any>} a 검색 응답의 관광지 문서 */
+export function visitFactCount(a) {
+  return VISIT_FACT_FIELDS.filter((keys) =>
+    keys.some((k) => !BLANK_FACT.has(String(a[k] ?? '').trim().toLowerCase())),
+  ).length;
+}
+
+/**
+ * 상세 sitemap 에 싣는 최소 방문 정보 칸 수. 칸 대부분이 비면 본문이 원천 개요뿐이라
+ * 다른 사이트의 같은 문장과 겹치는 얇은 페이지가 되고, 그런 URL 이 sitemap 을 채우면 크롤링이 흩어진다.
+ */
+export const VISIT_FACTS_MIN = 2;
 
 /**
  * 티어 A 상세 — 핵심 sitemap(`sitemap-places-core.xml`)에 허브 항목과 함께 싣는 관광지.
@@ -1488,10 +1504,15 @@ function regionTopCandidates(docs) {
   return docs.filter((a) => a.hasOverview && a.title).sort((a, b) => rank(a) - rank(b));
 }
 
-/** 시군구 대표 관광지 질의 크기 — 색인 대조·개요 필터로 빠지는 몫을 감안해 화면(10)보다 넉넉히 받는다 */
-const REGION_TOPS_SIZE = 30;
+/** 시군구 대표 관광지 질의 크기 — 서버 쪽 한 쪽 상한(100). 「더 보기」 목록까지 채우려고 꽉 받는다 */
+const REGION_TOPS_SIZE = 100;
 /** 지역 페이지 하나에 싣는 대표 관광지 수 */
 const REGION_TOPS_SHOWN = 10;
+/**
+ * 시군구 페이지의 「관광지 더 보기」 수 — 대표 다음 순서로 이어 싣는다. 상세로 가는 링크가 대표 10개뿐이면
+ * sitemap 밖 상세는 크롤러가 닿을 길이 거의 없고, sitemap 안 상세도 내부 링크 신호가 약하다.
+ */
+const REGION_MORE_SHOWN = 40;
 
 /**
  * 시군구 대표 관광지 조회 — 시군구마다 `GET /api/search/attractions` 1회(SPA 지역 화면과 같은 질의, 크기만 30).
@@ -1544,7 +1565,7 @@ export async function fetchRegionTops(
  */
 function sigunguTops(found, docsById) {
   const docs = (found ?? []).map((a) => docsById.get(a.id)).filter((d) => d?.hasOverview && d.title);
-  return [...docs.filter(isTierA), ...docs.filter((d) => !isTierA(d))].slice(0, REGION_TOPS_SHOWN);
+  return [...docs.filter(isTierA), ...docs.filter((d) => !isTierA(d))].slice(0, REGION_TOPS_SHOWN + REGION_MORE_SHOWN);
 }
 
 /**
@@ -1559,7 +1580,7 @@ export function renderRegionDetail(
   shell,
   lang,
   region,
-  { parent = null, children = [], top = [], landings = [], bothLangs = false } = {},
+  { parent = null, children = [], top = [], more = [], landings = [], bothLangs = false } = {},
 ) {
   const meta = regionMeta(lang, region, region.attractionCount);
   const canonical = regionUrl(lang, region.code);
@@ -1573,9 +1594,10 @@ export function renderRegionDetail(
   const childLinks = children
     .map((c) => `<li><a href="${regionPath(lang, c.code)}">${escapeHtml(regionDisplayName(lang, c))}</a></li>`)
     .join('');
-  const topLinks = top
-    .map((a) => `<li><a href="${attractionPath(lang, a.id)}">${escapeHtml(a.title)}</a></li>`)
-    .join('');
+  const attractionLinks = (list) =>
+    list.map((a) => `<li><a href="${attractionPath(lang, a.id)}">${escapeHtml(a.title)}</a></li>`).join('');
+  const topLinks = attractionLinks(top);
+  const moreLinks = attractionLinks(more);
   // 색인을 연 속성 랜딩만 — 스위치가 꺼져 있으면 0개다
   const landingLinks = landings
     .map((l) => `<li><a href="${landingPath(lang, l.entry.code, l.entry.attr)}">${escapeHtml(l.heading)}</a></li>`)
@@ -1604,6 +1626,9 @@ export function renderRegionDetail(
           : '') +
         (topLinks
           ? `<h2>${lang === 'en' ? 'Top attractions' : '대표 관광지'}</h2><ul>${topLinks}</ul>`
+          : '') +
+        (moreLinks
+          ? `<h2>${lang === 'en' ? 'More attractions' : '관광지 더 보기'}</h2><ul>${moreLinks}</ul>`
           : '') +
         (landingLinks
           ? `<h2>${lang === 'en' ? 'Lists by feature' : '조건별 목록'}</h2><ul>${landingLinks}</ul>`
@@ -1645,9 +1670,11 @@ export function placeDetailPages(shell, places, regions, { regionTops = new Map(
       const parent = isSido ? null : (sidoByCode.get(region.code.slice(0, 2)) ?? null);
       const children = isSido ? regionsLang.filter((r) => r.level === 'SIGUNGU' && r.code.startsWith(region.code)) : [];
       // 시도는 시도 샤드에서, 시군구는 빌드 때 시군구마다 조회한 결과(fetchRegionTops)에서 고른다
-      const top = isSido
+      const picks = isSido
         ? (bySido.get(region.code) ?? []).slice(0, REGION_TOPS_SHOWN)
         : sigunguTops(regionTops.get(`${lang}/${region.code}`), docsById);
+      const top = picks.slice(0, REGION_TOPS_SHOWN);
+      const more = picks.slice(REGION_TOPS_SHOWN);
       const landings = isSido
         ? []
         : landingPages.filter((p) => p.indexed && p.entry.lang === lang && p.entry.code === region.code);
@@ -1657,6 +1684,7 @@ export function placeDetailPages(shell, places, regions, { regionTops = new Map(
           parent,
           children,
           top,
+          more,
           landings,
           bothLangs: bothLangCodes.has(region.code),
         }),

@@ -461,9 +461,11 @@ class AttractionPageRenderer(
     // ─── 크롤러용 본문 ──────────────────────────────────────────────────────
 
     /**
-     * 화면(AttractionPage)과 같은 순서로 절을 낸다: 브레드크럼(시군구까지) → 제목 → 행동 줄 → 가까운 역·정류장 → 방문 요약 → 배지 줄 → 이 사이트 근거 줄 →
-     * 개요 → 대표 사진 → 유형별 절(행사·숙박·코스) → 지역 안 위치 → 같은 분류 가까운 곳 → 비슷한 곳(다른 시도) →
-     * 함께 간 곳 → 출처. 방문 요약·배지 줄은 유형별 절이 없는 유형에만 붙고, 그 유형에서는 「이용 안내」·배지 절이
+     * 절 순서: 브레드크럼(시군구까지) → 제목 → 행동 줄 → 가까운 역·정류장 → 방문 요약 → 배지 줄 → 이 사이트 근거 줄 →
+     * 유형별 절(행사·숙박·코스) → 접근성 → 지역 안 위치 → 같은 분류 가까운 곳 → 개요 → 대표 사진 → 비슷한 곳(다른 시도) →
+     * 함께 간 곳 → 출처. 화면(AttractionPage)과 달리 원천 개요를 이 사이트가 만든 절 뒤에 둔다 — 개요는 같은 원천을 쓰는
+     * 다른 사이트에도 똑같이 있는 문장이고, JS 를 돌리지 않는 크롤러(네이버 Yeti 등)는 이 HTML 만 본다.
+     * 방문 요약·배지 줄은 유형별 절이 없는 유형에만 붙고, 그 유형에서는 「이용 안내」·배지 절이
      * 겹치므로 내지 않는다. 반경 주변 관광지·편의시설·근처 행사·숙소는 조회가 더 필요해 SPA 가 그린다
      * (관광지당 색인 조회는 한 번).
      */
@@ -490,8 +492,6 @@ class AttractionPageRenderer(
             append(visitBadges(lang, doc.attributes, doc.uniqueClickers14d))
         }
         append(siteSignals(lang, doc))
-        append("<p>${escapeHtml(sourceText(doc.overview))}</p>")
-        append(photo(doc))
         typed?.let(::append)
         append(campingSection(lang, doc.camping))
         if (typed != null) append(badges(lang, doc.attributes, doc.uniqueClickers14d))
@@ -501,6 +501,8 @@ class AttractionPageRenderer(
             append(regionSection(lang, doc, it))
             append(sameCategoryNearby(lang, it, today))
         }
+        append("<p>${escapeHtml(sourceText(doc.overview))}</p>")
+        append(photo(doc))
         append(similarSection(lang, doc.similarElsewhere?.filterNot { ended(it.eventEndEffective, today) }))
         // 함께 간 곳 — 비슷한 곳과 겹쳐도 거르지 않는다(근거가 다른 두 목록이다). 색인에 실린 목록 그대로, 화면과 같은 순서
         append(relatedSection(lang, doc.relatedPlaces))
@@ -567,7 +569,7 @@ class AttractionPageRenderer(
 
     /**
      * 방문 요약 — 화면 `visitSummary`(placeAttributes.ts)와 같은 일곱 칸·같은 문구. `VisitSummaryParityTest` 가 화면 출력 골든과 비교한다.
-     * 값이 없는 칸은 「정보 없음」으로 남긴다(「불가」로 바꾸지 않는다). 두 줄 값(해석 줄 + 원문 줄)은 `\n` 으로 잇는다.
+     * 값이 없는 칸은 줄째 뺀다(「불가」로 채우지 않는다). 「확인 상태」는 늘 남는다. 두 줄 값(해석 줄 + 원문 줄)은 `\n` 으로 잇는다.
      */
     private fun visitSummary(lang: String, doc: AttractionDocument): String {
         val en = lang == EN
@@ -611,9 +613,9 @@ class AttractionPageRenderer(
         )
         // feeText 도 escapeHtml 만 — 원문 값은 위에서 이미 sourceText 를 거쳤다
         return "<dl data-place-section=\"visit-summary\">" +
-            rows.joinToString("") { (label, value) ->
-                "<dt>${escapeHtml(label)}</dt><dd>${visitSummaryHtml(value?.ifEmpty { null } ?: na)}</dd>"
-            } +
+            rows.mapNotNull { (label, value) ->
+                value?.takeIf { it.isNotEmpty() }?.let { "<dt>${escapeHtml(label)}</dt><dd>${visitSummaryHtml(it)}</dd>" }
+            }.joinToString("") +
             "</dl>"
     }
 

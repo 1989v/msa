@@ -374,7 +374,7 @@ const VISIT_SUMMARY_LABELS: Record<PlaceLang, readonly string[]> = {
 };
 
 export interface VisitSummary {
-  /** 칸 — 표 순서 그대로, 항상 일곱. 값이 두 줄이면 `\n` 으로 잇는다. */
+  /** 칸 — 표 순서 그대로. 값이 없는 칸은 빼고 「확인 상태」는 늘 마지막에 둔다. 값이 두 줄이면 `\n` 으로 잇는다. */
   rows: Array<{ label: string; value: string }>;
   /** 칸이 없는 배지(신용카드 · 유모차 대여 · 많이 클릭한 곳)를 「 · 」로 이은 줄. 없으면 null */
   badgeLine: string | null;
@@ -433,7 +433,11 @@ export function visitSummary(a: Attraction, lang: PlaceLang): VisitSummary {
     (a.uniqueClickers14d ?? 0) >= FREQUENTLY_CLICKED_MIN ? (en ? 'Frequently clicked' : '많이 클릭한 곳') : null,
   ].filter((s): s is string => s != null);
   return {
-    rows: VISIT_SUMMARY_LABELS[lang].map((label, i) => ({ label, value: visitSummaryValue(values[i] || na) })),
+    // 값 없는 칸은 줄째 뺀다 — 「정보 없음」 줄이 여럿이면 화면이 비고 검색엔진에는 템플릿만 남은 얇은 페이지로 읽힌다.
+    // 「불가」로 채우지 않는 규칙(모름 ≠ 없음)은 그대로다
+    rows: VISIT_SUMMARY_LABELS[lang]
+      .map((label, i) => ({ label, value: values[i] ? visitSummaryValue(values[i]) : '' }))
+      .filter((row) => row.value !== ''),
     badgeLine: badges.length > 0 ? badges.join(' · ') : null,
   };
 }

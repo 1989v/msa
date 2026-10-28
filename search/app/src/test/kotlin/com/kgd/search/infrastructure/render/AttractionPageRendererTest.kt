@@ -187,7 +187,9 @@ class AttractionPageRendererTest : BehaviorSpec({
             val summary = root.substringAfter("<dl data-place-section=\"visit-summary\">").substringBefore("</dl>")
             summary shouldContain "<dt>쉬는 날</dt><dd><ul><li>매주 화요일 휴무</li><li>매주 화요일</li></ul></dd>"
             summary shouldContain "<dt>주차</dt><dd><ul><li>주차 가능</li><li>가능</li></ul></dd>"
-            summary shouldContain "<dt>반려동물</dt><dd>정보 없음</dd>"
+            // 값이 없는 칸은 줄째 빠진다
+            summary shouldNotContain "<dt>반려동물</dt>"
+            summary shouldNotContain "정보 없음</dd><dt>"
             root shouldContain "<p data-place-section=\"visit-badges\">유모차 대여 없음</p>"
             root shouldNotContain "신용카드"
             // 입장 무료/유료는 요금 칸 값과 같은 정보라 따로 내지 않는다
@@ -210,15 +212,15 @@ class AttractionPageRendererTest : BehaviorSpec({
             root shouldContain "<li><a href=\"/attractions/3002\">화성행궁 &lt;정조&gt;</a></li>"
         }
 
-        then("절 순서는 제목 → 행동 줄 → 방문 요약 → 배지 줄 → 개요 → 지역 안 위치 → 같은 분류 가까운 곳 → 비슷한 곳") {
+        then("절 순서는 제목 → 행동 줄 → 방문 요약 → 배지 줄 → 지역 안 위치 → 같은 분류 가까운 곳 → 개요 → 비슷한 곳") {
             val order = listOf(
                 "<h1>",
                 "data-place-section=\"actions\"",
                 "data-place-section=\"visit-summary\"",
                 "data-place-section=\"visit-badges\"",
-                "조선 왕조의 법궁",
                 "종로구 관광지 120곳",
                 "data-place-section=\"same-category-nearby\"",
+                "조선 왕조의 법궁",
                 "다른 지역의 비슷한 곳",
                 "경기전",
             ).map { root.indexOf(it) }
@@ -828,7 +830,7 @@ class AttractionPageRendererTest : BehaviorSpec({
             val stayRoot = rootOf(render(SHELL, stay().copy(attributes = PARSED)))
             stayRoot shouldContain "<h2>방문 정보 요약</h2>"
             stayRoot shouldContain "<li>입장 무료</li>"
-            val order = listOf("<h1>", "data-place-section=\"actions\"", "북촌의 한옥 숙소", "data-place-section=\"stay\"", "방문 정보 요약")
+            val order = listOf("<h1>", "data-place-section=\"actions\"", "data-place-section=\"stay\"", "방문 정보 요약", "북촌의 한옥 숙소")
                 .map { stayRoot.indexOf(it) }
             order.none { it < 0 } shouldBe true
             order shouldBe order.sorted()
@@ -884,11 +886,11 @@ class AttractionPageRendererTest : BehaviorSpec({
             summaryValue(rootOf(render(SHELL, doc().copy(feeText = "<어린이> 무료"))), "요금") shouldBe "&lt;어린이&gt; 무료"
         }
 
-        then("feeText 가 없으면 원천 useFee 를 정규화해 쓰고, 둘 다 없으면 「정보 없음」") {
+        then("feeText 가 없으면 원천 useFee 를 정규화해 쓰고, 둘 다 없으면 요금 칸이 없다") {
             summaryValue(rootOf(render(SHELL, doc().copy(useFee = "어른 1,000원<br>&lt;어린이&gt; 무료"))), "요금") shouldBe
                 "<ul><li>어른 1,000원</li><li>&lt;어린이&gt; 무료</li></ul>"
-            summaryValue(rootOf(render(SHELL, doc())), "요금") shouldBe "정보 없음"
-            summaryValue(rootOf(render(SHELL, doc(id = "2001", lang = "en"))), "Admission") shouldBe "Not provided"
+            summaryValue(rootOf(render(SHELL, doc())), "요금") shouldBe null
+            summaryValue(rootOf(render(SHELL, doc(id = "2001", lang = "en"))), "Admission") shouldBe null
         }
     }
 

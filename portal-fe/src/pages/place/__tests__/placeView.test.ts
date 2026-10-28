@@ -492,23 +492,24 @@ describe('visitSummary — 방문 요약 칸과 배지 줄', () => {
   const cell = (a: Partial<Attraction>, label: string, lang: 'ko' | 'en' = 'ko') =>
     visitSummary({ ...base, ...a }, lang).rows.find((r) => r.label === label)?.value;
 
-  it('칸은 표 순서 그대로, 값이 없으면 「정보 없음 / Not provided」로 남는다', () => {
-    expect(visitSummary(base, 'ko').rows.map((r) => r.label)).toEqual(
-      ['요금', '이용시간', '쉬는 날', '주차', '반려동물', '무장애', '확인 상태'],
-    );
-    expect(visitSummary(base, 'en').rows.map((r) => r.label)).toEqual(
-      ['Admission', 'Hours', 'Closed', 'Parking', 'Pets', 'Accessibility', 'Data status'],
-    );
-    expect(visitSummary(base, 'ko').rows.slice(0, 6).map((r) => r.value)).toEqual(Array(6).fill('정보 없음'));
-    expect(visitSummary(base, 'en').rows.slice(0, 6).map((r) => r.value)).toEqual(Array(6).fill('Not provided'));
+  it('칸은 표 순서 그대로, 값이 없는 칸은 빼고 「확인 상태」만 늘 남는다', () => {
+    expect(visitSummary(base, 'ko').rows.map((r) => r.label)).toEqual(['확인 상태']);
+    expect(visitSummary(base, 'en').rows.map((r) => r.label)).toEqual(['Data status']);
+    const full = visitSummary({
+      ...base, feeText: '무료', useTime: '09:00~18:00', restDate: '매주 화요일', parking: '가능',
+      petAcmpyType: '불가', barrierFree: ['WHEELCHAIR'],
+    }, 'ko');
+    expect(full.rows.map((r) => r.label)).toEqual(['요금', '이용시간', '쉬는 날', '주차', '반려동물', '무장애', '확인 상태']);
+    expect(visitSummary({ ...base, useTime: '09:00~18:00', parking: '가능' }, 'en').rows.map((r) => r.label))
+      .toEqual(['Hours', 'Parking', 'Data status']);
   });
 
   it('요금 — feeText 가 우선이고 다시 정규화하지 않는다, 없으면 useFee 원문', () => {
     expect(cell({ feeText: '<어린이> 무료', useFee: '3,000원' }, '요금')).toBe('<어린이> 무료');
     expect(cell({ feeText: null, useFee: '어른 3,000원<br>어린이 1,500원' }, '요금')).toBe('어른 3,000원\n어린이 1,500원');
     expect(cell({ useFee: '&lt;성인&gt; 1,000원' }, '요금')).toBe('<성인> 1,000원');
-    expect(cell({ feeText: null, useFee: ' <br> ' }, '요금')).toBe('정보 없음');
-    expect(cell({ feeText: null, useFee: null }, 'Admission', 'en')).toBe('Not provided');
+    expect(cell({ feeText: null, useFee: ' <br> ' }, '요금')).toBeUndefined();
+    expect(cell({ feeText: null, useFee: null }, 'Admission', 'en')).toBeUndefined();
   });
 
   it('이용시간 — 원문 평문', () => {
@@ -530,14 +531,14 @@ describe('visitSummary — 방문 요약 칸과 배지 줄', () => {
     expect(cell({ closureState: 'ALWAYS_OPEN', restDate: null }, '쉬는 날')).toBe('연중무휴');
     expect(cell({ closureState: 'ALWAYS_OPEN', restDate: null }, 'Closed', 'en')).toBe('Open every day');
     expect(cell({ closureState: 'UNKNOWN', restDate: '설날 당일' }, '쉬는 날')).toBe('설날 당일');
-    expect(cell({ closureState: 'UNKNOWN', restDate: null }, '쉬는 날')).toBe('정보 없음');
+    expect(cell({ closureState: 'UNKNOWN', restDate: null }, '쉬는 날')).toBeUndefined();
   });
 
-  it('주차 — YES·NO 해석 줄 + 원문, UNKNOWN 에 원문도 없으면 정보 없음', () => {
+  it('주차 — YES·NO 해석 줄 + 원문, UNKNOWN 에 원문도 없으면 칸이 없다', () => {
     expect(cell({ attrParking: 'NO', parking: '불가' }, '주차')).toBe('주차 불가\n불가');
     expect(cell({ attrParking: 'YES', parking: null }, 'Parking', 'en')).toBe('Parking available');
     expect(cell({ attrParking: 'NO' }, 'Parking', 'en')).toBe('No parking');
-    expect(cell({ attrParking: 'UNKNOWN', parking: null }, '주차')).toBe('정보 없음');
+    expect(cell({ attrParking: 'UNKNOWN', parking: null }, '주차')).toBeUndefined();
     expect(cell({ attrParking: 'UNKNOWN', parking: '문의 요망' }, '주차')).toBe('문의 요망');
   });
 
@@ -545,14 +546,14 @@ describe('visitSummary — 방문 요약 칸과 배지 줄', () => {
     expect(cell({ petPolicy: 'ALLOWED', petAcmpyType: '전구역 동반가능' }, '반려동물')).toBe('반려동물 동반 가능');
     expect(cell({ petPolicy: 'PARTIAL' }, 'Pets', 'en')).toBe('Pets allowed in some areas');
     expect(cell({ petPolicy: 'UNKNOWN', petAcmpyType: '소형견만 &amp; 목줄' }, '반려동물')).toBe('소형견만 & 목줄');
-    expect(cell({ petPolicy: 'UNKNOWN', petAcmpyType: null }, '반려동물')).toBe('정보 없음');
+    expect(cell({ petPolicy: 'UNKNOWN', petAcmpyType: null }, '반려동물')).toBeUndefined();
   });
 
-  it('무장애 — 긍정 항목을 접근성 절과 같은 순서로 「 · 」, 없으면 정보 없음', () => {
+  it('무장애 — 긍정 항목을 접근성 절과 같은 순서로 「 · 」, 없으면 칸이 없다', () => {
     expect(cell({ barrierFree: ['ELEVATOR', 'WHEELCHAIR'] }, '무장애')).toBe('휠체어 · 엘리베이터');
     expect(cell({ barrierFree: ['RESTROOM'] }, 'Accessibility', 'en')).toBe('Accessible restroom');
-    expect(cell({ barrierFree: [] }, '무장애')).toBe('정보 없음');
-    expect(cell({ barrierFree: null }, '무장애')).toBe('정보 없음');
+    expect(cell({ barrierFree: [] }, '무장애')).toBeUndefined();
+    expect(cell({ barrierFree: null }, '무장애')).toBeUndefined();
   });
 
   it('속성이 없는 옛 문서는 해석 줄 없이 원문 줄만', () => {
