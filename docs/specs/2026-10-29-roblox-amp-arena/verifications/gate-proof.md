@@ -46,8 +46,8 @@ LUAU_BIN=/private/tmp/roblox-infinity-step-tools/luau python3 gate_proof.py robl
 | 공통 정리 함수를 없앰(정의·호출 전부 다른 이름으로) (2차 test-strategy 지적) | single cleanup()/leave() | 1 | `FAIL launched→down waits for an Air observation (replication lag) with a 2.5s timeout (Rules.launchLanded); grab uses a Weld with PlatformStand; single cleanup(` |
 | Commands 가 상위 폴더를 문자열 require (2차 test-strategy 지적) | no parent-folder string requires | 1 | `FAIL no parent-folder string requires in any script (they resolve against the DataModel tree in Studio, not files) — [('src/server/Commands.luau', '../shared/Co` |
 | hitScan 이 팀 검사(canHit)를 건너뜀 (2차 test-strategy 지적) | combat decisions live in Rules (canHit) | 1 | `FAIL combat decisions live in shared Rules and the server calls them: Combat uses 21 Rules functions (chains, grab, hit geometry, guard, windows, credit, knockb` |
-| Z8 결과 단계 얼림이 속도 제약을 안 끔 (2차 implementation 지적) | end-of-match freeze / KO credit order | 1 | `NameError: name 'cfg' is not defined` |
-| Z9 KO 크레딧을 Health 뒤에 적음 (2차 implementation 지적) | end-of-match freeze / KO credit order | 1 | `NameError: name 'cfg' is not defined` |
+| Z8 결과 단계 얼림이 속도 제약을 안 끔 (2차 implementation 지적) | end-of-match freeze / KO credit order | 1 | `FAIL end-of-match freeze also stops the velocity constraint; KO credit is written before Health (sync Died safe); joints survive death (dead pose, accessory sta` |
+| Z9 KO 크레딧을 Health 뒤에 적음 (2차 implementation 지적) | end-of-match freeze / KO credit order | 1 | `FAIL end-of-match freeze also stops the velocity constraint; KO credit is written before Health (sync Died safe); joints survive death (dead pose, accessory sta` |
 | X 에셋 파일 변조 | embedded models are Roblox-owned | 1 | `FAIL 9 embedded models are Roblox-owned (creator id 1) with matching sha256 in provenance.json; 0 scripts in the raw files were stripped at build` |
 
 34/34 RED, proof exit=0 (Y 는 2차 security 권고로 게이트를 본문 모양 정규식으로 조인 뒤, Z1~Z7 은 2차 test-strategy 「RED 행 없는 게이트 15」 지적으로, Z8·Z9 는 2차 implementation N2·N5 로 추가). 주입 전 원본은 exit=0(status.md 의 출력).

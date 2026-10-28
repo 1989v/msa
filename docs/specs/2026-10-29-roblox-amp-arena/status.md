@@ -48,8 +48,25 @@ PASS pickup is the native ProximityPrompt (bomb) and hearts use Touched — no c
 PASS knockback/launch/dash use one LinearVelocity per fighter toggled on and off (constraints replicate to the owning client; no BodyVelocity/ApplyImpulse)
 PASS health is Humanoid.Health (native KO via Died); no shadow HP attribute
 PASS MoveAt/FightAt use workspace:GetServerTimeNow() on both server and Poser (shared clock for pose phase)
-Traceback (most recent call last):
-NameError: name 'cfg' is not defined
+PASS launched→down waits for an Air observation (replication lag) with a 2.5s timeout (Rules.launchLanded); grab uses a Weld with PlatformStand; single cleanup()/leave() clears weld, velocity and locks
+PASS end-of-match freeze also stops the velocity constraint; KO credit is written before Health (sync Died safe); joints survive death (dead pose, accessory stays); style scale is re-applied as an absolute value and the accessory scales with it
+PASS round loop phases ['countdown', 'lobby', 'match', 'result']; arena cloned per match and destroyed after; lighting preset applied per map
+PASS caps: bots ≤ 7, fighters ≤ 8, projectiles ≤ 40 (server Humanoid rigs and raycast steps stay bounded)
+PASS bots probe the ground ahead before stepping (the web reference lost 36% of bot deaths to self-ringouts)
+PASS Guard attribute replicates only when its integer value changes (no per-tick attribute churn)
+PASS client commands are shape-checked (enum intents, finite direction) and rate-limited; loadout is re-validated against style exclusivity on the server
+PASS player avatars are kept (R6 own clothes); style adds scale, accessory weld, name tag with HP bar and team outline (Highlight)
+PASS lighting: Future technology, Atmosphere + Bloom, per-map ClockTime presets ['17.5', '13'] (visual result is Studio-only)
+INFO world: 36 Roblox-owned models placed across maps, 1 ProximityPrompt template(s) (counts are scale, not quality evidence)
+UNVERIFIED: Studio Play: round loop timing, LoadCharacter into lobby/arena, bots filling, ForceField spawn shield
+UNVERIFIED: procedural pose look (R6 joint axis signs for shoulders/hips/root), hold timing, down pose resting on the floor, R15 mapping
+UNVERIFIED: LinearVelocity knockback feel on client-owned characters, launched→down landing detection, grab Weld between two player characters
+UNVERIFIED: hit reach/radius feel vs R6 bodies, aim assist turning, guard/counter window, chain buffering
+UNVERIFIED: touch button placement around the default jump button, gamepad bindings, ProximityPrompt on bombs
+UNVERIFIED: 8 players, team outline colors, name tag HP bars, result ranking screen, lobby ready shortcut
+UNVERIFIED: balance: every number in Config.luau/Moves.luau is a first guess translated from the web reference
+UNVERIFIED: fighter state transition table and per-state intent acceptance (idle/attack/guard/hitstun/launched/down/getup/held/grabbing/stun) live in Combat.luau and are exercised only in Studio — decisions with logic are in Rules, the transitions themselves are not CLI-tested
+UNVERIFIED: sound IDs (rbxasset) audible, Bangers font availability, Atmosphere density by eye
 exit=0
 ```
 게이트 증명: 회귀 주입 34/34 빨강 — `verifications/gate-proof.md`.

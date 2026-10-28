@@ -176,6 +176,7 @@ gate('hum.Health = math.max(0, V.hum.Health - dmg)' in combat and 'hum.Died:Conn
 gate('workspace:GetServerTimeNow()' in combat and 'workspace:GetServerTimeNow()' in poser and 'os.clock()' not in combat,
      'MoveAt/FightAt use workspace:GetServerTimeNow() on both server and Poser (shared clock for pose phase)')
 rules_src = (ROOT / 'src/shared/Rules.luau').read_text()
+cfg = (ROOT / 'src/shared/Config.luau').read_text()
 gate('F.sawAir = true' in combat and 'Rules.launchLanded(F.sawAir' in combat and 'elapsed > Config.HIT.launchTimeout' in rules_src and 'launchTimeout = 2.5' in cfg and 'Weld' in combat and 'PlatformStand = false' in combat and 'local function cleanup(F)' in combat and 'function Combat.leave' in combat,
      'launched→down waits for an Air observation (replication lag) with a 2.5s timeout (Rules.launchLanded); grab uses a Weld with PlatformStand; single cleanup()/leave() clears weld, velocity and locks')
 frozen_fn = re.search(r'function Combat\.setFrozen\(F, on\)(.*?)\nend', combat, re.S)
