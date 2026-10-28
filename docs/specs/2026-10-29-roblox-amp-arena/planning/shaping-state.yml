@@ -1,0 +1,4 @@
+mode: autonomous
+threshold: 0.2
+rounds: 0
+note: 사용자가 세션 중 응답할 수 없는 자율 실행. 결정은 open-questions.yml 에 assumed 로 적고 보고서에서 드러낸다.

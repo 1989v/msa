@@ -1,0 +1,82 @@
+--!nonstrict
+-- 절차 포즈. 태그 Fighter 전부의 Attribute(Fight·FightAt·Move·MoveAt·LandedAt) 를 읽어 Poses 의 각도를 Motor6D.Transform 으로 쓴다.
+-- RunService.Stepped 는 Animator 가 Transform 을 쓴 뒤라 여기서 쓰면 그 프레임의 걷기·대기 애니메이션을 덮는다. idle 이면 쓰지 않는다(기본 애니메이션이 돈다).
+-- R6 관절 축은 C0 의 회전(Right Shoulder = Ry(90°)) 때문에 로컬 Z 가 「앞으로 들기」다. R15 는 C0 회전이 없어 로컬 X 가 그 축이다.
+local RunService = game:GetService("RunService")
+local CollectionService = game:GetService("CollectionService")
+local Shared = game:GetService("ReplicatedStorage"):WaitForChild("AmpArena")
+local Moves = require(Shared.Moves)
+local Poses = require(Shared.Poses)
+
+local rad = math.rad
+local R6 = { root = "RootJoint", neck = "Neck", rs = "Right Shoulder", ls = "Left Shoulder", rh = "Right Hip", lh = "Left Hip" }
+local R15 = { root = "Root", neck = "Neck", rs = "RightShoulder", ls = "LeftShoulder", rh = "RightHip", lh = "LeftHip" }
+
+local cache = setmetatable({}, { __mode = "k" })
+local function joints(model)
+	local j = cache[model]
+	if j and j.alive then return j end
+	local hum = model:FindFirstChildOfClass("Humanoid")
+	local r15 = hum and hum.RigType == Enum.HumanoidRigType.R15
+	local names = r15 and R15 or R6
+	j = { r15 = r15, alive = true, posed = false }
+	for key, name in names do
+		local m = model:FindFirstChild(name, true)
+		if m and m:IsA("Motor6D") then j[key] = m end
+	end
+	cache[model] = j
+	return j
+end
+
+local function r6(j, p)
+	-- RootJoint/Neck 프레임: 로컬 X = 왼쪽, Y = 뒤, Z = 위
+	if j.root then j.root.Transform = CFrame.new(0, -p.root.dz, p.root.dy) * CFrame.Angles(rad(p.root.pitch), rad(-p.root.roll), rad(p.root.yaw)) end
+	if j.neck then j.neck.Transform = CFrame.Angles(rad(p.neck.pitch), 0, rad(p.neck.yaw)) end
+	-- 어깨·엉덩이 프레임: 로컬 Z = 몸통 X(오른쪽), 로컬 X = 앞. Z 회전 = 앞으로 들기(왼쪽은 부호 반대), X 회전 = 벌리기
+	if j.rs then j.rs.Transform = CFrame.Angles(rad(-p.rs.out), 0, rad(p.rs.fwd)) end
+	if j.ls then j.ls.Transform = CFrame.Angles(rad(-p.ls.out), 0, rad(-p.ls.fwd)) end
+	if j.rh then j.rh.Transform = CFrame.Angles(rad(-p.rh.out), 0, rad(p.rh.fwd)) end
+	if j.lh then j.lh.Transform = CFrame.Angles(rad(-p.lh.out), 0, rad(-p.lh.fwd)) end
+end
+local function r15(j, p)
+	if j.root then j.root.Transform = CFrame.new(0, p.root.dy, -p.root.dz) * CFrame.Angles(rad(-p.root.pitch), rad(p.root.yaw), rad(p.root.roll)) end
+	if j.neck then j.neck.Transform = CFrame.Angles(rad(-p.neck.pitch), rad(p.neck.yaw), 0) end
+	if j.rs then j.rs.Transform = CFrame.Angles(rad(p.rs.fwd), 0, rad(p.rs.out)) end
+	if j.ls then j.ls.Transform = CFrame.Angles(rad(p.ls.fwd), 0, rad(-p.ls.out)) end
+	if j.rh then j.rh.Transform = CFrame.Angles(rad(p.rh.fwd), 0, rad(p.rh.out)) end
+	if j.lh then j.lh.Transform = CFrame.Angles(rad(p.lh.fwd), 0, rad(-p.lh.out)) end
+end
+local function clear(j)
+	for _, key in { "root", "neck", "rs", "ls", "rh", "lh" } do
+		if j[key] then j[key].Transform = CFrame.identity end
+	end
+end
+
+local function poseFor(model, t)
+	local moveId = model:GetAttribute("Move")
+	if moveId and moveId ~= "" then
+		local m = Moves.get(moveId)
+		if m then
+			local at = model:GetAttribute("MoveAt") or t
+			local landedAt = model:GetAttribute("LandedAt") or 0
+			return Poses.forMove(m, t - at, landedAt > 0 and (landedAt - at) or nil)
+		end
+	end
+	local state = model:GetAttribute("Fight") or "idle"
+	return Poses.forState(state, t - (model:GetAttribute("FightAt") or t))
+end
+
+RunService.Stepped:Connect(function()
+	local t = workspace:GetServerTimeNow()
+	for _, model in CollectionService:GetTagged("Fighter") do
+		if not model.Parent then continue end
+		local j = joints(model)
+		local p = poseFor(model, t)
+		if p then
+			if j.r15 then r15(j, p) else r6(j, p) end
+			j.posed = true
+		elseif j.posed then
+			clear(j); j.posed = false
+		end
+	end
+end)

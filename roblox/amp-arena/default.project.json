@@ -1,0 +1,9 @@
+{
+  "name": "AmpArena",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {"AmpArena": {"$path": "src/shared", "Remotes": {"$className": "Folder", "Command": {"$className": "RemoteEvent"}, "Fx": {"$className": "RemoteEvent"}, "State": {"$className": "RemoteEvent"}}}},
+    "ServerScriptService": {"AmpArena": {"$path": "src/server"}},
+    "StarterPlayer": {"StarterPlayerScripts": {"$path": "src/client"}}
+  }
+}

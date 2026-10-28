@@ -1,0 +1,83 @@
+{
+ "56447717": {
+  "name": "Torch",
+  "creatorId": 1,
+  "creatorName": "Roblox",
+  "scriptCount": 0,
+  "sha256": "d8f929a0ae3c88e51571c1fb3a02cc5dd636e8e1ee7637d76a1abbcf06c9a1e1",
+  "source": "https://assetdelivery.roblox.com/v1/asset/?id=56447717",
+  "fetched": "2026-10-28"
+ },
+ "56448754": {
+  "name": "Castle Wall",
+  "creatorId": 1,
+  "creatorName": "Roblox",
+  "scriptCount": 0,
+  "sha256": "2a3aabcfbb8086208c4b6c8a502f23ce49671851294fed521460746ced7c3d37",
+  "source": "https://assetdelivery.roblox.com/v1/asset/?id=56448754",
+  "fetched": "2026-10-28"
+ },
+ "41324931": {
+  "name": "Castle - Rampart",
+  "creatorId": 1,
+  "creatorName": "Roblox",
+  "scriptCount": 0,
+  "sha256": "0646ae7af978cad5e272fd5913eff5a4be0a49459830172df0b7e6e52b26e4e8",
+  "source": "https://assetdelivery.roblox.com/v1/asset/?id=41324931",
+  "fetched": "2026-10-28"
+ },
+ "56448738": {
+  "name": "Castle Wall - Corner",
+  "creatorId": 1,
+  "creatorName": "Roblox",
+  "scriptCount": 0,
+  "sha256": "b4c1dd7d33b4ab160f1da3cb75e03aa0a85eac998f54f627cd6cbdf50ed9e1b9",
+  "source": "https://assetdelivery.roblox.com/v1/asset/?id=56448738",
+  "fetched": "2026-10-28"
+ },
+ "56449052": {
+  "name": "Fence",
+  "creatorId": 1,
+  "creatorName": "Roblox",
+  "scriptCount": 0,
+  "sha256": "333456412771dc4e555587fc1d6d484f0fc81276931b0831f91bcc813f9a8db4",
+  "source": "https://assetdelivery.roblox.com/v1/asset/?id=56449052",
+  "fetched": "2026-10-28"
+ },
+ "56448980": {
+  "name": "Flowers",
+  "creatorId": 1,
+  "creatorName": "Roblox",
+  "scriptCount": 0,
+  "sha256": "3f657f3dec520d6bbba3abbdbc44646b80719f6edd169253f826ae2c3842eeb7",
+  "source": "https://assetdelivery.roblox.com/v1/asset/?id=56448980",
+  "fetched": "2026-10-28"
+ },
+ "56449188": {
+  "name": "Tree - Large",
+  "creatorId": 1,
+  "creatorName": "Roblox",
+  "scriptCount": 0,
+  "sha256": "a5c0001476b8748258bac6b45862a744788c4f82135425c807bc5b9b4b28bfcf",
+  "source": "https://assetdelivery.roblox.com/v1/asset/?id=56449188",
+  "fetched": "2026-10-28"
+ },
+ "56449156": {
+  "name": "Tree - Medium",
+  "creatorId": 1,
+  "creatorName": "Roblox",
+  "scriptCount": 0,
+  "sha256": "ec6883784ca9e23b2865f321d091785487d55ff96f6244e7f800fed1b56c6133",
+  "source": "https://assetdelivery.roblox.com/v1/asset/?id=56449156",
+  "fetched": "2026-10-28"
+ },
+ "56449132": {
+  "name": "Tree - Small",
+  "creatorId": 1,
+  "creatorName": "Roblox",
+  "scriptCount": 0,
+  "sha256": "16830197dc8d0a8c4772166403393c3a88df2a5e7a7b06b5c19bbb0483237c39",
+  "source": "https://assetdelivery.roblox.com/v1/asset/?id=56449132",
+  "fetched": "2026-10-28"
+ }
+}

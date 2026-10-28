@@ -1,0 +1,35 @@
+# pre-impl: 구현 전 미결 · post-impl: 구현 뒤 사용자 확인
+questions:
+  - id: OQ1
+    phase: pre-impl
+    status: assumed
+    q: 로블록스판 이름·위치
+    a: "`roblox/amp-arena/`, 표시명 「AMP ARENA」 — 궁수 키우기 선례처럼 사용자 대면 이름을 따른다. 상용 게임 이름은 쓰지 않는다. 사용자가 다른 이름을 원하면 폴더·타이틀만 바꾼다"
+  - id: OQ2
+    phase: pre-impl
+    status: assumed
+    q: 첫 조각 범위
+    a: "스타일 5 + 액세서리 5(스타일당 1) + 아이템 3 + 맵 2 + 모드 3 + 봇. 16종 전체·진행·저장은 후속"
+  - id: OQ3
+    phase: pre-impl
+    status: assumed
+    q: 리그
+    a: "R6 강제 + 절차 포즈(Transform). 사용자가 R15 아바타를 원하면 Game Settings 만 바꾸면 Poser 가 R15 관절로 매핑한다(생김새는 미검증)"
+  - id: OQ4
+    phase: post-impl
+    status: open
+    q: 포즈·타격감·넉백 거리·속도는 Studio 플레이 뒤 조정
+  - id: OQ5
+    phase: post-impl
+    status: open
+    q: 공개(Roblox 업로드)·Max Players 8·Developer Product 는 별도 승인
+  - id: OQ6
+    phase: post-impl
+    status: open
+    q: 서바이벌에서 먼저 KO 된 사람은 관전 없이 로비 발판에서 최대 2분 기다린다
+    a: "알려진 한계. 관전 카메라는 후속"
+  - id: OQ7
+    phase: pre-impl
+    status: assumed
+    q: 액세서리 표시명(부스터·월·더블탭·브레이커·스파이크)
+    a: "사용자의 웹 참고작 고유명을 그대로. 상용 게임 이름은 쓰지 않는다. 바꾸려면 Accessories.luau 의 label 만"
