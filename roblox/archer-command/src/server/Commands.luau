@@ -1,71 +1,38 @@
 --!nonstrict
--- 클라이언트 명령의 고정 스키마. 통과한 것만 Sim.act 에 간다. ownerId 는 여기서 붙이지 않는다(서버 세션이 붙인다).
--- 타입이 다르면 nil — 오류 응답으로 탐색 정보를 주지 않는다.
+-- 클라이언트 명령의 모양 검사와 빈도 제한. 통과한 것만 Main 이 실행한다.
 local Commands = {}
 
-local function finite(v) return type(v) == "number" and v == v and v ~= math.huge and v ~= -math.huge end
-local function int(v) return finite(v) and v == math.floor(v) and v >= 1 and v < 2 ^ 31 end
-local function oneOf(v, list)
-	if type(v) ~= "string" then return false end
-	for _, x in list do if x == v then return true end end
-	return false
-end
-local function intList(v, maxLen)
-	if type(v) ~= "table" or #v == 0 or #v > maxLen then return nil end
-	local out, seen = {}, {}
-	for i = 1, #v do
-		local id = v[i]
-		if not int(id) or seen[id] then return nil end
-		seen[id] = true; out[i] = id
-	end
-	return out
+local function finiteVector(v)
+	if typeof(v) ~= "Vector3" then return false end
+	return v.X == v.X and v.Y == v.Y and v.Z == v.Z and math.abs(v.X) < 1e4 and math.abs(v.Y) < 1e4 and math.abs(v.Z) < 1e4
 end
 
-function Commands.normalize(payload)
-	if type(payload) ~= "table" or type(payload.type) ~= "string" then return nil end
-	local t = payload.type
-	if t == "hire" then
-		if not oneOf(payload.kind, { "archer", "longbow", "carpenter" }) then return nil end
-		return { type = "hire", kind = payload.kind }
-	elseif t == "upgrade" then
-		if not oneOf(payload.stat, { "attack", "armor" }) or (payload.count ~= 1 and payload.count ~= 10) then return nil end
-		return { type = "upgrade", stat = payload.stat, count = payload.count }
-	elseif t == "combine" then
-		local ids = intList(payload.unitIds, 3)
-		if not ids or #ids ~= 3 then return nil end
-		return { type = "combine", unitIds = ids }
-	elseif t == "garrison" then
-		local ids = intList(payload.unitIds, 24)
-		if not ids or not int(payload.towerId) then return nil end
-		return { type = "garrison", unitIds = ids, towerId = payload.towerId }
-	elseif t == "ungarrison" then
-		local ids = intList(payload.unitIds, 24)
-		if not ids then return nil end
-		return { type = "ungarrison", unitIds = ids }
-	elseif t == "assign" then
-		if not int(payload.unitId) or not oneOf(payload.job, { "wood", "mine", "repair", "idle" }) then return nil end
-		local c = { type = "assign", unitId = payload.unitId, job = payload.job }
-		if payload.job == "wood" or payload.job == "mine" then
-			if not oneOf(payload.nodeId, { "wood_west", "wood_east", "ore_west", "ore_east" }) then return nil end
-			c.nodeId = payload.nodeId
-		elseif payload.job == "repair" then
-			if not int(payload.towerId) then return nil end
-			c.towerId = payload.towerId
-		end
-		return c
-	elseif t == "build" then
-		if not int(payload.workerId) or not finite(payload.x) or not finite(payload.z) then return nil end
-		-- 서버가 셀로 내린다. 클라이언트 스냅은 표시용이다.
-		return { type = "build", workerId = payload.workerId, x = math.floor(payload.x / 4) * 4, z = math.floor(payload.z / 4) * 4 }
-	elseif t == "cancelBuild" then
-		if not int(payload.towerId) then return nil end
-		return { type = "cancelBuild", towerId = payload.towerId }
-	elseif t == "heroSkill" then
-		if not oneOf(payload.skill, { "multishot", "roll" }) or not finite(payload.dx) or not finite(payload.dz) then return nil end
-		local length = if finite(payload.length) then math.clamp(payload.length, 0, 15) else 15
-		return { type = "heroSkill", skill = payload.skill, dx = payload.dx, dz = payload.dz, length = length }
-	end
-	return nil
+local SCHEMA = {
+	start = function(a) return a.mode == "new" or a.mode == "continue" end,
+	hire = function(a) return a.kind == "archer" or a.kind == "longbow" or a.kind == "carpenter" end,
+	upgrade = function(a) return a.kind == "attack" or a.kind == "armor" end,
+	combine = function() return true end,
+	tower = function(a) return finiteVector(a.point) end,
+	skill = function(a) return finiteVector(a.point) end,
+	restart = function() return true end,
+}
+
+local buckets = {}
+local CAP, REFILL = 20, 2 -- 20개, 초당 2개 회복
+
+function Commands.validate(player, name, args)
+	if type(name) ~= "string" or not SCHEMA[name] then return false, "UNKNOWN" end
+	if type(args) ~= "table" then args = {} end
+	local b = buckets[player] or { tokens = CAP, at = os.clock() }
+	buckets[player] = b
+	local t = os.clock()
+	b.tokens = math.min(CAP, b.tokens + (t - b.at) * REFILL); b.at = t
+	if b.tokens < 1 then return false, "RATE" end
+	b.tokens -= 1
+	if not SCHEMA[name](args) then return false, "SCHEMA" end
+	return true, args
 end
+
+function Commands.forget(player) buckets[player] = nil end
 
 return Commands

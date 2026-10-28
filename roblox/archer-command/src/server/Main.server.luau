@@ -1,364 +1,295 @@
 --!nonstrict
--- 서버: 세션·협동 수락·틱·리더 검사·패킷·저장. 규칙은 전부 shared/Sim 에 있다.
+-- 세션: 로비 → 원정(playing) → 패배. 금화·고용·강화·합성·탑·영웅 기술·본진·치료사·저장을 서버가 결정한다.
 local Players = game:GetService("Players")
-local Run = game:GetService("RunService")
-local Replicated = game:GetService("ReplicatedStorage")
-local DataStores = game:GetService("DataStoreService")
-local Http = game:GetService("HttpService")
-
-local Shared = Replicated:WaitForChild("ArcherCommand")
-local Sim = require(Shared.Sim)
-local Grid = require(Shared.Grid)
-local Balance = require(Shared.Balance)
-local Packet = require(Shared.Packet)
-local Theme = require(Shared.Theme)
+local RunService = game:GetService("RunService")
+local PhysicsService = game:GetService("PhysicsService")
+local Shared = game:GetService("ReplicatedStorage"):WaitForChild("ArcherCommand")
+local Config = require(Shared.Config)
+local Rules = require(Shared.Rules)
+local Rigs = require(script.Parent.Rigs)
+local Npc = require(script.Parent.Npc)
+local Campaign = require(script.Parent.Campaign)
+local Towers = require(script.Parent.Towers)
 local Save = require(script.Parent.Save)
-local Ingress = require(script.Parent.Ingress)
 local Commands = require(script.Parent.Commands)
 
-local STUDIO = Run:IsStudio()
-local commandRemote = Shared:WaitForChild("Command")
-local stateRemote = Shared:WaitForChild("State")
-local actorsRemote = Shared:WaitForChild("Actors")
-local lobbyRemote = Shared:WaitForChild("Lobby")
-local eventRemote = Shared:WaitForChild("Event")
+local Remotes = Shared:WaitForChild("Remotes")
+local Command, Fx, State = Remotes.Command, Remotes.Fx, Remotes.State
+local World = workspace:WaitForChild("World")
 
-Players.CharacterAutoLoads = false
+-- NPC 끼리·NPC 와 플레이어는 서로 밀치지 않는다(무리가 끼지 않게). 지형과는 충돌한다.
+pcall(function()
+	PhysicsService:RegisterCollisionGroup("Npc"); PhysicsService:RegisterCollisionGroup("Player")
+	PhysicsService:CollisionGroupSetCollidable("Npc", "Npc", false)
+	PhysicsService:CollisionGroupSetCollidable("Npc", "Player", false)
+end)
 
--- ── 저장소 (Studio 는 메모리) ───────────────────────────────────────────────
-local memory = {}
-local store = if STUDIO then nil else DataStores:GetDataStore("ArcherCommand_v1")
-local function update(key, transform)
-	if STUDIO then
-		local updated = transform(memory[key])
-		if updated ~= nil then memory[key] = updated end
-		return memory[key]
+local session = {
+	phase = "lobby", host = nil, eco = Rules.newEconomy(), baseHp = Config.BASE.maxHealth, baseMax = Config.BASE.maxHealth,
+	skillReadyAt = 0, saveTimer = 0, saveInfo = "none", tutorial = {}, startedWith = 0,
+}
+local toasts = {}
+local function toast(text) table.insert(toasts, text); Fx:FireAllClients("toast", text) end
+
+local function addGold(amount, reason, pos)
+	session.eco.gold += amount
+	if pos then Fx:FireAllClients("gold", pos, amount) end
+end
+
+local function damageBase(amount)
+	if session.phase ~= "playing" then return end
+	session.baseHp = math.max(0, session.baseHp - amount)
+	Fx:FireAllClients("baseHit", session.baseHp / session.baseMax)
+	if session.baseHp <= 0 then
+		session.phase = "defeat"
+		toast("본진이 무너졌다")
+		Npc.clear(); Towers.clear(); Campaign.stop()
 	end
-	return store:UpdateAsync(key, transform)
-end
-local save = Save.new(update, function(snapshot) return Http:JSONEncode(snapshot) end, function(text) return Http:JSONDecode(text) end, os.time)
-
--- ── 세션 ───────────────────────────────────────────────────────────────────
-local sim = nil            -- Sim 상태 (선택이 끝나기 전에는 nil)
-local campaignId = nil
-local hostUserId = nil
-local sessions = {}        -- [player] = { ownerId, spectator, pending, lastAccepted, corrections, rejected, queue }
-local loadResult = nil     -- 호스트 로드 결과
-local pendingJoin = nil    -- 수락 대기 중인 손님
-local lastSave = 0
-local overflowTicks = 0
-
-local function sessionOf(player) return sessions[player] end
-local function ownerSession(ownerId)
-	for player, s in sessions do if s.ownerId == ownerId then return player, s end end
-	return nil
 end
 
-local function toast(player, text, kind) eventRemote:FireClient(player, { type = "toast", text = text, kind = kind or "info" }) end
-
--- ── 캐릭터 ─────────────────────────────────────────────────────────────────
-local function setupCharacter(player, character)
-	local humanoid = character:WaitForChild("Humanoid")
-	local health = character:FindFirstChild("Health")
-	if health then health:Destroy() end
-	humanoid.BreakJointsOnDeath = false
-	humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
-	humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
-	humanoid.JumpPower = 0
-	humanoid.UseJumpPower = true
-	humanoid.WalkSpeed = Balance.UNITS.archer.speed
-	humanoid.MaxHealth = 100
-	humanoid.Health = 100
-	humanoid.NameDisplayDistance = 0
-	humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
-end
-
-local function worldY(p) return Grid.heightAt(Sim.terrain, p) + 3 end
-local function pivotTo(character, p)
-	local root = character and character:FindFirstChild("HumanoidRootPart")
-	if not root then return end
-	character:PivotTo(CFrame.new(p.x, worldY(p), p.z) * (root.CFrame - root.CFrame.Position))
-	root.AssemblyLinearVelocity = Vector3.zero
-end
-
-local function spawnCharacter(player, at)
-	player:LoadCharacter()
-	local character = player.Character or player.CharacterAdded:Wait()
-	setupCharacter(player, character)
-	task.defer(function() pivotTo(character, at or Grid.SITES.base) end)
-	return character
-end
-
--- ── 캠페인 시작 ─────────────────────────────────────────────────────────────
-local function startCampaign(snapshot, newCampaignId)
-	campaignId = newCampaignId
-	if snapshot then
-		sim = Sim.restore(snapshot)
-	else
-		sim = Sim.create(os.time() % 1000003, "solo")
+local outpostTower = World:FindFirstChild("Outpost") and World.Outpost:FindFirstChild("OutpostTower")
+local function structureDamage(model, amount)
+	if model == nil then damageBase(amount); return end
+	if Towers.damage(model, amount) then return end
+	if model == outpostTower then
+		local hp = (model:GetAttribute("Health") or 0) - amount
+		model:SetAttribute("Health", math.max(0, hp))
+		if hp <= 0 then
+			Npc.unregisterStructure(model)
+			Campaign.structureDestroyed(model)
+			Fx:FireAllClients("ruin", model)
+			for _, p in model:GetDescendants() do if p:IsA("BasePart") then p.Color = Color3.fromRGB(70, 66, 62) end end
+		end
 	end
-	if not sim then return false end
-	lastSave = os.clock()
+end
+
+Npc.hooks.gold = addGold
+Npc.hooks.enemyKilled = function(ent) addGold(ent.def.reward, "kill", ent.root.Position) end
+Npc.hooks.allyDied = function(ent) session.eco.counts[ent.kind] = math.max(0, (session.eco.counts[ent.kind] or 1) - 1) end
+Npc.hooks.structureDamage = structureDamage
+Npc.hooks.upgrades = function() return session.eco.upgrades end
+Npc.hooks.towers = Towers.list
+Npc.hooks.claimBuild = Towers.claimBuild
+Npc.hooks.buildProgress = Towers.buildProgress
+Npc.hooks.claimRepair = Towers.claimRepair
+Npc.hooks.repair = Towers.repair
+Npc.hooks.phasePlaying = function() return session.phase == "playing" end
+Towers.hooks.spend = function(amount)
+	if session.eco.gold < amount then return false end
+	session.eco.gold -= amount
 	return true
 end
+Towers.hooks.toast = toast
 
-local function bindOwner(player, ownerId)
-	local s = sessionOf(player)
-	s.ownerId = ownerId; s.spectator = false
-	local owner = Sim.ownerOf(sim, ownerId)
-	if owner then owner.userId = player.UserId; owner.name = player.DisplayName end
-	local leader = Sim.leaderOf(sim, ownerId)
-	spawnCharacter(player, leader and { x = leader.x, z = leader.z } or Grid.SITES.base)
-	lobbyRemote:FireClient(player, { type = "playing", ownerId = ownerId, studio = STUDIO })
+-- ───────── 플레이어 ─────────
+local function setupCharacter(player, character)
+	Rigs.setupPlayer(character)
+	local function group(p) if p:IsA("BasePart") then p.CollisionGroup = "Player" end end
+	for _, p in character:GetDescendants() do group(p) end
+	character.DescendantAdded:Connect(group)
 end
 
-local function hostChoose(player, payload)
-	local s = sessionOf(player)
-	if not s or player.UserId ~= hostUserId or sim then return end
-	if type(payload) ~= "table" then return end
-	if payload.action == "continue" and loadResult and loadResult.status == "ok" then
-		if not startCampaign(loadResult.snapshot, loadResult.campaignId) then toast(player, "기록을 복원하지 못했습니다.", "error"); return end
-		save:resume(hostUserId, campaignId, loadResult.savedTick)
-		-- 호스트는 저장된 소유자 0. 상대 슬롯은 그 userId 가 와야 움직인다.
-		bindOwner(player, 0)
+local function playerCount() return #Players:GetPlayers() end
+
+local function onPlayer(player)
+	if not session.host then
+		session.host = player
+		session.saveInfo = Save.load(player.UserId)
+	end
+	Npc.registerPlayer(player)
+	player.CharacterAdded:Connect(function(c) setupCharacter(player, c) end)
+	if player.Character then setupCharacter(player, player.Character) end
+	if session.phase == "playing" and playerCount() == 2 and session.startedWith < 2 then
+		session.startedWith = 2
+		session.baseMax += Config.BASE.coopBonus; session.baseHp += Config.BASE.coopBonus
+		toast(player.DisplayName .. " 합류 · 본진 체력 +" .. Config.BASE.coopBonus)
+	end
+end
+Players.PlayerAdded:Connect(onPlayer)
+for _, p in Players:GetPlayers() do onPlayer(p) end
+
+local function snapshot()
+	local counts = Npc.counts()
+	return { economy = session.eco, wave = Campaign.snapshot().wave, towers = Towers.count(), savedTick = os.time(), alive = counts }
+end
+local function persist()
+	if session.phase ~= "playing" or not session.host then return end
+	-- 저장되는 병력 수는 살아 있는 것 기준
+	local eco = session.eco
+	for k in pairs(Config.UNITS) do eco.counts[k] = 0 end
+	for _, a in Npc.allAllies() do if not a.dead then eco.counts[a.kind] = (eco.counts[a.kind] or 0) + 1 end end
+	Save.write(session.host.UserId, snapshot())
+end
+
+Players.PlayerRemoving:Connect(function(player)
+	Commands.forget(player)
+	if player == session.host then persist() end
+	Npc.unregisterPlayer(player)
+	if player == session.host then
+		local rest = Players:GetPlayers()
+		session.host = rest[1] ~= player and rest[1] or rest[2]
+	end
+end)
+game:BindToClose(function() persist() end)
+
+-- ───────── 시작·재시작 ─────────
+local function recruitPoint() return Config.SITES.barracks + Vector3.new(0, 0, Config.BASE.recruitWalkOut) end
+
+local function startGame(mode)
+	Rigs.ready()
+	Npc.clear(); Towers.clear()
+	local eco = Rules.newEconomy()
+	if mode == "continue" then
+		local info, data = Save.load(session.host.UserId)
+		if info == "ok" then eco = data.economy else toast("저장을 읽지 못해 새 원정으로 시작한다") end
+	end
+	session.eco = eco
+	session.baseMax = Config.BASE.maxHealth + (playerCount() >= 2 and Config.BASE.coopBonus or 0)
+	session.baseHp = session.baseMax
+	session.startedWith = playerCount()
+	session.skillReadyAt = 0; session.saveTimer = 0; session.tutorial = {}
+	if outpostTower then
+		outpostTower:SetAttribute("Health", Config.OUTPOST.towerHealth)
+		for _, p in outpostTower:GetDescendants() do if p:IsA("BasePart") and p.Name ~= "Totem" then p.Color = Color3.fromRGB(118, 110, 102) end end
+	end
+	local gate = World:FindFirstChild("ExitGate")
+	if gate then gate:SetAttribute("Open", false) end
+	Campaign.start({
+		outpostTower = outpostTower,
+		notify = function(kind, a, b, c)
+			if kind == "gold" then addGold(a, b, c)
+			elseif kind == "toast" then toast(a)
+			elseif kind == "wave" then Fx:FireAllClients("wave", a, b)
+			elseif kind == "gate" and gate then gate:SetAttribute("Open", a) end
+		end,
+	})
+	-- 저장된 병력을 본진에서 다시 세운다(호스트 소속)
+	for kind, n in eco.counts do
+		for _ = 1, n do
+			local p = recruitPoint()
+			Npc.spawnAlly(kind, session.host, p + Vector3.new(math.random(-4, 4), 0, math.random(-4, 4)))
+		end
+	end
+	session.phase = "playing"
+	toast(if mode == "continue" then "원정을 이어간다" else "활잡이 하나, 금화 0. 동쪽 사냥터에서 시작한다")
+end
+
+-- ───────── 명령 ─────────
+local handlers = {}
+function handlers.start(player, a)
+	if session.phase ~= "lobby" and session.phase ~= "defeat" then return end
+	if player ~= session.host then return end
+	startGame(a.mode)
+end
+function handlers.restart(player)
+	if player ~= session.host or session.phase ~= "defeat" then return end
+	session.phase = "lobby"
+	session.saveInfo = Save.load(player.UserId)
+end
+function handlers.hire(player, a)
+	if session.phase ~= "playing" then return end
+	local ok, why = Rules.hire(session.eco, a.kind)
+	if not ok then
+		toast(if why == "GOLD" then "금화가 모자란다" elseif why == "LIMIT" then "더 둘 수 없다" else "고용 불가")
 		return
 	end
-	if payload.action == "new" then
-		local newId = Http:GenerateGUID(false)
-		local ok, why = save:beginNew(hostUserId, newId, payload.overwrite == true)
-		if not ok then toast(player, why, "error"); lobbyRemote:FireClient(player, { type = "confirmOverwrite" }); return end
-		if not startCampaign(nil, newId) then return end
-		Sim.addOwner(sim, 0, player.DisplayName)
-		bindOwner(player, 0)
-	end
+	local p = recruitPoint()
+	Npc.spawnAlly(a.kind, player, p + Vector3.new(math.random(-3, 3), 0, math.random(-2, 2)))
+	Fx:FireAllClients("recruit", p, Config.UNITS[a.kind].label)
 end
-
-local function offerJoin(guest)
-	local hostPlayer = ownerSession(0)
-	if not hostPlayer then return end
-	pendingJoin = guest
-	lobbyRemote:FireClient(hostPlayer, { type = "joinRequest", name = guest.DisplayName })
-	lobbyRemote:FireClient(guest, { type = "waiting", text = "호스트의 수락을 기다리는 중입니다." })
+function handlers.upgrade(player, a)
+	if session.phase ~= "playing" then return end
+	local ok, why = Rules.upgrade(session.eco, a.kind)
+	if not ok then toast(if why == "GOLD" then "금화가 모자란다" elseif why == "MAX" then "최대 강화" else "강화 불가"); return end
+	Fx:FireAllClients("upgrade", a.kind, session.eco.upgrades[a.kind])
 end
-
-local function hostAccept(player, payload)
-	if player.UserId ~= hostUserId or not sim or not pendingJoin then return end
-	local guest = pendingJoin
-	pendingJoin = nil
-	if type(payload) ~= "table" or payload.accept ~= true or not guest.Parent then
-		if guest.Parent then lobbyRemote:FireClient(guest, { type = "spectating", text = "호스트가 거절했습니다. 관전합니다." }) end
+function handlers.combine(player)
+	if session.phase ~= "playing" then return end
+	local archers = {}
+	for _, a in Npc.alliesOf(player, { archer = true }) do if not a.garrison then table.insert(archers, a) end end
+	if #archers < Config.COMBINE.count then toast("합성에는 뒤따르는 활잡이 셋이 필요하다"); return end
+	local ok = Rules.combine(session.eco)
+	if not ok then toast("합성 불가"); return end
+	local sum = Vector3.zero
+	for i = 1, Config.COMBINE.count do sum += archers[i].root.Position; Npc.removeAlly(archers[i]) end
+	local pos = sum / Config.COMBINE.count
+	Npc.spawnAlly("hero", player, pos)
+	Fx:FireAllClients("combine", pos)
+	toast("영웅 활잡이 탄생 · 일제 사격을 쓸 수 있다")
+end
+function handlers.tower(player, a)
+	if session.phase ~= "playing" then return end
+	local ok, why = Towers.place(player, a.point)
+	if not ok then
+		toast(({ GOLD = "금화가 모자란다", LIMIT = "탑은 더 세울 수 없다", BOWL = "분지 밖이다", FAR = "너무 멀다 · 가까이 가서 짓는다", SITE = "건물 위에는 못 짓는다", SPACING = "다른 탑과 너무 가깝다" })[why] or "지을 수 없다")
 		return
 	end
-	local owner = Sim.addOwner(sim, 1, guest.DisplayName)
-	if not owner then lobbyRemote:FireClient(guest, { type = "spectating", text = "빈 자리가 없습니다." }); return end
-	bindOwner(guest, 1)
-	toast(player, guest.DisplayName .. " 님이 합류했습니다 · 협동 원정 (본진 +2000)", "info")
-	toast(guest, "이 원정은 호스트(" .. player.DisplayName .. ") 계정에 저장됩니다. 내 계정에는 남지 않습니다.", "warn")
+	if Npc.counts().carpenters == 0 then toast("탑 자리를 잡았다 · 목수가 있어야 짓는다") else toast("목수가 탑을 지으러 간다") end
+end
+function handlers.skill(player, a)
+	if session.phase ~= "playing" then return end
+	local heroes = Npc.alliesOf(player, { hero = true })
+	if #heroes == 0 then toast("영웅 활잡이가 없다"); return end
+	local t = os.clock()
+	if t < session.skillReadyAt then return end
+	local hero = heroes[1]
+	if Rules.flatDistance(hero.root.Position, a.point) > Config.HERO_SKILL.maxDistance then toast("너무 멀다"); return end
+	session.skillReadyAt = t + Config.HERO_SKILL.cooldown
+	Npc.volley(a.point, hero.root.Position)
+	Fx:FireAllClients("volley", a.point)
 end
 
-local function onJoin(player)
-	sessions[player] = { ownerId = nil, spectator = true, corrections = 0, rejected = {}, lastAccepted = nil }
-	if sim then
-		-- 같은 userId 의 슬롯이 있으면 돌려준다
-		for _, o in sim.owners do
-			if o.userId == player.UserId and not ownerSession(o.id) then bindOwner(player, o.id); return end
-		end
-		if #sim.owners < 2 and not pendingJoin then offerJoin(player)
-		else lobbyRemote:FireClient(player, { type = "spectating", text = "자리가 없어 관전합니다." }) end
-		spawnCharacter(player, Grid.SITES.base)
-		return
-	end
-	if hostUserId == nil then
-		hostUserId = player.UserId
-		loadResult = save:load(player.UserId)
-		lobbyRemote:FireClient(player, { type = "choose", status = loadResult.status, message = loadResult.message, savedAt = loadResult.savedAt, studio = STUDIO })
-		spawnCharacter(player, Grid.SITES.base)
-	else
-		lobbyRemote:FireClient(player, { type = "waiting", text = "호스트가 원정을 고르는 중입니다." })
-		spawnCharacter(player, Grid.SITES.base)
-	end
-end
-
-local function saveNow(reason)
-	if not sim or not hostUserId or not save:canSave(hostUserId) then return end
-	local snapshot = Sim.snapshot(sim)
-	local ok, why = save:save(hostUserId, snapshot, campaignId)
-	local hostPlayer = ownerSession(0)
-	if hostPlayer then eventRemote:FireClient(hostPlayer, { type = "saveStatus", ok = ok, text = if ok then (if STUDIO then "TEST 저장(메모리)" else "저장됨") else why, reason = reason }) end
-end
-
-local function onLeave(player)
-	local s = sessions[player]
-	sessions[player] = nil
-	if pendingJoin == player then pendingJoin = nil end
-	if s and s.ownerId == 0 then saveNow("leave") end
-	if sim and s and s.ownerId ~= nil then
-		-- 소유자 슬롯은 Sim 에 남는다(한 명이 나가도 coop 유지). 캐릭터만 사라진다.
-		local owner = Sim.ownerOf(sim, s.ownerId)
-		if owner then owner.leaderPos = nil; owner.moving = false end
-	end
-	if hostUserId == player.UserId and not sim then hostUserId = nil; loadResult = nil end
-end
-
--- ── 명령 ───────────────────────────────────────────────────────────────────
-commandRemote.OnServerEvent:Connect(function(player, payload)
-	local s = sessionOf(player)
-	if not s or s.spectator or s.ownerId == nil or not sim then return end
-	if not Ingress.allow(s, os.clock()) then return end
-	local command = Commands.normalize(payload)
-	if not command then return end
-	command.ownerId = s.ownerId
-	local result = Sim.act(sim, command)
-	if not result.ok then s.rejected[result.code] = (s.rejected[result.code] or 0) + 1 end
-	eventRemote:FireClient(player, { type = "result", ok = result.ok, code = result.code, message = result.message, command = command.type, unitId = result.unitId, towerId = result.towerId })
+Command.OnServerEvent:Connect(function(player, name, args)
+	local ok, result = Commands.validate(player, name, args)
+	if not ok then return end
+	handlers[name](player, result)
 end)
 
-lobbyRemote.OnServerEvent:Connect(function(player, payload)
-	if type(payload) ~= "table" then return end
-	if payload.action == "new" or payload.action == "continue" then hostChoose(player, payload)
-	elseif payload.action == "acceptCoop" then hostAccept(player, payload) end
-end)
+-- ───────── 틱 ─────────
+local tutorialSteps = {
+	{ key = "upgrade", text = "금화가 모이면 공업·방업을 올린다", when = function(e) return e.gold >= 80 and e.upgrades.attack == 0 end },
+	{ key = "carpenter", text = "목수(500)를 고용하면 채집으로 금화가 들어온다", when = function(e) return e.gold >= 500 and e.counts.carpenter == 0 end },
+	{ key = "archer", text = "활잡이(700)를 고용해 원정대를 키운다", when = function(e) return e.gold >= 700 and e.counts.archer == 0 end },
+	{ key = "tower", text = "방어탑(220)을 세우고 가까이 가서 활잡이를 주둔시킨다", when = function(e) return e.gold >= 220 and e.counts.archer >= 1 and Towers.count() == 0 end },
+	{ key = "combine", text = "활잡이 셋을 영웅으로 합친다", when = function(e) return e.counts.archer >= 3 end },
+	{ key = "skill", text = "일제 사격으로 북쪽 언덕의 거점을 친다", when = function(e) return e.counts.hero >= 1 end },
+}
 
--- ── 지형 칠하기: 빌더 파트(충돌·검증의 진실)와 같은 부피를 Terrain 으로 덧칠해 풀·바위 질감을 낸다 ───
-local function paintTerrain()
-	local terrainService = workspace.Terrain
-	local function fill(x0, z0, x1, z1, y0, y1, material)
-		terrainService:FillBlock(CFrame.new((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2), Vector3.new(x1 - x0, y1 - y0, z1 - z0), material)
-	end
-	local ring, interior, plateau, inner, rampHi, rampLo = table.unpack(Grid.RECTS)
-	local W, H, EL = Grid.WIDTH, Grid.HEIGHT, Grid.ELEVATION_STUDS
-	-- 저지 풀밭 (윗면 Y=0 바로 아래) · 분지 바깥 어두운 흙
-	fill(interior[1], interior[2], interior[1] + interior[3], interior[2] + interior[4], -6, -0.2, Enum.Material.Grass)
-	fill(-300, -300, W + 300, H + 300, -8, -2.6, Enum.Material.Mud)
-	-- 테두리·고지 절벽은 바위, 고지 윗면은 풀
-	for _, r in { { 0, 0, W, interior[2] }, { 0, interior[2] + interior[4], W, H }, { 0, interior[2], interior[1], interior[2] + interior[4] }, { interior[1] + interior[3], interior[2], W, interior[2] + interior[4] } } do
-		fill(r[1], r[2], r[3], r[4], -2, 22, Enum.Material.Rock)
-	end
-	local px, pz, pw, ph = plateau[1], plateau[2], plateau[3], plateau[4]
-	local ix, iz, iw, ih = inner[1], inner[2], inner[3], inner[4]
-	local rx, rw = rampHi[1], rampHi[3]
-	fill(px, pz, px + pw, iz, -1, 11, Enum.Material.Rock)
-	fill(px, iz, ix, iz + ih, -1, 11, Enum.Material.Rock)
-	fill(ix + iw, iz, px + pw, iz + ih, -1, 11, Enum.Material.Rock)
-	fill(px, iz + ih, rx, pz + ph, -1, 11, Enum.Material.Rock)
-	fill(rx + rw, iz + ih, px + pw, pz + ph, -1, 11, Enum.Material.Rock)
-	fill(ix, iz, ix + iw, iz + ih, EL - 6, EL - 0.2, Enum.Material.Grass)
-end
-pcall(paintTerrain)
-
--- ── 탑 모델 (서버 Workspace 의 유일한 동적 구조물) ───────────────────────────
-local towerFolder = Instance.new("Folder")
-towerFolder.Name = "Towers"
-towerFolder.Parent = workspace
-local towerModels = {}
-local function color(token) local c = Theme[token] return Color3.fromRGB(c[1], c[2], c[3]) end
-local function syncTowers()
-	local seen = {}
-	for _, t in sim.towers do
-		seen[t.id] = true
-		local model = towerModels[t.id]
-		if not model then
-			model = Instance.new("Model"); model.Name = "Tower" .. t.id
-			local base = Instance.new("Part"); base.Name = "Body"; base.Anchored = true; base.Material = Enum.Material.Wood; base.Color = color("wood")
-			base.Size = Vector3.new(Balance.TOWER.footprint - 1, 1, Balance.TOWER.footprint - 1)
-			base.Position = Vector3.new(t.x, worldY({ x = t.x, z = t.z }) - 2.5, t.z)
-			base.Parent = model
-			model.Parent = towerFolder
-			towerModels[t.id] = model
-		end
-		local body = model:FindFirstChild("Body")
-		local height = if t.state == "completed" then 12 else 1 + 11 * t.progress
-		body.Size = Vector3.new(Balance.TOWER.footprint - 1, height, Balance.TOWER.footprint - 1)
-		body.Position = Vector3.new(t.x, worldY({ x = t.x, z = t.z }) - 3 + height / 2, t.z)
-		body.CanCollide = t.started
-		model:SetAttribute("state", t.state)
-		model:SetAttribute("hp", math.floor(t.hp)); model:SetAttribute("maxHp", t.maxHp)
-		model:SetAttribute("occupants", #t.occupants)
-		model:SetAttribute("ownerId", t.ownerId)
-	end
-	for id, model in towerModels do if not seen[id] then model:Destroy(); towerModels[id] = nil end end
-end
-
--- ── 틱 ─────────────────────────────────────────────────────────────────────
-local accumulator = 0
-local lastState, lastActors = 0, 0
-Run.Heartbeat:Connect(function(dt)
-	if not sim or sim.phase ~= "playing" then return end
-	accumulator += math.min(dt, 0.25)
-	local ticks = 0
-	while accumulator + 1e-10 >= Balance.FIXED_DT and ticks < 3 do
-		accumulator -= Balance.FIXED_DT
-		for player, s in sessions do
-			if s.ownerId ~= nil then
-				local character = player.Character
-				local root = character and character:FindFirstChild("HumanoidRootPart")
-				local humanoid = character and character:FindFirstChild("Humanoid")
-				if root and humanoid then Sim.setLeader(sim, s.ownerId, root.Position.X, root.Position.Z, humanoid.MoveDirection.Magnitude > 0) end
+local stateTimer, healTick = 0, 0
+RunService.Heartbeat:Connect(function(dt)
+	dt = math.min(dt, 0.1)
+	if session.phase == "playing" then
+		Npc.update(dt)
+		Campaign.update(dt)
+		-- 치료사 고리
+		healTick += dt
+		if healTick >= 0.25 then
+			local h = Config.BASE.healerRadius
+			for _, player in Players:GetPlayers() do
+				local c = player.Character; local hum = c and c:FindFirstChildOfClass("Humanoid"); local root = c and c:FindFirstChild("HumanoidRootPart")
+				if hum and root and hum.Health > 0 and Rules.flatDistance(root.Position, Config.SITES.healer) <= h then hum.Health = math.min(hum.MaxHealth, hum.Health + Config.BASE.healPerSecond * healTick) end
 			end
-		end
-		Sim.tick(sim)
-		ticks += 1
-		-- 역방향 쓰기: 되돌림 · 구르기 · 리더 교체
-		for _, e in sim.events do
-			if e.type == "leaderChanged" then
-				local player = ownerSession(e.ownerId)
-				if player then
-					local leader = if e.unitId then Sim.unitById(sim, e.unitId) else nil
-					if player.Character then pivotTo(player.Character, leader and { x = leader.x, z = leader.z } or Grid.SITES.base) end
-					eventRemote:FireClient(player, { type = "toast", text = if e.reason == "none" then "활잡이가 모두 쓰러졌습니다. 고용소에서 새 활잡이를 고용하세요." elseif e.reason == "death" then "선두 활잡이가 쓰러져 다른 병력이 이어받습니다." else "선두가 바뀌었습니다.", kind = "warn" })
-				end
-			elseif e.type == "wave" then
-				for player, s in sessions do if s.ownerId ~= nil then eventRemote:FireClient(player, { type = "toast", text = ("웨이브 %d · %d마리"):format(e.number, e.count), kind = "warn" }) end end
-			elseif e.type == "campCleared" then
-				for player, s in sessions do if s.ownerId ~= nil then eventRemote:FireClient(player, { type = "toast", text = e.label .. " 거점을 부쉈습니다 · 역습이 옵니다", kind = "info" }) end end
-			elseif e.type == "lose" then
-				for player in sessions do eventRemote:FireClient(player, { type = "lose", reason = e.reason }) end
-				saveNow("lose")
+			for _, a in Npc.allAllies() do
+				if not a.dead and Rules.flatDistance(a.root.Position, Config.SITES.healer) <= h then a.hum.Health = math.min(a.hum.MaxHealth, a.hum.Health + Config.BASE.healPerSecond * healTick) end
 			end
+			healTick = 0
 		end
-	end
-	if accumulator >= Balance.FIXED_DT then overflowTicks += 1; accumulator = 0 end
-	for player, s in sessions do
-		if s.ownerId ~= nil then
-			local owner = Sim.ownerOf(sim, s.ownerId)
-			local character = player.Character
-			local humanoid = character and character:FindFirstChild("Humanoid")
-			if owner and character and humanoid then
-				local leader = Sim.leaderOf(sim, s.ownerId)
-				if owner.correction then pivotTo(character, owner.correction); s.corrections += 1 end
-				if leader and leader.roll then pivotTo(character, leader) end
-				humanoid.WalkSpeed = Sim.squadSpeed(sim, s.ownerId)
-				if leader then
-					humanoid.MaxHealth = leader.maxHp; humanoid.Health = math.max(1, leader.hp)
-				else
-					humanoid.MaxHealth = 100; humanoid.Health = 100
-				end
-			end
+		for _, step in tutorialSteps do
+			if not session.tutorial[step.key] and step.when(session.eco) then session.tutorial[step.key] = true; toast(step.text) end
 		end
+		session.saveTimer += dt
+		if session.saveTimer >= Config.SAVE.intervalSeconds then session.saveTimer = 0; persist() end
 	end
-	syncTowers()
-	local now = os.clock()
-	if now - lastActors >= 0.1 then
-		lastActors = now
-		for player, s in sessions do
-			local around = if s.ownerId ~= nil then Sim.leaderOf(sim, s.ownerId) else nil
-			actorsRemote:FireClient(player, Packet.encode(sim, Packet.collect(sim, around or Grid.SITES.base)))
-		end
+	stateTimer += dt
+	if stateTimer >= 0.25 then
+		stateTimer = 0
+		local c = Npc.counts()
+		State:FireAllClients({
+			phase = session.phase, hostId = session.host and session.host.UserId or 0, saveInfo = session.saveInfo, memoryOnly = Save.isMemoryOnly(),
+			gold = math.floor(session.eco.gold), upgrades = session.eco.upgrades, counts = session.eco.counts, alive = c,
+			base = { hp = math.floor(session.baseHp), max = session.baseMax }, towers = Towers.count(),
+			campaign = Campaign.snapshot(), skillIn = math.max(0, session.skillReadyAt - os.clock()),
+			prices = { archer = Rules.price("archer"), longbow = Rules.price("longbow"), carpenter = Rules.price("carpenter"), tower = Config.TOWER.cost, attack = Rules.upgradeCost("attack", session.eco.upgrades.attack), armor = Rules.upgradeCost("armor", session.eco.upgrades.armor) },
+		})
 	end
-	if now - lastState >= 0.2 then
-		lastState = now
-		for player, s in sessions do
-			local view = Sim.view(sim, s.ownerId or -1)
-			view.overflowTicks = overflowTicks; view.corrections = s.corrections; view.spectator = s.ownerId == nil
-			stateRemote:FireClient(player, view)
-		end
-	end
-	if now - lastSave >= 60 then lastSave = now; saveNow("timer") end
-end)
-
-Players.PlayerAdded:Connect(onJoin)
-Players.PlayerRemoving:Connect(onLeave)
-for _, p in Players:GetPlayers() do task.spawn(onJoin, p) end
-game:BindToClose(function()
-	if sim and hostUserId then saveNow("close") end
 end)

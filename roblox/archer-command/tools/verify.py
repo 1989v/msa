@@ -1,124 +1,133 @@
 #!/usr/bin/env python3
-"""검증기. 공식 luau CLI 로 실제 모듈을 실행하고, 빌더 산출물을 실행한 Grid.luau 덤프와 전수 대조한다.
-PASS 줄은 무엇이 아닌지도 적는다. Studio·물리·네트워크는 UNVERIFIED 로 남긴다."""
+"""검증기. 공식 luau CLI 로 실제 공유 모듈을 실행하고, 빌더 산출물의 구조와 로블록스 네이티브 조건을 검사한다.
+PASS 줄은 무엇이 아닌지도 적는다. Studio·물리·애니메이션·네트워크는 UNVERIFIED 로 남긴다."""
 from pathlib import Path
 import hashlib
+import json
 import os
 import re
 import subprocess
 import sys
 import xml.etree.ElementTree as E
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import build_place
+import build
 ROOT = Path(__file__).resolve().parents[1]
-REPO = Path(os.environ.get('ARCHER_REPO', str(ROOT.parents[1])))  # 스크래치 사본에서 돌릴 때 원작 위치
 runner = Path(os.environ.get('LUAU_BIN', 'luau'))
 compiler = runner.with_name('luau-compile')
 analyzer = runner.with_name('luau-analyze')
 if not runner.is_file() or not compiler.is_file() or not analyzer.is_file():
     raise SystemExit('Official Luau CLI and sibling luau-compile / luau-analyze are required; no skipped pass.')
+failures = []
+def gate(ok, text):
+    if ok: print('PASS ' + text)
+    else: failures.append(text); print('FAIL ' + text)
 
-# 1. 실제 모듈 테스트 (두 별도 프로세스로 결정성 해시 비교)
-first = subprocess.run([str(runner), str(ROOT / 'tests/run.luau')], capture_output=True, text=True)
-sys.stdout.write(first.stdout)
-if first.returncode: raise SystemExit(first.stderr or 'tests failed')
-second = subprocess.run([str(runner), str(ROOT / 'tests/run.luau')], capture_output=True, text=True)
-h1 = re.search(r'^HASH (\w+)$', first.stdout, re.M); h2 = re.search(r'^HASH (\w+)$', second.stdout, re.M)
-assert h1 and h2 and h1.group(1) == h2.group(1), 'determinism: two processes produced different state hashes'
-print('PASS determinism across two separate luau processes (same seed, same inputs)')
+# 1. 실제 공유 모듈 검사
+spec = subprocess.run([str(runner), str(ROOT / 'tests/rules.spec.luau')], capture_output=True, text=True)
+sys.stdout.write(spec.stdout)
+if spec.returncode: raise SystemExit(spec.stderr or 'rules spec failed')
 
-# 2. 컴파일 · 미지 전역 · require 허용 목록
-files = sorted((ROOT / 'src').rglob('*.luau')) + sorted((ROOT / 'tests').glob('*.luau')) + sorted((ROOT / 'tools').glob('*.luau'))
+# 2. 컴파일 · 미지 전역 · 의존 방향
+files = sorted((ROOT / 'src').rglob('*.luau')) + sorted((ROOT / 'tests').glob('*.luau'))
 for path in files:
-    result = subprocess.run([str(compiler), str(path)], capture_output=True)
-    if result.returncode: raise SystemExit(f'{path}: {result.stderr.decode("utf-8", errors="replace")}')
-allowed_globals = {'game', 'workspace', 'Enum', 'Instance', 'Vector3', 'Vector2', 'CFrame', 'Color3', 'UDim2', 'UDim', 'RaycastParams', 'script', 'task', 'buffer', 'typeof'}
+    r = subprocess.run([str(compiler), str(path)], capture_output=True)
+    if r.returncode: raise SystemExit(f'{path}: {r.stderr.decode("utf-8", errors="replace")}')
+allowed_globals = {'game', 'workspace', 'Enum', 'Instance', 'Vector3', 'Vector2', 'CFrame', 'Color3', 'UDim2', 'UDim', 'RaycastParams', 'script', 'task', 'typeof', 'warn',
+                   'NumberSequence', 'NumberSequenceKeypoint', 'NumberRange', 'ColorSequence', 'TweenInfo', 'Random'}
 analysis = subprocess.run([str(analyzer), '--formatter=plain', *[str(p) for p in files]], capture_output=True, text=True)
 unknown = set(re.findall(r"Unknown global '([^']+)'", analysis.stdout + analysis.stderr)) - allowed_globals
 if unknown: raise SystemExit('Undefined globals: ' + ', '.join(sorted(unknown)))
 if analysis.returncode not in (0, 1): raise SystemExit('Luau analyzer failed to execute: ' + analysis.stderr)
 print(f'PASS compiled {len(files)} Luau files and unknown-global analysis with explicit Roblox allowlist (not Roblox API typechecking)')
-allowed_shared = {'Sim', 'Grid', 'Balance', 'Theme', 'Packet'}
-for path in list((ROOT / 'src/server').glob('*.luau')) + list((ROOT / 'src/client').glob('*.luau')):
-    for mod in re.findall(r'require\(Shared\.(\w+)\)', path.read_text()):
-        assert mod in allowed_shared, f'{path.name} requires shared.{mod}; allowed: {sorted(allowed_shared)}'
-print('PASS server/client require only shared Sim·Grid·Balance·Theme·Packet (Campaign stays internal)')
+shared_text = ''.join(p.read_text() for p in (ROOT / 'src/shared').glob('*.luau'))
+gate('game:GetService' not in shared_text and 'workspace' not in shared_text, 'shared modules never touch Roblox services (pure rules stay CLI-testable)')
+client_text = {p.name: p.read_text() for p in (ROOT / 'src/client').glob('*.luau')}
+gate(all('script.Parent' not in t and 'ServerScriptService' not in t for t in client_text.values()), 'client scripts require only ReplicatedStorage.ArcherCommand (no server modules)')
 
-# 3. 빌더 결정성 · 스크립트 포함 · 서비스
-artifact = build_place.build()
-first_bytes = artifact.read_bytes()
-assert first_bytes == build_place.build().read_bytes(), 'non-deterministic artifact'
+# 3. 빌더 결정성 · 스크립트 정확 포함 · 서비스
+artifact = build.build()
+first = artifact.read_bytes()
+assert first == build.build().read_bytes(), 'non-deterministic artifact'
 xml = E.parse(artifact)
-scripts = {n.attrib['referent']: n for n in xml.iter('Item') if n.attrib['class'] in ('Script', 'LocalScript', 'ModuleScript')}
-assert len(scripts) == len(build_place.SOURCE_MAP) == len(list((ROOT / 'src').rglob('*.luau')))
-for ref, path in build_place.SOURCE_MAP.items():
+items = list(xml.iter('Item'))
+scripts = {n.attrib['referent']: n for n in items if n.attrib['class'] in ('Script', 'LocalScript', 'ModuleScript')}
+src_files = list((ROOT / 'src').rglob('*.luau'))
+gate(len(scripts) == len(build.SOURCE_MAP) == len(src_files), f'exactly {len(src_files)} scripts in the place and none inside embedded assets')
+for ref, path in build.SOURCE_MAP.items():
     n = scripts[ref]
     assert n.find("./Properties/ProtectedString[@name='Source']").text == (ROOT / path).read_text(), path
     expected = 'LocalScript' if '.client.' in path else 'Script' if '.server.' in path else 'ModuleScript'
-    assert n.attrib['class'] == expected
-classes = [n.attrib['class'] for n in xml.iter('Item')]
-for cls in ['Workspace', 'SpawnLocation', 'Lighting', 'Atmosphere', 'ReplicatedStorage', 'ServerScriptService', 'StarterPlayerScripts', 'WedgePart']:
+    assert n.attrib['class'] == expected, path
+classes = [n.attrib['class'] for n in items]
+for cls in ['Workspace', 'SpawnLocation', 'Lighting', 'Atmosphere', 'ReplicatedStorage', 'ServerScriptService', 'ServerStorage', 'StarterPlayer', 'StarterPlayerScripts', 'ProximityPrompt', 'PointLight', 'Fire']:
     assert cls in classes, cls
-assert classes.count('RemoteEvent') == 5
-print(f'PASS deterministic XML: exact {len(scripts)} scripts, 5 RemoteEvents, services, spawn, lighting ({len(first_bytes)} bytes) — not opened in Studio')
+assert classes.count('RemoteEvent') == 3
+print(f'PASS deterministic XML: services, spawn, lighting, 3 RemoteEvents, prompts, lights ({len(first)} bytes, {classes.count("Part") + classes.count("WedgePart")} parts) — not opened in Studio')
 
-# 4. 격자 전수 대조: 실행한 Grid.luau 덤프 vs XML 파트 AABB
-dump = subprocess.run([str(runner), str(ROOT / 'tools/dump_grid.luau')], capture_output=True, text=True, check=True).stdout.splitlines()
-cols, rows, cell, el = (int(v) for v in dump[0].split()[1:])
-cells = {}
-sites = {}
-for line in dump[1:]:
-    if line.startswith('SITE'):
-        _, sid, x, z = line.split(); sites[sid] = (float(x), float(z))
-    else:
-        c, r, blocked, elev, ramp = (int(v) for v in line.split()); cells[(c, r)] = (blocked, elev, ramp)
-def num(node, tag, name):
-    p = node.find(f"./Properties/{tag}[@name='{name}']")
-    return p
-parts = []
-for n in xml.iter('Item'):
-    if n.attrib['class'] not in ('Part', 'WedgePart', 'SpawnLocation'): continue
-    collide = n.find("./Properties/bool[@name='CanCollide']").text == 'true'
-    size = num(n, 'Vector3', 'size'); cf = num(n, 'CoordinateFrame', 'CFrame')
-    sx, sy, sz = (float(size.find(a).text) for a in ('X', 'Y', 'Z'))
-    x, y, z = (float(cf.find(a).text) for a in ('X', 'Y', 'Z'))
-    parts.append({'cls': n.attrib['class'], 'collide': collide, 'x0': x - sx / 2, 'x1': x + sx / 2, 'y0': y - sy / 2, 'y1': y + sy / 2, 'z0': z - sz / 2, 'z1': z + sz / 2, 'name': n.find("./Properties/string[@name='Name']").text})
-def covers(p, c, r):
-    cx0, cz0 = c * cell, r * cell
-    return p['x0'] <= cx0 + 1e-6 and p['x1'] >= cx0 + cell - 1e-6 and p['z0'] <= cz0 + 1e-6 and p['z1'] >= cz0 + cell - 1e-6
-def overlaps_band(p, lo, hi): return p['y1'] > lo + 1e-6 and p['y0'] < hi - 1e-6
-def intersects_cell(p, c, r):
-    cx0, cz0 = c * cell, r * cell
-    return p['x1'] > cx0 + 1e-6 and p['x0'] < cx0 + cell - 1e-6 and p['z1'] > cz0 + 1e-6 and p['z0'] < cz0 + cell - 1e-6
-failures = []
-for (c, r), (blocked, elev, ramp) in cells.items():
-    base_y = elev * el
-    if ramp:
-        if not any(p['cls'] == 'WedgePart' and covers(p, c, r) for p in parts): failures.append(f'ramp cell {c},{r} has no WedgePart')
-    elif blocked:
-        if not any(p['collide'] and p['cls'] == 'Part' and covers(p, c, r) and overlaps_band(p, base_y, base_y + 4) for p in parts): failures.append(f'blocked cell {c},{r} elev {elev} has no solid part in [{base_y},{base_y + 4}]')
-    else:
-        bad = [p['name'] for p in parts if p['collide'] and p['cls'] != 'WedgePart' and intersects_cell(p, c, r) and overlaps_band(p, base_y + 0.5, base_y + 4)]
-        if bad: failures.append(f'walkable cell {c},{r} elev {elev} is obstructed by {bad}')
-gx, gz = sites['exit_gate']
-assert cells[(int(gx // cell), int(gz // cell))][0] == 1, 'east exit gate cell must be blocked in Grid'
-if failures: raise SystemExit('GRID MISMATCH:\n' + '\n'.join(failures[:20]) + f'\n({len(failures)} total)')
-print(f'PASS grid vs parts: all {len(cells)} cells (walkable band clear, blocked covered, ramp wedge, east gate blocked) — collision geometry, not Studio physics')
+# 4. 에셋 출처: Roblox 공식 소유(creator 1) · 해시 일치 · 스크립트 제거
+prov = json.loads((ROOT / 'assets/roblox/provenance.json').read_text())
+asset_files = sorted((ROOT / 'assets/roblox').glob('*.rbxmx'))
+ok = True
+for p in asset_files:
+    rec = prov.get(p.stem)
+    if not rec or rec['creatorId'] != 1 or rec['sha256'] != hashlib.sha256(p.read_bytes()).hexdigest(): ok = False; print('   asset mismatch', p.name)
+raw_scripts = sum(len(re.findall(r'class="(?:Script|LocalScript|ModuleScript)"', p.read_text())) for p in asset_files)
+gate(ok and len(asset_files) == len(prov), f'{len(asset_files)} embedded models are Roblox-owned (creator id 1) with matching sha256 in provenance.json; {raw_scripts} scripts in the raw files were stripped at build')
 
-# 5. 원작 오라클 신선도: 원작 소스 해시가 기록과 다르면 STALE
-expected = {'sim.js': 'b19b6cc2349aba244798759aa5bd2b2b8f57dd626c7a586de225967ee145ed8c', 'campaign.js': '6b334b890d0be7c7ac2f6c49b754ed0d1abbc7149eebb125dfbce12e7391e763', 'map.js': 'bdf6970a73e034dff4fd33ecbe9d446abc03643b640e7abe04e4819c840502c1'}
-origin = REPO / 'portal-fe/public/games/marine-command/js/origin'
-stale = [name for name, h in expected.items() if not (origin / name).is_file() or hashlib.sha256((origin / name).read_bytes()).hexdigest() != h]
-if stale:
-    print(f'STALE original oracle: {stale} changed since verifications/original-bot.md — re-measure with orig_bot.mjs; oracle rows in tests/run.luau are not a PASS')
-    raise SystemExit(2)
-print('PASS original oracle freshness: sim.js/campaign.js/map.js hashes match verifications/original-bot.md (oracle windows still valid)')
+# 5. 로블록스 네이티브 조건 (1차 이식에서 지적된 세 결함을 구조로 막는다)
+cam = client_text['Camera.client.luau']
+body = re.search(r'local function quarterView\(\)(.*?)\nend\n', cam, re.S)
+scriptable_total = cam.count('CameraType.Scriptable')
+gate(body is not None and scriptable_total == 1 and 'CameraType.Scriptable' in body.group(1) and 'CameraType.Custom' in cam,
+     'default Roblox camera stays default: Scriptable appears only inside the quarter-view toggle and Custom is restored on exit')
+sp = next(n for n in items if n.attrib['class'] == 'StarterPlayer')
+zmin = float(sp.find("./Properties/float[@name='CameraMinZoomDistance']").text); zmax = float(sp.find("./Properties/float[@name='CameraMaxZoomDistance']").text)
+qd = re.search(r'local distance = (\d+)', cam); qmax = re.search(r'local MIN, MAX = (\d+), (\d+)', cam)
+gate(8 <= zmin < zmax <= 40 and qd and int(qd.group(1)) <= 36 and qmax and int(qmax.group(2)) <= 48,
+     f'camera distances within public references: default zoom {zmin:g}~{zmax:g}, quarter view {qd.group(1)} (max {qmax.group(2)}) — the first port used 96~150')
+rigs = (ROOT / 'src/server/Rigs.luau').read_text()
+setup = re.search(r'function Rigs\.setupPlayer\(character\)(.*?)\nend\n', rigs, re.S)
+cfg = (ROOT / 'src/shared/Config.luau').read_text()
+lr = re.search(r'lightRange = (\d+)', cfg)
+gate(setup and 'addLight(' in setup.group(1) and 'PointLight' in rigs and lr and int(lr.group(1)) >= 20,
+     f'player character carries a PointLight (range {lr.group(1)}) and allies carry one too — brightness/visual quality itself is Studio-only')
+fx = client_text['Effects.client.luau']
+arrow_fn = re.search(r'local function makeArrow\(\)(.*?)\nend\n', fx, re.S)
+gate(arrow_fn and 'Instance.new("Trail")' in arrow_fn.group(1) and 'LightInfluence = 0' in arrow_fn.group(1) and 'Neon' in arrow_fn.group(1)
+     and 'ParticleEmitter' in fx and 'Instance.new("Sound")' in fx and 'PointLight' in fx,
+     'arrow visuals: Trail with LightInfluence 0 + Neon head + muzzle PointLight + impact ParticleEmitter + Sound (Weapons Kit pattern)')
+banned = re.compile(r'WASD|Space|Shift|\[Q\]|Q/E|키를 눌러|을 누르면|클릭하세요|점프 버튼')
+hits = [(name, m.group(0)) for name, t in client_text.items() for lit in re.findall(r'"([^"\n]*)"', t) for m in banned.finditer(lit)]
+gate(not hits, f'no web-style key hints or jump buttons in client UI strings ({hits})')
+storage = next(n for n in items if n.attrib['class'] == 'ServerStorage')
+templates = {n.find("./Properties/string[@name='Name']").text: n for n in storage.iter('Item') if n.attrib['class'] == 'Model'}
+def has(node, cls): return any(c.attrib['class'] == cls for c in node.iter('Item'))
+gate(all(k in templates for k in ('Zombie', 'Bat', 'BlockRig', 'Bow', 'Tower', 'TowerSite')) and has(templates['Zombie'], 'Humanoid') and has(templates['Zombie'], 'Motor6D')
+     and has(templates['Bat'], 'Motor6D') and has(templates['BlockRig'], 'Humanoid') and sum(1 for c in templates['BlockRig'].iter('Item') if c.attrib['class'] == 'Motor6D') == 6
+     and all(templates[k].find("./Properties/Ref[@name='PrimaryPart']") is not None and templates[k].find("./Properties/Ref[@name='PrimaryPart']").text != 'null' for k in ('Zombie', 'Bat', 'BlockRig', 'Tower', 'TowerSite', 'Bow'))
+     and 'CreateHumanoidModelFromDescriptionAsync' in rigs,
+     'NPC templates are Humanoid rigs with Motor6D joints (Roblox Zombie, Bat wings, R6 fallback) and allies come from HumanoidDescription avatars')
+lim = re.search(r'LIMITS = \{ enemies = (\d+)', cfg)
+gate(lim and int(lim.group(1)) <= 60, f'concurrent enemy cap {lim.group(1)} ≤ 60 for server Humanoid rigs')
+jp = float(sp.find("./Properties/float[@name='CharacterJumpPower']").text)
+gate(jp == 0 and 'Jump' not in ''.join(client_text.values()), 'no jump: CharacterJumpPower 0 (default touch jump button hides itself) and no custom jump GUI')
+lighting = next(n for n in items if n.attrib['class'] == 'Lighting')
+clock = float(lighting.find("./Properties/float[@name='ClockTime']").text)
+tech = lighting.find("./Properties/token[@name='Technology']").text
+gate((clock >= 19 or clock <= 5) and tech == '4' and has(lighting, 'Atmosphere') and has(lighting, 'BloomEffect'),
+     f'night lighting preset: ClockTime {clock:g}, Technology Future, Atmosphere + Bloom (visual result is Studio-only)')
+world = next(n for n in items if n.attrib['class'] == 'Workspace')
+embedded = sum(1 for n in world.iter('Item') if n.attrib['class'] == 'Model' and n.find("./Properties/string[@name='Name']").text in ('Model', 'castleInteriorTorch', 'castleInteriorWell', 'landscapeFence', 'Skeleton', 'Flowers', 'Castle_Roof_2'))
+prompts = sum(1 for n in world.iter('Item') if n.attrib['class'] == 'ProximityPrompt')
+print(f'INFO world: {embedded} Roblox-owned models placed, {prompts} ProximityPrompts (counts are scale, not quality evidence)')
+
+if failures: raise SystemExit(f'{len(failures)} native gate(s) failed')
 for line in [
-    'Studio Play, Humanoid physics, WalkSpeed 13.75 실측, HRP→Sim 리더 주입 지연',
-    '클라이언트 액터 240 렌더 프레임 시간, 10Hz buffer 패킷 크기, 5Hz 요약 크기',
-    '카메라 피치/거리, 배치·조준 레이캐스트, 터치 배치, 터치 점프 버튼 숨김',
-    '2인 접속, 협동 수락 흐름, 호스트 단독 이어하기(부재 손님 병력), 슬롯 재결속',
-    'DataStore UpdateAsync 호출, BindToClose, Studio 메모리 저장소 외 실제 저장',
-    'Lighting/Atmosphere 시각, 가시 절벽 높이와 격자 LOS 의 일치',
+    'Studio Play, Humanoid physics/MoveTo on Terrain hills, stuck-jump, NPC animation IDs actually playing',
+    'CreateHumanoidModelFromDescriptionAsync in Studio (network), BlockRig fallback posture, Model:ScaleTo on R6 Zombie',
+    'arrow/trail visibility and sound IDs audible, PointLight look under Future lighting, Atmosphere density by eye',
+    'default camera feel vs quarter-view toggle, touch tap placement, pinch zoom, ProximityPrompt panels',
+    '2 players, host handoff, DataStore UpdateAsync outside Studio, BindToClose save',
+    'balance: first wave survivable with kiting near the healer — numbers in Config.luau are a first guess',
 ]:
     print('UNVERIFIED: ' + line)

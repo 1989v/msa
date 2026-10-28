@@ -1,6 +1,6 @@
 # Status — 궁수 키우기 로블록스판 · 시작 분지 (2026-10-28)
 
-**상태: 로컬 구현·검증 완료. Studio 실행은 미검증(사용자가 직접 연다).**
+**상태: 폐기(2026-10-28 저녁).** 사용자가 Studio 에서 플레이한 뒤 「그대로 옮긴 느낌」(카메라 너무 멀다 · 캐릭터 주변 밝힘 없음 · 화살 안 보임)이라 지적해 전면 재개발로 넘어갔다. 후속은 [2026-10-28-roblox-archer-native](../2026-10-28-roblox-archer-native/spec.md). 이 구현은 커밋 c3fe0df59 의 git 이력에만 남는다. 아래는 폐기 전 기록이다.
 
 ## 결과물
 - `roblox/archer-command/dist/ArcherCommand.rbxlx` — Studio 에서 File → Open from File. Max Players 2 는 Game Settings 에서 둔다.

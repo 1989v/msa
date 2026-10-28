@@ -1,10 +1,21 @@
--- marine-command/DESIGN.md 의 토큰을 RGB 로 옮겼다. 빌더(build_place.py)가 정규식으로 읽으므로 한 줄 한 토큰, 숫자 리터럴만.
--- UI: surface_0 oklch(0.17 .025 252) · surface_1 · surface_2 · text_primary · text_secondary · primary · warning
--- 지형: dust hsl(38 14% 23%) · stone hsl(32 11% 29%) · infestation hsl(14 22% 18%) · friendly hsl(203 67% 65%) · enemy hsl(12 68% 59%) · healing hsl(162 45% 62%)
-return {
-	surface0={12,20,36}, surface1={26,34,56}, surface2={34,43,68},
-	textPrimary={242,243,247}, textSecondary={189,193,201}, primary={14,165,233}, warning={233,170,70},
-	dust={67,61,50}, stone={82,74,66}, infestation={56,41,36}, friendly={106,180,226}, enemy={222,108,79}, healing={115,202,175},
-	grass={46,58,34}, cliff={74,70,66}, wood={110,78,46}, torch={255,170,70}, moon={120,140,190},
-	textSize=16, hudSize=14, titleSize=24, touch=48, gap=8, radius=6,
+--!strict
+-- 화면·연출 색. 원작 marine-command/DESIGN.md 의 의미 토큰을 RGB 로 옮겼다. 월드 재질 색은 빌더(tools/build.py)가 따로 가진다.
+local Theme = {
+	surface0 = Color3.fromRGB(22, 27, 38),
+	surface1 = Color3.fromRGB(34, 40, 54),
+	surface2 = Color3.fromRGB(46, 53, 70),
+	textPrimary = Color3.fromRGB(244, 245, 248),
+	textSecondary = Color3.fromRGB(190, 196, 208),
+	primary = Color3.fromRGB(82, 160, 232),
+	warning = Color3.fromRGB(236, 180, 60),
+	friendly = Color3.fromRGB(104, 178, 226),
+	enemy = Color3.fromRGB(226, 96, 68),
+	healing = Color3.fromRGB(112, 206, 160),
+	torch = Color3.fromRGB(255, 179, 73),
+	arrow = Color3.fromRGB(255, 226, 170),
+	plague = Color3.fromRGB(150, 220, 80),
+	font = Enum.Font.GothamBold,
+	fontBody = Enum.Font.Gotham,
+	fontTitle = Enum.Font.GrenzeGotisch,
 }
+return Theme
