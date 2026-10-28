@@ -7,13 +7,20 @@ local function finiteVector(v)
 	return v.X == v.X and v.Y == v.Y and v.Z == v.Z and math.abs(v.X) < 1e4 and math.abs(v.Y) < 1e4 and math.abs(v.Z) < 1e4
 end
 
+local Shared = game:GetService("ReplicatedStorage"):WaitForChild("ArcherCommand")
+local Config = require(Shared.Config)
+
 local SCHEMA = {
 	start = function(a) return a.mode == "new" or a.mode == "continue" end,
-	hire = function(a) return a.kind == "archer" or a.kind == "longbow" or a.kind == "carpenter" end,
+	hire = function(a) local u = Config.UNITS[a.kind]; return u ~= nil and u.cost > 0 end,
 	upgrade = function(a) return a.kind == "attack" or a.kind == "armor" end,
-	combine = function() return true end,
+	combine = function(a) return type(a.kind) == "string" and Config.UNITS[a.kind] ~= nil end,
 	tower = function(a) return finiteVector(a.point) end,
-	skill = function(a) return finiteVector(a.point) end,
+	skill = function(a)
+		local s = Config.SKILLS[a.kind]
+		if not s then return false end
+		return s.target ~= "ground" or finiteVector(a.point)
+	end,
 	restart = function() return true end,
 }
 

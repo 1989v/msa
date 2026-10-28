@@ -26,7 +26,7 @@ end)
 
 local session = {
 	phase = "lobby", host = nil, eco = Rules.newEconomy(), baseHp = Config.BASE.maxHealth, baseMax = Config.BASE.maxHealth,
-	skillReadyAt = 0, saveTimer = 0, saveInfo = "none", tutorial = {}, startedWith = 0,
+	skillReadyAt = {}, saveTimer = 0, saveInfo = "none", tutorial = {}, startedWith = 0,
 }
 local toasts = {}
 local function toast(text) table.insert(toasts, text); Fx:FireAllClients("toast", text) end
@@ -164,7 +164,7 @@ local function startGame(mode)
 	session.baseMax = Config.BASE.maxHealth + (playerCount() >= 2 and Config.BASE.coopBonus or 0)
 	session.baseHp = session.baseMax
 	session.startedWith = playerCount()
-	session.skillReadyAt = 0; session.saveTimer = 0; session.tutorial = {}
+	session.skillReadyAt = {}; session.saveTimer = 0; session.tutorial = {}
 	if outpostTower then
 		outpostTower:SetAttribute("Health", Config.OUTPOST.towerHealth)
 		for _, p in outpostTower:GetDescendants() do if p:IsA("BasePart") and p.Name ~= "Totem" then p.Color = Color3.fromRGB(118, 110, 102) end end
@@ -177,6 +177,7 @@ local function startGame(mode)
 			if kind == "gold" then addGold(a, b, c)
 			elseif kind == "toast" then toast(a)
 			elseif kind == "wave" then Fx:FireAllClients("wave", a, b)
+			elseif kind == "boss" then toast(a)
 			elseif kind == "gate" and gate then gate:SetAttribute("Open", a) end
 		end,
 	})
@@ -220,19 +221,22 @@ function handlers.upgrade(player, a)
 	if not ok then toast(if why == "GOLD" then "금화가 모자란다" elseif why == "MAX" then "최대 강화" else "강화 불가"); return end
 	Fx:FireAllClients("upgrade", a.kind, session.eco.upgrades[a.kind])
 end
-function handlers.combine(player)
+-- 강화(합성): 같은 병종 셋이 뒤따르고 있어야 한다(주둔 중인 것은 제외).
+function handlers.combine(player, a)
 	if session.phase ~= "playing" then return end
-	local archers = {}
-	for _, a in Npc.alliesOf(player, { archer = true }) do if not a.garrison then table.insert(archers, a) end end
-	if #archers < Config.COMBINE.count then toast("합성에는 뒤따르는 활잡이 셋이 필요하다"); return end
-	local ok = Rules.combine(session.eco)
-	if not ok then toast("합성 불가"); return end
+	local rule = Rules.combineRule(a.kind)
+	if not rule then toast("더 강화할 수 없는 병종이다"); return end
+	local units = {}
+	for _, u in Npc.alliesOf(player, { [rule.from] = true }) do if not u.garrison then table.insert(units, u) end end
+	if #units < rule.count then toast(string.format("%s %d명이 뒤따라야 %s로 강화한다", Config.UNITS[rule.from].label, rule.count, Config.UNITS[rule.to].label)); return end
+	local ok = Rules.combine(session.eco, a.kind)
+	if not ok then toast("강화 불가"); return end
 	local sum = Vector3.zero
-	for i = 1, Config.COMBINE.count do sum += archers[i].root.Position; Npc.removeAlly(archers[i]) end
-	local pos = sum / Config.COMBINE.count
-	Npc.spawnAlly("hero", player, pos)
-	Fx:FireAllClients("combine", pos)
-	toast("영웅 활잡이 탄생 · 일제 사격을 쓸 수 있다")
+	for i = 1, rule.count do sum += units[i].root.Position; Npc.removeAlly(units[i]) end
+	local pos = sum / rule.count
+	Npc.spawnAlly(rule.to, player, pos)
+	Fx:FireAllClients("combine", pos, Config.UNITS[rule.to].label)
+	toast(if rule.to == "hero" then "영웅 활잡이 탄생 · 일제 사격을 쓸 수 있다" else Config.UNITS[rule.to].label .. " 탄생")
 end
 function handlers.tower(player, a)
 	if session.phase ~= "playing" then return end
@@ -243,17 +247,44 @@ function handlers.tower(player, a)
 	end
 	if Npc.counts().carpenters == 0 then toast("탑 자리를 잡았다 · 목수가 있어야 짓는다") else toast("목수가 탑을 지으러 간다") end
 end
+-- 스킬. 쿨다운은 스킬마다 서버가 센다. 화살비·질주·집결은 플레이어, 일제 사격은 영웅이 쏜다.
 function handlers.skill(player, a)
 	if session.phase ~= "playing" then return end
-	local heroes = Npc.alliesOf(player, { hero = true })
-	if #heroes == 0 then toast("영웅 활잡이가 없다"); return end
+	local skill = Config.SKILLS[a.kind]
 	local t = os.clock()
-	if t < session.skillReadyAt then return end
-	local hero = heroes[1]
-	if Rules.flatDistance(hero.root.Position, a.point) > Config.HERO_SKILL.maxDistance then toast("너무 멀다"); return end
-	session.skillReadyAt = t + Config.HERO_SKILL.cooldown
-	Npc.volley(a.point, hero.root.Position)
-	Fx:FireAllClients("volley", a.point)
+	if t < (session.skillReadyAt[a.kind] or 0) then return end
+	local char = player.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	local root = char and char:FindFirstChild("HumanoidRootPart")
+	if not hum or not root or hum.Health <= 0 then return end
+	if a.kind == "volley" then
+		local heroes = Npc.alliesOf(player, { hero = true })
+		if #heroes == 0 then toast("영웅 활잡이가 없다"); return end
+		local hero = heroes[1]
+		if Rules.flatDistance(hero.root.Position, a.point) > skill.maxDistance then toast("너무 멀다"); return end
+		session.skillReadyAt[a.kind] = t + skill.cooldown
+		Npc.volley(a.point, hero.root.Position)
+		Fx:FireAllClients("volley", a.point, skill.radius)
+	elseif a.kind == "rain" then
+		if Rules.flatDistance(root.Position, a.point) > skill.maxDistance then toast("너무 멀다"); return end
+		session.skillReadyAt[a.kind] = t + skill.cooldown
+		Npc.rain(a.point)
+		Fx:FireAllClients("volley", a.point, skill.radius)
+	elseif a.kind == "dash" then
+		session.skillReadyAt[a.kind] = t + skill.cooldown
+		hum.WalkSpeed = Config.PLAYER.walkSpeed + skill.speedBonus
+		Fx:FireAllClients("dash", char, skill.seconds)
+		task.delay(skill.seconds, function() if hum.Parent then hum.WalkSpeed = Config.PLAYER.walkSpeed end end)
+	elseif a.kind == "rally" then
+		session.skillReadyAt[a.kind] = t + skill.cooldown
+		local hums = {}
+		for _, p in Players:GetPlayers() do
+			local c = p.Character; local h = c and c:FindFirstChildOfClass("Humanoid"); local r = c and c:FindFirstChild("HumanoidRootPart")
+			if h and r and h.Health > 0 and Rules.flatDistance(r.Position, root.Position) <= skill.radius then table.insert(hums, h) end
+		end
+		Npc.rally(root.Position, hums)
+		Fx:FireAllClients("rally", root.Position, skill.radius, skill.seconds)
+	end
 end
 
 Command.OnServerEvent:Connect(function(player, name, args)
@@ -271,11 +302,23 @@ local tutorialSteps = {
 	{ key = "hunt", text = "동쪽 사냥터의 좀비를 잡아 금화를 번다 · 다치면 치료사(초록 고리) 곁으로", when = function(e) return e.upgrades.attack >= 2 and e.upgrades.armor >= 1 end },
 	{ key = "healer", text = "체력이 줄었다 · 치료사 곁에 서면 빨리 낫는다", when = function(e, ctx) return ctx.lowHealth end },
 	{ key = "carpenter", text = "목수(500)를 고용하면 채집으로 금화가 들어온다", when = function(e) return e.gold >= 500 and e.counts.carpenter == 0 end },
-	{ key = "archer", text = "활잡이(700)를 고용해 원정대를 키운다", when = function(e) return e.gold >= 700 and e.counts.archer == 0 end },
-	{ key = "tower", text = "방어탑(220)을 세우고 가까이 가서 활잡이를 주둔시킨다", when = function(e) return e.gold >= 220 and e.counts.archer >= 1 and Towers.count() == 0 end },
-	{ key = "combine", text = "활잡이 셋을 영웅으로 합친다", when = function(e) return e.counts.archer >= 3 end },
-	{ key = "skill", text = "일제 사격으로 북쪽 언덕의 거점을 친다", when = function(e) return e.counts.hero >= 1 end },
+	{ key = "rain", hint = "rain", text = "적이 몰리면 「화살비」 · 지면을 탭하면 하늘에서 쏟아진다", when = function(e, ctx) return ctx.enemiesNear end },
+	{ key = "tower", hint = "tower", text = "방어탑(220)은 자리를 잡으면 스스로 올라가고 발리스타가 쏜다", when = function(e) return e.gold >= 220 and Towers.count() == 0 and e.upgrades.armor >= 1 end },
+	{ key = "archer", text = "활잡이(700)를 고용해 원정대를 키운다 · 용병(방패·석궁)도 고용소에", when = function(e) return e.gold >= 700 and e.counts.archer == 0 end },
+	{ key = "combine", text = "같은 병종 셋을 한 단계 위로 강화한다 · 활잡이 3 → 정예", when = function(e) return e.counts.archer >= 3 end },
+	{ key = "skill", text = "영웅이 생겼다 · 일제 사격으로 북쪽 언덕의 거점을 친다", when = function(e) return e.counts.hero >= 1 end },
 }
+
+local function skillTimers()
+	local out = {}
+	for kind, _ in pairs(Config.SKILLS) do out[kind] = math.max(0, (session.skillReadyAt[kind] or 0) - os.clock()) end
+	return out
+end
+local function prices()
+	local out = { tower = Config.TOWER.cost, attack = Rules.upgradeCost("attack", session.eco.upgrades.attack), armor = Rules.upgradeCost("armor", session.eco.upgrades.armor) }
+	for kind, unit in pairs(Config.UNITS) do if unit.cost > 0 then out[kind] = unit.cost end end
+	return out
+end
 
 local stateTimer, healTick = 0, 0
 RunService.Heartbeat:Connect(function(dt)
@@ -283,6 +326,7 @@ RunService.Heartbeat:Connect(function(dt)
 	if session.phase == "playing" then
 		Npc.update(dt)
 		Campaign.update(dt)
+		Towers.update(dt)
 		-- 치료사 곁 회복. 낫고 있는 대상엔 1초마다 회복 연출을 보낸다.
 		healTick += dt
 		local lowHealth = false
@@ -309,7 +353,16 @@ RunService.Heartbeat:Connect(function(dt)
 			if healer and healer.aura then healer.aura.Rate = healing and 14 or 3 end
 			healTick = 0
 		end
-		local ctx = { lowHealth = lowHealth }
+		local enemiesNear = false
+		for _, player in Players:GetPlayers() do
+			local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+			if root then
+				local n = 0
+				for _, e in Npc.allEnemies() do if not e.dead and Rules.flatDistance(e.root.Position, root.Position) <= 24 then n += 1 end end
+				if n >= 4 then enemiesNear = true end
+			end
+		end
+		local ctx = { lowHealth = lowHealth, enemiesNear = enemiesNear }
 		session.hint = nil
 		for _, step in tutorialSteps do
 			if not session.tutorial[step.key] and step.when(session.eco, ctx) then session.tutorial[step.key] = true; toast(step.text) end
@@ -326,8 +379,8 @@ RunService.Heartbeat:Connect(function(dt)
 			phase = session.phase, hostId = session.host and session.host.UserId or 0, saveInfo = session.saveInfo, memoryOnly = Save.isMemoryOnly(),
 			gold = math.floor(session.eco.gold), upgrades = session.eco.upgrades, counts = session.eco.counts, alive = c,
 			base = { hp = math.floor(session.baseHp), max = session.baseMax }, towers = Towers.count(),
-			campaign = Campaign.snapshot(), skillIn = math.max(0, session.skillReadyAt - os.clock()), hint = session.hint,
-			prices = { archer = Rules.price("archer"), longbow = Rules.price("longbow"), carpenter = Rules.price("carpenter"), tower = Config.TOWER.cost, attack = Rules.upgradeCost("attack", session.eco.upgrades.attack), armor = Rules.upgradeCost("armor", session.eco.upgrades.armor) },
+			campaign = Campaign.snapshot(), skills = skillTimers(), hint = session.hint, rally = Npc.rallyActive(),
+			prices = prices(),
 		})
 	end
 end)

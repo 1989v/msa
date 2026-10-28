@@ -376,10 +376,10 @@ def build():
     build_tower(b, assets)
     build_site(b, assets)
 
-    # ── StarterPlayer: 기본 카메라 줌 범위 · 점프 없음 ──
+    # ── StarterPlayer: 기본 카메라 줌 범위 · 점프는 Roblox 기본(50) ──
     sp = b.item(b.root, 'StarterPlayer', 'StarterPlayer')
     b.prop(sp, 'float', 'CameraMaxZoomDistance', 36); b.prop(sp, 'float', 'CameraMinZoomDistance', 12)
-    b.prop(sp, 'float', 'CharacterWalkSpeed', 16); b.prop(sp, 'float', 'CharacterJumpPower', 0); b.prop(sp, 'bool', 'CharacterUseJumpPower', 'true')
+    b.prop(sp, 'float', 'CharacterWalkSpeed', 16); b.prop(sp, 'float', 'CharacterJumpPower', 50); b.prop(sp, 'bool', 'CharacterUseJumpPower', 'true')
     b.prop(sp, 'bool', 'EnableMouseLockOption', 'true'); b.prop(sp, 'float', 'HealthDisplayDistance', 0); b.prop(sp, 'float', 'NameDisplayDistance', 60)
     sps = b.item(sp, 'StarterPlayerScripts', 'StarterPlayerScripts')
     for path in sorted((ROOT / 'src/client').glob('*.luau')):

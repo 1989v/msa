@@ -43,3 +43,9 @@
 - 초반: `Config.START.gold` 300, 첫 웨이브 75초·6마리, 튜토리얼 단계에 `hint` 를 붙여 HUD 가 버튼을 깜빡인다.
 - 치료사: `Rigs.makeHealer()` NPC, `Config.BASE.healPerSecond` 20, 회복 Fx.
 - 검사: 네이티브 게이트 4종 추가(attack motion · swarm spread · healer NPC · upgrade-first opening), 규칙 단언 44→46.
+
+## 3차 피드백 반영 (2026-10-29 저녁)
+사용자 7건: ① 방어탑 미동작 ② 미니맵 ③ 점프 ④ 용병 고용·유닛 강화 ⑤ 스킬 ⑥ 좀비 수량·형태 ⑦ 거구 보스 임팩트(원거리).
+- 설계 변경: 점프는 Roblox 기본으로(초기 「점프 없음」 결정 철회). 탑은 목수·주둔 없이도 동작(자립 건설 + 발리스타). 병종 체계는 `Config.UNITS`(9종, 용병 2) + `Config.COMBINES`(4규칙)로 데이터화. 스킬은 `Config.SKILLS`(4종) 로 데이터화, 서버 쿨다운.
+- 적은 `Config.ENEMIES` 7종. 거구는 `boss`·`boulder` 필드로 보스·원거리. 웨이브 표는 종류별 등장 웨이브를 갖는다.
+- 검사: 네이티브 게이트 6종 추가 + 점프 게이트 반전, 규칙 단언 46→60. 미니맵·핫바 폭·보스 바 복제는 Studio 확인.

@@ -108,9 +108,10 @@ gate(all(k in templates for k in ('Zombie', 'Bat', 'BlockRig', 'Bow', 'Tower', '
      and 'CreateHumanoidModelFromDescriptionAsync' in rigs,
      'NPC templates are Humanoid rigs with Motor6D joints (Roblox Zombie, Bat wings, R6 fallback) and allies come from HumanoidDescription avatars')
 lim = re.search(r'LIMITS = \{ enemies = (\d+)', cfg)
-gate(lim and int(lim.group(1)) <= 60, f'concurrent enemy cap {lim.group(1)} ≤ 60 for server Humanoid rigs')
+gate(lim and int(lim.group(1)) <= 90, f'concurrent enemy cap {lim.group(1)} ≤ 90 for server Humanoid rigs (public co-op zombie shooters run ~100)')
 jp = float(sp.find("./Properties/float[@name='CharacterJumpPower']").text)
-gate(jp == 0 and 'Jump' not in ''.join(client_text.values()), 'no jump: CharacterJumpPower 0 (default touch jump button hides itself) and no custom jump GUI')
+gate(jp == 50 and 'JumpPower = Config.PLAYER.jumpPower' in rigs and 'Jump' not in ''.join(client_text.values()),
+     'jump is the Roblox default: CharacterJumpPower 50, server keeps it, no custom jump GUI (the default touch jump button serves) — user asked for jump on 2026-10-29')
 lighting = next(n for n in items if n.attrib['class'] == 'Lighting')
 clock = float(lighting.find("./Properties/float[@name='ClockTime']").text)
 tech = lighting.find("./Properties/token[@name='Technology']").text
@@ -139,6 +140,32 @@ start_gold = re.search(r'START = \{ gold = (\d+)', cfg); first_at = re.search(r'
 gate(first and first.group(2) == 'attack' and 'hint = session.hint' in main and 's.hint' in client_text['Hud.client.luau'] and 'UIStroke' in client_text['Hud.client.luau']
      and start_gold and int(start_gold.group(1)) >= 280 and first_at and int(first_at.group(1)) >= 60,
      f'upgrade-first opening: {start_gold.group(1) if start_gold else "?"} starting gold, first wave at {first_at.group(1) if first_at else "?"}s, tutorial step 1 points at the attack-upgrade button and the HUD pulses it')
+# 7. 2차 플레이 피드백(2026-10-29 저녁): 탑 자립 · 미니맵 · 용병/병종 강화 · 스킬 · 적 종류 · 거구 보스
+towers_src = (ROOT / 'src/server/Towers.luau').read_text(); hud = client_text['Hud.client.luau']
+ab = re.search(r'autoBuildSeconds = (\d+)', cfg); bal = re.search(r'ballista = \{ range = (\d+), damage = (\d+)', cfg)
+gate(ab and int(ab.group(1)) > 0 and bal and int(bal.group(2)) > 0 and 'function Towers.update(dt)' in towers_src and 'Towers.update(dt)' in main
+     and 'local function updateTowers(' in npc and 'updateTowers(t, up)' in npc and '"tower", tower.model' in npc,
+     f'towers work alone: a placed site builds itself in {ab.group(1) if ab else "?"}s (carpenter speeds it up) and a completed tower fires its own ballista (range {bal.group(1) if bal else "?"}, damage {bal.group(2) if bal else "?"}) — garrison adds on top')
+gate('minimap.Name = "Minimap"' in hud and 'CollectionService:GetTagged("Enemy")' in hud and 'CollectionService:GetTagged("Ally")' in hud and 'GetTagged("Boss")' in hud
+     and 'workspace:FindFirstChild("Towers")' in hud and 'Config.SITES[site.key]' in hud and 'meDir.Rotation' in hud,
+     'minimap: bowl-scaled frame with fixed sites, tagged allies/enemies/boss, towers, other players and the local player with heading')
+merc = re.findall(r'mercenary = true', cfg); combines = re.search(r'Config\.COMBINES = \{(.*?)\n\}', cfg, re.S)
+n_comb = len(re.findall(r'\{ from = "', combines.group(1))) if combines else 0
+gate(len(merc) >= 2 and n_comb >= 3 and 'function Rules.combineRule(' in (ROOT / 'src/shared/Rules.luau').read_text() and 'local function updateMeleeAlly(' in npc and 'attachMeleeGear(' in rigs
+     and 'for _, rule in Config.COMBINES do' in hud and 'send("combine", { kind = rule.from })' in hud and 'Rules.combineRule(a.kind)' in main,
+     f'mercenaries and unit promotion: {len(merc)} hireable mercenaries (one melee with sword/shield gear and melee AI), {n_comb} same-kind promotion rules driven from Config.COMBINES in rules, server and panel')
+skills = re.findall(r'^\s+(\w+) = \{ label = "[^"]+", .*?cooldown = (\d+)', re.search(r'Config\.SKILLS = \{(.*?)\n\}', cfg, re.S).group(1), re.M)
+gate(len(skills) >= 4 and all(k in main for k in ('a.kind == "rain"', 'a.kind == "dash"', 'a.kind == "rally"', 'a.kind == "volley"')) and 'skills = skillTimers()' in main
+     and all(f'handlers.{k}' in fx for k in ('rally', 'dash')) and 'function Npc.rain(' in npc and 'function Npc.rally(' in npc and 'for kind, skill in pairs(Config.SKILLS) do' in hud,
+     f'skills: {len(skills)} with server-side cooldowns ({", ".join(k for k, _ in skills)}), each with an Fx and a hotbar button showing the cooldown')
+enemy_kinds = re.findall(r'^\s+(\w+) = \{ label = "[^"]+", maxHealth', cfg, re.M)
+variety = sum(1 for k in ('runner', 'bomber', 'armored', 'brute', 'plague') if f'kind == "{k}"' in rigs)
+gate(len(enemy_kinds) >= 7 and variety >= 5 and 'scaleJitter' in rigs and 'def.explode' in npc and 'ent.def.armor' in npc and 'runner' in (ROOT / 'src/shared/Rules.luau').read_text(),
+     f'enemy variety: {len(enemy_kinds)} kinds in Config, {variety} with distinct looks in Rigs (colors/scale/fire/metal/highlight) plus per-body scale jitter; runner/bomber/armored enter the wave table')
+boss_hp = re.search(r'brute = \{ label = "[^"]+", maxHealth = (\d+)', cfg)
+gate(boss_hp and int(boss_hp.group(1)) >= 600 and 'boss = true' in cfg and 'boulder = {' in cfg and 'def.boulder' in npc and 'fx("boulder"' in npc and 'splashDamage(' in npc
+     and 'BossBar' in rigs and 'AddTag(model, "Boss")' in rigs and 'function handlers.boulder' in fx and 'function handlers.boss' in fx and 'bossEvery' in cfg and '"boss"' in camp_src,
+     f'brute is a mid-boss: {boss_hp.group(1) if boss_hp else "?"} hp, scale 1.9 with red light, always-on head health bar, throws boulders with splash damage from range, announced every bossEvery waves')
 world = next(n for n in items if n.attrib['class'] == 'Workspace')
 embedded = sum(1 for n in world.iter('Item') if n.attrib['class'] == 'Model' and n.find("./Properties/string[@name='Name']").text in ('Model', 'castleInteriorTorch', 'castleInteriorWell', 'landscapeFence', 'Skeleton', 'Flowers', 'Castle_Roof_2'))
 prompts = sum(1 for n in world.iter('Item') if n.attrib['class'] == 'ProximityPrompt')
@@ -153,5 +180,6 @@ for line in [
     '2 players, host handoff, DataStore UpdateAsync outside Studio, BindToClose save',
     'balance: upgrade-first opening and 6-zombie first wave at 75s — numbers in Config.luau are a second guess after one play session',
     'attack track visually reads as a bow shot (toolslash is a swing), swarm spread by eye, healer NPC pose on the shrine ring',
+    'minimap dot density at 90 enemies, two-row hotbar fit on a phone, scrolling panel, melee mercenary gear welds, boulder arc, boss bar replication',
 ]:
     print('UNVERIFIED: ' + line)

@@ -66,7 +66,7 @@ function Campaign.update(dt)
 		state.campRespawn = 0
 		state.notify("gold", Config.CAMP.reward, "camp", SITES.camp)
 		state.notify("toast", string.format("거점 소탕 · 금화 +%d · 역습이 온다", Config.CAMP.reward))
-		for _ = 1, Config.CAMP.counterattack do table.insert(state.queue, "zombie") end
+		for i = 1, Config.CAMP.counterattack do table.insert(state.queue, if i % 3 == 0 then "runner" else "zombie") end
 		state.counterPending = Config.CAMP.counterattack
 	elseif state.campCleared then
 		state.campRespawn += dt
@@ -91,6 +91,7 @@ function Campaign.update(dt)
 		state.nextWave = Config.WAVES.interval
 		enqueueWave(state.wave)
 		state.notify("wave", state.wave, Rules.waveTotal(state.wave))
+		if (Rules.waveComposition(state.wave).brute or 0) > 0 then state.notify("boss", "거구 좀비가 온다 · 바위를 던진다, 거리를 벌려라") end
 	end
 	-- 대기열 방출: 상한 안에서 묶음 단위
 	state.spawnTimer -= dt

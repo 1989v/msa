@@ -54,7 +54,7 @@ local function burst(pos, texture, color, size, speed, count)
 end
 
 -- ───────── 화살 ─────────
-local ARROW_COLOR = { player = Theme.arrow, archer = Theme.arrow, longbow = Color3.fromRGB(190, 220, 255), hero = Color3.fromRGB(255, 140, 90) }
+local ARROW_COLOR = { player = Theme.arrow, archer = Theme.arrow, veteran = Theme.arrow, longbow = Color3.fromRGB(190, 220, 255), marksman = Color3.fromRGB(190, 220, 255), crossbow = Color3.fromRGB(255, 200, 120), hero = Color3.fromRGB(255, 140, 90), rain = Color3.fromRGB(255, 200, 120), tower = Color3.fromRGB(255, 160, 100) }
 local pool, flights = {}, {}
 local function makeArrow()
 	local shaft = part(Vector3.new(0.18, 0.18, 2.6), Color3.fromRGB(160, 120, 80), Enum.Material.Wood)
@@ -183,17 +183,63 @@ function handlers.gold(pos, amount) floatingText(pos, "+" .. tostring(amount), T
 function handlers.wave(n, total) showBanner(string.format("웨이브 %d · 적 %d", n, total)); playAt(player.Character and player.Character:GetPivot().Position or Vector3.zero, "wave") end
 function handlers.baseHit(ratio) if ratio < 0.3 then showBanner("본진이 위험하다", Theme.enemy) end end
 function handlers.recruit(pos) burst(pos + Vector3.new(0, 2, 0), SPARK, Theme.friendly, 1.2, 5, 10) end
-function handlers.combine(pos) burst(pos + Vector3.new(0, 2, 0), SPARK, Color3.fromRGB(255, 140, 90), 2, 8, 24); showBanner("영웅 활잡이", Color3.fromRGB(255, 140, 90)) end
+function handlers.combine(pos, label) burst(pos + Vector3.new(0, 2, 0), SPARK, Color3.fromRGB(255, 140, 90), 2, 8, 24); showBanner(label or "강화", Color3.fromRGB(255, 140, 90)) end
 function handlers.upgrade(kind, level) showBanner((kind == "attack" and "공업 " or "방업 ") .. level, Theme.primary) end
 function handlers.site(model) burst(model:GetPivot().Position + Vector3.new(0, 1, 0), SMOKE, Color3.fromRGB(150, 120, 90), 2, 4, 8) end
 function handlers.tower(model) burst(model:GetPivot().Position + Vector3.new(0, 6, 0), SPARK, Theme.warning, 1.5, 6, 16) end
 function handlers.gather(pos, kind) burst(pos + Vector3.new(0, 2, 0), kind == "wood" and SMOKE or SPARK, kind == "wood" and Color3.fromRGB(150, 110, 70) or Color3.fromRGB(200, 200, 230), 1, 4, 6) end
-function handlers.volley(point)
-	local ring = part(Vector3.new(0.2, 16, 16), Color3.fromRGB(255, 140, 90), Enum.Material.Neon); ring.Shape = Enum.PartType.Cylinder
+function handlers.volley(point, radius)
+	local d = (radius or 8) * 2
+	local ring = part(Vector3.new(0.2, d, d), Color3.fromRGB(255, 140, 90), Enum.Material.Neon); ring.Shape = Enum.PartType.Cylinder
 	ring.CFrame = CFrame.new(point + Vector3.new(0, 0.3, 0)) * CFrame.Angles(0, 0, math.rad(90)); ring.Transparency = 0.5
 	TweenService:Create(ring, TweenInfo.new(0.8), { Transparency = 1 }):Play(); Debris:AddItem(ring, 0.9)
 end
 function handlers.toast() end -- HUD 가 받는다
+-- 거구의 바위: 돌덩이가 포물선으로 날아간다
+function handlers.boulder(from, to, travel)
+	local rock = part(Vector3.new(2.4, 2.4, 2.4), Color3.fromRGB(96, 90, 84), Enum.Material.Slate); rock.Shape = Enum.PartType.Ball; rock.Position = from
+	local t0 = os.clock()
+	local conn
+	conn = RunService.RenderStepped:Connect(function()
+		local k = math.min(1, (os.clock() - t0) / travel)
+		local pos = from:Lerp(to, k) + Vector3.new(0, math.sin(k * math.pi) * 10, 0)
+		rock.CFrame = CFrame.new(pos) * CFrame.Angles(k * 9, 0, k * 6)
+		if k >= 1 then conn:Disconnect(); rock:Destroy() end
+	end)
+end
+-- 반경 폭발(바위 착탄·폭발 좀비)
+function handlers.explode(pos, radius, kind)
+	local color = if kind == "fire" then Color3.fromRGB(255, 140, 40) else Color3.fromRGB(150, 140, 130)
+	burst(pos + Vector3.new(0, 1, 0), SMOKE, color, radius * 0.5, radius * 1.4, 24)
+	burst(pos + Vector3.new(0, 1, 0), SPARK, color, 1.2, radius * 1.6, 12)
+	local ring = part(Vector3.new(0.2, radius * 2, radius * 2), color, Enum.Material.Neon); ring.Shape = Enum.PartType.Cylinder
+	ring.CFrame = CFrame.new(pos + Vector3.new(0, 0.3, 0)) * CFrame.Angles(0, 0, math.rad(90)); ring.Transparency = 0.4
+	TweenService:Create(ring, TweenInfo.new(0.5), { Transparency = 1, Size = Vector3.new(0.2, radius * 2.6, radius * 2.6) }):Play(); Debris:AddItem(ring, 0.6)
+	local flashLight = Instance.new("PointLight"); flashLight.Range = radius * 3; flashLight.Brightness = 3; flashLight.Color = color; flashLight.Parent = ring
+	playAt(pos, "wave")
+end
+-- 근접 용병의 베기
+function handlers.slash(pos) burst(pos + Vector3.new(0, 1.5, 0), SPARK, Color3.fromRGB(220, 225, 240), 0.8, 7, 5); playAt(pos, "melee") end
+-- 질주: 잠시 발밑에 빛 꼬리
+function handlers.dash(char, seconds)
+	local root = char and char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+	local a0 = Instance.new("Attachment"); a0.Position = Vector3.new(-1, -2.5, 0); a0.Parent = root
+	local a1 = Instance.new("Attachment"); a1.Position = Vector3.new(1, -2.5, 0); a1.Parent = root
+	local trail = Instance.new("Trail"); trail.Attachment0 = a0; trail.Attachment1 = a1; trail.Lifetime = 0.4; trail.LightEmission = 1; trail.LightInfluence = 0; trail.Color = ColorSequence.new(Theme.primary); trail.Parent = root
+	Debris:AddItem(trail, seconds); Debris:AddItem(a0, seconds); Debris:AddItem(a1, seconds)
+end
+-- 집결: 초록 고리가 퍼지고 범위 안이 잠시 밝다
+function handlers.rally(center, radius, seconds)
+	local ring = part(Vector3.new(0.2, 2, 2), Theme.healing, Enum.Material.Neon); ring.Shape = Enum.PartType.Cylinder
+	ring.CFrame = CFrame.new(center + Vector3.new(0, 0.3, 0)) * CFrame.Angles(0, 0, math.rad(90)); ring.Transparency = 0.3
+	TweenService:Create(ring, TweenInfo.new(0.7), { Size = Vector3.new(0.2, radius * 2, radius * 2), Transparency = 0.85 }):Play()
+	Debris:AddItem(ring, seconds)
+	burst(center + Vector3.new(0, 2, 0), SPARK, Theme.healing, 1.4, 6, 20)
+	showBanner("집결", Theme.healing)
+end
+-- 중간 보스 등장
+function handlers.boss(_model, label) showBanner(label or "거구 좀비", Theme.enemy); playAt(player.Character and player.Character:GetPivot().Position or Vector3.zero, "wave") end
 Fx.OnClientEvent:Connect(function(kind, ...)
 	local h = handlers[kind]
 	if h then h(...) end

@@ -7,7 +7,15 @@ local Rules = {}
 export type Economy = { gold: number, upgrades: { attack: number, armor: number }, counts: { [string]: number } }
 
 function Rules.newEconomy(): Economy
-	return { gold = Config.START.gold, upgrades = { attack = 0, armor = 0 }, counts = { archer = 0, longbow = 0, hero = 0, carpenter = 0 } }
+	local counts = {}
+	for kind in pairs(Config.UNITS) do counts[kind] = 0 end
+	return { gold = Config.START.gold, upgrades = { attack = 0, armor = 0 }, counts = counts }
+end
+
+local function combatCount(eco: Economy): number
+	local n = 0
+	for kind, unit in pairs(Config.UNITS) do if unit.combat then n += eco.counts[kind] or 0 end end
+	return n
 end
 
 function Rules.price(kind: string): number?
@@ -27,8 +35,7 @@ function Rules.canHire(eco: Economy, kind: string): (boolean, string)
 	if not unit or unit.cost <= 0 then return false, "UNKNOWN" end
 	if eco.gold < unit.cost then return false, "GOLD" end
 	if unit.combat then
-		local combat = (eco.counts.archer or 0) + (eco.counts.longbow or 0) + (eco.counts.hero or 0)
-		if combat >= Config.LIMITS.allies then return false, "LIMIT" end
+		if combatCount(eco) >= Config.LIMITS.allies then return false, "LIMIT" end
 	elseif (eco.counts.carpenter or 0) >= Config.LIMITS.carpenters then
 		return false, "LIMIT"
 	end
@@ -54,16 +61,25 @@ function Rules.upgrade(eco: Economy, kind: string): (boolean, string)
 	return true, "OK"
 end
 
-function Rules.canCombine(eco: Economy): (boolean, string)
-	if (eco.counts[Config.COMBINE.from] or 0) < Config.COMBINE.count then return false, "COUNT" end
+-- 합성 규칙: from 병종 count 명 → to 병종 하나. 한 병종은 한 규칙에만 속한다.
+function Rules.combineRule(from: string)
+	for _, rule in Config.COMBINES do if rule.from == from then return rule end end
+	return nil
+end
+
+function Rules.canCombine(eco: Economy, from: string): (boolean, string)
+	local rule = Rules.combineRule(from)
+	if not rule then return false, "UNKNOWN" end
+	if (eco.counts[rule.from] or 0) < rule.count then return false, "COUNT" end
 	return true, "OK"
 end
 
-function Rules.combine(eco: Economy): (boolean, string)
-	local ok, why = Rules.canCombine(eco)
+function Rules.combine(eco: Economy, from: string): (boolean, string)
+	local ok, why = Rules.canCombine(eco, from)
 	if not ok then return false, why end
-	eco.counts[Config.COMBINE.from] -= Config.COMBINE.count
-	eco.counts[Config.COMBINE.to] = (eco.counts[Config.COMBINE.to] or 0) + 1
+	local rule = Rules.combineRule(from)
+	eco.counts[rule.from] -= rule.count
+	eco.counts[rule.to] = (eco.counts[rule.to] or 0) + 1
 	return true, "OK"
 end
 
@@ -76,18 +92,29 @@ function Rules.damageTaken(raw: number, armorLevel: number): number
 	return math.max(1, raw - Config.UPGRADES.armor.reductionPerLevel * armorLevel)
 end
 
--- 웨이브 n(1부터)의 구성. 수는 줄이고 개체는 키운 규모. 첫 웨이브는 활잡이 하나가 치료사 곁에서 버틸 만큼 작다.
-function Rules.waveComposition(n: number): { zombie: number, plague: number, bat: number }
+-- 웨이브 n(1부터)의 구성. 첫 웨이브는 활잡이 하나가 치료사 곁에서 버틸 만큼 작고, 종류는 웨이브마다 하나씩 는다.
+-- bossEvery 번째 웨이브엔 거구 좀비(중간 보스)가 하나 온다. 총량이 동시 상한을 넘으면 대기열이 상한 안에서 흘려보낸다.
+function Rules.waveComposition(n: number): { [string]: number }
 	return {
-		zombie = 6 + 3 * (n - 1),
+		zombie = 6 + 4 * (n - 1),
+		runner = if n >= 2 then 2 + 2 * (n - 2) else 0,
 		plague = math.floor(n / 2),
 		bat = if n >= 3 then 2 + (n - 3) else 0,
+		bomber = if n >= 3 then 1 + math.floor((n - 3) / 2) else 0,
+		armored = if n >= 4 then math.floor((n - 2) / 2) else 0,
+		brute = if n % Config.WAVES.bossEvery == 0 then 1 else 0,
 	}
 end
 
 function Rules.waveTotal(n: number): number
-	local c = Rules.waveComposition(n)
-	return c.zombie + c.plague + c.bat
+	local total = 0
+	for _, count in Rules.waveComposition(n) do total += count end
+	return total
+end
+
+-- 적이 받는 화살 피해: 철갑은 차감, 최소 1.
+function Rules.enemyDamageTaken(raw: number, enemyArmor: number?): number
+	return math.max(1, raw - (enemyArmor or 0))
 end
 
 local function inBowl(p: Vector3): boolean
@@ -142,7 +169,7 @@ function Rules.sanitizeSave(raw: any): Economy?
 	end
 	if type(raw.counts) ~= "table" then return nil end
 	for k in pairs(Config.UNITS) do
-		local n = finite(raw.counts[k], Config.LIMITS.allies)
+		local n = finite(raw.counts[k] or 0, Config.LIMITS.allies)
 		if not n then return nil end
 		eco.counts[k] = n
 	end

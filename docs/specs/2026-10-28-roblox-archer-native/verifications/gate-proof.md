@@ -43,3 +43,19 @@ LUAU_BIN=/private/tmp/roblox-infinity-step-tools/luau python3 gate_proof.py <작
 R 은 첫 시도에서 **초록**이었다 — 게이트가 `ent.wobble` 문자열 존재만 봐서 할당문이 남아 있으면 통과했다. 목적지 식 `(target.pos + ent.wobble)` 자체를 보도록 고친 뒤 빨강. 안 물리는 게이트를 켰다고 하지 않았다.
 
 4/4 RED, proof exit=0. 주입 전 원본 exit=0(status.md 2차 출력).
+
+## 3차 — 2차 플레이 피드백 7건의 게이트, 주입 7/7 빨강 (2026-10-29 저녁)
+
+점프 게이트는 뒤집었다(0 → Roblox 기본 50, 사용자 요청). 새 게이트 6종(탑 자립·미니맵·용병/병종 강화·스킬·적 종류·거구 보스). 스크립트 `gate_proof3.py`(스크래치패드, 사례당 치환 여러 개).
+
+| 주입 | exit | 첫 빨간 줄 |
+|---|---|---|
+| U 점프를 다시 0 으로 | exit 1 | `FAIL jump is the Roblox default: CharacterJumpPower 50, server keeps it, no custom jump GUI (the default touch jump button serves) — user asked for jump on 2026` |
+| V 탑 자가 건설 틱 제거 | exit 1 | `FAIL towers work alone: a placed site builds itself in 20s (carpenter speeds it up) and a completed tower fires its own ballista (range 34, damage 18) — garriso` |
+| W 미니맵에서 적 점 제거 | exit 1 | `FAIL minimap: bowl-scaled frame with fixed sites, tagged allies/enemies/boss, towers, other players and the local player with heading` |
+| X 근접 용병 AI 를 이름만 바꿔 우회 | exit 1 | `FAIL mercenaries and unit promotion: 2 hireable mercenaries (one melee with sword/shield gear and melee AI), 4 same-kind promotion rules driven from Config.COMB` |
+| Y 질주 스킬 분기 이름 변경(동작 안 함) | exit 1 | `FAIL skills: 4 with server-side cooldowns (rain, dash, rally, volley), each with an Fx and a hotbar button showing the cooldown` |
+| Z 질주 좀비 외형 분기 제거 | exit 1 | `FAIL enemy variety: 7 kinds in Config, 4 with distinct looks in Rigs (colors/scale/fire/metal/highlight) plus per-body scale jitter; runner/bomber/armored enter` |
+| AA 거구 바위 Fx 이름 변경(클라이언트가 못 그림) | exit 1 | `FAIL brute is a mid-boss: 900 hp, scale 1.9 with red light, always-on head health bar, throws boulders with splash damage from range, announced every bossEvery ` |
+
+7/7 RED, proof exit=0. 주입 전 원본 exit=0(status.md 3차 출력). X 는 함수 이름만 바꿔 호출까지 맞춘 「컴파일되는 회귀」다 — 문자열 존재가 아니라 그 이름의 정의·호출 둘 다를 보는 게이트라 빨강.

@@ -1,5 +1,6 @@
 --!nonstrict
--- 방어탑: 플레이어가 지면을 탭해 자리를 정하고, 목수가 걸어가 짓는다. 완성된 탑엔 활잡이가 주둔한다(ProximityPrompt).
+-- 방어탑: 플레이어가 지면을 탭해 자리를 정하면 스스로 올라간다(autoBuildSeconds). 목수가 붙으면 더 빠르다.
+-- 완성된 탑은 발리스타가 자동 사격하고(Npc 가 쏜다), 활잡이를 주둔시키면 그 위에서 더 쏜다(ProximityPrompt).
 local ServerStorage = game:GetService("ServerStorage")
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("ArcherCommand")
 local Config = require(Shared.Config)
@@ -42,18 +43,25 @@ function Towers.claimBuild(ent)
 	return nil
 end
 
+-- progress 는 0~1. 스스로 1/autoBuildSeconds 씩, 목수가 붙으면 1/buildSeconds 를 더한다.
+local function advance(s, i, amount)
+	s.progress = math.min(1, s.progress + amount)
+	s.model:SetAttribute("Progress", s.progress)
+	if s.progress >= 1 then
+		table.remove(sites, i)
+		Towers.complete(s.model)
+		return true
+	end
+	return false
+end
+
+function Towers.update(dt)
+	for i = #sites, 1, -1 do advance(sites[i], i, dt / Config.TOWER.autoBuildSeconds) end
+end
+
 function Towers.buildProgress(siteModel, dt)
 	for i, s in sites do
-		if s.model == siteModel then
-			s.progress += dt
-			s.model:SetAttribute("Progress", math.clamp(s.progress / Config.CARPENTER.buildSeconds, 0, 1))
-			if s.progress >= Config.CARPENTER.buildSeconds then
-				table.remove(sites, i)
-				Towers.complete(s.model)
-				return true
-			end
-			return false
-		end
+		if s.model == siteModel then return advance(s, i, dt / Config.CARPENTER.buildSeconds) end
 	end
 	return true
 end
@@ -71,7 +79,7 @@ function Towers.complete(siteModel)
 	tower.Parent = folder
 	table.insert(towers, { model = tower, repairer = nil })
 	Fx:FireAllClients("tower", tower)
-	Towers.hooks.toast("방어탑 완성 · 가까이 가서 주둔시킨다")
+	Towers.hooks.toast("방어탑 완성 · 발리스타가 쏜다 · 가까이 가면 활잡이를 주둔시킬 수 있다")
 end
 
 function Towers.toggleGarrison(player, tower)
@@ -80,7 +88,9 @@ function Towers.toggleGarrison(player, tower)
 	if not root then return end
 	if #garrisoned < Config.TOWER.garrison then
 		local best, bestD = nil, 14
-		for _, a in Npc.alliesOf(player, { archer = true, longbow = true, hero = true }) do
+		local ranged = {}
+		for kind, unit in pairs(Config.UNITS) do if unit.combat and not unit.melee then ranged[kind] = true end end
+		for _, a in Npc.alliesOf(player, ranged) do
 			if not a.garrison then
 				local d = Rules.flatDistance(a.root.Position, root.Position)
 				if d < bestD then best, bestD = a, d end

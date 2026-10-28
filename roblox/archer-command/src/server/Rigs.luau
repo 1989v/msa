@@ -102,12 +102,44 @@ local function attachBow(model)
 	bow.Parent = model
 end
 
+local SKIN = Color3.fromRGB(204, 160, 120)
 local ALLY_LOOK = {
-	archer = { head = Color3.fromRGB(204, 160, 120), torso = Color3.fromRGB(70, 96, 58), arms = Color3.fromRGB(204, 160, 120), legs = Color3.fromRGB(72, 58, 44) },
-	longbow = { head = Color3.fromRGB(204, 160, 120), torso = Color3.fromRGB(44, 62, 102), arms = Color3.fromRGB(204, 160, 120), legs = Color3.fromRGB(40, 40, 52) },
-	hero = { head = Color3.fromRGB(204, 160, 120), torso = Color3.fromRGB(150, 44, 40), arms = Color3.fromRGB(190, 150, 110), legs = Color3.fromRGB(54, 44, 40) },
-	carpenter = { head = Color3.fromRGB(204, 160, 120), torso = Color3.fromRGB(140, 98, 60), arms = Color3.fromRGB(204, 160, 120), legs = Color3.fromRGB(96, 80, 64) },
+	archer = { torso = Color3.fromRGB(70, 96, 58), legs = Color3.fromRGB(72, 58, 44) },
+	veteran = { torso = Color3.fromRGB(96, 128, 64), legs = Color3.fromRGB(60, 50, 40), trim = Theme.warning },
+	hero = { torso = Color3.fromRGB(150, 44, 40), legs = Color3.fromRGB(54, 44, 40), trim = Color3.fromRGB(255, 140, 90) },
+	longbow = { torso = Color3.fromRGB(44, 62, 102), legs = Color3.fromRGB(40, 40, 52) },
+	marksman = { torso = Color3.fromRGB(60, 90, 150), legs = Color3.fromRGB(30, 30, 44), trim = Color3.fromRGB(190, 220, 255) },
+	shield = { torso = Color3.fromRGB(110, 110, 118), legs = Color3.fromRGB(70, 70, 80) },
+	heavy = { torso = Color3.fromRGB(80, 80, 92), legs = Color3.fromRGB(50, 50, 60), trim = Color3.fromRGB(200, 200, 215) },
+	crossbow = { torso = Color3.fromRGB(120, 80, 50), legs = Color3.fromRGB(60, 44, 34) },
+	carpenter = { torso = Color3.fromRGB(140, 98, 60), legs = Color3.fromRGB(96, 80, 64) },
 }
+
+-- 근접 용병은 활 대신 검과 방패. 템플릿 없이 파트 둘을 손·팔에 건다.
+local function weldTo(part, limb, offset)
+	local weld = Instance.new("Weld"); weld.Part0 = limb; weld.Part1 = part; weld.C0 = offset; weld.Parent = part
+	part.Anchored = false; part.CanCollide = false; part.Massless = true; part.CastShadow = false
+end
+local function attachMeleeGear(model, trim)
+	local right = model:FindFirstChild("RightHand") or model:FindFirstChild("Right Arm")
+	local left = model:FindFirstChild("LeftLowerArm") or model:FindFirstChild("Left Arm")
+	if right then
+		local sword = Instance.new("Part"); sword.Name = "Sword"; sword.Size = Vector3.new(0.25, 3.2, 0.5); sword.Color = Color3.fromRGB(200, 205, 215); sword.Material = Enum.Material.Metal
+		weldTo(sword, right, CFrame.new(0, -1.2, 0) * CFrame.Angles(math.rad(90), 0, 0)); sword.Parent = model
+	end
+	if left then
+		local shield = Instance.new("Part"); shield.Name = "Shield"; shield.Size = Vector3.new(2.2, 2.6, 0.25); shield.Color = trim or Color3.fromRGB(120, 60, 40); shield.Material = Enum.Material.WoodPlanks
+		weldTo(shield, left, CFrame.new(-0.6, 0, 0) * CFrame.Angles(0, math.rad(90), 0)); shield.Parent = model
+	end
+end
+
+-- 상위 병종은 어깨 장식(Neon 띠)으로 구분한다.
+local function addTrim(model, color)
+	local torso = model:FindFirstChild("UpperTorso") or model:FindFirstChild("Torso")
+	if not torso then return end
+	local band = Instance.new("Part"); band.Name = "Trim"; band.Size = Vector3.new(torso.Size.X + 0.3, 0.35, torso.Size.Z + 0.3); band.Color = color; band.Material = Enum.Material.Neon
+	weldTo(band, torso, CFrame.new(0, torso.Size.Y * 0.35, 0)); band.Parent = model
+end
 
 function Rigs.makeAlly(kind)
 	Rigs.ready()
@@ -115,12 +147,13 @@ function Rigs.makeAlly(kind)
 	local model = allyTemplate:Clone()
 	model.Name = kind
 	local look = ALLY_LOOK[kind]
-	setBodyColors(model, look.head, look.torso, look.arms, look.legs)
+	setBodyColors(model, SKIN, look.torso, SKIN, look.legs)
 	local hum = prepareHumanoid(model, unit.walkSpeed, unit.maxHealth, unit.label)
-	if kind == "hero" then pcall(function() model:ScaleTo(1.12) end) end
+	if unit.scale then pcall(function() model:ScaleTo(unit.scale) end) end
 	local root = model:FindFirstChild("HumanoidRootPart")
 	addLight(root, 12, 0.7, Theme.torch)
-	if unit.combat then attachBow(model) end
+	if unit.melee then attachMeleeGear(model, look.trim) elseif unit.combat then attachBow(model) end
+	if look.trim then addTrim(model, look.trim) end
 	CollectionService:AddTag(model, "Ally")
 	model:SetAttribute("Kind", kind)
 	return model, hum, root
@@ -140,29 +173,64 @@ function Rigs.makeEnemy(kind)
 	end
 	local model = Assets.Zombie:Clone()
 	model.Name = kind
+	local function glow(color, fill)
+		local h = Instance.new("Highlight"); h.FillColor = color; h.FillTransparency = fill or 0.75; h.OutlineTransparency = 1; h.Parent = model
+	end
 	if kind == "plague" then
 		setBodyColors(model, Color3.fromRGB(150, 190, 90), Color3.fromRGB(96, 130, 60), Color3.fromRGB(150, 190, 90), Color3.fromRGB(70, 90, 50))
-		local glow = Instance.new("Highlight")
-		glow.FillColor = Theme.plague; glow.FillTransparency = 0.75; glow.OutlineTransparency = 1
-		glow.Parent = model
+		glow(Theme.plague)
+	elseif kind == "runner" then
+		setBodyColors(model, Color3.fromRGB(90, 96, 100), Color3.fromRGB(60, 62, 70), Color3.fromRGB(90, 96, 100), Color3.fromRGB(40, 40, 48))
+	elseif kind == "bomber" then
+		setBodyColors(model, Color3.fromRGB(230, 120, 50), Color3.fromRGB(180, 70, 30), Color3.fromRGB(230, 120, 50), Color3.fromRGB(90, 40, 20))
+		local torso = model:FindFirstChild("Torso")
+		if torso then
+			local fire = Instance.new("Fire"); fire.Size = 3; fire.Heat = 6; fire.Color = Color3.fromRGB(255, 140, 40); fire.SecondaryColor = Color3.fromRGB(255, 60, 20); fire.Parent = torso
+			addLight(torso, 10, 1.0, Color3.fromRGB(255, 120, 40))
+		end
+	elseif kind == "armored" then
+		setBodyColors(model, Color3.fromRGB(120, 124, 132), Color3.fromRGB(70, 74, 84), Color3.fromRGB(120, 124, 132), Color3.fromRGB(50, 52, 60))
+		glow(Color3.fromRGB(200, 205, 215), 0.85)
+		for _, name in { "Torso", "Head" } do
+			local part = model:FindFirstChild(name)
+			if part then part.Material = Enum.Material.Metal; part.Color = Color3.fromRGB(110, 114, 124) end
+		end
 	elseif kind == "brute" then
 		setBodyColors(model, Color3.fromRGB(120, 70, 60), Color3.fromRGB(80, 40, 40), Color3.fromRGB(120, 70, 60), Color3.fromRGB(50, 30, 30))
-		pcall(function() model:ScaleTo(1.45) end)
+		glow(Theme.enemy, 0.8)
+		addLight(model:FindFirstChild("Torso") or model:FindFirstChild("Head"), 16, 1.2, Theme.enemy)
 	end
+	-- 같은 모델이라도 크기를 조금씩 다르게(모양 변주). 보스·철갑·질주는 고유 배율.
+	local scale = (def.scale or 1) * (1 + Config.SWARM.scaleJitter * (math.random() * 2 - 1))
+	pcall(function() model:ScaleTo(scale) end)
 	local hum = prepareHumanoid(model, def.walkSpeed, def.maxHealth, def.label)
+	if def.boss then
+		-- 보스 체력바: 머리 위에 항상 보인다(일반 적은 맞았을 때만 기본 체력바).
+		hum.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
+		hum.NameDisplayDistance = 160
+		local head = model:FindFirstChild("Head")
+		if head then
+			local bar = Instance.new("BillboardGui"); bar.Name = "BossBar"; bar.Size = UDim2.fromOffset(180, 16); bar.StudsOffset = Vector3.new(0, 4.5, 0); bar.MaxDistance = 160; bar.AlwaysOnTop = true
+			local back = Instance.new("Frame"); back.Size = UDim2.fromScale(1, 1); back.BackgroundColor3 = Color3.fromRGB(30, 20, 20); back.BorderSizePixel = 0; back.Parent = bar
+			local fill = Instance.new("Frame"); fill.Name = "Fill"; fill.Size = UDim2.fromScale(1, 1); fill.BackgroundColor3 = Theme.enemy; fill.BorderSizePixel = 0; fill.Parent = back
+			bar.Parent = head
+			hum.HealthChanged:Connect(function(h) fill.Size = UDim2.fromScale(math.clamp(h / hum.MaxHealth, 0, 1), 1) end)
+		end
+		CollectionService:AddTag(model, "Boss")
+	end
 	CollectionService:AddTag(model, "Enemy")
 	model:SetAttribute("Kind", kind)
 	return model, hum, model:FindFirstChild("HumanoidRootPart")
 end
 
--- 플레이어 아바타 = 원정대 선두 활잡이. 걷기·카메라는 Roblox 기본, 점프 없음(JumpPower 0 이면 기본 터치 점프 버튼이 숨는다).
+-- 플레이어 아바타 = 원정대 선두 활잡이. 걷기·점프·카메라는 Roblox 기본(기본 터치 점프 버튼 그대로).
 function Rigs.setupPlayer(character)
 	local hum = character:WaitForChild("Humanoid")
 	hum.WalkSpeed = Config.PLAYER.walkSpeed
 	hum.MaxHealth = Config.PLAYER.maxHealth
 	hum.Health = Config.PLAYER.maxHealth
 	hum.UseJumpPower = true
-	hum.JumpPower = 0
+	hum.JumpPower = Config.PLAYER.jumpPower
 	hum.DisplayName = "활잡이 " .. (Players:GetPlayerFromCharacter(character) and Players:GetPlayerFromCharacter(character).DisplayName or "")
 	local root = character:WaitForChild("HumanoidRootPart")
 	addLight(root, Config.PLAYER.lightRange, Config.PLAYER.lightBrightness, Theme.torch)

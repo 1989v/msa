@@ -31,6 +31,8 @@ local allies, enemies, structures, players = {}, {}, {}, {}
 local flat = Rules.flatDistance
 local now = os.clock
 local rng = Random.new()
+-- 집결 버프: 끝나는 시각. 켜진 동안 아군·플레이어 사격 간격이 줄어든다.
+local rallyUntil = 0
 
 -- 무리가 한 줄로 서지 않게: 개체마다 목적지를 조금씩 비켜 잡고(wobble) 몇 초마다 다시 뽑는다.
 local function newWobble()
@@ -57,6 +59,10 @@ local function alive(ent) return ent and ent.model.Parent ~= nil and not ent.dea
 
 local function fx(kind, ...) Fx:FireAllClients(kind, ...) end
 
+local function fireInterval(base)
+	return if now() < rallyUntil then base * (1 - Config.SKILLS.rally.fireRateBonus) else base
+end
+
 -- ───────── 적 ─────────
 function Npc.spawnEnemy(kind, position, role, group)
 	local def = Config.ENEMIES[kind]
@@ -65,13 +71,14 @@ function Npc.spawnEnemy(kind, position, role, group)
 	model:PivotTo(CFrame.new(position.X, y + (def.flying and def.altitude or 3), position.Z))
 	model.Parent = folder
 	ownPhysics(model)
-	local ent = { kind = kind, def = def, model = model, hum = hum, root = root, role = role, group = group, home = Vector3.new(position.X, y, position.Z), retarget = 0, moveTimer = 0, lastAttack = 0, lastPos = root.Position, stuckTimer = 0, hp = def.maxHealth, wobble = newWobble(), wobbleAt = now() + rng:NextNumber(0, Config.SWARM.wobbleSeconds) }
+	local ent = { kind = kind, def = def, model = model, hum = hum, root = root, role = role, group = group, home = Vector3.new(position.X, y, position.Z), retarget = 0, moveTimer = 0, lastAttack = 0, lastThrow = 0, lastPos = root.Position, stuckTimer = 0, hp = def.maxHealth, wobble = newWobble(), wobbleAt = now() + rng:NextNumber(0, Config.SWARM.wobbleSeconds) }
 	enemies[model] = ent
 	if hum then
 		-- 같은 속도로 걸으면 열을 맞춘 것처럼 보인다. 개체마다 속도를 흔든다.
 		hum.WalkSpeed = def.walkSpeed * (1 + Config.SWARM.speedJitter * rng:NextNumber(-1, 1))
 		hum.Died:Connect(function() Npc.killEnemy(ent) end)
 	end
+	if def.boss then fx("boss", model, def.label) end
 	return ent
 end
 
@@ -86,6 +93,7 @@ end
 
 function Npc.damageEnemy(ent, amount, hitPos)
 	if not alive(ent) then return end
+	amount = Rules.enemyDamageTaken(amount, ent.def.armor)
 	fx("hit", hitPos or ent.root.Position, amount, ent.model)
 	if ent.hum then
 		ent.hum:TakeDamage(amount)
@@ -174,6 +182,7 @@ function Npc.clear()
 	for _, e in enemies do e.dead = true; e.model:Destroy() end
 	for _, a in allies do a.dead = true; a.model:Destroy() end
 	enemies, allies, structures = {}, {}, {}
+	rallyUntil = 0
 end
 
 -- ───────── 사격 ─────────
@@ -217,26 +226,46 @@ local function nearestEnemy(pos, range)
 	return best, bestS
 end
 
--- 영웅 일제 사격: 반경 안 적에게 화살을 나눠 쏜다.
-function Npc.volley(point, fromPos)
-	local skill = Config.HERO_SKILL
+-- 반경 안 적에게 화살을 나눠 쏜다(영웅 일제 사격·플레이어 화살비가 같은 모양). 적이 없는 화살은 바닥에 꽂힌다.
+local function arrowBurst(skill, point, fromPos, color, up)
 	local inside = {}
 	for _, e in enemies do if alive(e) and flat(e.root.Position, point) <= skill.radius then table.insert(inside, e) end end
-	local up = Npc.hooks.upgrades()
 	local damage = Rules.attackDamage(skill.damage, up.attack)
 	for i = 1, skill.arrows do
 		local target = inside[(i - 1) % math.max(1, #inside) + 1]
 		if target then
-			task.delay((i - 1) * 0.05, function() shoot(fromPos + Vector3.new(0, 2, 0), target, damage, "hero") end)
+			task.delay((i - 1) * 0.05, function() shoot(fromPos, target, damage, color, nil) end)
 		else
 			local angle = i / skill.arrows * math.pi * 2
 			local to = point + Vector3.new(math.cos(angle) * skill.radius * 0.6, 0, math.sin(angle) * skill.radius * 0.6)
 			local travel = (to - fromPos).Magnitude / Config.ARROW.speed
-			task.delay((i - 1) * 0.05, function() fx("arrow", fromPos + Vector3.new(0, 2, 0), to, travel, "hero") end)
+			task.delay((i - 1) * 0.05, function() fx("arrow", fromPos, to, travel, color) end)
 		end
 	end
 	return #inside
 end
+
+function Npc.volley(point, fromPos)
+	return arrowBurst(Config.SKILLS.volley, point, fromPos + Vector3.new(0, 2, 0), "hero", Npc.hooks.upgrades())
+end
+
+-- 화살비: 하늘에서 떨어진다. 쏘는 자리를 지점 위 높이로 둔다.
+function Npc.rain(point)
+	return arrowBurst(Config.SKILLS.rain, point, point + Vector3.new(0, 26, 0), "rain", Npc.hooks.upgrades())
+end
+
+-- 집결: 반경 안 아군·플레이어를 치료하고 잠시 사격 속도를 올린다.
+function Npc.rally(center, playerHumanoids)
+	local skill = Config.SKILLS.rally
+	rallyUntil = now() + skill.seconds
+	local touched = 0
+	for _, a in allies do
+		if alive(a) and flat(a.root.Position, center) <= skill.radius then a.hum.Health = math.min(a.hum.MaxHealth, a.hum.Health + skill.heal); touched += 1 end
+	end
+	for _, hum in playerHumanoids do hum.Health = math.min(hum.MaxHealth, hum.Health + skill.heal); touched += 1 end
+	return touched
+end
+function Npc.rallyActive() return now() < rallyUntil end
 
 -- ───────── 주둔 ─────────
 function Npc.garrison(ent, tower)
@@ -275,7 +304,7 @@ local function targetsForEnemies()
 		if hum and root and hum.Health > 0 then table.insert(list, { kind = "player", pos = root.Position, radius = 2, hum = hum }) end
 	end
 	for _, a in allies do
-		if alive(a) and not a.garrison then table.insert(list, { kind = "ally", pos = a.root.Position, radius = 2, hum = a.hum, ent = a }) end
+		if alive(a) and not a.garrison then table.insert(list, { kind = "ally", pos = a.root.Position, radius = 2, hum = a.hum, ent = a, taunt = a.def.taunt }) end
 	end
 	for _, t in Npc.hooks.towers() do table.insert(list, { kind = "tower", pos = t.pos, radius = t.radius, model = t.model }) end
 	table.insert(list, { kind = "base", pos = Config.SITES.base, radius = 9, base = true })
@@ -293,13 +322,25 @@ local function applyEnemyDamage(target, raw)
 	end
 end
 
+-- 반경 피해(거구의 바위·폭발 좀비). 반경 안 플레이어·아군·탑, 본진도 닿으면 한 번.
+local function splashDamage(center, radius, raw, list)
+	local hit = 0
+	for _, t in list do
+		if not t.base and flat(t.pos, center) <= radius + t.radius then applyEnemyDamage(t, raw); hit += 1 end
+	end
+	if flat(Config.SITES.base, center) <= radius + 9 then applyEnemyDamage({ base = true }, raw); hit += 1 end
+	return hit
+end
+
 local function pickEnemyTarget(ent, list)
 	local aggro = if ent.role == "wave" or ent.role == "counter" then 28 else 32
 	local best, bestD = nil, math.huge
 	for _, t in list do
 		if not t.base then
 			local d = flat(t.pos, ent.root.Position)
-			if d < bestD and d <= aggro + t.radius then best, bestD = t, d end
+			-- 방패 용병은 적이 먼저 노린다(거리를 짧게 친다)
+			local score = if t.taunt then d * 0.55 else d
+			if score < bestD and d <= aggro + t.radius then best, bestD = t, score end
 		end
 	end
 	if best then return best end
@@ -307,6 +348,17 @@ local function pickEnemyTarget(ent, list)
 		for _, t in list do if t.base then return t end end
 	end
 	return nil
+end
+
+local function explode(ent, list)
+	if ent.dead then return end
+	local pos = ent.root.Position
+	fx("explode", pos, ent.def.explode.radius, "fire")
+	splashDamage(pos, ent.def.explode.radius, ent.def.damage, list)
+	ent.dead = true
+	enemies[ent.model] = nil
+	Npc.hooks.enemyKilled(ent)
+	Debris:AddItem(ent.model, 0.1)
 end
 
 local function updateEnemy(ent, dt, list, t)
@@ -350,8 +402,26 @@ local function updateEnemy(ent, dt, list, t)
 	else
 		Rigs.animate(ent.model, ent.hum, false)
 	end
-	if target and t - ent.lastAttack >= def.cooldown and flat(target.pos, root.Position) <= def.attackRange + target.radius + 0.5 then
+	if not target then return end
+	local dist = flat(target.pos, root.Position)
+	-- 거구: 근접 밖이면 바위를 던진다(원거리). 던지는 순간 멈춰 서서 표적을 본다.
+	if def.boulder and dist > def.attackRange + target.radius + 1 and dist <= def.boulder.range and t - ent.lastThrow >= def.boulder.cooldown then
+		ent.lastThrow = t
+		ent.hum:MoveTo(root.Position)
+		root.CFrame = CFrame.lookAt(root.Position, Vector3.new(target.pos.X, root.Position.Y, target.pos.Z))
+		Rigs.attack(ent.model, ent.hum)
+		local from = root.Position + Vector3.new(0, 5, 0)
+		local to = target.pos
+		local travel = (to - from).Magnitude / def.boulder.speed
+		fx("boulder", from, to, travel)
+		task.delay(travel, function()
+			if alive(ent) then fx("explode", to, def.boulder.radius, "rock"); splashDamage(to, def.boulder.radius, def.boulder.damage, list) end
+		end)
+		return
+	end
+	if t - ent.lastAttack >= def.cooldown and dist <= def.attackRange + target.radius + 0.5 then
 		ent.lastAttack = t
+		if def.explode then explode(ent, list); return end
 		Rigs.attack(ent.model, ent.hum)
 		if def.spitSpeed then
 			local from = root.Position + Vector3.new(0, 1.5, 0)
@@ -376,11 +446,47 @@ local function formationOffset(index)
 	return Vector3.new(math.cos(angle) * r, 0, 2 + math.abs(math.sin(angle)) * r)
 end
 
+local function followOwner(ent, t)
+	local root = ent.root
+	local ownerRoot = ent.owner and ent.owner.Character and ent.owner.Character:FindFirstChild("HumanoidRootPart")
+	local anchor = ownerRoot and ownerRoot.CFrame or CFrame.new(Config.SITES.base + Vector3.new(0, 3, 0))
+	local dest = (anchor * CFrame.new(formationOffset(ent.index))).Position
+	if flat(dest, root.Position) > 3 then
+		if ent.moveTimer <= t then ent.moveTimer = t + 0.3; ent.hum:MoveTo(dest) end
+		Rigs.animate(ent.model, ent.hum, true)
+	else
+		Rigs.animate(ent.model, ent.hum, false)
+	end
+end
+
+-- 근접 용병: 근처(18 스터드) 적에게 달려가 베고, 없으면 대형으로 돌아온다.
+local function updateMeleeAlly(ent, t, up)
+	local root = ent.root
+	local enemy = nearestEnemy(root.Position, 18)
+	if not enemy then followOwner(ent, t); return end
+	local d = flat(enemy.root.Position, root.Position)
+	if d > ent.def.range then
+		if ent.moveTimer <= t then ent.moveTimer = t + 0.3; ent.hum:MoveTo(enemy.root.Position) end
+		Rigs.animate(ent.model, ent.hum, true)
+		return
+	end
+	ent.hum:MoveTo(root.Position)
+	Rigs.animate(ent.model, ent.hum, false)
+	root.CFrame = CFrame.lookAt(root.Position, Vector3.new(enemy.root.Position.X, root.Position.Y, enemy.root.Position.Z))
+	if t - ent.lastShot >= fireInterval(ent.def.fireInterval) then
+		ent.lastShot = t
+		Rigs.attack(ent.model, ent.hum)
+		local damage = Rules.attackDamage(ent.def.damage, up.attack)
+		task.delay(0.2, function() if alive(enemy) and alive(ent) then fx("slash", enemy.root.Position); Npc.damageEnemy(enemy, damage, enemy.root.Position) end end)
+	end
+end
+
 local function updateCombatAlly(ent, dt, t, up)
+	if ent.def.melee then updateMeleeAlly(ent, t, up); return end
 	local root = ent.root
 	local range = ent.def.range + (ent.garrison and Config.TOWER.heightBonus or 0)
 	local enemy, structure = nearestEnemy(root.Position, range)
-	if (enemy or structure) and t - ent.lastShot >= ent.def.fireInterval then
+	if (enemy or structure) and t - ent.lastShot >= fireInterval(ent.def.fireInterval) then
 		ent.lastShot = t
 		local from = root.Position + Vector3.new(0, 1.6, 0)
 		local damage = Rules.attackDamage(ent.def.damage, up.attack)
@@ -390,16 +496,7 @@ local function updateCombatAlly(ent, dt, t, up)
 		if ent.garrison or ent.hum.MoveDirection.Magnitude < 0.1 then root.CFrame = CFrame.lookAt(root.Position, Vector3.new(aim.X, root.Position.Y, aim.Z)) end
 	end
 	if ent.garrison then Rigs.animate(ent.model, ent.hum, false); return end
-	local ownerRoot = ent.owner and ent.owner.Character and ent.owner.Character:FindFirstChild("HumanoidRootPart")
-	local anchor = ownerRoot and ownerRoot.CFrame or CFrame.new(Config.SITES.base + Vector3.new(0, 3, 0))
-	local dest = (anchor * CFrame.new(formationOffset(ent.index))).Position
-	local d = flat(dest, root.Position)
-	if d > 3 then
-		if ent.moveTimer <= t then ent.moveTimer = t + 0.3; ent.hum:MoveTo(dest) end
-		Rigs.animate(ent.model, ent.hum, true)
-	else
-		Rigs.animate(ent.model, ent.hum, false)
-	end
+	followOwner(ent, t)
 end
 
 local storePos = Config.SITES.store
@@ -453,13 +550,31 @@ local function updatePlayers(t, up)
 		local char = player.Character
 		local hum = char and char:FindFirstChildOfClass("Humanoid")
 		local root = char and char:FindFirstChild("HumanoidRootPart")
-		if hum and root and hum.Health > 0 and t - p.lastShot >= Config.PLAYER.fireInterval then
+		if hum and root and hum.Health > 0 and t - p.lastShot >= fireInterval(Config.PLAYER.fireInterval) then
 			local enemy, structure = nearestEnemy(root.Position, Config.PLAYER.range)
 			if enemy or structure then
 				p.lastShot = t
 				local from = root.Position + Vector3.new(0, 1.6, 0)
 				local damage = Rules.attackDamage(Config.PLAYER.damage, up.attack)
 				if enemy then shoot(from, enemy, damage, "player", char) else shootStructure(from, structure, damage, "player", char) end
+			end
+		end
+	end
+end
+
+-- 완성된 탑의 발리스타. 주둔 병력과 별개로 스스로 쏜다.
+local towerShots = setmetatable({}, { __mode = "k" })
+local function updateTowers(t, up)
+	local b = Config.TOWER.ballista
+	for _, tower in Npc.hooks.towers() do
+		local last = towerShots[tower.model] or 0
+		if t - last >= b.interval then
+			local enemy = nearestEnemy(tower.pos, b.range)
+			if enemy then
+				towerShots[tower.model] = t
+				local top = tower.model:FindFirstChild("Top", true)
+				local from = top and top.WorldPosition + Vector3.new(0, 1, 0) or tower.pos + Vector3.new(0, 11, 0)
+				shoot(from, enemy, Rules.attackDamage(b.damage, up.attack), "tower", tower.model)
 			end
 		end
 	end
@@ -478,6 +593,7 @@ function Npc.update(dt)
 		end
 	end
 	updatePlayers(t, up)
+	updateTowers(t, up)
 end
 
 return Npc
