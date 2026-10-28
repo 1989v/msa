@@ -230,8 +230,8 @@ function Rules.counterOpen(counterUntil, now) return now < counterUntil end
 function Rules.dashAttackOpen(dashAttackUntil, now) return now < dashAttackUntil end
 -- 띄움 뒤 착지: 공중을 한 번은 봐야(복제 지연) 바닥을 믿고, 2.5초가 지나면 어디든 내린다
 function Rules.launchLanded(sawAir, elapsed, onGround)
-	if elapsed > 2.5 then return true end
-	return (sawAir or elapsed > 0.25) and onGround and elapsed > 0.1
+	if elapsed > Config.HIT.launchTimeout then return true end
+	return (sawAir or elapsed > Config.HIT.launchAirGrace) and onGround and elapsed > Config.HIT.launchMinAir
 end
 function Rules.botsNeeded(humans)
 	local n = math.clamp(Config.BOTS.fillTo - humans, 0, Config.BOTS.max)

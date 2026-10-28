@@ -128,7 +128,7 @@
 ## 검사
 1. `tests/rules.spec.luau` — Config/Styles/Moves/Accessories/Rules/Poses 실제 실행(≥ 40 단언).
 2. 구조 게이트(`tools/verify.py`): 컴파일·미지 전역·공유 모듈+Commands 무 Roblox API·벡터 메서드 없음(`{X,Y,Z}` 성분 셈만)·클라이언트가 서버 모듈 불참조·**서버 require 그래프 비순환(Combat 최하위)**·Heartbeat 하나와 틱 순서·**Health 쓰기는 Combat(+Rigs 초기값)뿐**·OnServerEvent 하나와 Commands.validate 배선·줍기 서버 거리 재확인·결정 함수가 Rules 에 있고 서버가 부름·Rojo 트리 대조·빌더 결정성·스크립트 정확 포함·서비스·Remotes 3·맵 2(스폰 8·팀 양쪽·상자·점프대·FallY)·`FallenPartsDestroyHeight ≤ min fallY − 100`·템플릿 5·아이템 3·BlockRig Motor6D 6 · **네이티브 게이트**: CameraType 0 · StarterPlayer R6(`GameSettingsAvatar` 0)·줌 8~20 · Poser 가 `RunService.Stepped` + `Motor6D.Transform` · 서버가 스폰 소유(CharacterAutoLoads false) · 키 이름 안내 문자열 없음 · ContextActionService 터치 버튼 제목 · 줍기는 ProximityPrompt(클라이언트 E 바인딩 없음) · 넉백 LinearVelocity 하나 재사용 · Health 는 Humanoid · GetServerTimeNow 시계 · 착지 Air 선행 관측 · 라운드 단계 4 · 봇 ≤ 7·파이터 ≤ 8·투사체 ≤ 40 · 봇 절벽 탐침 · Guard 속성 정수 변화 시만 · 아바타 유지(ScaleTo·이름표·Highlight) · 조명 프리셋 2 · 에셋 provenance ≥ 5(공집합 통과 없음).
-3. 회귀 주입 32 건 전부 RED(주입→게이트 대응표) → `verifications/gate-proof.md`.
+3. 회귀 주입 34 건 전부 RED(주입→게이트 대응표) → `verifications/gate-proof.md`.
 4. UNVERIFIED: Studio Play·포즈 생김새·LinearVelocity 넉백 체감·Weld 잡기·터치 버튼 배치·8인·R15 매핑·소리 ID·치트 방어(신뢰 경계 절).
 
 ## 수용 시나리오 (사용자 Studio)

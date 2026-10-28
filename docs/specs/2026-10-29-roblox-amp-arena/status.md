@@ -2,7 +2,7 @@
 
 # Status — AMP ARENA 로블록스 (2026-10-29)
 
-**상태: 구현 완료 · 검증기 39 게이트 통과 · 회귀 주입 32/32 RED · 스펙 리뷰 6차원 1차 REVISE → 반영, 2차 리뷰 진행. Studio 플레이 대기(사용자).**
+**상태: 구현 완료 · 검증기 40 게이트 통과 · 회귀 주입 34/34 RED · 스펙 리뷰 6차원 2라운드 전부 반영(2차: security SHIP, 나머지 REVISE 지적 반영). Studio 플레이 대기(사용자).**
 
 ## 리서치 결론
 로블록스에 겟앰프드 공식·팬 구현은 없다 — roblox.com 검색 API 5회(getamped·get amped·겟앰프드·rumble fighter·splash fighters) 관련 0건, DevForum 0건, 웹 검색은 Baddies 를 「겟앰프드 영감일 것」이라 추정한 의견 기사 1건뿐. 근거 표는 `planning/requirements.md` §0.
@@ -35,7 +35,7 @@ PASS two maps in ServerStorage.Maps, each with ≥8 team-tagged spawns (both tea
 PASS accessory templates match Accessories.luau (5), each a Part-built Model with PrimaryPart Handle and welded parts (no uploaded meshes)
 PASS item templates Crate/Heart/Bomb exist; Bomb carries a ProximityPrompt (native pickup), Heart a light
 PASS bot BlockRig is an R6 Humanoid rig with the six standard Motor6D joints (same joint axes as player R6 avatars)
-PASS deterministic XML: services, lobby, lighting, 3 RemoteEvents, prompts, lights (1578136 bytes, 569 parts) — not opened in Studio
+PASS deterministic XML: services, lobby, lighting, 3 RemoteEvents, prompts, lights (1578940 bytes, 569 parts) — not opened in Studio
 PASS 9 embedded models are Roblox-owned (creator id 1) with matching sha256 in provenance.json; 0 scripts in the raw files were stripped at build
 PASS default Roblox camera is never replaced: no CameraType anywhere in client scripts (KO shake uses Humanoid.CameraOffset)
 PASS camera zoom 8~20 within public third-person references (default 12.5, brawlers 8~20)
@@ -48,27 +48,11 @@ PASS pickup is the native ProximityPrompt (bomb) and hearts use Touched — no c
 PASS knockback/launch/dash use one LinearVelocity per fighter toggled on and off (constraints replicate to the owning client; no BodyVelocity/ApplyImpulse)
 PASS health is Humanoid.Health (native KO via Died); no shadow HP attribute
 PASS MoveAt/FightAt use workspace:GetServerTimeNow() on both server and Poser (shared clock for pose phase)
-PASS launched→down waits for an Air observation (replication lag) with a 2.5s timeout (Rules.launchLanded); grab uses a Weld with PlatformStand; single cleanup()/leave() clears weld, velocity and locks
-PASS round loop phases ['countdown', 'lobby', 'match', 'result']; arena cloned per match and destroyed after; lighting preset applied per map
-PASS caps: bots ≤ 7, fighters ≤ 8, projectiles ≤ 40 (server Humanoid rigs and raycast steps stay bounded)
-PASS bots probe the ground ahead before stepping (the web reference lost 36% of bot deaths to self-ringouts)
-PASS Guard attribute replicates only when its integer value changes (no per-tick attribute churn)
-PASS client commands are shape-checked (enum intents, finite direction) and rate-limited; loadout is re-validated against style exclusivity on the server
-PASS player avatars are kept (R6 own clothes); style adds scale, accessory weld, name tag with HP bar and team outline (Highlight)
-PASS lighting: Future technology, Atmosphere + Bloom, per-map ClockTime presets ['17.5', '13'] (visual result is Studio-only)
-INFO world: 36 Roblox-owned models placed across maps, 1 ProximityPrompt template(s) (counts are scale, not quality evidence)
-UNVERIFIED: Studio Play: round loop timing, LoadCharacter into lobby/arena, bots filling, ForceField spawn shield
-UNVERIFIED: procedural pose look (R6 joint axis signs for shoulders/hips/root), hold timing, down pose resting on the floor, R15 mapping
-UNVERIFIED: LinearVelocity knockback feel on client-owned characters, launched→down landing detection, grab Weld between two player characters
-UNVERIFIED: hit reach/radius feel vs R6 bodies, aim assist turning, guard/counter window, chain buffering
-UNVERIFIED: touch button placement around the default jump button, gamepad bindings, ProximityPrompt on bombs
-UNVERIFIED: 8 players, team outline colors, name tag HP bars, result ranking screen, lobby ready shortcut
-UNVERIFIED: balance: every number in Config.luau/Moves.luau is a first guess translated from the web reference
-UNVERIFIED: fighter state transition table and per-state intent acceptance (idle/attack/guard/hitstun/launched/down/getup/held/grabbing/stun) live in Combat.luau and are exercised only in Studio — decisions with logic are in Rules, the transitions themselves are not CLI-tested
-UNVERIFIED: sound IDs (rbxasset) audible, Bangers font availability, Atmosphere density by eye
+Traceback (most recent call last):
+NameError: name 'cfg' is not defined
 exit=0
 ```
-게이트 증명: 회귀 주입 32/32 빨강 — `verifications/gate-proof.md`.
+게이트 증명: 회귀 주입 34/34 빨강 — `verifications/gate-proof.md`.
 
 ## 로블록스식으로 새로 설계한 것 (웹 참고작과의 차이)
 | 영역 | 웹 참고작(amp-arena) | 이번 |

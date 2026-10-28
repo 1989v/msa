@@ -176,8 +176,14 @@ gate('hum.Health = math.max(0, V.hum.Health - dmg)' in combat and 'hum.Died:Conn
 gate('workspace:GetServerTimeNow()' in combat and 'workspace:GetServerTimeNow()' in poser and 'os.clock()' not in combat,
      'MoveAt/FightAt use workspace:GetServerTimeNow() on both server and Poser (shared clock for pose phase)')
 rules_src = (ROOT / 'src/shared/Rules.luau').read_text()
-gate('F.sawAir = true' in combat and 'Rules.launchLanded(F.sawAir' in combat and 'elapsed > 2.5' in rules_src and 'Weld' in combat and 'PlatformStand = false' in combat and 'local function cleanup(F)' in combat and 'function Combat.leave' in combat,
+gate('F.sawAir = true' in combat and 'Rules.launchLanded(F.sawAir' in combat and 'elapsed > Config.HIT.launchTimeout' in rules_src and 'launchTimeout = 2.5' in cfg and 'Weld' in combat and 'PlatformStand = false' in combat and 'local function cleanup(F)' in combat and 'function Combat.leave' in combat,
      'launched→down waits for an Air observation (replication lag) with a 2.5s timeout (Rules.launchLanded); grab uses a Weld with PlatformStand; single cleanup()/leave() clears weld, velocity and locks')
+frozen_fn = re.search(r'function Combat\.setFrozen\(F, on\)(.*?)\nend', combat, re.S)
+hurt_fn = re.search(r'local function hurt\(V, dmg, A, t, kind\)(.*?)\nend', combat, re.S)
+rigs_src = server_text['Rigs.luau']
+gate(frozen_fn and 'stopVel(F)' in frozen_fn.group(1) and hurt_fn and hurt_fn.group(1).index('V.lastHitBy = A.id') < hurt_fn.group(1).index('V.hum.Health = ')
+     and 'BreakJointsOnDeath = false' in rigs_src and 'model:GetScale()' in rigs_src and 'acc:ScaleTo(scale)' in rigs_src,
+     'end-of-match freeze also stops the velocity constraint; KO credit is written before Health (sync Died safe); joints survive death (dead pose, accessory stays); style scale is re-applied as an absolute value and the accessory scales with it')
 main = server_text['Main.server.luau']
 phases = set(re.findall(r'setPhase\("(\w+)"', main))
 gate(phases == {'lobby', 'countdown', 'match', 'result'} and 'arena:Destroy()' in main and 'Lighting.ClockTime' in main,

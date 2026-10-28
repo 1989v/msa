@@ -23,7 +23,8 @@ function Rigs.hand(model, side)
 end
 
 -- 액세서리 모델을 손에 건다. 기존 것은 뗀다.
-function Rigs.attachAccessory(model, accId)
+function Rigs.attachAccessory(model, accId, scale)
+	scale = scale or 1
 	local old = model:FindFirstChild("Accessory")
 	if old then old:Destroy() end
 	local def = Accessories.get(accId)
@@ -34,10 +35,11 @@ function Rigs.attachAccessory(model, accId)
 	local acc = template:Clone()
 	acc.Name = "Accessory"
 	for _, p in acc:GetDescendants() do if p:IsA("BasePart") then p.Anchored = false; p.CanCollide = false; p.CanQuery = false; p.CanTouch = false; p.Massless = true end end
+	if scale ~= 1 then pcall(function() acc:ScaleTo(scale) end) end
 	local weld = Instance.new("Weld")
 	weld.Name = "Grip"; weld.Part0 = hand; weld.Part1 = acc.PrimaryPart
 	local o, r = def.grip.offset, def.grip.rot
-	weld.C0 = CFrame.new(o[1], o[2], o[3]) * CFrame.Angles(math.rad(r[1]), math.rad(r[2]), math.rad(r[3]))
+	weld.C0 = CFrame.new(o[1] * scale, o[2] * scale, o[3] * scale) * CFrame.Angles(math.rad(r[1]), math.rad(r[2]), math.rad(r[3]))
 	weld.Parent = acc.PrimaryPart
 	acc.Parent = model
 	return acc
@@ -82,7 +84,7 @@ function Rigs.prepare(model, loadout, team, label, isBot)
 	hum.UseJumpPower = true
 	hum.JumpPower = Rules.jumpPower(stats.jmp)
 	hum.AutoRotate = true
-	hum.BreakJointsOnDeath = true
+	hum.BreakJointsOnDeath = false -- 죽어도 관절·Grip Weld 를 남겨 dead 포즈와 액세서리가 보인다(시체는 리스폰·라운드 전환이 치운다)
 	hum.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
 	hum.NameDisplayDistance = 0
 	hum.HealthDisplayDistance = 0
@@ -90,8 +92,10 @@ function Rigs.prepare(model, loadout, team, label, isBot)
 	for _, state in { Enum.HumanoidStateType.Ragdoll, Enum.HumanoidStateType.FallingDown, Enum.HumanoidStateType.Seated, Enum.HumanoidStateType.Swimming, Enum.HumanoidStateType.Climbing } do
 		pcall(function() hum:SetStateEnabled(state, false) end)
 	end
-	if style.scale ~= 1 then pcall(function() model:ScaleTo(style.scale) end) end
-	Rigs.attachAccessory(model, loadout.accessory)
+	-- ScaleTo 는 절댓값: 로비에서 헤비(1.18)→파이터(1.0)로 바꿔도 돌아오게 현재 배율과 다를 때 매번 맞춘다
+	local ok, cur = pcall(function() return model:GetScale() end)
+	if not ok or math.abs(cur - style.scale) > 1e-3 then pcall(function() model:ScaleTo(style.scale) end) end
+	Rigs.attachAccessory(model, loadout.accessory, style.scale)
 	nameTag(model, label, team)
 	teamOutline(model, team)
 	model:SetAttribute("Style", loadout.style)

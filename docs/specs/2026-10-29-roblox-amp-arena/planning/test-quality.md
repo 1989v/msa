@@ -8,7 +8,7 @@
 | unit | `Commands` (시계 주입) | 미지 이름 UNKNOWN · enum 밖 SCHEMA · NaN/과대 방향 SCHEMA · 영벡터 통과(정면으로 정리) · 버스트 30 뒤 RATE · 0.1초 뒤 회복 · forget 뒤 리셋 | ✔ |
 | unit | `Poses` | 모든 무브에 포즈가 있고 0~1 샘플이 유한 · 타격 무브는 지속 구간에 오른팔/다리가 뻗는 키프레임 | ✔ |
 | component (python) | `build.py` | 결정적 XML · 스크립트 정확 포함 · 서비스·맵 2·액세서리 템플릿 5·BlockRig·Remotes 3 | ✔ |
-| component | 네이티브 게이트 | spec §검사 목록(그래프·Health 단일 쓰기·validate 배선·줍기 거리·FallenPartsDestroyHeight·Rojo 대조 포함). 회귀 주입 32 건 전부 RED, 주입→게이트 대응표 | ✔ |
+| component | 네이티브 게이트 | spec §검사 목록(그래프·Health 단일 쓰기·validate 배선·줍기 거리·FallenPartsDestroyHeight·Rojo 대조 포함). 회귀 주입 34 건 전부 RED, 주입→게이트 대응표 | ✔ |
 | e2e (Studio, 사용자) | 첫 60초 | 로비 → 준비 → 봇 3과 콜로세움 FFA: 약공 사슬이 맞고 경직·넉백·다운이 보이며 포즈가 뻗는다. 스카이독에서 던지기 링아웃 | 사용자 |
 
 규약: `Rules`·`Commands` 는 `{X,Y,Z}` 표 또는 숫자만 받고 `.Magnitude`·`.Unit`·`:Dot` 을 쓰지 않는다(변환은 Combat). 시계는 인자로 받는다. 검증기 게이트가 이 규약을 grep 으로 잰다.

@@ -120,8 +120,8 @@ end
 
 -- ───────── 피해 ─────────
 local function hurt(V, dmg, A, t, kind)
+	if A then A.damage += dmg; V.lastHitBy = A.id; V.lastHitAt = t end -- Health 보다 먼저: Died 가 동기로 발화해도 크레딧이 맞는다
 	V.hum.Health = math.max(0, V.hum.Health - dmg)
-	if A then A.damage += dmg; V.lastHitBy = A.id; V.lastHitAt = t end
 	Combat.hooks.fx("hit", V.root.Position + Vector3.new(0, 1.5, 0), dmg, V.model, kind or "hit")
 	if V.hum.Health <= 0 then Combat.ko(V, A, "hit", t) end
 end
@@ -439,7 +439,11 @@ function Combat.byModel(model)
 end
 function Combat.all() return fighters end
 function Combat.setFallY(y) fallY = y end
-function Combat.setFrozen(F, on) F.frozen = on; applyLocks(F) end
+function Combat.setFrozen(F, on)
+	F.frozen = on
+	if on then stopVel(F) end -- 결과 단계에 띄움·밀림 제약이 켜진 채 남지 않게
+	applyLocks(F)
+end
 -- 점프대: 위로 쏘아 올린다. 공중 대시도 다시 채운다.
 function Combat.launchUp(F, speed)
 	if F.state == "dead" or F.state == "held" then return end

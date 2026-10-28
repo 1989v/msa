@@ -10,7 +10,7 @@ Config.DASH = { speed = 46, duration = 0.22, cooldown = 0.9, attackWindow = 0.3 
 Config.GUARD = { max = 100, regenPerSecond = 20, costMult = 4, angleDeg = 180, stunSeconds = 1.5, counterWindow = 0.25, walkSpeed = 0 }
 Config.GRAB = { range = 3.0, coneDeg = 60, heldMax = 2.0, mashToEscape = 6, throwSpeedH = 24, throwSpeedV = 14, damage = 15, wallBonus = 5, holdOffset = 2.4, escapeStun = 0.2 }
 -- 경타는 짧은 밀림, 강타는 띄움 → 착지 → 다운 → 기상(둘 다 무적). 같은 공격자 연속 4히트째부터 넉백 ×1.5(무한 콤보 방지).
-Config.HIT = { pushSeconds = 0.12, launchSeconds = 0.2, downSeconds = 0.8, getupSeconds = 0.4, consecutiveFrom = 4, consecutiveMult = 1.5, koCreditSeconds = 3, airHitsMax = 1, hitStop = 0.05 }
+Config.HIT = { pushSeconds = 0.12, launchSeconds = 0.2, downSeconds = 0.8, getupSeconds = 0.4, consecutiveFrom = 4, consecutiveMult = 1.5, koCreditSeconds = 3, airHitsMax = 1, hitStop = 0.05, launchMinAir = 0.1, launchAirGrace = 0.25, launchTimeout = 2.5 }
 Config.RESPAWN = { seconds = 3, invulnSeconds = 2 }
 Config.ITEMS = {
 	crateHits = 2, crateRespawn = 30, heartHeal = 30, dropHeart = 0.3, dropBomb = 0.2,
