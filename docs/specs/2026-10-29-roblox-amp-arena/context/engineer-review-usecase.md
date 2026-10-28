@@ -45,4 +45,45 @@
 
 Finding 1·2·4·5 는 `spec.md` 에 표 두 개(모드와 승패 · 라운드 단계 전이)와 단락 하나(준비·퇴장·팀 배정)로 닫힌다. Finding 3 은 선택 하나. Finding 6·7 은 각 한 줄. 구현이 `Config.luau`·`Accessories.luau` 까지 진행됐으니 코드가 이미 정한 것(맨손·POINTS·MODE_ORDER)을 스펙이 따라 적는 쪽이 빠르다.
 
+Round 1 VERDICT: REVISE
+
+## Round 2 (2026-10-29) — REVISE
+
+읽기만 했다. 1차 이슈 7건을 개정된 `spec.md` 와 구현(`roblox/amp-arena/src/server/Main.server.luau`·`Combat.luau`·`Items.luau`·`src/shared/Rules.luau`·`Config.luau`·`tests/rules.spec.luau`·`README.md`)으로 대조했다. 1차 이슈는 전부 스펙에 반영됐고 5건은 코드와도 일치한다. 남은 것은 **스펙이 새로 적은 문장과 코드가 어긋나는 두 곳**이다 — 둘 다 1차가 요구한 가장자리(퇴장·승자)이고 수정 방향이 자명하므로 REVISE.
+
+### 1차 이슈 해소 대조
+
+| # | 1차 요구 | 스펙 | 코드 | 판정 |
+|---|---|---|---|---|
+| 1 | 준비 선택지·기본값·`ready` 효과 | `spec.md:16`(맨손 용어)·`:86`(기본 파이터·맨손, 로비에서만)·`:99`(전원 준비 → 1초 뒤, 사람 0 이면 로비 유지) | `Main.server.luau:265`(기본 장비)·`:287-293`(전원 준비 → `phaseEnds = min(…, now+1)`)·`:316`(사람 0 → 로비 연장)·`Hud.client.luau:163`(준비/준비 취소 토글)·`README.md:9` | 해소. 「직전 라운드 장비 유지」만 스펙에 없다 — 코드는 유지한다(`Main.server.luau:236` 이 `e.loadout` 을 건드리지 않음). 아래 소항목 |
+| 2 | 모드·승패·동점·아군 KO 표, `POINTS` 거취 | `spec.md:90-96` 표 + 순위 키 | `Rules.luau:159-181`(KO↓→데스↑→피해↓, 팀 합산)·`:193-198`(시간·최후 1인)·`Main.server.luau:253-254`(아군 KO −1, 링아웃 자멸 −1)·`tests/rules.spec.luau:94-98` | 표는 해소. **서바이벌 시간 종료 승자가 코드와 다르다** → Finding A. `POINTS` 는 스펙에 없는데 코드에 남아 있다 → 소항목 |
+| 3 | 서바이벌 먼저 KO 시 대기 | `spec.md:104` 「3초 뒤 로비 발판, 최대 2분 대기, OQ6」 + `open-questions.yml:26-30` | `Main.server.luau:258-260`(사람은 서바이벌에서도 3초 뒤 리스폰 예약)·`:324-327`(`alive=false` 로 `respawnHuman`)·`:106-111`(alive 아니면 로비 스폰) | 해소(알려진 한계로 결정). 스펙이 선택했으므로 더 묻지 않는다 |
+| 4 | 퇴장·늦은 입장·팀 배정·봇 재계산 | `spec.md:97`(팀 번갈아)·`:102`(늦은 입장 `joined=false`)·`:103`(퇴장 정리 + 폭탄 드랍) | `Main.server.luau:271-276`(PlayerRemoving → `Combat.leave`)·`:106`(`joined` 로 아레나/로비 분기)·`:192-193`(라운드마다 `botsNeeded`)·`:198-200`+`Rules.luau:200-204`(id 정렬 번갈아)·`tests:99` | 팀·입장·봇 수는 해소. **퇴장·KO 시 폭탄 드랍이 코드에 없다** → Finding B |
+| 5 | 결과 → 로비 정리 순서 | `spec.md:105` 순서 7단계 | `Main.server.luau:233-241` 이 같은 순서(봇 제거 → 아이템·투사체 → 파이터 해제 → 아레나 Destroy → 조명 → 로비 → LoadCharacter). 결과 단계는 `Combat.update` 를 돌리지 않고(`:322-334`) 입력도 `match` 에서만 받는다(`:295,299`) | 해소. 맵 Destroy 전에 파이터를 해제하므로 결과 뒤 링아웃 KO 는 나지 않는다 |
+| 6 | 순환 식·보존 재미 1번 시나리오·수용 범위 | `spec.md:98`(순환 식)·`:134-139`(시나리오 5개, 2번이 액세서리 교체) | `Rules.luau:211-215`·`tests:102-105`(6라운드 전 조합)·`README.md:13` | 해소. `planning/test-quality.md:12` e2e 행은 아직 1차 문장 그대로 — 소항목 |
+| 7 | 로비 표준 비적용 문장 | `spec.md:9` | — | 해소 |
+
+### Findings
+
+**A. Check 2·4 (종료 흐름·AC) — 서바이벌 시간 종료 승자: 스펙은 「KO 순」, 코드는 「명단 순서상 첫 생존자」.**
+`spec.md:95` 「서바이벌 … 승리 최후 1인 · 동점 시간 종료 시 KO 순」. 코드는 `Main.server.luau:220-222` 가 종료 사유를 보지 않고 `Rules.survivalWinner(list)` 를 부르고, `Rules.luau:188-191` 은 명단을 돌다 **처음 만나는 `alive`** 를 돌려준다. 명단 순서는 `Main.server.luau:157-172`(사람 해시 순 → 봇 해시 순)라 시간 종료 시 생존자가 둘 이상이면 승자 별(`Hud.client.luau:192,196` 「승리」)이 KO 와 무관하게 붙는다. 2분 안에 봇 셋을 다 못 보낸 사람 플레이어(수용 시나리오 5, `spec.md:139`)가 바로 이 경우다. 검사는 생존자 1 경우만 단언한다(`tests/rules.spec.luau:96,98`).
+→ `endMatch` 에서 `reason == "time"` 이면 생존자만 추려 `Rules.rank` 의 1위를 승자로(또는 `Rules.survivalWinner` 가 생존자 중 KO↓→피해↓ 1위를 돌려주게) 고치고, `tests/rules.spec.luau` 에 「생존 2 · 시간 종료 → KO 많은 쪽」 단언 한 줄. 스펙 `spec.md:95` 는 「**생존자 중** KO 순 → 피해」로 범위를 적는다(죽은 사람이 KO 로 생존자를 이기지 않게).
+
+**B. Check 2·5 (예외 흐름) — 「죽거나 나가면 폭탄은 그 자리에 떨어진다」가 두 경로 모두에서 실행되지 않는다.**
+`spec.md:87` 「죽거나 나가면 그 자리에 떨어진다」, `spec.md:103` 「퇴장: … 들고 있던 폭탄은 떨어진다」. 코드: (KO) `Combat.luau:393` 이 `cleanup(V)` 로 `F.item = nil`(`:388`) 을 먼저 하고 `:400` 에서 `hooks.ko` 를 부르므로, `Main.server.luau:256` 의 `if V.item then Items.dropHeld(V)` 는 항상 거짓이다. (퇴장) `Main.server.luau:274` 는 `Items.dropHeld` 없이 `Combat.leave` 만 부르고 `Combat.luau:428-433` 도 아이템을 `nil` 로만 둔다. 결과: 폭탄 레코드의 `holder` 가 죽은/나간 파이터를 가리킨 채 남고(`Items.luau:112`), 파트는 `CanCollide=false` 그대로(`:117`) 바닥을 뚫고 떨어지며, 줍기(`:108` `rec.holder` 검사)·봇 탐색(`:173`)에서 빠진다. 신관이 줍는 순간 시작되므로(`:114`) 최대 3초 뒤 어디선가 터지는 것으로 끝나긴 한다(`:215`) — 드랍만 되지 않는다. 드랍이 실제로 도는 경로는 `toLobby` 의 `Items.clear`(`Items.luau:203`)뿐이다.
+→ `Combat.ko` 에서 `hooks.ko` 를 `cleanup` 앞에 부르거나(또는 `cleanup` 이 `F.item` 을 건드리지 않고 Main 이 떨군 뒤 지우게), `PlayerRemoving` 에서 `Combat.leave` 전에 `Items.dropHeld(e.F)`. 스펙은 그대로. 이 경로는 Studio 에서만 보이므로 UNVERIFIED 목록(`spec.md:132`)에 「KO·퇴장 시 폭탄 드랍 위치」를 한 항목 더한다.
+
+### 남은 소항목 (문구·정리 수준, 판정에 넣지 않음)
+
+- `spec.md:86` 에 「장비는 라운드를 넘어 유지된다(바꾸지 않으면 직전 장비)」 한 구 — 코드가 이미 그렇게 동작한다(`Main.server.luau:236,265`).
+- `Config.luau:36` `POINTS` + `Rules.luau:157` `score` + `tests/rules.spec.luau:101` 은 서버·클라이언트 어디서도 쓰지 않는다(grep 결과 세 곳뿐). 스펙 표(`spec.md:90-96`)가 점수제를 채택하지 않았으니 셋을 지운다(YAGNI).
+- `planning/test-quality.md:12` e2e 행을 `spec.md:134-139` 시나리오와 맞춘다(액세서리 교체가 사슬을 바꾸는 장면 + 터치·게임패드·8인 제외).
+- 수용 시나리오 4(`spec.md:138`) 「상자를 부수고 폭탄을 주워」는 드랍이 확률(`Config.luau:16` 폭탄 20%·하트 30%)이라 한 상자로 재현되지 않는다 — 「상자 6개 중 폭탄이 나올 때까지」 같은 전제 한 구.
+
+### Covered (round 2 에서 새로 확인)
+
+- 사람 0명 로비 유지(`spec.md:99` ↔ `Main.server.luau:316`), 로비 사망 2초 재세움(`spec.md:106` ↔ `:114-117`), 카운트다운 중 고정(`:93,211`), 매치 통계 리셋(`:192,211`), 가드·쿨다운은 `Combat.register` 로 새로 만들어진다(`Combat.luau:404-427`).
+- 나간 공격자의 KO 크레딧: `Main.server.luau:250-254` 에서 `Combat.get` 이 nil 이면 가산 없음, 링아웃이면 자멸 −1. 스펙 `spec.md:25` 와 모순 없음.
+- 검증기 게이트가 라운드 단계 4 와 아레나 Destroy·조명 복귀를 센다(`tools/verify.py:173-175`).
+
 VERDICT: REVISE

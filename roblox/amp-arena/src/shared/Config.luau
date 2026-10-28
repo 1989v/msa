@@ -33,7 +33,6 @@ Config.MAP_ORDER = { "colosseum", "skydock" }
 Config.PAD = { launchSpeed = 70 }
 Config.BOTS = { fillTo = 4, max = 7, reaction = 0.25, edgeProbe = 2.5, guardChance = 0.2, heavyChance = 0.3 }
 Config.LIMITS = { players = 8, fighters = 8, commandBurst = 30, commandRefillPerSecond = 20, mashInterval = 0.08 }
-Config.POINTS = { ko = 100, damage = 1, win = 50 }
 Config.CAMERA = { minZoom = 8, maxZoom = 20 }
 Config.TEAMS = { { id = 1, label = "레드", color = { 226, 86, 70 } }, { id = 2, label = "블루", color = { 82, 150, 232 } } }
 

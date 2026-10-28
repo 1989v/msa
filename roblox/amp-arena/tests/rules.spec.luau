@@ -55,13 +55,14 @@ eachChain(function(mv)
 end)
 check(seen >= 40, "사슬·기술 무브 40개 이상 검사")
 -- 압박이지 확정 콤보가 아니다: 약공 경직 < 후딜 + 다음 발동 (가드·대시가 사이에 들어간다)
-for _, id in Styles.ORDER do
-	local st = Styles.DEF[id]
-	for i = 1, #st.light - 1 do
-		local a, b = Moves.get(st.light[i]), Moves.get(st.light[i + 1])
-		check(a.hitstun < a.recovery + b.startup, "경직 < 후딜+다음 발동 " .. st.light[i])
+local function pressureChain(chain, label)
+	for i = 1, #chain - 1 do
+		local a, b = Moves.get(chain[i]), Moves.get(chain[i + 1])
+		if a.effect == "hitstun" then check(a.hitstun < a.recovery + b.startup, "경직 < 후딜+다음 발동 " .. label .. ":" .. chain[i]) end
 	end
 end
+for _, id in Styles.ORDER do pressureChain(Styles.DEF[id].light, id); pressureChain(Styles.DEF[id].heavy, id) end
+for _, id in Accessories.ORDER do pressureChain(Accessories.DEF[id].light, id); pressureChain(Accessories.DEF[id].heavy, id) end
 for id, m in Moves.DEF do check(Moves.duration(m) <= 1.4, "무브 길이 1.4초 이하 " .. id) end
 check(Moves.isActive(Moves.get("jab"), 0.12) and not Moves.isActive(Moves.get("jab"), 0.05) and not Moves.isActive(Moves.get("jab"), 0.2), "지속 구간")
 check(Moves.isActive(Moves.get("divekick"), 1.0), "급강하는 착지까지 지속")
@@ -94,11 +95,15 @@ local roster = { { id = "a", ko = 2, deaths = 1, damage = 100, team = 1, alive =
 local r = Rules.rank(roster); check(r[1].id == "b" and r[2].id == "a" and r[3].id == "c", "순위 KO → 데스 → 피해")
 local tt = Rules.teamTotals(roster); check(tt[1].team == 1 and tt[1].ko == 3, "팀 합산")
 check(not Rules.survivalOver(roster) and Rules.survivalOver({ roster[1], roster[2] }) and Rules.survivalWinner({ roster[1], roster[2] }).id == "a", "서바이벌 생존 1")
+check(Rules.survivalWinner(roster).id == "a" and Rules.survivalWinner({ roster[3], roster[1] }).id == "a" and Rules.survivalWinner({ roster[2] }) == nil, "서바이벌 시간 종료: 생존자 중 KO 순(명단 순서 무관), 생존자 없으면 nil")
 check(Rules.matchOver("ffa_dm", 200, roster) and not Rules.matchOver("ffa_dm", 100, roster), "시간 종료")
 local over, why = Rules.matchOver("survival", 10, { roster[1], roster[2] }); check(over and why == "lastone", "서바이벌 마지막 하나")
 local teams = Rules.assignTeams({ "p1", "p2", "p3" }); check(teams.p1 == 1 and teams.p2 == 2 and teams.p3 == 1, "팀 번갈아")
-check(Rules.koCredit("x", 10, 12) == "x" and Rules.koCredit("x", 10, 14) == nil and Rules.koCredit(nil, nil, 1) == nil, "KO 크레딧 3초")
-check(Rules.score(2, 150.7, true) == 400, "점수 KO100·피해1·승50")
+check(Rules.koCredit("x", 10, 12.9) == "x" and Rules.koCredit("x", 10, 13.1) == nil and Rules.koCredit(nil, nil, 1) == nil, "KO 크레딧 3초(2.9 안 / 3.1 밖)")
+check(Config.GUARD.counterWindow == 0.25 and Config.DASH.attackWindow == 0.3, "반격 창 0.25 · 대시 공격 창 0.3")
+local g1, c1 = Rules.guardAfterBlock(20, 24, false); check(g1 == 0 and c1 == true, "게이지가 바닥나면 크러시")
+local g2, c2 = Rules.guardAfterBlock(20, 24, true); check(g2 == 1 and c2 == false, "방패는 크러시 면역(1 로 남는다)")
+local g3, c3 = Rules.guardAfterBlock(100, 24, false); check(g3 == 76 and c3 == false, "막으면 피해×4 소모")
 local m1, map1 = Rules.nextRotation(1); local m4, map4 = Rules.nextRotation(4)
 check(m1 == "ffa_dm" and map1 == "colosseum" and m4 == "ffa_dm" and map4 == "skydock", "모드·맵 순환")
 local seenMaps = {}
@@ -122,6 +127,7 @@ check(Config.GRAB.heldMax == 2 and Config.HIT.downSeconds + Config.HIT.getupSeco
 
 -- ───────── 명령 검사(서버 Commands, Roblox API 없음) ─────────
 local Commands = require("../src/server/Commands")
+Commands.configure(Config.LIMITS)
 local pl = { Name = "p" }
 local function vec(x, y, z) return { X = x, Y = y, Z = z } end
 local ok, why = Commands.validate(pl, "zzz", {}, 10); check(not ok and why == "UNKNOWN", "미지 명령")

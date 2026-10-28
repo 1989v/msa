@@ -87,4 +87,65 @@
 ## 결론
 계층 배정과 이름 규약, 게이트 증명 방식은 선행작과 같아 문제없다. 격차는 「상수는 이미 Config 에 있는데 그것을 재는 행이 없다」(F1·F5)와 「결정이 Combat 으로 흘러가면 CLI 로 잴 길이 사라진다」(F2·F3·F4)에 모여 있고, 전부 구현 전에 test-quality.md 와 Rules 의 함수 목록을 고치면 닫힌다. BLOCK 근거(스펙 결정 + 문서 위반 쌍)는 없다.
 
+_(1차 판정: REVISE)_
+
+---
+
+## Round 2 (2026-10-29)
+
+대상 추가: `planning/test-quality.md`(개정), `roblox/amp-arena/tests/rules.spec.luau`(764 단언), `src/shared/Rules.luau`, `src/server/Commands.luau`, `src/server/Combat.luau`, `src/server/Bots.luau`, `tools/verify.py`(게이트 38), `verifications/gate-proof.md`(24 RED), 검증기 출력 `/tmp/amp_verify.txt`(PASS 38 · INFO 1 · UNVERIFIED 8, exit 0).
+
+### 1차 이슈 해소 확인
+| 1차 | 상태 | 근거 (file:line) |
+|---|---|---|
+| F1 순수 규칙 7건 | 해소 — 1건 잔여 | 반격 창 `rules.spec.luau:111` · 대시 공격 창 `:112` · 아군 피격 `:117` · 4히트째 `:86`(호출 `Combat.luau:159`) · HELD 2초 `:121` · 6연타 `:109`(`Combat.luau:282`) · 대검 잡기 불가 `:24`(`Combat.luau:310`) · 공중 대시 `:120`(`Combat.luau:324,412`) · KO 크레딧 `:100`(`Combat.luau:398`) · 봇 채움 `:114`(`Main.server.luau:193`). 잔여: `Rules.canHit` 는 호출처가 없다 → R2-1 |
+| F2 상태 전이 | **수용** | `spec.md:73` 「상태 머신의 전이 자체는 Combat 에 있다(Studio 확인 대상)」로 명시. 논리가 있는 결정(`launchLanded`·`heldEscape`·`mashAccepted`·`counterOpen`·`dashAttackOpen`, `Rules.luau:218-227`)은 빠져 나왔고, Combat 에 남은 것은 타이머 만료 전이(`Combat.luau:353-374`)와 상태별 의도 수용표(`:240-316`)다. 1차가 제안한 `acceptIntent`/`resolveHit` 는 없지만 `test-quality.md:12` e2e 행과 `verify.py:204` UNVERIFIED 줄이 받는다. 수용 조건 하나는 「사소」에 적었다 |
+| F3 `{X,Y,Z}` 규약 | 해소 | `test-quality.md:14` 규약 문장 · `verify.py:43` regex 가 `Vector3\.new|CFrame|\.Magnitude|:Dot\(|\.Unit\b` 까지 보고 Commands 를 포함(`:42`) · `gate-proof.md:32` V(스펙이 먼저 죽는 성질을 명시) |
+| F4 Commands | 해소 | `test-quality.md:8` 행 · `Commands.luau:25-26` `validate(player, name, args, now)` 시계 주입 · `rules.spec.luau:123-145` UNKNOWN/SCHEMA/RATE/회복/forget · `gate-proof.md:21,33` K·W |
+| F5a FallenPartsDestroyHeight | 해소 | `verify.py:97-99` Workspace float 읽어 `≤ min fallY − 100` · `gate-proof.md:25` O · `/tmp/amp_verify.txt:13` |
+| F5b 봇 절벽 | 해소 | `Rules.luau:233-237 botMove` · `rules.spec.luau:115` · `Bots.luau:60` 결정식 · `verify.py:70` 이 결정식 문자열 그대로를 대조(토큰 존재가 아님) · `gate-proof.md:23` M |
+| F6 provenance 공집합 | 해소 | `verify.py:131-135` 파일마다 레코드·creatorId 1·sha256 일치 + `len >= 5` 하한 · `gate-proof.md:34` X |
+| F7 주입 대응표 | 해소 — 잔여 2 | `gate-proof.md:9-34` 24행, 주입이 「틀린 API 로 바꾸기」(A·D·G·H·I). 잔여: 게이트 38 중 15 에 RED 행이 없다 → R2-4 · `gate-proof.md:36` 가 가리키는 status.md 가 없다 → 사소 |
+| F8 픽스처·전수 불변식 | 해소 — 잔여 1 | `rules.spec.luau:2` `V()` 하나, Rules 함수가 원시값을 받아 파이터 팩토리가 필요 없어졌다 · `:44-56` 실제 `Styles.DEF`·`Accessories.DEF` 순회 · 포즈 「뻗는다」 수치 `:157`(60°/30°). 잔여: 압박 불변식 `:58-64` 가 스타일 약공 사슬만 돈다 → R2-3 |
+| 사소 2 | 해소 | `test-quality.md:11` 링크를 spec §검사로 · `rules.spec.luau:82` guardAngle 150 override |
+
+### 남은 것
+
+#### R2-1 (Check 3·1) `Rules.canHit` 는 정의·단언됐지만 아무도 부르지 않는다
+- 근거: `Rules.luau:239` 정의, `rules.spec.luau:117` 단언, `Combat.luau:191-203` hitScan 루프에 팀 분기가 없다(현재 동작은 스펙대로 맞는다). `verify.py:70` 「서버가 부름」 게이트 목록에 `canHit` 가 없다.
+- 왜 중요한가: hitScan 에 `if V.team == F.team then continue end` 한 줄을 넣어도 764 단언·38 게이트가 전부 초록이다. 1차 F1 이 걱정한 「친절한 팀 검사」가 그대로 통과한다 — 검사가 대상이 아니라 자기 사본(상수 `true`)을 재고 있다.
+- 수정안: `Combat.luau:194` 의 continue 조건에 `or not Rules.canHit(F.team, V.team)` 을 붙이고 `verify.py:70` 목록에 `'Rules.canHit(F.team, V.team)' in combat` 을 더한다. 대안은 함수·단언을 지우고 게이트가 hitScan 본문에 `.team` 이 없음을 보는 것인데, `spec.md:73` 「결정은 Rules」와 맞는 쪽은 전자다.
+
+#### R2-2 (Check 5) 「결정 함수가 Rules 에 있고 서버가 부름」 게이트가 스펙 목록보다 좁다
+- 근거: `spec.md:73` 는 11 항목(사슬·잡기 성립·히트 기하·가드·연타 탈출·반격/대시 공격 창·띄움 착지·봇 걸음·봇 수·아군 KO·장비 단계)을 Rules 결정으로 적고 `spec.md:130` 이 그것을 게이트라 한다. `verify.py:70` 은 6 항목(botMove·loadoutPhaseOpen·allyKo·launchLanded·heldEscape·mashAccepted) + `:179` botsNeeded 만 본다. 호출 자체는 다 있다(`Combat.luau:139 guardBlocks`, `:159 knockbackMult`, `:197 hitTest`, `:210,222 canGrab`, `:298 counterOpen`, `:310 canGrabWith`, `:311 dashAttackOpen`, `:312 firstMove`, `:348 chainNext`, `:398 koCredit`) — 게이트가 안 잡을 뿐이다.
+- 왜 중요한가: 반격 창을 `t < F.counterUntil + 1` 로 인라인해도 spec 은 Rules 를 재니 초록, 게이트는 그 함수를 안 보니 초록. 스펙이 「게이트」라 부르는 것과 게이트가 재는 것이 다르다.
+- 수정안: `verify.py:70` 의 문자열 목록에 위 10 호출(`Rules.chainNext(`·`Rules.firstMove(`·`Rules.canGrab(`·`Rules.hitTest(`·`Rules.guardBlocks(`·`Rules.counterOpen(`·`Rules.dashAttackOpen(`·`Rules.koCredit(`·`Rules.knockbackMult(`·`Rules.canGrabWith(`)을 더한다. 덤으로 가드 크러시·방패 면역 분기는 `Combat.luau:144-145` 에 있고 단언이 없다(`test-quality.md:5` 「크러시」에 대응하는 것은 `rules.spec.luau:83` 산술뿐, `Accessories.luau:18 crushImmune` 은 어디서도 안 센다). `Rules.guardAfterBlock(guard, cost, crushImmune)` → `{guard, crushed}` 로 빼면 단언 대상이 된다.
+
+#### R2-3 (Check 1) 압박 불변식이 스타일 약공 사슬만 돈다
+- 근거: `rules.spec.luau:58-64` 는 `Styles.ORDER` 의 `light` 인접쌍만 검사한다. `Accessories.DEF` 의 light(gs1→gs2 …)·heavy 사슬과 스타일 heavy 사슬은 안 본다. `test-quality.md:6` 「경직 < 후딜+다음 발동」은 `Moves·Accessories·Styles` 행에 있어 모든 사슬을 뜻한다. `gate-proof.md:28` R 도 jab(스타일 사슬)에만 주입했다.
+- 수정안: `:44-47` eachChain 과 같은 식으로 Styles·Accessories 의 light·heavy 전부 인접쌍을 돌린다(단언 수가 늘고 R 주입을 액세서리 사슬에 한 번 더).
+
+#### R2-4 (Check 5 · 게이트 정직성) 게이트 38 중 15 에 RED 행이 없다
+- 근거: `gate-proof.md:9-34` 24 행이 덮지 않는 게이트 — `verify.py:61`(Heartbeat 하나·틱 순서) · `:73`(Rojo 대조) · `:77`(클라이언트 참조) · `:89`(스크립트 수) · `:120`(아이템 템플릿) · `:123`(BlockRig) · `:150`(CharacterAutoLoads) · `:160`(ProximityPrompt) · `:165`(그림자 HP 없음) · `:170`(착지·Weld·cleanup) · `:174`(라운드 4단계) · `:184`(Guard 속성 정수 변화 시만) · `:186`(명령 모양) · `:188`(아바타 유지) · `:193`(조명). `docs/research/2026-10-26-roblox-development/README.md:24` 「회귀를 주입해 빨간불을 본 뒤에만 켰다」는 게이트마다다. 스펙 하한(`spec.md:131` 24)은 넘겼다.
+- 수정안: 토큰 모양이라 공허 통과 위험이 큰 다섯만이라도 주입 행을 더한다 — Bots 에 `Heartbeat:Connect` 하나 더(`:61`) · `SetAttribute("Guard"` 를 매 틱(`:184`) · `SetAttribute("Hp"` 추가(`:165`) · `CharacterAutoLoads` true(`:150`) · cleanup 을 둘로 쪼개기(`:170`).
+
+#### 사소
+- `gate-proof.md:36` 「주입 전 원본은 exit=0(status.md 의 출력)」 — status.md 가 스펙 폴더에도 `roblox/amp-arena/` 에도 없다(`tasks.md:5` 미완). 기준선 출력은 레포 밖 `/tmp/amp_verify.txt` 뿐이다. status.md 를 쓰면서 verify 출력 원문을 넣거나, 그 전까지 문구를 고친다.
+- `tasks.md:8` 「게이트 증명 ≥ 12 RED」 — `spec.md:131` 은 24 이고 산출물 이름 `verifications/gate-proof.md` 가 없다(1차 F7 수정안).
+- `rules.spec.luau:100` koCredit 단언이 12/14 라 `koCreditSeconds ∈ [2, 4)` 어디서든 초록이다 — 12.9/13.1 로. `Config.GUARD.counterWindow 0.25`·`Config.DASH.attackWindow 0.3` 은 `Combat.luau:141,264` 에서만 쓰이고 단언이 없다 — `:121` 처럼 Config 값 단언 한 줄.
+- F2 수용 조건: `verify.py:204` UNVERIFIED 문구에 「상태 전이표(hitstun→idle·down→getup·held 타임아웃)·상태별 의도 수용표」를 적는다. 지금은 「guard/counter window, chain buffering」만 있어 README 「검증하지 않는 것」(`README.md:47`)이 상태 머신을 빠뜨린다.
+
+### 체크리스트 (2차)
+| # | 항목 | 판정 |
+|---|---|---|
+| 1 | 모든 AC 에 테스트 ≥ 1 | △ 압박 불변식 범위(R2-3) · 크러시 면역(R2-2 덤) |
+| 2 | 계층 배정 적절 | ✔ F2 수용 — 추출 경계가 스펙에 명시됐고 잔여는 UNVERIFIED |
+| 3 | 목 경계 명확 | △ 규약·게이트는 됐으나 `canHit` 가 경로 밖(R2-1) |
+| 4 | 테스트 데이터 전략 | ✔ 원시값 인자 + `V()` 하나, 실제 표 순회 |
+| 5 | 부정·경계 케이스 | △ 게이트가 스펙 목록보다 좁다(R2-2) · RED 없는 게이트 15(R2-4) · koCredit 경계 |
+| 6 | 이름 규약 | ✔ |
+
+### 결론
+1차 8건 중 F2 는 스펙 명시로 수용, 나머지 7건은 file:line 으로 해소 확인. 남은 4건은 전부 「검사가 대상에 물려 있는가」 쪽이고 변경은 `Combat.luau` 한 줄·`verify.py:70` 문자열 목록·spec 루프 범위·주입 다섯 수준이다. BLOCK 쌍(스펙 결정 + 코드 위반)은 없다. 2라운드 상한이므로 다음 라운드는 SHIP 이어야 하고, 위 4건은 한 번에 닫힌다.
+
 VERDICT: REVISE

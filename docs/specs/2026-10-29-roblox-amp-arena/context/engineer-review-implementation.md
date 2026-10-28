@@ -76,4 +76,76 @@
 ## UNVERIFIED (스펙 §4 와 같다)
 Studio Play·Weld 소유권 전환 체감·LinearVelocity 넉백 거리·FloorMaterial 지연 실측·포즈 생김새·터치 버튼 배치·8인.
 
+라운드 1 판정: REVISE (아래 Round 2 로 갱신)
+
+---
+
+## Round 2 (2026-10-29, 구현 뒤 재리뷰)
+
+대상 코드: `roblox/amp-arena/src/server/{Combat,Items,Projectiles,Bots,Rigs,Commands}.luau` · `Main.server.luau` · `src/client/{Input,Poser,Effects,Hud}.client.luau` · `src/shared/{Config,Rules,Poses,Styles,Accessories}.luau` · `tools/{build,verify}.py`. 검증기 출력 `/tmp/amp_verify.txt`(PASS 37 · INFO 1 · UNVERIFIED 8). 스펙은 1차 지적대로 고쳐져 있다(spec.md:68 CharacterAutoLoads false · spec.md:103 `Combat.leave` · spec.md:123 Part Sand · spec.md:130 게이트 목록).
+
+### 1차 이슈 해소 확인
+
+| R | 판정 | 코드 근거 |
+|---|---|---|
+| R1 Terrain → Part Sand | **해소** | `tools/build.py:236-237` 바닥 `Desert`·`Floor` 가 `Material='Sand'` Cylinder Part, `build.py:26` 재질 토큰 1296. Terrain 참조 0건(grep). spec.md:123 와 일치 |
+| R2 CharacterAutoLoads false + 서버 LoadCharacter | **해소** | 빌더 `build.py:470` + 런타임 `Main.server.luau:23`. 입장 `Main.server.luau:267`, 로비/아레나 분기 `100-119`(`PivotTo` + `pickSpawn`), 데스매치 리스폰은 `respawnAt` 폴링 `325-327` → `respawnHuman` `120-125`(퇴장자는 `humans[player]` 가 nil 이라 자연히 버려짐, `271-276`). 서바이벌 KO 자는 `e.alive=false` 로 LoadCharacter 되어 `106` 의 `inMatch` 가 거짓 → 로비 발판. 로비 사망 재세움 `116` 이 `player.Parent` 를 본다. 스폰은 SpawnLocation 이 아니라 Part(`build.py:187-190`)라 엔진 자동 배치와 경쟁하지 않는다 |
+| R3 Air 선행 관측 + 2.5초 타임아웃 | **해소** | `Rules.luau:224-227` `launchLanded(sawAir, elapsed, onGround)`: 2.5초 초과 강제, `(sawAir or elapsed > 0.25) and onGround and elapsed > 0.1`. 호출 `Combat.luau:356-357`, `sawAir` 초기화 `164`·`185`. 작은 흠: 2.5/0.25/0.1 이 `Config` 가 아니라 `Rules` 에 박혀 있다(spec.md:50 「수치 한 곳」) — 동작엔 영향 없음 |
+| R4 cleanup()/leave() | **해소** | `Combat.luau:383-389` `cleanup`(짝 해제·`stopVel`·`PlatformStand false`), `390-401` `ko` 가 먼저 부름, `425` `Died` → `ko`, `428-433` `leave`. `Main.server.luau:271-276` PlayerRemoving → `leave`, `233-241` 결과→로비 순서가 spec.md:105 와 같다(leave → 아레나 Destroy → LoadCharacter). 링아웃·KO 는 `Combat.update` 가 match 단계에서만 돌아(`Main.server.luau:323`) 결과 단계엔 찍히지 않는다. HELD 중 사망: `applyHit` `153` 이 `hurt` 뒤라 `ko`→`cleanup`→`release` 가 Weld 를 지우고 홀더를 idle 로 되돌린다 |
+| R5 GetServerTimeNow + 보행 통과 | **해소** | 서버 `Combat.luau:27`·`Rigs.luau:102`, 클라이언트 `Poser.client.luau:70`. idle 은 `Poses.luau:57-58` 에 없어 `forState` 가 nil → Poser `75-80` 이 한 번 `clear` 후 Transform 을 건드리지 않는다(기본 Animate 유지). phase 는 호출자가 계산(`Poser.client.luau:60-62,66`) |
+| R6 Guard 정수 변화 시만 · LinearVelocity 하나 | **해소** | `Combat.luau:89-92` `setGuardAttr`(정수 바뀔 때만), 회복 틱 `322`. 파이터당 Attachment+LinearVelocity 하나 `419-423`(`RelativeTo=World`, `MaxForce=inf`), 켜고 끄기만 `42-57`. State 4Hz 도 정수 `Main.server.luau:346` |
+
+### 체크리스트 재판정
+
+| # | 항목 | 판정 | 근거 |
+|---|---|---|---|
+| 1 | 참조 모듈 존재 | PASS | 스펙 모듈 표(spec.md:47-74)의 19 파일 전부 존재, 검증기 「compiled 19 Luau files」(`/tmp/amp_verify.txt:2`), `dist/AmpArena.rbxlx` 커밋 대상으로 존재 |
+| 2 | 기존 코드와 충돌 | PASS | R1·R2·R5 해소. `Explosion` 인스턴스 미사용(클라이언트 grep 0건), `FallenPartsDestroyHeight −220 ≤ −60−100`(`build.py:430`, 검증기 13행) |
+| 3 | 복잡도 위험 | REVISE | 공통 정리는 생겼으나 `cleanup` 의 순서가 Main 훅과 엇갈린다 → N1 |
+| 4 | NFR 안티패턴 | REVISE | R3·R6 해소. 남은 것: 속도 제약 만료가 match 단계 밖에서 멈춘다 → N2 |
+| 5 | 마이그레이션/롤백 | N/A | 변동 없음 |
+| 6 | 동시성 | REVISE | N1(훅 순서)·N2(단계 전환)·N5(`Died` 동기 발화) |
+
+### 새 이슈 (REVISE)
+
+**N1. KO·퇴장 때 든 폭탄이 떨어지지 않는다 — `cleanup` 이 Main 훅보다 먼저 `item` 을 지운다** (Check 3·6)
+- 스펙: 「죽거나 나가면 그 자리에 떨어진다」(spec.md:87), 「들고 있던 폭탄은 떨어진다」(spec.md:103).
+- 근거: `Combat.ko` 는 `cleanup(V)` 를 먼저 부르고(`Combat.luau:393`) 그 안에서 `F.item = nil`(`388`) 을 한 뒤에야 `Combat.hooks.ko`(`400`) 를 부른다. Main 의 훅은 `if V.item then Items.dropHeld(V)`(`Main.server.luau:256`) 라 항상 거짓 — 죽은 코드다. 퇴장 경로(`Main.server.luau:271-276`)는 `dropHeld` 를 아예 부르지 않는다. 결과: 폭탄이 시체 손에 Weld 된 채 남고, 캐릭터가 지워지면 `Massless`·`CanCollide false` 상태(`Items.luau:117`)로 바닥을 뚫고 떨어진다. `rec.holder` 가 남아 있어 봇 탐색(`Items.luau:173`)·낙하 청소(`216`)도 건너뛴다. 퓨즈(`114`)가 결국 터뜨리므로 누수는 아니지만 스펙 동작이 아니다.
+- 수정안: `Combat.hooks.dropItem = function(F) end` 를 추가하고 `cleanup` 이 `F.item = nil` **전에** `if F.item then Combat.hooks.dropItem(F) end` 를 부른다(Main 이 `Items.dropHeld` 로 배선). Main 훅의 `256` 행은 지운다. 스펙의 「Combat 이 위로 부를 일은 전부 hooks」(spec.md:71) 와 같은 모양이다.
+
+**N2. 결과 단계에 LinearVelocity 가 켜진 채 남는다** (Check 4·6)
+- 스펙: 결과 10초 → 로비(spec.md:43), 「경타 밀림 0.12초·띄움 0.2초」(spec.md:79).
+- 근거: 속도 만료는 `tickFighter` 안에서만 끈다(`Combat.luau:321`), `Combat.update` 는 match 단계에서만 돈다(`Main.server.luau:323`). `endMatch` 는 `setFrozen(true)` 만 하고(`229`) `setFrozen` 은 이동 잠금만 바꾼다(`Combat.luau:441`). 마지막 순간 맞은 파이터는 `stopVel` 이 불리는 `toLobby`(`Main.server.luau:236` → `leave` → `cleanup`)까지 `Config.MATCH.resultSeconds = 10`(`Config.luau:20`) 동안 제약이 켜져 있다. Vector 모드(띄움 `Combat.luau:165`, 던지기 `187`)면 상승 속도가 상수로 유지돼 결과 화면 내내 위로 날아간다.
+- 수정안: `Combat.setFrozen(F, on)` 에서 `if on then stopVel(F) end`. 검증기 게이트 한 줄(`'stopVel(F)' in setFrozen 본문`)로 회귀 주입 대상에 넣는다.
+
+**N3. 로비에서 장비를 다시 고르면 몸집이 1.0 으로 돌아오지 않는다** (Check 2)
+- 스펙: 로비 단계에서 장비 변경 허용(spec.md:86), 스타일 몸집(spec.md:51).
+- 근거: `Rigs.prepare` 가 `if style.scale ~= 1 then model:ScaleTo(style.scale)`(`Rigs.luau:93`). `ScaleTo` 는 절댓값이라 헤비(1.18, `Styles.luau:30`) → 파이터(1.0) 로 바꾸면 호출 자체가 건너뛰어 1.18 이 남는다. 로비 재선택 경로는 `Main.server.luau:285` 가 같은 캐릭터에 `prepare` 를 다시 부르는 것이다. 매치 캐릭터는 LoadCharacter 로 새로 만들어지니 매치엔 안 샌다 — 로비 미리보기만 틀린다.
+- 같은 자리: `ScaleTo` 뒤에 `attachAccessory`(`94`) 가 붙어 액세서리 모델과 grip 오프셋(`Accessories.luau:13-33`)은 스케일되지 않는다. 헤비가 든 대검은 0.18 스터드 어긋난 보통 크기다(시각만).
+- 수정안: `if model:GetScale() ~= style.scale then pcall(model.ScaleTo, model, style.scale) end`. 액세서리는 클론 뒤 `acc:ScaleTo(style.scale)` + C0 오프셋 × scale.
+
+**N4. `BreakJointsOnDeath = true` 가 dead 포즈·Grip Weld 와 충돌한다** (Check 2)
+- 스펙: `Fight = dead` 상태(spec.md:58), 포즈 테이블의 `dead`(`Poses.luau:67`).
+- 근거: `Rigs.luau:85` 가 `hum.BreakJointsOnDeath = true`. 죽는 순간 Motor6D 가 전부 끊겨 Poser 가 `dead` 포즈를 쓸 관절이 없고(`Poser.client.luau:16-28` 캐시는 죽은 참조를 그대로 가진다), 손의 `Grip` Weld(`Rigs.luau:37-41`) 도 끊겨 액세서리가 바닥에 떨어진다. 1차 §C 가 false 를 권했고 archer NPC 도 false 다. 시체는 데스매치 3초 뒤 LoadCharacter(`Main.server.luau:124`)·봇은 `removeBot`(`140`) 이 치운다.
+- 수정안: `BreakJointsOnDeath = false`. 그러면 dead 포즈가 보이고 액세서리가 손에 남는다.
+
+**N5. `Died` 가 동기로 발화하면 마무리 타격의 KO 크레딧이 빠진다** (Check 6, 낮음)
+- 스펙: 「KO 크레딧 = 3초 안 마지막 타격자」(spec.md:25,84).
+- 근거: `hurt` 가 `Health` 를 먼저 쓰고(`Combat.luau:122`) `lastHitBy` 를 그다음 적는다(`123`). `Died` 핸들러(`425`)가 그 사이에 동기로 돌면 `Combat.ko(F, nil, "died")` 가 `Rules.koCredit(lastHitBy…)` 로 **직전** 타격자(또는 nil)에게 크레딧을 주고, `125` 의 정식 `ko(V, A, "hit")` 는 `392` 에서 되돌아간다. 빌더는 `Workspace.SignalBehavior` 를 쓰지 않아(`build.py` grep 0건) 엔진 기본값에 걸린다. `Died` 가 다음 스텝에 오면 문제 없다 — Studio 로만 확정된다.
+- 수정안(둘 다 한 줄): `122`·`123` 순서를 바꿔 `lastHitBy`·`lastHitAt` 을 먼저 쓴다. 빌더에 `SignalBehavior = Deferred` 를 넣는다.
+
+### 부모가 지목한 다섯 가지 — 실현 가능성
+
+- **Motor6D.Transform 축 부호** — **유도로 맞다.** BlockRig 의 C0 가 기본 R6 와 같고(`build.py:410-415`, archer `build.py:430-435` 와 동일), 어깨 C0 = Ry(90°) 에서 관절 프레임은 X=앞·Y=위·Z=오른쪽이다. 매달린 팔(−Y)에 Rz(+θ) 를 주면 (sinθ, −cosθ, 0) 로 앞으로 들리고, 왼쪽은 Ry(−90°) 라 X=뒤가 되어 부호가 뒤집힌다 — `Poser.client.luau:36-39` 의 `rad(fwd)`/`rad(-fwd)`, `rad(-out)` 과 일치. RootJoint/Neck 프레임(X=왼쪽·Y=뒤·Z=위)에서 `CFrame.new(0, -dz, dy)`·`Angles(pitch, -roll, yaw)`(`33-34`) 도 pitch+ = 앞으로 숙임, yaw+ = 왼쪽 회전으로 `Poses.luau:4` 의 정의와 맞는다. 생김새(다운 포즈가 바닥에 닿는지)는 UNVERIFIED 그대로.
+- **LinearVelocity Plane/Vector 모드 전환** — **문제 없다.** 같은 인스턴스에서 `VelocityConstraintMode` 와 축·속도를 바꾸고 `Enabled` 를 켠다(`Combat.luau:42-56`). Plane 모드는 `PrimaryTangentAxis=x`·`Secondary=z` 로 Y 를 중력에 맡기고, Vector 모드는 세 축을 다 잡아 0.2초 동안 상승을 유지한 뒤 끈다. `RelativeTo=World` 라 탄젠트 축이 월드 축이다. 속성 변경은 한 인스턴스 안에서 순서대로 복제된다.
+- **Weld 로 두 플레이어 캐릭터 결합** — **구현됐고, 정적으로는 더 못 본다.** `doGrab`(`Combat.luau:108-118`) 이 Weld(Part0 홀더 root, Part1 피해자 root, `holdOffset` 2.4 앞, 180° 회전) + 피해자 `PlatformStand=true`, 홀더는 grabbing 으로 `WalkSpeed 0`·`AutoRotate false`. 1차 R4 가 권한 두 가지가 빠졌다: 피해자 파트 `Massless`·`CanCollide false` 는 없고, 던지기 속도는 Weld 제거와 **같은 호출** 안에서 넣는다(`179` → `187`). 제약이 복제되므로 어느 쪽이 시뮬하든 적용은 되지만, 소유권 복귀 중 손실·홀더 Humanoid 가 두 몸 무게를 균형 잡는 체감은 Studio 에서만 안다(검증기 UNVERIFIED 42행). 값싼 보강: 잡는 동안 피해자 BasePart 를 `Massless=true` 로 하고 `release` 에서 되돌린다.
+- **ProximityPrompt 서버 재확인** — **맞다.** `Triggered` → `Items.pickupBy`(`Items.luau:136-140`) 가 `rec.holder`·`F.item`·`F.state=="idle"`·`model.Parent`·평면 거리 ≤ `pickupDistance+2`(`107-109`) 를 서버에서 다시 본다. 봇도 같은 함수(`Bots.luau:97`). 줍고 나면 프롬프트를 끄고 다시 켜지 않는데(`115`) 퓨즈가 줍는 순간 시작되어(`114`) 다시 주울 일이 없으니 맞다.
+- **ScaleTo 와 Weld 오프셋** — N3 로 올렸다. 순서(`Rigs.luau:93-94`)상 오프셋·액세서리가 스케일되지 않고, 1.0 복귀가 건너뛴다. `pcall` 감쌈(`93`)은 1차 §C 대로다.
+
+### UNVERIFIED (검증기 40-47행과 같다)
+Studio Play · LoadCharacter 뒤 PivotTo 가 엔진 배치에 덮이지 않는지 · Weld 두 캐릭터 소유권 전환 · LinearVelocity 넉백 체감 · `Died` 발화 시점 · 포즈 생김새 · 터치 버튼 · 8인.
+
+### 판정
+R1~R6 전부 해소. 새 이슈 5건 — N1·N2 는 스펙 동작과 어긋나는 것(폭탄 낙하 없음·결과 단계 상승), N3~N5 는 한두 줄 보강. 사람 판단이 필요한 것은 없다.
+
 VERDICT: REVISE

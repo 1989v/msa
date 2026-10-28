@@ -63,12 +63,21 @@ gate(heartbeats == {name: (1 if name == 'Main' else 0) for name in server_files}
 health_writers = {name for name, src in server_files.items() if re.search(r'\.Health\s*=|TakeDamage', src)}
 gate(health_writers == {'Combat', 'Rigs'} and 'TakeDamage' not in ''.join(server_files.values()) and re.findall(r'\.Health\s*=', server_files['Rigs']) == ['.Health ='] and 'hum.Health = hum.MaxHealth' in server_files['Rigs'],
      'Humanoid.Health is written only by Combat (damage/heal/KO) and Rigs (initial fill); Items, Projectiles and Bots route through Combat.applyHit/heal')
-gate(server_files['Main'].count('OnServerEvent:Connect') == 1 and 'Commands.validate(player, name, args)' in server_files['Main'] and 'Commands.forget(player)' in server_files['Main'],
-     'exactly one RemoteEvent handler, every command passes Commands.validate (schema + token bucket) and buckets are forgotten on leave')
+handler_shape = re.search(r'OnServerEvent:Connect\(function\(player, name, args\)\s*local ok, result = Commands\.validate\(player, name, args\)\s*if not ok then return end\s*handlers\[name\]\(player, result\)\s*end\)', server_files['Main'])
+gate(server_files['Main'].count('OnServerEvent:Connect') == 1 and handler_shape is not None and 'Commands.forget(player)' in server_files['Main'],
+     'exactly one RemoteEvent handler whose body is validate → return on reject → dispatch the validated args (not just a validate call somewhere), and buckets are forgotten on leave')
 gate('Config.ITEMS.pickupDistance + 2' in server_files['Items'] and 'F.state ~= "idle"' in server_files['Items'] and 'MaxActivationDistance = Config.ITEMS.pickupDistance' in server_files['Items'],
      'bomb pickup re-checks distance and fighter state on the server (ProximityPrompt range is a client-side condition)')
-gate('Rules.botMove(groundAhead(F, dir), groundAhead(F, side))' in server_files['Bots'] and 'Rules.loadoutPhaseOpen(session.phase)' in server_files['Main'] and 'Rules.allyKo(credit.team, V.team)' in server_files['Main'] and 'Rules.launchLanded(' in server_files['Combat'] and 'Rules.heldEscape(' in server_files['Combat'] and 'Rules.mashAccepted(' in server_files['Combat'],
-     'combat decisions live in shared Rules (bot edge step, loadout phase, ally KO, launch landing, held escape, mash interval) and the server calls them')
+combat_calls = ['Rules.firstMove(', 'Rules.chainNext(', 'Rules.specialMove(', 'Rules.hitTest(', 'Rules.canGrab(', 'Rules.canGrabWith(', 'Rules.canHit(', 'Rules.guardBlocks(', 'Rules.guardCost(', 'Rules.guardAfterBlock(',
+                'Rules.counterOpen(', 'Rules.dashAttackOpen(', 'Rules.koCredit(', 'Rules.knockbackMult(', 'Rules.launchLanded(', 'Rules.heldEscape(', 'Rules.mashAccepted(', 'Rules.damage(', 'Rules.throwDirection(', 'Rules.sanitizeDir(', 'Rules.isRingout(']
+missing = [c for c in combat_calls if c not in server_files['Combat']]
+gate(not missing and 'Rules.botMove(groundAhead(F, dir), groundAhead(F, side))' in server_files['Bots'] and 'Rules.loadoutPhaseOpen(session.phase)' in server_files['Main'] and 'Rules.allyKo(credit.team, V.team)' in server_files['Main']
+     and 'Rules.botsNeeded(n)' in server_files['Main'] and 'Rules.sanitizeLoadout(' in server_files['Main'] and 'Rules.matchOver(' in server_files['Main'] and 'Rules.assignTeams(' in server_files['Main'] and 'Rules.nextRotation(' in server_files['Main'] and 'Rules.survivalWinner(' in server_files['Main'],
+     f'combat decisions live in shared Rules and the server calls them: Combat uses {len(combat_calls)} Rules functions (chains, grab, hit geometry, guard, windows, credit, knockback, landing, escape), Main uses loadout/teams/rotation/winner/bots, Bots uses botMove{" — missing " + str(missing) if missing else ""}')
+all_src = {str(p.relative_to(ROOT)): p.read_text() for p in (ROOT / 'src').rglob('*.luau')}
+bad_requires = [(name, m) for name, src in all_src.items() for m in re.findall(r'require\("(\.\./[^"]+)"\)', src)]
+gate(not bad_requires and 'Commands.configure(Config.LIMITS)' in server_files['Main'] and not re.search(r'^local \w+ = require\(', server_files['Commands'], re.M),
+     f'no parent-folder string requires in any script (they resolve against the DataModel tree in Studio, not files){" — " + str(bad_requires) if bad_requires else ""}; Commands has no requires and Main configures its limits from Config')
 proj = json.loads((ROOT / 'default.project.json').read_text())
 gate(proj['name'] == 'AmpArena' and 'AmpArena' in proj['tree']['ReplicatedStorage'] and 'AmpArena' in proj['tree']['ServerScriptService'] and set(proj['tree']['ReplicatedStorage']['AmpArena']['Remotes']) >= {'Command', 'Fx', 'State'},
      'default.project.json (Rojo) describes the same tree the builder emits: ReplicatedStorage.AmpArena{shared, Remotes 3}, ServerScriptService.AmpArena, StarterPlayerScripts')
@@ -205,6 +214,7 @@ for line in [
     'touch button placement around the default jump button, gamepad bindings, ProximityPrompt on bombs',
     '8 players, team outline colors, name tag HP bars, result ranking screen, lobby ready shortcut',
     'balance: every number in Config.luau/Moves.luau is a first guess translated from the web reference',
+    'fighter state transition table and per-state intent acceptance (idle/attack/guard/hitstun/launched/down/getup/held/grabbing/stun) live in Combat.luau and are exercised only in Studio — decisions with logic are in Rules, the transitions themselves are not CLI-tested',
     'sound IDs (rbxasset) audible, Bangers font availability, Atmosphere density by eye',
 ]:
     print('UNVERIFIED: ' + line)

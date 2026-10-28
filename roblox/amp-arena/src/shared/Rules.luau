@@ -26,7 +26,7 @@ function Rules.jumpPower(s) return Config.PLAYER.jumpPower + 4 * (s - Config.STA
 function Rules.damage(base, atkStat, defStat) return math.floor(base * Rules.atkMult(atkStat) * Rules.defMult(defStat) + 1e-6) end
 
 -- ───────── 장비 ─────────
--- 직업이 들 수 없는 액세서리는 맨손으로 — 권위와 화면이 같은 규칙을 쓴다.
+-- 스타일이 들 수 없는 액세서리는 맨손으로 — 권위와 화면이 같은 규칙을 쓴다.
 function Rules.allowedAccessory(styleId, accId)
 	local st = Styles.get(styleId)
 	if not st then return "none" end
@@ -126,6 +126,13 @@ function Rules.guardBlocks(victimPos, victimLook, attackerPos, guardAngle)
 	return Rules.facingAngle(victimPos, victimLook, attackerPos) <= (guardAngle or Config.GUARD.angleDeg) / 2
 end
 function Rules.guardCost(damage) return damage * Config.GUARD.costMult end
+-- 막은 뒤 게이지와 크러시 여부. 크러시 면역(방패)은 1 로 남아 다음 타도 막는다.
+function Rules.guardAfterBlock(guard, cost, crushImmune)
+	local g = guard - cost
+	if g > 0 then return g, false end
+	if crushImmune then return 1, false end
+	return 0, true
+end
 -- 잡기: 거리 ≤ range, 정면 coneDeg/2, 상대가 잡힐 수 있는 상태.
 local GRABBABLE = { idle = true, guard = true, hitstun = true, stun = true }
 function Rules.canGrab(attPos, look, victimPos, victimState, range)
@@ -154,7 +161,6 @@ function Rules.sanitizeDir(v)
 end
 
 -- ───────── 매치 ─────────
-function Rules.score(ko, damage, win) return ko * Config.POINTS.ko + math.floor(damage) * Config.POINTS.damage + (win and Config.POINTS.win or 0) end
 -- 순위: KO 많고, 데스 적고, 준 피해 많은 순. 팀전은 팀 합산 뒤 같은 기준.
 local function better(a, b)
 	if a.ko ~= b.ko then return a.ko > b.ko end
@@ -185,9 +191,11 @@ function Rules.survivalOver(roster)
 	for _, r in roster do if r.alive then alive += 1 end end
 	return alive <= 1
 end
+-- 서바이벌 승자: 생존자 중 순위 1위(마지막 하나면 그 사람, 시간 종료면 생존자 중 KO → 데스 → 피해 순)
 function Rules.survivalWinner(roster)
-	for _, r in roster do if r.alive then return r end end
-	return nil
+	local alive = {}
+	for _, r in roster do if r.alive then table.insert(alive, r) end end
+	return Rules.rank(alive)[1]
 end
 -- 모드 끝 판정: 시간 종료 또는 서바이벌 생존 1.
 function Rules.matchOver(modeId, elapsed, roster)
@@ -196,7 +204,7 @@ function Rules.matchOver(modeId, elapsed, roster)
 	if mode.lives == 1 and Rules.survivalOver(roster) then return true, "lastone" end
 	return false
 end
--- 팀 배정: 들어온 순서로 번갈아. 봇도 같은 줄에 선다.
+-- 팀 배정: 참가자 id 정렬 순으로 번갈아(Main 이 정렬해 넘긴다). 봇도 같은 줄에 선다.
 function Rules.assignTeams(ids)
 	local out = {}
 	for i, id in ids do out[id] = (i % 2 == 1) and 1 or 2 end

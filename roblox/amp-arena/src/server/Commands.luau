@@ -1,7 +1,7 @@
 --!nonstrict
 -- 클라이언트 명령의 모양 검사와 빈도 제한. 통과한 것만 Main/Combat 이 실행한다. 거부는 조용히 버린다(스팸이 화면을 채우지 않게).
 -- Roblox API 를 쓰지 않아 luau CLI 로 검사한다. 시계는 인자(now)로 받는다 — 기본은 os.clock().
-local Config = require("../shared/Config")
+-- 한도는 Main 이 Config.LIMITS 로 configure 한다(상위 폴더 문자열 require 는 Studio 트리에서 풀리지 않는다).
 local Commands = {}
 
 local function finiteVector(v)
@@ -20,7 +20,11 @@ local SCHEMA = {
 }
 
 local buckets = {}
-local CAP, REFILL = Config.LIMITS.commandBurst, Config.LIMITS.commandRefillPerSecond
+local CAP, REFILL = 30, 20
+function Commands.configure(limits)
+	CAP, REFILL = limits.commandBurst, limits.commandRefillPerSecond
+	buckets = {}
+end
 
 function Commands.validate(player, name, args, now)
 	now = now or os.clock()

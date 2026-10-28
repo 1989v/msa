@@ -1,4 +1,4 @@
-# 게이트 증명 — 회귀 주입 24건 전부 빨강 (2026-10-29)
+# 게이트 증명 — 회귀 주입 32건 전부 빨강 (2026-10-29)
 
 프로젝트 사본(`dist` 제외)에 회귀를 하나씩 넣고 `tools/verify.py` 를 돌렸다. 원본은 건드리지 않았다. 스크립트는 세션 스크래치패드 `gate_proof.py`(레포에 두지 않음 — 검사용 임시 코드).
 
@@ -31,8 +31,23 @@ LUAU_BIN=/private/tmp/roblox-infinity-step-tools/luau python3 gate_proof.py robl
 | U 장비를 매치 중에도 받음 | combat decisions live in Rules (loadout phase) | 1 | `FAIL combat decisions live in shared Rules (bot edge step, loadout phase, ally KO, launch landing, held escape, mash interval) and the server calls them` |
 | V 공유 모듈이 Vector3.new 사용 | rules spec 이 먼저 죽는다(CLI 엔 Vector3 가 없다) — 같은 성질을 다른 길로 잡은 것 | 1 | `…/tests/rules.spec.luau:7: error while running module` |
 | W Commands 버스트 초과를 통과시킴 | rules spec (명령 빈도) | 1 | `…/tests/rules.spec.luau:10: 같은 순간 버스트 상한` |
+| Y validate 를 부르되 결과를 무시(2차 security 권고) | OnServerEvent handler body shape | 1 | `FAIL exactly one RemoteEvent handler whose body is validate → return on reject → dispatch the validated args (not just a validate call somewhere), and buckets are forgotten on leave` |
+| Z1 Items 에 Heartbeat 하나 더 (2차 test-strategy 지적) | one Heartbeat in Main | 1 | `FAIL one Heartbeat in Main with a fixed tick order Combat → Items → Projectiles → Bots → State` |
+| Z2 Guard 속성을 매 틱 쓰기 (2차 test-strategy 지적) | Guard attribute … only when changes | 1 | `FAIL Guard attribute replicates only when its integer value changes (no per-tick attribute churn)` |
+| Z3 그림자 Hp 속성 (2차 test-strategy 지적) | health is Humanoid.Health | 1 | `FAIL health is Humanoid.Health (native KO via Died); no shadow HP attribute` |
+| Z4 CharacterAutoLoads 를 true 로 (2차 test-strategy 지적) | server owns spawning | 1 | `FAIL server owns spawning: Players.CharacterAutoLoads false in the place and Main calls LoadCharacter for lobby/arena/respawn` |
+| Z5 공통 정리 함수를 없앰(정의·호출 전부 다른 이름으로) (2차 test-strategy 지적) | cleanup()/leave() 단일 정리 | 1 | `FAIL launched→down waits for an Air observation (replication lag) with a 2.5s timeout (Rules.launchLanded); grab uses a Weld with PlatformStand; single cleanup(` |
+| Z6 Commands 가 상위 폴더를 문자열 require (2차 test-strategy 지적) | no parent-folder string requires | 1 | `FAIL no parent-folder string requires in any script (they resolve against the DataModel tree in Studio, not files) — [('src/server/Commands.luau', '../shared/Co` |
+| Z7 hitScan 이 팀 검사(canHit)를 건너뜀 (2차 test-strategy 지적) | combat decisions live in Rules (canHit) | 1 | `FAIL combat decisions live in shared Rules and the server calls them: Combat uses 21 Rules functions (chains, grab, hit geometry, guard, windows, credit, knockb` |
+| Items 에 Heartbeat 하나 더 (2차 test-strategy 지적) | one Heartbeat in Main | 1 | `FAIL one Heartbeat in Main with a fixed tick order Combat → Items → Projectiles → Bots → State` |
+| Guard 속성을 매 틱 쓰기 (2차 test-strategy 지적) | Guard attribute only when it changes | 1 | `FAIL Guard attribute replicates only when its integer value changes (no per-tick attribute churn)` |
+| 그림자 Hp 속성 (2차 test-strategy 지적) | health is Humanoid.Health | 1 | `FAIL health is Humanoid.Health (native KO via Died); no shadow HP attribute` |
+| CharacterAutoLoads 를 true 로 (2차 test-strategy 지적) | server owns spawning | 1 | `FAIL server owns spawning: Players.CharacterAutoLoads false in the place and Main calls LoadCharacter for lobby/arena/respawn` |
+| 공통 정리 함수를 없앰(정의·호출 전부 다른 이름으로) (2차 test-strategy 지적) | single cleanup()/leave() | 1 | `FAIL launched→down waits for an Air observation (replication lag) with a 2.5s timeout (Rules.launchLanded); grab uses a Weld with PlatformStand; single cleanup(` |
+| Commands 가 상위 폴더를 문자열 require (2차 test-strategy 지적) | no parent-folder string requires | 1 | `FAIL no parent-folder string requires in any script (they resolve against the DataModel tree in Studio, not files) — [('src/server/Commands.luau', '../shared/Co` |
+| hitScan 이 팀 검사(canHit)를 건너뜀 (2차 test-strategy 지적) | combat decisions live in Rules (canHit) | 1 | `FAIL combat decisions live in shared Rules and the server calls them: Combat uses 21 Rules functions (chains, grab, hit geometry, guard, windows, credit, knockb` |
 | X 에셋 파일 변조 | embedded models are Roblox-owned | 1 | `FAIL 9 embedded models are Roblox-owned (creator id 1) with matching sha256 in provenance.json; 0 scripts in the raw files were stripped at build` |
 
-24/24 RED, proof exit=0. 주입 전 원본은 exit=0(status.md 의 출력).
+32/32 RED, proof exit=0 (Y 는 2차 security 권고로 게이트를 본문 모양 정규식으로 조인 뒤, Z1~Z7 은 2차 test-strategy 「RED 행 없는 게이트 15」 지적으로 추가). 주입 전 원본은 exit=0(status.md 의 출력).
 
 이 게이트가 재는 것은 구조(코드·XML)다. 포즈가 실제로 뻗어 보이는지, 넉백이 어떻게 느껴지는지, 잡기 Weld 가 두 클라이언트 사이에서 흔들리지 않는지는 Studio 에서 봐야 한다(UNVERIFIED 줄).

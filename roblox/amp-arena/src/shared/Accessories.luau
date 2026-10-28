@@ -1,12 +1,12 @@
 --!nonstrict
--- 액세서리 5 — 직업당 하나, 들면 약공·강공·기술이 통째로 바뀐다(겟앰프드식). 모델은 빌더가 Part 로 만들어 ServerStorage 에 둔다.
+-- 액세서리 5 — 스타일당 하나, 들면 약공·강공·기술이 통째로 바뀐다(겟앰프드식). 모델은 빌더가 Part 로 만들어 ServerStorage 에 둔다.
 -- grip: 손(R6 Right Arm) 기준 부착 오프셋 {x,y,z}·회전(deg). twoHanded 면 잡기 불가.
 local Accessories = {}
 
 Accessories.ORDER = { "rocket", "shield", "pistols", "greatsword", "spear" }
 
 Accessories.DEF = {
-	none = { label = "맨손", desc = "직업의 기본기", style = nil, light = nil, heavy = nil, special = nil, specialCooldown = 0, speedMult = 1, twoHanded = false, projectile = false, ammo = 0, reload = 0 },
+	none = { label = "맨손", desc = "스타일의 기본기", style = nil, light = nil, heavy = nil, special = nil, specialCooldown = 0, speedMult = 1, twoHanded = false, projectile = false, ammo = 0, reload = 0 },
 	rocket = {
 		label = "부스터", desc = "로켓 글러브 — 리치 긴 펀치 3단, 강공 강펀치. 기술 로켓 펀치 발사(투사체).",
 		style = "fighter", light = { "rk1", "rk2", "rk3" }, heavy = { "rkHeavy" }, special = "rocketPunch", specialCooldown = 5,

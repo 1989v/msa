@@ -72,4 +72,50 @@
 ## 결론
 계층 분리·서버 권위·Remotes 3·shared 순수성·네이티브 게이트는 선례와 같은 모양이고, 새 모듈 다섯은 Deletion Test 를 통과한다. 남은 것은 서버 모듈 사이의 **경계 소유와 방향**이다: 피해 진입점 하나(A1), `throw` 소유(A2), Terrain 생명주기(A3), 맵 기하 원천(A4), require DAG 와 틱 순서(A5). 전부 스펙에 한 줄씩 적으면 풀리고 사람 판단이 필요한 것은 없다. A3·A5 는 태스크 2·4 착수 전에 정해야 한다 — 코드가 생긴 뒤 바꾸면 Combat 전체를 돌려야 한다.
 
+Round 1 판정: REVISE
+
+---
+
+## Round 2 (2026-10-29, 스펙 개정 + 구현 완료 후)
+
+근거: 개정 `spec.md`, `roblox/amp-arena/src/{shared,server,client}`, `tools/build.py`·`tools/verify.py`, `default.project.json`, `tests/rules.spec.luau`, 검증기 출력 `/tmp/amp_verify.txt`(PASS 37 · FAIL 0), `verifications/gate-proof.md`(회귀 주입 24/24 RED). `roblox/archer-command` 는 선례 대조용으로 읽기만 했다.
+
+### 1차 이슈 해소 확인
+
+| # | 판정 | 스펙 | 코드 · 게이트 |
+|---|---|---|---|
+| A1 피해 진입점·KO 통지 방향 | **해소** | `spec.md:71` hooks 로 Main 이 꽂음, `spec.md:72` Health 쓰기는 Combat 셋뿐 | `Combat.luau:14-20` hooks 5종, `Combat.luau:121-126` `hurt` 가 유일한 피해 쓰기, `Combat.luau:397`(ko)·`450`(heal). 폭탄 `Items.luau:96`·투사체 `Projectiles.luau:56`·잡기 던지기 `Combat.luau:183` 모두 `applyHit`/`hurt`. Main 이 `hooks.ko` 를 채움 `Main.server.luau:244-261`. 게이트 `verify.py:63-65`, 증명 H(`gate-proof.md:18`) |
+| A2 `throw` 소유 | **부분 해소 → R1** | `spec.md:87` 소지는 Combat 소유, 약공=던지기, `throw` 는 별칭 | `Combat.luau:302-304` throw→light, `F.item` 이면 `itemThrow`; `Combat.luau:332` → `hooks.throwItem` → `Main.server.luau:37` → `Items.throwHeld`(`Items.luau:145-158`). 던지기 경로는 맞다. **드랍 경로는 깨져 있다**(R1) |
+| A3 Terrain → Part | **해소** | `spec.md:123` Part Sand + 이유 | `build.py:236-237` Desert·Floor Part(Sand). 서버·빌더에 `Terrain` 없음(클라이언트 `Effects.client.luau:28` 의 Attachment 부모로만 씀) |
+| A4 맵 기하 단일 원천 | **해소**(비고 P3) | `spec.md:126` 마커 폴더·FallY·Label, Config 는 fallY·clock·표시명 | `build.py:233,272-283`(콜로세움) `290,314-320`(스카이독) Spawns/CrateSpots/Pads; 서버 `Main.server.luau:43-62` Spawns+Team, `Items.luau:197-200` CrateSpots/Pads; `Config.luau:28-31` 좌표 없음; `build.py:29-35` read_config. 게이트 `verify.py:104-112`, 증명 P |
+| A5 require DAG · 틱 순서 | **해소** | `spec.md:71` 그래프 + Heartbeat 하나 + 순서 | `Combat.luau:6-11` shared 만, `Items.luau:9-10`, `Projectiles.luau:7`, `Bots.luau:6-8`, `Main.server.luau:12-17`, `Rigs.luau:7-11`. 틱 `Main.server.luau:323`. 게이트 `verify.py:46-62`(DAG·Combat 최하위·Heartbeat 1·순서 문자열), 증명 J. 검증기 출력 4-5행 |
+| A6 Rojo 파일 | **해소**(비고 P4) | `spec.md:69` | `default.project.json:1-9`, 게이트 `verify.py:72-74` |
+
+### 남은 이슈 (비차단 · Studio 열기 전에 고친다)
+
+#### R1. KO·퇴장 때 든 폭탄이 떨어지지 않는다 — Combat 이 `F.item` 을 지운 **뒤에** Main 에 알린다 (A2 잔여, L4)
+- 스펙: `spec.md:87` 「죽거나 나가면 그 자리에 떨어진다」, `spec.md:103` 「`Combat.leave` 가 … 들고 있던 폭탄은 떨어진다」.
+- 코드: `Combat.luau:383-389` `cleanup(F)` 가 `F.item = nil`(388). `Combat.ko` 는 `cleanup(V)`(393) **다음에** `Combat.hooks.ko`(400)를 부른다. Main 의 ko 훅은 `Main.server.luau:256` `if V.item then Items.dropHeld(V) end` — 이미 nil 이라 한 번도 안 탄다. `Combat.leave`(`Combat.luau:428-433`)도 cleanup 뿐이고, 퇴장(`Main.server.luau:271-276`)·사람 리스폰(`Main.server.luau:123`)·봇 리스폰(`Main.server.luau:329`) 어디에도 `Items.dropHeld` 가 없다. Items 쪽 `rec.holder`(`Items.luau:112`)와 손 Weld `AmpCarry`(`Items.luau:118`)는 그대로 남는다.
+- 결과: 폭탄이 죽은/나간 캐릭터 손에 붙은 채 모델과 함께 사라지거나(Massless·CanCollide false, `Items.luau:117`) 바닥을 뚫고 떨어진다. 신관(`Items.luau:114`)은 돌고 있어 어디선가 터지고, `rec.thrower` 가 죽은 F 라 피해·KO 크레딧이 그에게 간다(`Items.luau:90,96`). `Items.nearest` 는 holder 있는 폭탄을 건너뛰어 봇도 못 줍는다(`Items.luau:173`). `Items.clear`(`Items.luau:203`)는 매치 끝에만 돈다.
+- 원인: A2 를 「Combat 소유」로 정했는데 **놓는 동작**(unweld·레코드 정리)은 Items 에 있고 Combat 에 그 방향의 훅이 없다. 그래서 Combat 이 자기 필드만 지우고 Items 는 모른다.
+- 수정: `Combat.hooks.dropItem = function() end` 를 추가하고 `cleanup` 이 `F.item = nil` 전에 `if F.item then Combat.hooks.dropItem(F) end` 를 부른다(던지기와 같은 장치: `Combat.luau:19,332`). Main 은 `Combat.hooks.dropItem = Items.dropHeld` 한 줄로 꽂고 `Main.server.luau:256` 을 지운다. 게이트: verify 에 「`cleanup` 본문에 `hooks.dropItem` 호출이 `F.item = nil` 보다 앞」 문자열 검사를 더하고, 훅 호출을 지운 회귀로 RED 를 본다. 스펙 `spec.md:71` hooks 목록에 `dropItem` 을 적는다.
+
+#### R2. `Commands.luau` 의 `require("../shared/Config")` 는 파일 경로라 Rojo 트리·rbxlx 에서 풀리지 않는다 (L2·L5, 신규)
+- 스펙: `spec.md:47` 「디렉토리 == Rojo 트리 == rbxlx 배치」, `spec.md:63`·`spec.md:130` Commands 는 Roblox API 없이 CLI 검사.
+- 코드: `Commands.luau:4` `require("../shared/Config")`. 트리는 `default.project.json:5-6` 가 `src/shared` → `ReplicatedStorage.AmpArena`, `src/server` → `ServerScriptService.AmpArena` 로 놓고 빌더도 같다(`build.py:448-451`, `456-459`). 두 폴더는 트리에서 형제가 아니고 `ServerScriptService` 아래에 `shared` 가 없다 — `..` 가 어디로 풀리든 `ReplicatedStorage` 에 닿지 않는다. 이 경로는 `src/server/../shared/Config.luau` 라는 **파일 배치**에서만 맞고, 그 배치로 부르는 곳은 CLI 테스트(`tests/rules.spec.luau:124`)뿐이다. `Main.server.luau:17` 이 기동 때 require 하므로 실패하면 서버 스크립트 전체가 서지 않는다.
+- 선례: `archer-command/src/server/Commands.luau:10-11` 은 `game:GetService("ReplicatedStorage")…` + `require(Shared.Config)` 로 트리를 통해 푼다(CLI 테스트에는 안 넣었다, `archer-command/tests/rules.spec.luau:3-4`). 이 프로젝트는 Commands 를 CLI 테스트에 넣으면서 게이트(`verify.py:42-44`)가 Commands 의 `game:GetService` 를 막게 했고, 그 결과 경로가 파일 기준으로 바뀌었다 — **게이트가 트리와 어긋난 경로를 통과시킨다**. `Rules.luau:3` 의 `./Config` 는 같은 폴더라 트리에서도 풀린다(선례 `archer-command/src/shared/Rules.luau:3` 이 Studio 에서 돈 것이 증거).
+- 수정(택일): ① Commands 가 Config 를 require 하지 않는다 — `Commands.configure(limits)` 를 두고 Main(`Main.server.luau:17` 다음)과 테스트(`rules.spec.luau:124` 다음)가 `Config.LIMITS` 를 넘긴다. Commands 는 모듈 의존 0 이 되어 CLI 와 트리에서 같은 코드가 돈다. ② Commands 를 `src/shared` 로 옮기고 `./Config` 로 부른다(클라이언트에 복제돼도 비밀은 없다). ①을 권한다 — 서버 모듈이 서버 폴더에 남고 `spec.md:71` 그래프도 그대로다. 게이트: verify 에 「`src/server/*.luau` 의 문자열 require 는 없거나 `./` 로 시작한다(`../` 금지)」를 더하고 `../` 를 넣은 회귀로 RED 를 본다. 이 게이트는 P4 와 같은 자리에서 「디렉토리 == 트리」를 실제로 재는 첫 검사가 된다.
+
+### 권고 (판정에 안 넣음)
+- **P1 (D3)** Items 가 Combat 내부 상태를 직접 쓴다 — `Items.luau:54,56` 이 `F.hitSet["crate:"…]` 를 쓰는데 그 표는 Combat 이 무브마다 비우는 것(`Combat.luau:84`)이라 Items 가 Combat 의 리셋 시점을 안다. `Items.luau:119,147,150,163` 은 `F.item` 을 직접 쓰고 바로 뒤에 `Combat.setItem` 도 부른다(이중 쓰기). 세터를 쓰거나 세터를 지운다 — 둘 중 하나만.
+- **P2 (D4)** `Items.hooks.fighterOf`(`Items.luau:14`)는 Main 이 `Combat.byModel` 로 꽂는 통과 훅(`Main.server.luau:39`)인데 Items 는 이미 Combat 을 require 한다(`Items.luau:10`). 1 어댑터 가설 seam — 지우고 `Combat.byModel` 을 직접 부른다.
+- **P3 (A4 비고)** 빌더가 맵에 넣는 `FallY`(`build.py:233,290`)를 서버는 읽지 않고 Config 에서 읽는다(`Main.server.luau:186`). 원천은 Config 하나(빌더가 복사)라 이중 원천은 아니지만 `spec.md:126` 「서버는 Clone 한 모델을 읽는다」와 다르고, 게이트(`verify.py:110-111`)가 아무도 안 읽는 값을 지킨다. `arena.FallY.Value` 를 읽거나 값·게이트를 뺀다.
+- **P4 (A6 비고)** Rojo 대조 게이트(`verify.py:72-74`)는 JSON 만 읽는다. 「빌더가 내는 트리와 같다」는 문구가 성립하려면 XML 의 `ReplicatedStorage.AmpArena`·`ServerScriptService.AmpArena` 자식 이름을 `src/shared`·`src/server` 스템과 맞춰 봐야 한다(`verify.py:89-94` 는 스크립트 존재만 본다).
+
+### 차원 밖(기록만)
+- `Items.luau:19` `CRATE_MOVE` 는 아무 데서도 안 쓴다(상자 던지기는 스펙에 없다, `spec.md:59,138`). `Config.luau:29-30` `ringout` 은 서버가 읽지 않는다 — implementation 차원.
+
+### 결론
+1차 이슈 6건 중 5건(A1·A3·A4·A5·A6)은 스펙·코드·게이트·회귀 증명까지 닫혔다. A2 는 던지기 방향은 맞지만 **놓기 방향**이 빠져 KO·퇴장 드랍이 실제로 안 된다(R1). 새로 본 R2 는 CLI 테스트 가능성을 위해 넣은 파일 경로 require 가 Rojo 트리와 어긋나는 것으로, Studio 에서 서버가 기동하지 않을 수 있다 — 스펙 결정을 바꿀 일은 없고 수정은 기계적이라 BLOCK 이 아니지만 Studio 수용 시나리오(`spec.md:134-139`) 전에 반드시 고쳐야 한다. 둘 다 `Combat.hooks` 장치와 verify 게이트 한 줄씩으로 닫히고 회귀 주입 RED 를 같이 남긴다.
+
 VERDICT: REVISE

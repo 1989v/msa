@@ -21,6 +21,7 @@ local Command, Fx, State = Remotes.Command, Remotes.Fx, Remotes.State
 local Assets = ServerStorage:WaitForChild("AmpAssets")
 local Lobby = workspace:WaitForChild("Lobby")
 Players.CharacterAutoLoads = false
+Commands.configure(Config.LIMITS)
 
 local function now() return workspace:GetServerTimeNow() end
 local function fx(kind, ...) Fx:FireAllClients(kind, ...) end
@@ -35,6 +36,7 @@ Combat.hooks.fx = fx
 Combat.hooks.projectile = function(F, m, t) Projectiles.fire(F, m, t) end
 Combat.hooks.itemHit = function(F, m, t) Items.hitScan(F, m, t) end
 Combat.hooks.throwItem = function(F, t) Items.throwHeld(F, t) end
+Combat.hooks.dropItem = function(F) Items.dropHeld(F) end
 Items.hooks.fx = fx
 Items.hooks.fighterOf = function(model) return model and Combat.byModel(model) or nil end
 Projectiles.hooks.fx = fx
@@ -183,7 +185,8 @@ local function startCountdown()
 	local arena = template:Clone(); arena.Name = "Arena"; arena.Parent = workspace
 	session.arena = arena
 	applyLighting(mapId)
-	Combat.setFallY(Config.MAPS[mapId].fallY)
+	local fallValue = arena:FindFirstChild("FallY")
+	Combat.setFallY(fallValue and fallValue.Value or Config.MAPS[mapId].fallY)
 	Items.setup(arena)
 	Projectiles.clear()
 	-- 참가자: 지금 있는 사람 전원 + 봇 채움
@@ -253,7 +256,6 @@ Combat.hooks.ko = function(V, creditId, reason)
 		if Rules.allyKo(credit.team, V.team) then credit.ko -= 1 else credit.ko += 1 end
 	elseif reason == "ringout" then V.ko -= 1 end
 	fx("feed", V.label, credit and credit.label or nil, reason)
-	if V.item then Items.dropHeld(V) end
 	-- 데스매치는 아레나에, 서바이벌은 로비 발판에 다시 선다(관전 자리). 봇은 데스매치에서만.
 	if session.phase == "match" and (not V.isBot or Config.MODES[session.mode].lives == 0) then
 		entry.respawnAt = now() + Config.RESPAWN.seconds

@@ -76,4 +76,71 @@
 ## 요약
 비차단 7건. 용어집 부재와 표기 드리프트(D1~D3)는 표 두 개로 닫히고, 불변식 누락(D4~D6)은 각각 한두 줄과 게이트 한 항목이다. 스펙 결정과 코드가 충돌하는 BLOCK 근거는 없다.
 
+VERDICT (1차): REVISE
+
+---
+
+## Round 2 (2026-10-29, 2차)
+
+대상: 반영된 `spec.md`(용어표·식별자표·장비·모드표·아군 KO·점수판·로비 표준 비적용) + `planning/*`·`context/open-questions.yml`·`status.md`·`verifications/gate-proof.md` + 구현 `roblox/amp-arena/src/**`·`tools/verify.py`·`tests/rules.spec.luau`. 1차에 없던 코드가 생겨 이번엔 스펙 ↔ 코드를 직접 대조했다.
+
+### 1차 이슈 해소 확인
+| # | 판정 | 근거 |
+|---|---|---|
+| D1 용어표 | 해소 | `spec.md:11-29` 표(용어·뜻·코드·Avoid, 18행). 코드 식별자 대조: `Rules.chainNext` `Rules.luau:70` · `Rules.koCredit` `Rules.luau:206` · `phase` `Main.server.luau:28` · `effect = "hitstun" / "launch"` `Moves.luau:21-27` · Attribute `Fight`·`Guard` `Combat.luau:74,91` · 방 최대 8 `Config.luau:35` |
+| D2 표기 | 해소(스펙 폴더) | 스펙 폴더에서 「악세서리·직업」은 `spec.md:14-15` Avoid 열에만 남았다(grep 0건 외). 코드 주석·데이터에 잔여 → R5 |
+| D3 식별자·표시명 | 해소 | `spec.md:31-39` ↔ `Styles.luau:6-39`(id·label·accessory) ↔ `Accessories.luau:6-35`(id·label·style). 5×5 전부 일치(fighter/파이터/rocket/부스터 … martial/마셜/spear/스파이크). 가정 등록 `open-questions.yml:31-35`(OQ7) |
+| D4 장비 불변식 | 해소 | `spec.md:86` ↔ `Rules.sanitizeLoadout` `Rules.luau:36-43`(거부가 아니라 `none` 으로 정리) · `Rules.loadoutPhaseOpen` `Rules.luau:240` → `Main.server.luau:282` · 봇 2/3 `Main.server.luau:145` · 기본 파이터·맨손 `Main.server.luau:265` · 테스트 `rules.spec.luau:20-23,118` · 회귀 주입 S·U RED `gate-proof.md:29,31` |
+| D5 모드·승패·팀 | 해소(1곳 잔여) | `spec.md:90-99` 표 ↔ `Rules.rank` `Rules.luau:159-169`(KO↓→데스↑→피해↓) · `teamTotals` `Rules.luau:170-181` · `assignTeams` `Rules.luau:200-204` + id 정렬 `Main.server.luau:150-156` · `allyKo` `Rules.luau:238` → `Main.server.luau:253` · 준비 전원 1초 `Main.server.luau:292` · 사람 0명 로비 유지 `Main.server.luau:316` · 순환 `Rules.luau:211-215`. **서바이벌 동점만 코드가 다르다** → R1 |
+| D6 피해 진입점 | 해소 | `spec.md:72` ↔ `.Health =` 쓰기는 `Combat.luau:122,397,450` + `Rigs.luau:79-80`(초기값) 뿐(grep). 폭탄 `Items.luau:96` · 하트 `Items.luau:77` · 투사체 `Projectiles.luau:56` 가 `Combat.applyHit/heal` 을 부른다 · 게이트 `verify.py:63-65` · 회귀 주입 H RED `gate-proof.md:18` |
+| D7 경계 | 해소(1곳 잔여) | 로비 표준 비적용 `spec.md:9` · 점수판 정의 `spec.md:29`. 모듈 표의 「순위 버튼」은 그대로 → R3 |
+
+### 남은 것 (전부 비차단)
+
+#### R1. 서바이벌 시간 종료 동점 — 스펙은 「KO 순」, 코드는 명단 순서의 첫 생존자 (체크 6)
+- 스펙 결정: `spec.md:95` 「서바이벌 | 1 | 최후 1인 | **시간 종료 시 KO 순**」.
+- 코드: `Main.server.luau:221` `Rules.survivalWinner(list)` — `list` 는 정렬 전 `roster()`(`Main.server.luau:157-173`, `humans` 해시 순회라 순서 보장 없음). `Rules.luau:188-191` 은 첫 `alive` 를 돌려준다. 바로 위 `Main.server.luau:217` 의 `ranked` 는 서바이벌 분기에서 안 쓴다.
+- 결과: 2분 안에 둘 이상 살아남으면 승자가 KO 와 무관하게 정해진다. 결과판(`Hud.client.luau:191-196`)은 `ranked` 순으로 그리면서 ★ 는 다른 행에 붙을 수 있다.
+- 테스트 공백: `rules.spec.luau:96` 은 생존자 1명 케이스만 단언한다.
+- 수정안: `Main.server.luau:221` 을 `Rules.survivalWinner(ranked)` 로(또는 `survivalWinner` 안에서 `Rules.rank` 를 먼저 적용). `rules.spec.luau` 에 「생존 2, KO 많은 쪽이 승자」 단언 1줄.
+
+#### R2. 스펙 본문이 자기 Avoid 어휘 「낙사」를 쓴다 (체크 4)
+- 스펙 결정: `spec.md:25` Avoid 「낙사」. 위반: `spec.md:123` 「낙사 없음」, `requirements.md:33` 「낙사 없음 — 입문 · 낙사 — 던지기·태클로 링아웃」.
+- 코드는 정본을 쓴다: `Config.luau:29-30` `ringout = false / true`, `Config.luau:27` 주석 「KO(링아웃)」.
+- 체크리스트 문구대로면 「Avoid 동의어 사용 → BLOCK」 트리거다. 그러나 용어집이 스펙 안의 표이고 코드에 유출이 없으며 사람 판단이 필요한 사안이 아니라(한 단어 치환) REVISE 로 둔다. 수정안: 「링아웃 없음」/「링아웃 있음」. (`requirements.md:19` 「첫 판부터」의 「판」도 같은 류지만 하네스 규칙 문구 인용이라 선택.)
+
+#### R3. 모듈 표의 「순위 버튼」 잔여 (체크 3·5)
+- `spec.md:67` Hud 행 「… / 결과 / 순위 버튼」 ↔ `spec.md:29` 정본 「점수판」, Avoid 「순위표」.
+- 코드에 그런 버튼이 없다: `Hud.client.luau` 에 「순위」 문자열 0건. 명단을 KO 순으로 정렬하는 `Hud.client.luau:145` 가 곧 점수판이다.
+- 수정안: `spec.md:67` 을 「명단(8, KO 순 = 점수판)」 으로 고치고 「순위 버튼」을 지운다.
+
+#### R4. requirements.md 의 강공 키가 스펙·코드와 다르다 (체크 5)
+- `requirements.md:25` 「M2 강공」 ↔ `spec.md:19` 「M1 · R · 1」 ↔ `Input.client.luau:62` `Enum.KeyCode.R` ↔ `status.md:76` 「M1·R·F·Q·1」. 셋이 R, 하나만 M2.
+- 수정안: `requirements.md:25` 를 R 로.
+
+#### R5. 코드 주석·데이터에 Avoid 「직업」 잔여, 팀 배정 주석 드리프트 (체크 4·5)
+- `Styles.luau:2` 「스타일(직업) 5」 · `Rules.luau:29` 「직업이 들 수 없는 액세서리는」 · `Accessories.luau:2` 「직업당 하나」 · `Accessories.luau:9` `none.desc = "직업의 기본기"`. 마지막은 사용자 대면 문자열이다 — 지금은 `Hud.client.luau:162` 가 `none` 일 때 전용 액세서리 desc 를 그려 화면에 안 나오지만, 그 분기가 바뀌면 그대로 노출된다.
+- 같은 류: `Rules.luau:199` 주석 「들어온 순서로 번갈아」 ↔ `spec.md:97` 「id 정렬 순으로 번갈아」. 실제 정렬은 호출자 `Main.server.luau:154` 가 하므로 주석만 옛것이다.
+- 수정안: 「직업」→「스타일」 4곳. `Rules.luau:199` 를 「호출자가 정렬한 id 순으로 번갈아」.
+
+#### R6. 아군 KO 의 「팀 점수 없음」 이 합산 구현과 어긋나 읽힌다 (체크 6, 경미)
+- `spec.md:94` 「아군 KO: 팀 점수 없음, 개인 −1」. 코드는 개인 `ko -= 1`(`Main.server.luau:253`)이고 팀 점수는 개인 합(`Rules.luau:170-176`)이라 **팀 합계도 −1** 이 된다.
+- 「팀 +1 없음」 뜻이면 코드가 맞고 문장만 모호하고, 「팀 점수 불변」 뜻이면 코드가 다르다. 수정안: `spec.md:94` 를 「팀 +1 없음 · 개인 −1(팀 합계는 개인 합이라 함께 −1)」 로 한 줄 확정.
+
+### 체크리스트 재판정
+| # | 항목 | 판정 | 근거 |
+|---|---|---|---|
+| 1 | 바운디드 컨텍스트 경계 | SHIP | `spec.md:9` 로비 표준 비적용 명시. 외부 서비스 참조 없음 |
+| 2 | 용어집 존재 | SHIP | `spec.md:11-29` |
+| 3 | 스펙 어휘가 용어집에 정의됨 | REVISE | R3. (선택: 「무적·슈퍼아머」는 본문 `spec.md:79,93,112` 에 쓰이고 `Combat.luau:133` 이 뜻을 갖는데 표에 없다 — 행 하나면 된다) |
+| 4 | Avoid 동의어 미사용 | REVISE | R2·R5 |
+| 5 | 코드와 유비쿼터스 언어 일치 | REVISE | R4·R5. 식별자·표시명·모듈 어휘는 일치(D3 해소) |
+| 6 | 애그리거트 불변식 | REVISE | R1(동작 불일치)·R6(문장 모호). 장비·피해 진입점·KO 크레딧·팀 배정은 스펙=코드=테스트=게이트 |
+| 7 | 도메인 이벤트 소유 | SHIP | `Combat.hooks.ko` 를 Main 이 꽂는다 `Main.server.luau:244` ↔ `spec.md:71` |
+| 8 | 애그리거트 간 직접 참조 없음 | SHIP | 서버 그래프 DAG·Combat 최하위 `status.md:23`, 게이트 J RED `gate-proof.md:20` |
+| 9 | VO / Entity | SHIP | 1차와 같음 |
+
+### 요약
+1차 7건 전부 반영됐다. 남은 6건 중 실제 동작이 스펙과 다른 것은 R1(서바이벌 시간 종료 승자) 하나고 인자 하나·단언 한 줄로 닫힌다. 나머지는 표기(R2~R5)와 문장 확정(R6). 프로토콜상 3차는 BLOCK 으로 올라가므로 이번에 전부 닫는 것을 권한다.
+
 VERDICT: REVISE

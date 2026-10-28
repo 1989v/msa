@@ -64,7 +64,7 @@
 | `src/client/Input.client.luau` | ContextActionService 바인딩(약공·강공·가드·기술·대시·던지기), 터치 버튼 제목, 게임패드, 조준 보조(정면 ±35°), `Command:FireServer` | CAS·UIS |
 | `src/client/Poser.client.luau` | 태그 `Fighter` 전부: Attribute(`Fight`·`Move`·`MoveAt`·`FightAt`) → `Poses.sample` → `Motor6D.Transform` (Stepped). R6/R15 매핑 | RunService.Stepped |
 | `src/client/Effects.client.luau` | Fx: 타격 스파크·피해 숫자·가드 불꽃·KO 폭발·투사체·폭발·링아웃·히트스톱·카메라 흔들림(`Humanoid.CameraOffset`)·소리 | Debris·Tween |
-| `src/client/Hud.client.luau` | 내 체력·가드·액세서리·쿨다운·탄 / 타이머·모드·맵 / 명단(8) / KO 피드 / 로비 장비 패널 / 결과 / 순위 버튼 | ScreenGui |
+| `src/client/Hud.client.luau` | 내 체력·가드·액세서리·쿨다운·탄 / 타이머·모드·맵 / 명단(8, KO 순 = 점수판) / KO 피드 / 로비 장비 패널 / 결과 | ScreenGui |
 | `tools/build.py` | 결정적 .rbxlx: 서비스·Lighting·로비·맵 2(ServerStorage.Maps)·액세서리 템플릿 5·BlockRig·아이템 템플릿·Remotes·StarterPlayer(R6, 줌 8~20)·Players.CharacterAutoLoads false | - |
 | `default.project.json` | Rojo 트리(`AmpArena`, Remotes 3). 검증기가 빌더 배치와 대조 | - |
 
@@ -82,17 +82,19 @@
 - 이동 잠금: attack(후딜 포함)·hitstun·held·down·getup·dead → `WalkSpeed 0`·`JumpPower 0`·`AutoRotate false`. 가드 중 WalkSpeed 0. 그 외 스타일 배율 × 액세서리 배율.
 - 대시: `Q` → 0.22초 LinearVelocity 정면 46 스터드/s, 쿨다운 0.9초, 공중 대시는 스피드스타만 1회.
 - 링아웃: 루트 Y < 맵 fallY → KO(크레딧 = 3초 안 마지막 타격자, 없으면 자멸 −1). `FallenPartsDestroyHeight` 는 fallY 보다 100 아래(검증기 게이트).
-- 아군 KO(팀전): 팀 점수 없음 · 가해자 개인 KO −1(그리핑 최소 억제). 강퇴·투표는 범위 밖(Roblox 신고·차단).
+- 아군 KO(팀전): 가해자 개인 KO −1, 팀 합산은 개인 KO 의 합이라 팀도 −1(아군 KO 로 득점하지 않는다 — 그리핑 최소 억제). 강퇴·투표는 범위 밖(Roblox 신고·차단).
 - 장비: `loadout` 은 로비 단계에서만 받는다(`Rules.loadoutPhaseOpen`). 스타일 전용이 아닌 액세서리는 거부가 아니라 맨손으로 **정리**한다(`Rules.sanitizeLoadout`). 기본 장비 파이터·맨손. 봇은 무작위 스타일 + 전용 액세서리를 2/3 확률로 든다.
-- 아이템 소지는 파이터 상태다(`F.item`, Combat 소유). 들고 있을 때 약공 = 던지기(`itemThrow` 무브 → `Combat.hooks.throwItem` → `Items.throwHeld`). `throw` 의도는 약공의 별칭(봇·게임패드용). 죽거나 나가면 그 자리에 떨어진다. Items 는 월드 객체(배치·프롬프트·폭발·재생성)만 안다.
+- 아이템 소지는 파이터 상태다(`F.item`, Combat 소유). 들고 있을 때 약공 = 던지기(`itemThrow` 무브 → `Combat.hooks.throwItem` → `Items.throwHeld`). `throw` 의도는 약공의 별칭(봇·게임패드용). 죽거나 나가면 그 자리에 떨어진다(`Combat` 의 공통 정리 `cleanup()` 이 `hooks.dropItem` 을 불러 KO·퇴장 두 경로를 한 곳에서 처리). Items 는 월드 객체(배치·프롬프트·폭발·재생성)만 안다.
 - 잡힌 쪽 연타는 0.08초 간격으로만 센다(버스트 입력이 탈출 시간을 줄이지 못하게).
+- KO: `Humanoid.Health = 0` → Died. 데스매치 3초 뒤 `LoadCharacter` + 무적 2초(ForceField). 서바이벌은 관전 없이 로비 발판에서 대기.
+- 봇: 같은 상태 머신에 의도만 넣는다. 절벽 앞 2.5 스터드 지지면 없으면 옆으로 비키거나 선다(`Rules.botMove`, 웹판 자멸 36% 교훈).
 
 ## 모드 · 승패 · 팀
 | 모드 | 목숨 | 승리 | 동점 | 아군 KO | 길이 |
 |---|---|---|---|---|---|
 | 개인 데스매치 | 무한(3초 리스폰, 무적 2초) | KO 최다 | 데스 적은 순 → 준 피해 | — | 3분 |
-| 팀 데스매치 | 무한 | 팀 KO 합 | 팀 데스 → 팀 피해 | 팀 점수 없음, 개인 −1 | 3분 |
-| 서바이벌 | 1 | 최후 1인 | 시간 종료 시 KO 순 | — | 2분 |
+| 팀 데스매치 | 무한 | 팀 KO 합(개인 KO 의 합) | 팀 데스 → 팀 피해 | 가해자 개인 KO −1 → 팀 합도 −1(아군 KO 로 팀이 득점하지 않는다) | 3분 |
+| 서바이벌 | 1 | 최후 1인 | 시간 종료 시 **생존자 중** KO → 데스 → 피해 순(`Rules.survivalWinner`) | — | 2분 |
 - 순위(개인·팀 안): KO ↓ → 데스 ↑ → 피해 ↓ (`Rules.rank`, `Rules.teamTotals`).
 - 팀 배정: 카운트다운 때 참가자(사람+봇) id 정렬 순으로 번갈아(`Rules.assignTeams`). 라운드 안 재배정 없음.
 - 순환: 라운드 n 의 모드 = `MODE_ORDER[(n−1) % 3]`, 맵 = `MAP_ORDER[⌊(n−1)/3⌋ % 2]` — 6라운드 안에 모든 조합(`Rules.nextRotation`).
@@ -109,26 +111,24 @@
 - 서버가 갖는 것: 명령 모양·빈도(`Commands`, 버스트 30 · 초당 20 회복)·상태 머신·판정·피해·HP·점수·팀·아이템·장비 단계·줍기 거리 재확인.
 - 소유 클라이언트를 믿는 것: 캐릭터 위치·정면·속도·착지(`FloorMaterial`)·`WalkSpeed 0` 준수·넉백 LinearVelocity 시뮬.
 - 막지 않는 것: 스피드·텔레포트·비행·넉백 무시·경직 중 이동. 저장·순위가 없어(범위 밖) 수용하고, 공개·순위 도입 전에 재검토한다(README 「검증하지 않는 것」에도 적는다).
-- KO: `Humanoid.Health = 0` → Died. 데스매치 3초 뒤 `LoadCharacter` + 무적 2초(반투명). 서바이벌은 관전 없이 로비 발판에서 대기.
-- 봇: 같은 상태 머신에 의도만 넣는다. 절벽 앞 2.5 스터드 지지면 없으면 멈춤(웹판 자멸 36% 교훈).
 
 ## 네트워크
-- `Remotes.Command`(C→S): `(name, args)` — `loadout{style,accessory}`·`ready`·`intent{kind}`·`guard{on}`·`throw{dir}`. 검사: 문자열 enum·Vector3 유한·초당 20.
+- `Remotes.Command`(C→S): `(name, args)` — 명령 4종 `loadout{style,accessory}`·`ready{on?}`·`intent{kind, dir?}`(kind ∈ light·heavy·special·dash·throw — `throw` 는 약공의 별칭)·`guard{on}`. `Commands.validate` 가 모양(문자열 enum·`{X,Y,Z}` 유한·|성분| ≤ 2·boolean)과 빈도(토큰 버킷 버스트 30 · 초당 20 회복)를 검사하고 거부는 조용히 버린다. 퇴장 시 `Commands.forget`. 단계 게이트: `loadout`·`ready` 는 로비, `intent`·`guard` 는 매치.
 - `Remotes.Fx`(S→C all): `hit(pos, amount, victimModel, kind)`·`guard(pos)`·`ko(pos, victimName, attackerName)`·`ringout(pos)`·`projectile(from, to, kind, travel)`·`explode(pos, radius)`·`pickup(model)`·`countdown(n)`·`result(table)`.
-- `Remotes.State`(S→C all, 4Hz): 라운드 단계·남은 시간·모드·맵·명단(이름·팀·HP·KO·데스·스타일·액세서리·봇 여부)·내 가드·쿨다운·탄·준비 수.
-- 캐릭터 Attribute(복제): `Fight`·`FightAt`·`Move`·`MoveAt`·`Style`·`Accessory`·`Team`·`Guard`(0~100)·`Invuln`.
+- `Remotes.State`(S→C, 4Hz, **플레이어마다 `FireClient`**): 라운드 단계·남은 시간·모드·맵·명단(이름·팀·HP·KO·데스·스타일·액세서리·봇 여부·생존·준비)·`me`(장비·준비·가드·기술/대시/재장전 남은 시간·탄·소지·팀)·준비 수·사람 수.
+- 캐릭터 Attribute(복제): `Fight`·`FightAt`·`Move`·`MoveAt`·`LandedAt`·`Style`·`Accessory`·`Team`·`Bot`·`Guard`(정수, 변할 때만). 무적은 서버 내부값 + ForceField 표시.
 
 ## 월드 (빌더)
 - 로비: 아레나 위 하늘 발판(60×60, 난간, 스폰 8, 대형 안내판 「준비」 타이머는 HUD).
-- 콜로세움: 모래 바닥(Part, Sand 재질 — Terrain 은 Workspace 단일 객체라 맵 모델에 담을 수 없다) 반지름 60, 돌벽 높이 9(36조각), 관중석 벽·3단 티어·성곽 모델 12, 기둥 4(반지름 2.4), 단상 2(12×12×4.5), 상자 6, 스폰 8(반지름 45, 동 1팀·서 2팀), 횃불 6·울타리·나무. 낙사 없음. 해질녘 조명(17.5).
-- 스카이독: 중앙 72×48, 동서 24×24(+6), 남북 18×30, 간격 9, 상자 4, 스폰 8, fallY −40, 구름 위 낮 조명. 점프대 3(터치 → 상승 속도).
+- 콜로세움: 모래 바닥(Part, Sand 재질 — Terrain 은 Workspace 단일 객체라 맵 모델에 담을 수 없다) 반지름 60, 돌벽 높이 9(36조각), 관중석 벽·3단 티어·성곽 모델 12, 기둥 4(반지름 2.4), 단상 2(12×12×4.5), 상자 6, 스폰 8(반지름 45, 동 1팀·서 2팀), 횃불 6·울타리·나무. 링아웃 없음(벽). 해질녘 조명(17.5).
+- 스카이독: 중앙 72×48, 동서 24×24(+6), 남북 18×30, 간격 9, 상자 4, 스폰 8, fallY −40 — 링아웃 있음(발판 밖), 구름 위 낮 조명. 점프대 3(터치 → 상승 속도).
 - 액세서리 템플릿 5(Part 조립, PrimaryPart=Handle), BlockRig(R6, Motor6D 6), 아이템 템플릿(Crate·Heart·Bomb) — ServerStorage.
 - 맵은 ServerStorage.Maps 에 두고 매치마다 Workspace 로 Clone, 끝나면 Destroy. **맵 기하의 원천은 맵 모델 하나**: 빌더가 `Spawns`(Team NumberValue)·`CrateSpots`·`Pads` 폴더와 `FallY`·`Label` 값을 넣고 서버는 Clone 한 모델을 읽는다. Config.MAPS 는 fallY·clock·표시명만 갖고 빌더가 그것을 읽어 넣는다(좌표가 두 파일에 생기지 않는다).
 
 ## 검사
 1. `tests/rules.spec.luau` — Config/Styles/Moves/Accessories/Rules/Poses 실제 실행(≥ 40 단언).
 2. 구조 게이트(`tools/verify.py`): 컴파일·미지 전역·공유 모듈+Commands 무 Roblox API·벡터 메서드 없음(`{X,Y,Z}` 성분 셈만)·클라이언트가 서버 모듈 불참조·**서버 require 그래프 비순환(Combat 최하위)**·Heartbeat 하나와 틱 순서·**Health 쓰기는 Combat(+Rigs 초기값)뿐**·OnServerEvent 하나와 Commands.validate 배선·줍기 서버 거리 재확인·결정 함수가 Rules 에 있고 서버가 부름·Rojo 트리 대조·빌더 결정성·스크립트 정확 포함·서비스·Remotes 3·맵 2(스폰 8·팀 양쪽·상자·점프대·FallY)·`FallenPartsDestroyHeight ≤ min fallY − 100`·템플릿 5·아이템 3·BlockRig Motor6D 6 · **네이티브 게이트**: CameraType 0 · StarterPlayer R6(`GameSettingsAvatar` 0)·줌 8~20 · Poser 가 `RunService.Stepped` + `Motor6D.Transform` · 서버가 스폰 소유(CharacterAutoLoads false) · 키 이름 안내 문자열 없음 · ContextActionService 터치 버튼 제목 · 줍기는 ProximityPrompt(클라이언트 E 바인딩 없음) · 넉백 LinearVelocity 하나 재사용 · Health 는 Humanoid · GetServerTimeNow 시계 · 착지 Air 선행 관측 · 라운드 단계 4 · 봇 ≤ 7·파이터 ≤ 8·투사체 ≤ 40 · 봇 절벽 탐침 · Guard 속성 정수 변화 시만 · 아바타 유지(ScaleTo·이름표·Highlight) · 조명 프리셋 2 · 에셋 provenance ≥ 5(공집합 통과 없음).
-3. 회귀 주입 24 건 전부 RED(주입→게이트 대응표) → `verifications/gate-proof.md`.
+3. 회귀 주입 32 건 전부 RED(주입→게이트 대응표) → `verifications/gate-proof.md`.
 4. UNVERIFIED: Studio Play·포즈 생김새·LinearVelocity 넉백 체감·Weld 잡기·터치 버튼 배치·8인·R15 매핑·소리 ID·치트 방어(신뢰 경계 절).
 
 ## 수용 시나리오 (사용자 Studio)

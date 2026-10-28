@@ -17,6 +17,7 @@ Combat.hooks = {
 	projectile = function() end,    -- (F, move) 투사체 발사
 	itemHit = function() end,       -- (F, move, t) 상자 판정
 	throwItem = function() end,     -- (F, t) 든 아이템 던지기
+	dropItem = function() end,      -- (F) KO·퇴장 때 든 아이템을 그 자리에 떨어뜨린다
 }
 local fighters = {}
 local fallY = -1000
@@ -137,13 +138,12 @@ function Combat.applyHit(A, V, m, t, opts)
 	-- 가드: 정면만, 가드 무시 무브는 뚫는다. 막아도 조금 밀린다.
 	local guarding = V.state == "guard" or (V.state == "attack" and V.move and V.move.guardsWhileActive)
 	if guarding and not m.guardBreak and A and Rules.guardBlocks(V.root.Position, flatLook(V), A.root.Position, V.accDef.guardAngle) then
-		V.guard -= Rules.guardCost(dmg)
+		local crushed
+		V.guard, crushed = Rules.guardAfterBlock(V.guard, Rules.guardCost(dmg), V.accDef.crushImmune)
 		V.counterUntil = t + Config.GUARD.counterWindow
 		Combat.hooks.fx("guard", V.root.Position + Vector3.new(0, 1.5, 0))
 		impulsePlane(V, dir * m.push * 0.5, 0.1)
-		if V.guard <= 0 then
-			if V.accDef.crushImmune then V.guard = 1 else V.guard = 0; setState(V, "stun", t); Combat.hooks.fx("crush", V.root.Position + Vector3.new(0, 2, 0)) end
-		end
+		if crushed then setState(V, "stun", t); Combat.hooks.fx("crush", V.root.Position + Vector3.new(0, 2, 0)) end
 		setGuardAttr(V)
 		return true
 	end
@@ -191,7 +191,7 @@ end
 local function hitScan(F, m, t)
 	local pos, look = F.root.Position, flatLook(F)
 	for id, V in fighters do
-		if V == F or V.state == "dead" or not V.model.Parent then continue end
+		if V == F or V.state == "dead" or not V.model.Parent or not Rules.canHit(F.team, V.team) then continue end
 		local last = F.hitSet[id]
 		if last and (m.multiHit == 0 or t - last < m.multiHit) then continue end
 		if Rules.hitTest(pos, look, m, V.root.Position) then
@@ -385,6 +385,7 @@ local function cleanup(F)
 	if F.holder then release(F.holder, F, "cancel") end
 	stopVel(F)
 	if F.hum.Parent then F.hum.PlatformStand = false end
+	if F.item then Combat.hooks.dropItem(F) end
 	F.item = nil
 end
 function Combat.ko(V, A, reason, t)

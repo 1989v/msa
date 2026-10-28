@@ -70,3 +70,46 @@
 REVISE — 7건, 전부 비차단. 스펙 결정이 문서·코드 표준을 위반하는 곳은 없고, 빠진 것은 ① 신뢰 경계 선언(F1) ② 빈도·거리·단계·방향 정리 규칙의 구체화(F2~F5) ③ 팀킬 패널티(F6) ④ 그 규칙들을 재는 게이트(F7)다.
 
 VERDICT: REVISE
+
+---
+
+## Round 2 (2026-10-29, 구현 뒤 재리뷰)
+
+대상: 개정된 `spec.md` + 구현 `roblox/amp-arena/src/**` · `tools/verify.py` · `tests/rules.spec.luau` · `verifications/gate-proof.md` · `README.md`. 1차 F1~F7 이 각각 해소됐는지 file:line 으로 확인했다. 1차에서 인용한 spec.md 행 번호는 개정으로 밀렸으므로 아래는 현재 행이다.
+
+### 1차 이슈 해소 대조
+
+| # | 판정 | 스펙 | 코드 | 게이트·테스트·증명 |
+|---|---|---|---|---|
+| F1 신뢰 경계 | **해소** | spec.md:108-111 「신뢰 경계」 절 — 서버가 갖는 것 / 소유 클라이언트를 믿는 것 / 막지 않는 것 / 수용 근거(저장·순위 없음) / 재검토 시점(공개·순위 도입 전). spec.md:132 UNVERIFIED 에 「치트 방어(신뢰 경계 절)」 | — | README.md:47 「검증하지 않는 것」에 같은 문장 |
+| F2 버킷 수치·연타 간격·forget | **해소** | spec.md:109 「버스트 30 · 초당 20 회복」, spec.md:88 「잡힌 쪽 연타는 0.08초 간격으로만 센다」 | Config.luau:35 `commandBurst = 30, commandRefillPerSecond = 20, mashInterval = 0.08` → Commands.luau:23 `CAP, REFILL` · :31-33 버킷. Rules.luau:220 `mashAccepted` → Combat.luau:281 가 HELD 연타에 적용(같은 프레임 30발은 1회만 센다). Main.server.luau:272 PlayerRemoving 에서 `Commands.forget(player)` | rules.spec.luau:110(간격) · :138-145(버스트 상한·RATE·0.1초 회복·forget 리셋). verify.py:66-67 forget 배선. gate-proof.md:33 W 주입 RED |
+| F3 줍기 서버 거리 재확인 | **해소** | spec.md:109 「줍기 거리 재확인」, spec.md:130 게이트 목록 | Items.luau:106-109 `pickupBy` — holder·`F.item`·`F.state ~= "idle"`·`pickupDistance + 2` 검사. Items.luau:136-140 Triggered → `fighterOf(player.Character)` → `pickupBy`. 봇도 같은 함수(Bots.luau:97) | verify.py:68-69. gate-proof.md:22 L 주입 RED |
+| F4 loadout·ready 단계 게이트 | **해소** | spec.md:86 「`loadout` 은 로비 단계에서만 받는다(`Rules.loadoutPhaseOpen`)」 | Rules.luau:240 `phase == "lobby"`. Main.server.luau:282(loadout) · :288(ready, lobby 만) · :295 · :299(intent·guard 는 match 만). 카운트다운 전환(:202)이 리스폰(:204)보다 앞이라 틈 없음 | rules.spec.luau:118. verify.py:70-71. gate-proof.md:31 U 주입 RED |
+| F5 throw{dir} 영벡터·정규화 | **해소** | spec.md:116 「Vector3 유한」 + spec.md:87 던지기 방향 규칙 | Commands.luau:7-12 `finiteVector`(성분 ≤ 2) → Combat.luau:278 `Rules.sanitizeDir`(Rules.luau:149-154, NaN·범위) → Rules.luau:142-148 `throwDirection`(크기 ≤ 0.2 면 정면, 아니면 정규화·Y 제거). Combat.luau:178 · Items.luau:152 가 쓴다 | rules.spec.luau:88-90 · :129-131. test-quality.md:5·8 |
+| F6 아군 KO 패널티 | **해소** | spec.md:85 「팀 점수 없음 · 가해자 개인 KO −1 … 강퇴·투표는 범위 밖(Roblox 신고·차단)」, spec.md:94 표 | Rules.luau:238 `allyKo` → Main.server.luau:253 `credit.ko -= 1`. KO 피드(:255)에 가해자 이름이 남는다 | rules.spec.luau:116. verify.py:70 배선 |
+| F7 게이트·테스트 | **해소** | spec.md:129-131 검사 절(validate 배선·줍기 거리·회귀 주입 24) | — | verify.py:66-67(OnServerEvent 1 + validate + forget) · :68-69(거리) · :70-71(Rules 결정 배선). rules.spec.luau:123-145 Commands 단언 7종 전부(UNKNOWN·enum 밖·NaN·과대·영벡터·args 비테이블·RATE·회복·forget). gate-proof.md:21 K · :22 L · :33 W, 24/24 RED(:36) |
+
+1차 관찰 「`Remotes.State` 가 all 인데 내 가드가 들어 있다」도 코드에서는 해소됐다 — Main.server.luau:342-350 이 플레이어마다 `me` 블록을 `FireClient` 로 따로 보낸다.
+
+### 잔여 (비차단 · 판정에 영향 없음)
+
+**R1 (F7 잔여) validate 게이트가 문자열 존재만 본다**
+- verify.py:66 은 `'Commands.validate(player, name, args)' in server_files['Main']` 로 **파일 어딘가에 그 문자열이 있는지**만 재고, 핸들러 본문이 그 결과로 분기하는지는 보지 않는다. 「`local ok = Commands.validate(...)` 를 부르되 `if not ok then return end` 를 빼고 `args` 를 그대로 디스패치」하는 회귀는 초록이다. gate-proof.md:21 K 는 호출 자체를 지운 주입이라 이 모양을 덮지 않는다.
+- 수정안(한 줄): Main.server.luau:302-306 의 핸들러 모양을 한 정규식으로 잰다 — `OnServerEvent:Connect\(function\(player, name, args\)\s*local ok, result = Commands\.validate\(player, name, args\)\s*if not ok then return end\s*handlers\[name\]\(player, result\)`. gate-proof 에 「validate 결과 무시」 주입 1행 추가. 같은 논리로 verify.py:68 의 거리 검사도 `function Items.pickupBy` 본문 안에서 찾으면 더 단단하다.
+
+**문서 정합 nit (스펙 ↔ 코드)**
+- spec.md:116 `Remotes.Command` 목록에 `throw{dir}` 가 독립 명령으로 적혀 있으나 Commands.luau:15-20 SCHEMA 에 `throw` 이름은 없다. 실제는 `intent{kind="throw", dir}`(Commands.luau:13 INTENTS, spec.md:87 「`throw` 의도는 약공의 별칭」). 명령 표면은 4개(loadout·ready·intent·guard)로 적는다.
+- spec.md:116 「초당 20」 → spec.md:109 와 같이 「버스트 30 · 초당 20 회복」.
+- spec.md:118 `Remotes.State`「S→C all」 → 코드는 플레이어별 `FireClient`(Main.server.luau:350). 「각 플레이어」로.
+- spec.md:103 퇴장 문장에 `Commands.forget` 이 없다(코드 Main.server.luau:272 · 게이트 verify.py:67 은 있다). spec.md:129 `rules.spec.luau` 대상 목록에도 `Commands` 를 더한다(README.md:43 · test-quality.md:8 은 이미 있다).
+- spec.md:112-113 「KO:」·「봇:」 두 줄이 「신뢰 경계」 절 아래에 들어가 있어 경계 선언이 아닌 문장이 섞인다. 전투 규칙 절로 옮긴다.
+
+**관찰 (조치 불요)**
+- Items.luau:109 거리는 `Rules.flatDistance`(XZ 평면)라 높이를 보지 않는다. 치트 클라이언트가 6 스터드 높이 차 발판 너머의 폭탄을 집을 수 있으나, 텔레포트를 막지 않는 신뢰 경계(spec.md:111) 안에서 얻는 것이 없다. 원하면 `|ΔY| ≤ 4` 한 항.
+- 로비에서 `loadout` 을 초당 20회 보내도 Rigs.luau:26-28 · :50 · :65 가 기존 Accessory·AmpTag·TeamOutline 을 지우고 다시 만들어 인스턴스가 쌓이지 않는다(남용 경로 아님).
+- F6 의 「팀 점수 없음」은 Rules.luau:170-181 `teamTotals` 가 개인 KO 합이라 실제로는 팀 합도 −1 이 된다. 억제가 더 강한 쪽이라 보안상 문제 없음. 문구 일치는 domain 차원.
+
+### 판정
+1차 7건 전부 해소. 체크리스트 1·2·4·C3 이 PASS 로 바뀌어 전 항목 PASS/N-A. 잔여는 게이트 강도 권고 1건(R1)과 문서 정합 nit 5건이며 보안 태세를 바꾸지 않는다.
+
+VERDICT: SHIP

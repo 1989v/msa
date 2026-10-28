@@ -2,7 +2,7 @@
 
 # Status — AMP ARENA 로블록스 (2026-10-29)
 
-**상태: 구현 완료 · 검증기 38 게이트 통과 · 회귀 주입 24/24 RED · 스펙 리뷰 6차원 1차 REVISE → 반영, 2차 리뷰 진행. Studio 플레이 대기(사용자).**
+**상태: 구현 완료 · 검증기 39 게이트 통과 · 회귀 주입 32/32 RED · 스펙 리뷰 6차원 1차 REVISE → 반영, 2차 리뷰 진행. Studio 플레이 대기(사용자).**
 
 ## 리서치 결론
 로블록스에 겟앰프드 공식·팬 구현은 없다 — roblox.com 검색 API 5회(getamped·get amped·겟앰프드·rumble fighter·splash fighters) 관련 0건, DevForum 0건, 웹 검색은 Baddies 를 「겟앰프드 영감일 것」이라 추정한 의견 기사 1건뿐. 근거 표는 `planning/requirements.md` §0.
@@ -17,15 +17,16 @@
 LUAU_BIN=/private/tmp/roblox-infinity-step-tools/luau python3 roblox/amp-arena/tools/verify.py
 ```
 ```
-PASS 764 actual Luau assertions on shared Config/Styles/Moves/Accessories/Rules/Poses (stats, loadout exclusivity, chains, hit geometry, guard, grab, ringout, ranking, rotation, procedural poses) — not Roblox runtime
+PASS 776 actual Luau assertions on shared Config/Styles/Moves/Accessories/Rules/Poses (stats, loadout exclusivity, chains, hit geometry, guard, grab, ringout, ranking, rotation, procedural poses) — not Roblox runtime
 PASS compiled 19 Luau files and unknown-global analysis with explicit Roblox allowlist (not Roblox API typechecking)
 PASS shared rule modules and Commands never touch Roblox services or vector methods ({X,Y,Z} component math only — CLI-testable; Theme holds Color3 only)
 PASS server require graph is a DAG with Combat at the bottom ({'Main': ['Bots', 'Combat', 'Commands', 'Items', 'Projectiles', 'Rigs'], 'Bots': ['Combat', 'Items', 'Rigs'], 'Items': ['Combat', 'Rigs'], 'Projectiles': ['Combat']}); upward calls go through Combat.hooks
 PASS one Heartbeat in Main with a fixed tick order Combat → Items → Projectiles → Bots → State
 PASS Humanoid.Health is written only by Combat (damage/heal/KO) and Rigs (initial fill); Items, Projectiles and Bots route through Combat.applyHit/heal
-PASS exactly one RemoteEvent handler, every command passes Commands.validate (schema + token bucket) and buckets are forgotten on leave
+PASS exactly one RemoteEvent handler whose body is validate → return on reject → dispatch the validated args (not just a validate call somewhere), and buckets are forgotten on leave
 PASS bomb pickup re-checks distance and fighter state on the server (ProximityPrompt range is a client-side condition)
-PASS combat decisions live in shared Rules (bot edge step, loadout phase, ally KO, launch landing, held escape, mash interval) and the server calls them
+PASS combat decisions live in shared Rules and the server calls them: Combat uses 21 Rules functions (chains, grab, hit geometry, guard, windows, credit, knockback, landing, escape), Main uses loadout/teams/rotation/winner/bots, Bots uses botMove
+PASS no parent-folder string requires in any script (they resolve against the DataModel tree in Studio, not files); Commands has no requires and Main configures its limits from Config
 PASS default.project.json (Rojo) describes the same tree the builder emits: ReplicatedStorage.AmpArena{shared, Remotes 3}, ServerScriptService.AmpArena, StarterPlayerScripts
 PASS client scripts require only ReplicatedStorage.AmpArena (no server modules or ServerStorage)
 PASS exactly 18 scripts in the place and none inside embedded assets
@@ -34,7 +35,7 @@ PASS two maps in ServerStorage.Maps, each with ≥8 team-tagged spawns (both tea
 PASS accessory templates match Accessories.luau (5), each a Part-built Model with PrimaryPart Handle and welded parts (no uploaded meshes)
 PASS item templates Crate/Heart/Bomb exist; Bomb carries a ProximityPrompt (native pickup), Heart a light
 PASS bot BlockRig is an R6 Humanoid rig with the six standard Motor6D joints (same joint axes as player R6 avatars)
-PASS deterministic XML: services, lobby, lighting, 3 RemoteEvents, prompts, lights (1577338 bytes, 569 parts) — not opened in Studio
+PASS deterministic XML: services, lobby, lighting, 3 RemoteEvents, prompts, lights (1578136 bytes, 569 parts) — not opened in Studio
 PASS 9 embedded models are Roblox-owned (creator id 1) with matching sha256 in provenance.json; 0 scripts in the raw files were stripped at build
 PASS default Roblox camera is never replaced: no CameraType anywhere in client scripts (KO shake uses Humanoid.CameraOffset)
 PASS camera zoom 8~20 within public third-person references (default 12.5, brawlers 8~20)
@@ -63,10 +64,11 @@ UNVERIFIED: hit reach/radius feel vs R6 bodies, aim assist turning, guard/counte
 UNVERIFIED: touch button placement around the default jump button, gamepad bindings, ProximityPrompt on bombs
 UNVERIFIED: 8 players, team outline colors, name tag HP bars, result ranking screen, lobby ready shortcut
 UNVERIFIED: balance: every number in Config.luau/Moves.luau is a first guess translated from the web reference
+UNVERIFIED: fighter state transition table and per-state intent acceptance (idle/attack/guard/hitstun/launched/down/getup/held/grabbing/stun) live in Combat.luau and are exercised only in Studio — decisions with logic are in Rules, the transitions themselves are not CLI-tested
 UNVERIFIED: sound IDs (rbxasset) audible, Bangers font availability, Atmosphere density by eye
 exit=0
 ```
-게이트 증명: 회귀 주입 24/24 빨강 — `verifications/gate-proof.md`.
+게이트 증명: 회귀 주입 32/32 빨강 — `verifications/gate-proof.md`.
 
 ## 로블록스식으로 새로 설계한 것 (웹 참고작과의 차이)
 | 영역 | 웹 참고작(amp-arena) | 이번 |
