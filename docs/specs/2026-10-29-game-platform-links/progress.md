@@ -42,3 +42,13 @@
 - 독립검토 최종 추가4항목(URL raw 검증·폼 Enter·저장중잠금·JPA캡슐화/실제MySQL검사)도 차단 결함 없음.
 - API 계약: openapi.yaml. 현재 V112 신규 테이블은 운영 배포 전이며 실제 Place ID 등록 없음.
 - 이제 이번 변경만 커밋·main 반영하여 content/portal-fe/admin-fe 배포를 진행한다.
+
+## 운영 배포 완료
+
+- 소스 e800b48852a9763346e7d6b9fa06f9dac9840f45 → images40760776032 SUCCESS → 매니페스트27dc3e1a73b0958ab3594304f38ac07a5af4501e.
+- content/portal-fe/admin-fe 모두 e800b48, Ready/Updated=1, rollout successfully rolled out.
+- 운영 공개 API read-only smoke: detail새배열/목록·유사·컬렉션배열/웹entry유지/관리미인증차단 모두PASS. 운영 SQL에 임의 플랫폼 행을 등록하지 않았다.
+- 포털 새 번들 HTTP 확인, 관리자 번들은 실제 실행 컨테이너에서 확인. 관리자 외부 HTTP는 리디렉션/403, 실제 로그인/브라우저는미검증.
+- 처음 push 훅의 submodule 원격확인 실패는 로컬clone origin을 실제 GitHub auth/gifticon 원격으로 바로잡고 fetch하여 해소했다. 훅은 유지했고 재푸시 구조검사도 통과했다.
+- 원래 로컬 main과 다른 작업자의 미커밋/staging은 수정하지 않았다. 배포 작업은 원격 최신 기반 격리 worktree에서만 수행했다.
+- 운영 사용은 operations.md. 실제 인피니티 스탭 Roblox 게시주소가 확인되면 관리자에서 등록한다.
