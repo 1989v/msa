@@ -1,55 +1,59 @@
-# 게이트 증명 — 회귀 주입 34건 전부 빨강 (2026-10-29)
+# 게이트 증명 — 회귀 주입 46건 전부 빨강 (2026-10-29, 개정 2026-10-30)
 
 프로젝트 사본(`dist` 제외)에 회귀를 하나씩 넣고 `tools/verify.py` 를 돌렸다. 원본은 건드리지 않았다. 스크립트는 세션 스크래치패드 `gate_proof.py`(레포에 두지 않음 — 검사용 임시 코드).
+2026-10-30 추가 주입 Z10~Z21: 실제 있었던 `flatLook` nil 인덱스 버그(Z10), 봇 교전 거리 고정(Z11), 잡기 거리 가산(Z12), 스타일 간 포즈 공유(Z13), 마우스 약공·쉬프트락·E 줍기(Z14~Z16), 대기 자세가 다리까지(Z17), 판정 무시(Z18), 내딛기·대시·놓기 제거(Z19~Z21). Z10·Z18~Z21 은 스모크(쉼 실행)만이 잡는다.
 
 ```sh
 LUAU_BIN=/private/tmp/roblox-infinity-step-tools/luau python3 gate_proof.py roblox/amp-arena
 ```
 
-| 주입 | 기대 게이트 | exit | 첫 빨간 줄 |
-|---|---|---|---|
-| A 카메라를 Scriptable 로 | default Roblox camera is never replaced | 1 | `FAIL default Roblox camera is never replaced: no CameraType anywhere in client scripts (KO shake uses Humanoid.CameraOffset)` |
-| B 줌 범위 8~60 | camera zoom within references | 1 | `FAIL camera zoom 8~60 within public third-person references (default 12.5, brawlers 8~20)` |
-| C 아바타 R15 로 | R6 avatars | 1 | `FAIL R6 avatars (GameSettingsAvatar R6) with procedural poses; Poser maps the six logical joints for both R6 and R15 rigs` |
-| D Poser 를 RenderStepped 로 | procedural animation on Stepped | 1 | `FAIL procedural animation: Poser writes Motor6D.Transform every RunService.Stepped from shared Poses (no uploaded animation IDs required)` |
-| E 키 안내 문자열 추가 | no web-style key hints | 1 | `FAIL no web-style key hints or jump buttons in client UI strings ([('Hud.client.luau', 'WASD'), ('Hud.client.luau', 'Space')])` |
-| F 줍기를 E 키 바인딩으로 | pickup is not a bound key | 1 | `FAIL actions bound through ContextActionService with touch buttons titled ['약공', '강공', '기술', '대시'] + guard (keyboard, gamepad, touch); pickup is not a bound key` |
-| G 넉백을 BodyVelocity 로 | one LinearVelocity per fighter | 1 | `FAIL knockback/launch/dash use one LinearVelocity per fighter toggled on and off (constraints replicate to the owning client; no BodyVelocity/ApplyImpulse)` |
-| H 체력을 Items 가 직접 깎음 | Health written only by Combat | 1 | `FAIL Humanoid.Health is written only by Combat (damage/heal/KO) and Rigs (initial fill); Items, Projectiles and Bots route through Combat.applyHit/heal` |
-| I Combat 시계를 os.clock 으로 | GetServerTimeNow clock | 1 | `FAIL MoveAt/FightAt use workspace:GetServerTimeNow() on both server and Poser (shared clock for pose phase)` |
-| J 서버 모듈 순환(Combat → Items) | server require graph is a DAG | 1 | `FAIL server require graph is a DAG with Combat at the bottom (…)` |
-| K OnServerEvent 가 validate 를 건너뜀 | every command passes Commands.validate | 1 | `FAIL exactly one RemoteEvent handler, every command passes Commands.validate (schema + token bucket) and buckets are forgotten on leave` |
-| L 줍기 서버 거리 검사 제거 | bomb pickup re-checks distance | 1 | `FAIL bomb pickup re-checks distance and fighter state on the server (ProximityPrompt range is a client-side condition)` |
-| M 봇 절벽 탐침 제거 | combat decisions live in Rules (bot edge step) | 1 | `FAIL combat decisions live in shared Rules (bot edge step, loadout phase, ally KO, launch landing, held escape, mash interval) and the server calls them` |
-| N 봇 상한 20 | caps | 1 | `FAIL caps: bots ≤ 20, fighters ≤ 8, projectiles ≤ 40 (server Humanoid rigs and raycast steps stay bounded)` |
-| O FallenPartsDestroyHeight 를 fallY 위로 | FallenPartsDestroyHeight ≤ min fallY − 100 | 1 | `FAIL FallenPartsDestroyHeight -30 ≤ lowest fallY -60 − 100 (ringout KO credited before the engine destroys the character)` |
-| P 맵 스폰 팀을 전부 1 로 | two maps … both teams | 1 | `FAIL two maps in ServerStorage.Maps, each with ≥8 team-tagged spawns (both teams), crate spots, pads and FallY (cloned into Workspace per match)` |
-| Q 액세서리 템플릿 하나 삭제 | accessory templates match Accessories.luau | 1 | `FAIL accessory templates match Accessories.luau (4), each a Part-built Model with PrimaryPart Handle and welded parts (no uploaded meshes)` |
-| R 경직을 후딜+발동보다 길게 | rules spec (압박 ≠ 확정 콤보) | 1 | `…/tests/rules.spec.luau:10: 경직 < 후딜+다음 발동 jab` |
-| S 남의 액세서리 허용 | rules spec (장비 배타) | 1 | `…/tests/rules.spec.luau:10: 스타일 외 액세서리는 맨손` |
-| T 타격 포즈에서 팔을 안 뻗음 | rules spec (포즈) | 1 | `…/tests/rules.spec.luau:10: 타격 무브는 지속 구간에 팔·다리·몸을 뻗는다 quick2` |
-| U 장비를 매치 중에도 받음 | combat decisions live in Rules (loadout phase) | 1 | `FAIL combat decisions live in shared Rules (bot edge step, loadout phase, ally KO, launch landing, held escape, mash interval) and the server calls them` |
-| V 공유 모듈이 Vector3.new 사용 | rules spec 이 먼저 죽는다(CLI 엔 Vector3 가 없다) — 같은 성질을 다른 길로 잡은 것 | 1 | `…/tests/rules.spec.luau:7: error while running module` |
-| W Commands 버스트 초과를 통과시킴 | rules spec (명령 빈도) | 1 | `…/tests/rules.spec.luau:10: 같은 순간 버스트 상한` |
-| Y validate 를 부르되 결과를 무시(2차 security 권고) | OnServerEvent handler body shape | 1 | `FAIL exactly one RemoteEvent handler whose body is validate → return on reject → dispatch the validated args (not just a validate call somewhere), and buckets are forgotten on leave` |
-| Z1 Items 에 Heartbeat 하나 더 (2차 test-strategy 지적) | one Heartbeat in Main | 1 | `FAIL one Heartbeat in Main with a fixed tick order Combat → Items → Projectiles → Bots → State` |
-| Z2 Guard 속성을 매 틱 쓰기 (2차 test-strategy 지적) | Guard attribute … only when changes | 1 | `FAIL Guard attribute replicates only when its integer value changes (no per-tick attribute churn)` |
-| Z3 그림자 Hp 속성 (2차 test-strategy 지적) | health is Humanoid.Health | 1 | `FAIL health is Humanoid.Health (native KO via Died); no shadow HP attribute` |
-| Z4 CharacterAutoLoads 를 true 로 (2차 test-strategy 지적) | server owns spawning | 1 | `FAIL server owns spawning: Players.CharacterAutoLoads false in the place and Main calls LoadCharacter for lobby/arena/respawn` |
-| Z5 공통 정리 함수를 없앰(정의·호출 전부 다른 이름으로) (2차 test-strategy 지적) | cleanup()/leave() 단일 정리 | 1 | `FAIL launched→down waits for an Air observation (replication lag) with a 2.5s timeout (Rules.launchLanded); grab uses a Weld with PlatformStand; single cleanup(` |
-| Z6 Commands 가 상위 폴더를 문자열 require (2차 test-strategy 지적) | no parent-folder string requires | 1 | `FAIL no parent-folder string requires in any script (they resolve against the DataModel tree in Studio, not files) — [('src/server/Commands.luau', '../shared/Co` |
-| Z7 hitScan 이 팀 검사(canHit)를 건너뜀 (2차 test-strategy 지적) | combat decisions live in Rules (canHit) | 1 | `FAIL combat decisions live in shared Rules and the server calls them: Combat uses 21 Rules functions (chains, grab, hit geometry, guard, windows, credit, knockb` |
-| Items 에 Heartbeat 하나 더 (2차 test-strategy 지적) | one Heartbeat in Main | 1 | `FAIL one Heartbeat in Main with a fixed tick order Combat → Items → Projectiles → Bots → State` |
-| Guard 속성을 매 틱 쓰기 (2차 test-strategy 지적) | Guard attribute only when it changes | 1 | `FAIL Guard attribute replicates only when its integer value changes (no per-tick attribute churn)` |
-| 그림자 Hp 속성 (2차 test-strategy 지적) | health is Humanoid.Health | 1 | `FAIL health is Humanoid.Health (native KO via Died); no shadow HP attribute` |
-| CharacterAutoLoads 를 true 로 (2차 test-strategy 지적) | server owns spawning | 1 | `FAIL server owns spawning: Players.CharacterAutoLoads false in the place and Main calls LoadCharacter for lobby/arena/respawn` |
-| 공통 정리 함수를 없앰(정의·호출 전부 다른 이름으로) (2차 test-strategy 지적) | single cleanup()/leave() | 1 | `FAIL launched→down waits for an Air observation (replication lag) with a 2.5s timeout (Rules.launchLanded); grab uses a Weld with PlatformStand; single cleanup(` |
-| Commands 가 상위 폴더를 문자열 require (2차 test-strategy 지적) | no parent-folder string requires | 1 | `FAIL no parent-folder string requires in any script (they resolve against the DataModel tree in Studio, not files) — [('src/server/Commands.luau', '../shared/Co` |
-| hitScan 이 팀 검사(canHit)를 건너뜀 (2차 test-strategy 지적) | combat decisions live in Rules (canHit) | 1 | `FAIL combat decisions live in shared Rules and the server calls them: Combat uses 21 Rules functions (chains, grab, hit geometry, guard, windows, credit, knockb` |
-| Z8 결과 단계 얼림이 속도 제약을 안 끔 (2차 implementation 지적) | end-of-match freeze / KO credit order | 1 | `FAIL end-of-match freeze also stops the velocity constraint; KO credit is written before Health (sync Died safe); joints survive death (dead pose, accessory sta` |
-| Z9 KO 크레딧을 Health 뒤에 적음 (2차 implementation 지적) | end-of-match freeze / KO credit order | 1 | `FAIL end-of-match freeze also stops the velocity constraint; KO credit is written before Health (sync Died safe); joints survive death (dead pose, accessory sta` |
-| X 에셋 파일 변조 | embedded models are Roblox-owned | 1 | `FAIL 9 embedded models are Roblox-owned (creator id 1) with matching sha256 in provenance.json; 0 scripts in the raw files were stripped at build` |
+| 주입 | exit | 첫 빨간 줄 |
+|---|---|---|
+| A 카메라를 Scriptable 로 | 1 | `SMOKE 31 checks, 0 failed` |
+| B 줌 범위 8~60 | 1 | `SMOKE 31 checks, 0 failed` |
+| C 아바타 R15 로 | 1 | `SMOKE 31 checks, 0 failed` |
+| D Poser 를 RenderStepped 로 | 1 | `SMOKE 31 checks, 0 failed` |
+| E 키 안내 문자열 추가 | 1 | `SMOKE 31 checks, 0 failed` |
+| F 줍기를 E 키 바인딩으로 | 1 | `SMOKE 31 checks, 0 failed` |
+| G 넉백을 BodyVelocity 로 | 1 | `SMOKE 31 checks, 0 failed` |
+| H 체력을 Items 가 직접 깎음 | 1 | `SMOKE 31 checks, 0 failed` |
+| I Combat 시계를 os.clock 으로 | 1 | `FAIL jab 피해가 Humanoid.Health 에 들어갔다: 100 / 100` |
+| J 서버 모듈 순환(Combat → Items) | 1 | `FAIL server Combat.luau + Bots.luau executed on the Roblox shim (tests/roblox-shim.luau): ? runtime checks — hits land, chains, dash, guard, grab/throw, launch→` |
+| K OnServerEvent 가 validate 를 건너뜀 | 1 | `SMOKE 31 checks, 0 failed` |
+| L 줍기 서버 거리 검사 제거 | 1 | `SMOKE 31 checks, 0 failed` |
+| M 봇 절벽 탐침 제거 | 1 | `FAIL 봇이 절벽(z=-10) 앞에서 멈추고 떨어지지 않는다: z=-27.124833333333346` |
+| N 봇 상한 20 | 1 | `SMOKE 31 checks, 0 failed` |
+| O FallenPartsDestroyHeight 를 fallY 위로 | 1 | `SMOKE 31 checks, 0 failed` |
+| P 맵 스폰 팀을 전부 1 로 | 1 | `SMOKE 31 checks, 0 failed` |
+| Q 액세서리 템플릿 하나 삭제 | 1 | `SMOKE 31 checks, 0 failed` |
+| R 경직을 후딜+발동보다 길게(규칙 검사) | 1 | `/private/var/folders/ph/y0b21nzx597650trbnnzdy640000gn/T/ampgate_3uadcl3g/amp-arena/tests/rules.spec.luau:10: 경직 < 후딜+다음 발동 fighter:jab` |
+| S 남의 액세서리 허용(규칙 검사) | 1 | `/private/var/folders/ph/y0b21nzx597650trbnnzdy640000gn/T/ampgate_ebf9yhy2/amp-arena/tests/rules.spec.luau:10: 스타일 외 액세서리는 맨손` |
+| T 타격 포즈에서 팔을 안 뻗음(포즈 검사) | 1 | `/private/var/folders/ph/y0b21nzx597650trbnnzdy640000gn/T/ampgate_6o_g2_te/amp-arena/tests/rules.spec.luau:10: 타격 무브는 지속 구간에 팔·다리·몸을 뻗는다 rk1` |
+| U 장비를 매치 중에도 받음 | 1 | `SMOKE 31 checks, 0 failed` |
+| V 공유 모듈이 Vector3.new 사용 | 1 | `/private/var/folders/ph/y0b21nzx597650trbnnzdy640000gn/T/ampgate_iysmkcxi/amp-arena/tests/rules.spec.luau:7: error while running module: /private/var/folders/ph` |
+| W Commands 버스트 초과를 통과시킴(규칙 검사) | 1 | `/private/var/folders/ph/y0b21nzx597650trbnnzdy640000gn/T/ampgate_kvi_g340/amp-arena/tests/rules.spec.luau:10: 같은 순간 버스트 상한` |
+| Y validate 를 부르되 결과를 무시 | 1 | `SMOKE 31 checks, 0 failed` |
+| Z1 Items 에 Heartbeat 하나 더 | 1 | `SMOKE 31 checks, 0 failed` |
+| Z2 Guard 속성을 매 틱 쓰기 | 1 | `SMOKE 31 checks, 0 failed` |
+| Z3 그림자 Hp 속성 | 1 | `SMOKE 31 checks, 0 failed` |
+| Z4 CharacterAutoLoads 를 true 로 | 1 | `SMOKE 31 checks, 0 failed` |
+| Z5 공통 정리 함수를 없앰(정의·호출 전부 다른 이름으로) | 1 | `SMOKE 31 checks, 0 failed` |
+| Z6 Commands 가 상위 폴더를 문자열 require | 1 | `SMOKE 31 checks, 0 failed` |
+| Z7 hitScan 이 팀 검사(canHit)를 건너뜀 | 1 | `SMOKE 31 checks, 0 failed` |
+| Z8 결과 단계 얼림이 속도 제약을 안 끔 | 1 | `SMOKE 31 checks, 0 failed` |
+| Z9 KO 크레딧을 Health 뒤에 적음 | 1 | `SMOKE 31 checks, 0 failed` |
+| X 에셋 파일 변조 | 1 | `SMOKE 31 checks, 0 failed` |
+| Z10 flatLook 이 root.CFrame 을 읽음(실제 있었던 버그: 판정·대시 때 nil 인덱스) | 1 | `FAIL server Combat.luau + Bots.luau executed on the Roblox shim (tests/roblox-shim.luau): ? runtime checks — hits land, chains, dash, guard, grab/throw, launch→` |
+| Z11 봇 교전 거리를 7 스터드 고정으로 | 1 | `FAIL 봇은 교전 거리(3.0) 안에서 공격한다: 6.10` |
+| Z12 잡기 범위에 몸 반지름을 더함(약공 사거리 안이 전부 잡기) | 1 | `/private/var/folders/ph/y0b21nzx597650trbnnzdy640000gn/T/ampgate_2_hmsywc/amp-arena/tests/rules.spec.luau:10: 그래플러 잡기 범위(중심 거리, 몸 반지름 안 더함)` |
+| Z13 스피드스타 1타가 파이터 잽 포즈를 공유 | 1 | `/private/var/folders/ph/y0b21nzx597650trbnnzdy640000gn/T/ampgate_qe437crs/amp-arena/tests/rules.spec.luau:10: 포즈 템플릿 punchL 를 fighter 와 speedster 가 같이 쓴다(quick1` |
+| Z14 약공을 마우스 왼쪽 클릭으로 | 1 | `SMOKE 31 checks, 0 failed` |
+| Z15 쉬프트락 토글 켬(Shift 대시와 겹침) | 1 | `SMOKE 31 checks, 0 failed` |
+| Z16 줍기 프롬프트 키를 E 로 | 1 | `SMOKE 31 checks, 0 failed` |
+| Z17 대기 자세가 다리까지 씀 | 1 | `/private/var/folders/ph/y0b21nzx597650trbnnzdy640000gn/T/ampgate_vmtzd5cq/amp-arena/tests/rules.spec.luau:10: 대기 자세 상체만 fighter` |
+| Z18 판정이 한 번도 안 맞음(hitTest 결과 무시) | 1 | `FAIL jab 피해가 Humanoid.Health 에 들어갔다: 100 / 100` |
+| Z19 내딛기 제거 | 1 | `FAIL 내딛기(stepIn)로 공격자가 앞으로 움직였다: z=0` |
+| Z20 대시가 움직이지 않음 | 1 | `FAIL 대시로 앞(−Z)으로 이동: z=0` |
+| Z21 잡힌 쪽을 놓을 때 PlatformStand 를 안 풂 | 1 | `FAIL 놓인 뒤 PlatformStand 해제` |
 
-34/34 RED, proof exit=0 (Y 는 2차 security 권고로 게이트를 본문 모양 정규식으로 조인 뒤, Z1~Z7 은 2차 test-strategy 「RED 행 없는 게이트 15」 지적으로, Z8·Z9 는 2차 implementation N2·N5 로 추가). 주입 전 원본은 exit=0(status.md 의 출력).
-
-이 게이트가 재는 것은 구조(코드·XML)다. 포즈가 실제로 뻗어 보이는지, 넉백이 어떻게 느껴지는지, 잡기 Weld 가 두 클라이언트 사이에서 흔들리지 않는지는 Studio 에서 봐야 한다(UNVERIFIED 줄).
+46/46 RED

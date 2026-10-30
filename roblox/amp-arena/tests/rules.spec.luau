@@ -83,7 +83,12 @@ check(Rules.guardBlocks(V(0, 0, 0), V(0, 0, -1), V(0, 0, -4)) and not Rules.guar
 check(not Rules.guardBlocks(V(0, 0, 0), V(0, 0, -1), V(4, 0, 1), 150), "방패 가드 각 150°: 옆뒤는 뚫린다")
 check(Rules.guardCost(6) == 24 and Config.GUARD.max / Rules.guardCost(6) < 5, "잽 5회면 가드가 깨진다")
 check(Rules.canGrab(me, look, V(0, 0, -3), "idle") and not Rules.canGrab(me, look, V(0, 0, -3), "down") and not Rules.canGrab(me, look, V(0, 0, -6), "idle") and not Rules.canGrab(me, look, V(3, 0, 0), "idle"), "잡기: 거리·정면 60°·상태")
-check(Rules.canGrab(me, look, V(0, 0, -4.3), "guard", 3.9) and not Rules.canGrab(me, look, V(0, 0, -4.3), "guard", 2.0), "그래플러 잡기 범위")
+check(Rules.canGrab(me, look, V(0, 0, -3.8), "guard", 3.9) and not Rules.canGrab(me, look, V(0, 0, -4.1), "guard", 3.9) and not Rules.canGrab(me, look, V(0, 0, -3.8), "guard", 2.0), "그래플러 잡기 범위(중심 거리, 몸 반지름 안 더함)")
+-- 잡기 거리는 약공 교전 거리보다 짧다 — 아니면 사거리 안의 약공이 전부 잡기가 된다
+for _, sid in Styles.ORDER do
+	local st = Styles.get(sid)
+	check(st.grabRange < Rules.engageDistance(sid, "none") + Config.PLAYER.bodyRadius, sid .. " 잡기 범위 < 교전 거리 + 몸 반지름")
+end
 check(Rules.knockbackMult(3) == 1 and Rules.knockbackMult(4) == 1.5, "연속 4히트째 넉백 ×1.5")
 check(Rules.isRingout(-41, Config.MAPS.skydock.fallY) and not Rules.isRingout(0, Config.MAPS.skydock.fallY), "링아웃 Y")
 local d = Rules.throwDirection(V(0, 0, -1), V(1, 0, 0)); check(math.abs(d.X - 1) < 1e-6 and math.abs(d.Z) < 1e-6, "던지기 방향은 입력 우선")
@@ -174,4 +179,66 @@ check(Poses.forState("down", 0).root.dy <= -2 and math.abs(Poses.forState("down"
 local spin = Moves.get("spinKick"); check(Poses.forMove(spin, spin.startup + spin.active * 0.5).root.yaw > 300, "회전 발차기는 돈다")
 local w = Poses.forMove(jab, 0.0); check(math.abs(w.rs.fwd) < 1e-6, "발동 시작은 idle 에서 출발")
 
-print(string.format("PASS %d actual Luau assertions on shared Config/Styles/Moves/Accessories/Rules/Poses (stats, loadout exclusivity, chains, hit geometry, guard, grab, ringout, ranking, rotation, procedural poses) — not Roblox runtime", n))
+-- ───────── 스타일별 동작 고유성 · 교전 거리 · 대기 자세 ─────────
+-- 다섯 스타일의 사슬(맨손 + 전용 액세서리)은 포즈 템플릿을 서로 공유하지 않는다 — 공유하면 「캐릭터별 동작이 같다」가 된다
+local poseOwner = {}
+for _, sid in Styles.ORDER do
+	local st = Styles.get(sid)
+	for _, accId in { "none", st.accessory } do
+		local light, heavy, special = Rules.chains(sid, accId)
+		local ids = {}
+		for _, id in light do table.insert(ids, id) end
+		for _, id in heavy do table.insert(ids, id) end
+		if special then table.insert(ids, special) end
+		for _, id in ids do
+			local pose = Moves.get(id).pose
+			check(poseOwner[pose] == nil or poseOwner[pose] == sid, string.format("포즈 템플릿 %s 를 %s 와 %s 가 같이 쓴다(%s)", pose, tostring(poseOwner[pose]), sid, id))
+			poseOwner[pose] = sid
+		end
+	end
+end
+-- 휘두르는 부위 표: 값은 ra/la/rl/ll/both/head, 사슬의 판정 무브는 전부 궤적 부위가 있다(잡기·던지기·투사체·아이템 던지기 제외)
+local LIMBS = { ra = true, la = true, rl = true, ll = true, both = true, head = true }
+for pose, limb in Poses.LIMB do check(LIMBS[limb] == true and Poses.TEMPLATES[pose] ~= nil, "LIMB 항목 " .. pose .. " → " .. tostring(limb)) end
+for _, sid in Styles.ORDER do
+	local st = Styles.get(sid)
+	for _, accId in { "none", st.accessory } do
+		local light, heavy = Rules.chains(sid, accId)
+		for _, chain in { light, heavy } do
+			for _, id in chain do
+				local m = Moves.get(id)
+				if m.radius > 0 then check(Poses.LIMB[m.pose] ~= nil, "판정 무브는 궤적 부위가 있다: " .. id .. " (" .. m.pose .. ")") end
+			end
+		end
+	end
+end
+-- 교전 거리: 그 거리에 서서 바라보면 사슬의 모든 판정 무브가 맞고, 잡기 범위(몸 반지름 없이)는 교전 거리 안쪽이다
+for _, sid in Styles.ORDER do
+	local st = Styles.get(sid)
+	for _, accId in { "none", st.accessory } do
+		local engage = Rules.engageDistance(sid, accId)
+		check(engage >= 2.5 and engage <= 7, sid .. "/" .. accId .. " 교전 거리 " .. engage)
+		local light, heavy = Rules.chains(sid, accId)
+		for _, chain in { light, heavy } do
+			for _, id in chain do
+				local m = Moves.get(id)
+				if m.radius > 0 then check(Rules.hitTest(V(0, 0, 0), V(0, 0, -1), m, V(0, 0, -engage)), string.format("%s 교전 거리 %.1f 에서 %s 가 맞는다", sid, engage, id)) end
+			end
+		end
+	end
+end
+-- 내딛기는 타격 무브에만, 걷기보다 빠르되 대시보다 느리다
+for _, id in Moves.ids() do
+	local m = Moves.get(id)
+	check(m.stepIn >= 0 and m.stepIn < Config.DASH.speed, "stepIn 범위 " .. id)
+	if m.stepIn > 0 then check(m.effect == "hitstun" or m.effect == "launch", "내딛기는 타격 무브에만 " .. id) end
+end
+-- 대기 자세: 스타일마다 하나, 상체(root·neck·rs·ls)만 — 다리를 쓰면 걷기 애니메이션을 덮는다
+for _, sid in Styles.ORDER do
+	local u = Poses.forStance(sid)
+	check(u ~= nil and u.root and u.neck and u.rs and u.ls and u.rh == nil and u.lh == nil, "대기 자세 상체만 " .. sid)
+	check(u and u.rs.fwd >= 0 and u.rs.fwd <= 100 and u.ls.fwd >= 0 and u.ls.fwd <= 100 and math.abs(u.root.yaw) <= 20, "대기 자세 각도 범위 " .. sid)
+end
+check(Poses.forStance("nope") == nil, "모르는 스타일은 대기 자세 없음(기본 애니메이션)")
+
+print(string.format("PASS %d actual Luau assertions on shared Config/Styles/Moves/Accessories/Rules/Poses (stats, loadout exclusivity, chains, hit geometry, guard, grab, ringout, ranking, rotation, procedural poses, per-style pose uniqueness, engage distance, stances) — not Roblox runtime", n))

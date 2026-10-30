@@ -1,8 +1,8 @@
 <!-- source: roblox/amp-arena/src/server/Combat.luau, roblox/amp-arena/tools/verify.py -->
 
-# Status — AMP ARENA 로블록스 (2026-10-29)
+# Status — AMP ARENA 로블록스 (2026-10-29, 개정 2026-10-30)
 
-**상태: 구현 완료 · 검증기 40 게이트 통과 · 회귀 주입 34/34 RED · 스펙 리뷰 6차원 2라운드 전부 반영(2차: security SHIP, 나머지 REVISE 지적 반영). Studio 플레이 대기(사용자).**
+**상태: 구현 완료 · 첫 플레이 피드백 1차 반영(자판·타격 버그·봇·스타일별 동작) · 검증기 41 게이트 통과(규칙 1063 단언 + 쉼 스모크 31건) · 회귀 주입 46/46 RED. Studio 재확인 대기(사용자).**
 
 ## 리서치 결론
 로블록스에 겟앰프드 공식·팬 구현은 없다 — roblox.com 검색 API 5회(getamped·get amped·겟앰프드·rumble fighter·splash fighters) 관련 0건, DevForum 0건, 웹 검색은 Baddies 를 「겟앰프드 영감일 것」이라 추정한 의견 기사 1건뿐. 근거 표는 `planning/requirements.md` §0.
@@ -17,8 +17,10 @@
 LUAU_BIN=/private/tmp/roblox-infinity-step-tools/luau python3 roblox/amp-arena/tools/verify.py
 ```
 ```
-PASS 776 actual Luau assertions on shared Config/Styles/Moves/Accessories/Rules/Poses (stats, loadout exclusivity, chains, hit geometry, guard, grab, ringout, ranking, rotation, procedural poses) — not Roblox runtime
-PASS compiled 19 Luau files and unknown-global analysis with explicit Roblox allowlist (not Roblox API typechecking)
+PASS 1063 actual Luau assertions on shared Config/Styles/Moves/Accessories/Rules/Poses (stats, loadout exclusivity, chains, hit geometry, guard, grab, ringout, ranking, rotation, procedural poses, per-style pose uniqueness, engage distance, stances) — not Roblox runtime
+SMOKE 31 checks, 0 failed
+PASS server Combat.luau + Bots.luau executed on the Roblox shim (tests/roblox-shim.luau): 31 runtime checks — hits land, chains, dash, guard, grab/throw, launch→down→getup, bot approach inside engage distance, ringout, KO credit (shim physics, not Studio)
+PASS compiled 21 Luau files and unknown-global analysis with explicit Roblox allowlist (not Roblox API typechecking)
 PASS shared rule modules and Commands never touch Roblox services or vector methods ({X,Y,Z} component math only — CLI-testable; Theme holds Color3 only)
 PASS server require graph is a DAG with Combat at the bottom ({'Main': ['Bots', 'Combat', 'Commands', 'Items', 'Projectiles', 'Rigs'], 'Bots': ['Combat', 'Items', 'Rigs'], 'Items': ['Combat', 'Rigs'], 'Projectiles': ['Combat']}); upward calls go through Combat.hooks
 PASS one Heartbeat in Main with a fixed tick order Combat → Items → Projectiles → Bots → State
@@ -35,7 +37,7 @@ PASS two maps in ServerStorage.Maps, each with ≥8 team-tagged spawns (both tea
 PASS accessory templates match Accessories.luau (5), each a Part-built Model with PrimaryPart Handle and welded parts (no uploaded meshes)
 PASS item templates Crate/Heart/Bomb exist; Bomb carries a ProximityPrompt (native pickup), Heart a light
 PASS bot BlockRig is an R6 Humanoid rig with the six standard Motor6D joints (same joint axes as player R6 avatars)
-PASS deterministic XML: services, lobby, lighting, 3 RemoteEvents, prompts, lights (1578940 bytes, 569 parts) — not opened in Studio
+PASS deterministic XML: services, lobby, lighting, 3 RemoteEvents, prompts, lights (1589526 bytes, 569 parts) — not opened in Studio
 PASS 9 embedded models are Roblox-owned (creator id 1) with matching sha256 in provenance.json; 0 scripts in the raw files were stripped at build
 PASS default Roblox camera is never replaced: no CameraType anywhere in client scripts (KO shake uses Humanoid.CameraOffset)
 PASS camera zoom 8~20 within public third-person references (default 12.5, brawlers 8~20)
@@ -43,8 +45,8 @@ PASS R6 avatars (GameSettingsAvatar R6) with procedural poses; Poser maps the si
 PASS procedural animation: Poser writes Motor6D.Transform every RunService.Stepped from shared Poses (no uploaded animation IDs required)
 PASS server owns spawning: Players.CharacterAutoLoads false in the place and Main calls LoadCharacter for lobby/arena/respawn
 PASS no web-style key hints or jump buttons in client UI strings ([])
-PASS actions bound through ContextActionService with touch buttons titled ['약공', '강공', '기술', '대시'] + guard (keyboard, gamepad, touch); pickup is not a bound key
-PASS pickup is the native ProximityPrompt (bomb) and hearts use Touched — no custom pickup key
+PASS solo keyboard layout Z/X/C/V/Shift (+ gamepad, touch buttons titled ['약공', '강공', '기술', '대시']); no mouse buttons or E/F/R/Q/1 bound; StarterPlayer.EnableMouseLockOption false so Shift is free for dash
+PASS pickup is the native ProximityPrompt (bomb, keyboard F / gamepad DPadDown) and hearts use Touched — no custom pickup key
 PASS knockback/launch/dash use one LinearVelocity per fighter toggled on and off (constraints replicate to the owning client; no BodyVelocity/ApplyImpulse)
 PASS health is Humanoid.Health (native KO via Died); no shadow HP attribute
 PASS MoveAt/FightAt use workspace:GetServerTimeNow() on both server and Poser (shared clock for pose phase)
@@ -65,21 +67,26 @@ UNVERIFIED: hit reach/radius feel vs R6 bodies, aim assist turning, guard/counte
 UNVERIFIED: touch button placement around the default jump button, gamepad bindings, ProximityPrompt on bombs
 UNVERIFIED: 8 players, team outline colors, name tag HP bars, result ranking screen, lobby ready shortcut
 UNVERIFIED: balance: every number in Config.luau/Moves.luau is a first guess translated from the web reference
-UNVERIFIED: fighter state transition table and per-state intent acceptance (idle/attack/guard/hitstun/launched/down/getup/held/grabbing/stun) live in Combat.luau and are exercised only in Studio — decisions with logic are in Rules, the transitions themselves are not CLI-tested
+UNVERIFIED: fighter state transitions are exercised on the shim (tests/combat.smoke.luau) with one-look-vector rotation and no collisions — Studio physics (character collision, network ownership) still unverified
+UNVERIFIED: per-style stance on the upper body over the default walk animation, limb Trail look, step-in lunge feel — rendered offline from the same joint math, not seen in Studio
 UNVERIFIED: sound IDs (rbxasset) audible, Bangers font availability, Atmosphere density by eye
 exit=0
 ```
-게이트 증명: 회귀 주입 34/34 빨강 — `verifications/gate-proof.md`.
+게이트 증명: 회귀 주입 46/46 빨강 — `verifications/gate-proof.md`. 스모크만: `LUAU_BIN=… python3 roblox/amp-arena/tools/smoke.py` → `SMOKE 31 checks, 0 failed`.
 
 ## 로블록스식으로 새로 설계한 것 (웹 참고작과의 차이)
 | 영역 | 웹 참고작(amp-arena) | 이번 |
 |---|---|---|
 | 리그·동작 | 프리미티브 13본 + 코드 키프레임 | 플레이어 자기 R6 아바타 + `Motor6D.Transform` 절차 포즈(Stepped). 업로드 애니메이션 0 |
 | 권위 | 방장 브라우저 워커 60틱, 릴레이 | 서버 Heartbeat 상태 머신. 넉백은 LinearVelocity(소유 클라이언트가 시뮬), 잡기는 Weld |
-| 조작 | WASD/Z/X/C/V/F 키 안내 | M1·R·F·Q·1 + ProximityPrompt 줍기. 터치는 ContextActionService 버튼(제목만). 이동·점프·카메라 Roblox 기본 |
+| 조작 | WASD/Z/X/C/V/F 키 안내 | Z·X·C·V·Shift + ProximityPrompt 줍기 F(혼자 플레이 기준, 사용자 선택). 터치는 ContextActionService 버튼(제목만). 이동·점프·카메라 Roblox 기본, 쉬프트락 토글 끔 |
 | 방 | 플랫폼 릴레이 방·대기실 | 서버 = 방. 로비 발판 20초 → 카운트다운 → 매치 → 결과 순환, 봇 채움 |
 | 맵 | 미터 단위 상자·실린더 | 스터드 단위 Part 콜로세움(관중석·성곽 모델·횃불)·스카이독(발판·컨테이너·크레인), 조명 프리셋 |
 | 범위 | 액세서리 16·맵 4·진행·엠블럼 | 스타일 5·액세서리 5·아이템 3·맵 2·모드 3·봇. 진행·저장·순위는 후속 |
+
+## 2026-10-30 첫 플레이 피드백 반영
+- 사용자 보고 3건: 키 위치 불편 → 웹판 자판 그대로(Z/X/C/V/Shift/F) · 격투 동작이 캐릭터별로 안 갈림 → 스타일별 고유 템플릿 13 추가·상체 대기 자세·부위 Trail·내딛기 · 봇끼리 때려도 체력 그대로 → **`Combat.flatLook` 이 파이터 테이블에서 `CFrame` 을 읽어 판정·대시·잡기 때마다 nil 인덱스 오류**(정적 게이트가 못 잡는 종류) + 봇 교전 거리 7 스터드(리치 끝) + 잡기 거리에 몸 반지름 가산(사거리 안 약공이 전부 잡기) + 봇이 잡고 안 던짐.
+- 새 검증: 서버 `Combat`·`Bots` 본문을 Roblox 대역 위에서 실행하는 스모크(`tests/roblox-shim.luau`·`tools/smoke.py`·`tests/combat.smoke.luau`) — 체력·상태·위치로 판정. 포즈는 같은 관절 수식의 오프라인 렌더로 확인(스크래치패드).
 
 ## 사용자에게 알릴 것
 - 첫 60초: 로비에서 헤비+브레이커를 고르고 준비 → 봇 3과 콜로세움. 포즈가 이상하면(팔이 뒤로 든다 등) `Poser.client.luau` 의 `r6()` 부호만 바꾸면 된다 — R6 관절 축은 문서로만 확인했다.

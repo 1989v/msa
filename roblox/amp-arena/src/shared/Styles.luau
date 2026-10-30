@@ -19,13 +19,13 @@ Styles.DEF = {
 		color = { 150, 72, 58 },
 	},
 	speedster = {
-		label = "스피드스타", desc = "3단 속공, 강공 발차기·도끼차기. 기술 회전 발차기(다단). 이동 +15%, 공중 대시 1회, 방어 −1.",
-		light = { "quick1", "quick2", "quick3" }, heavy = { "quick4", "axeKick" }, special = "spinKick", specialCooldown = 4,
+		label = "스피드스타", desc = "낮은 자세 3단 속공, 강공 뒤돌려차기·공중제비 차기. 기술 회전 발차기(다단). 이동 +15%, 공중 대시 1회, 방어 −1.",
+		light = { "quick1", "quick2", "quick3" }, heavy = { "quick4", "flipKick" }, special = "spinKick", specialCooldown = 4,
 		stats = { spd = 2, jmp = 1, def = -1 }, speedMult = 1.15, grabRange = 3.0, throwDamage = 12, airDashes = 1, accessory = "pistols", scale = 0.92,
 		color = { 112, 206, 160 },
 	},
 	heavy = {
-		label = "헤비", desc = "해머 2단, 강공 강타 2단(슈퍼아머). 기술 지진(반경 띄움). 체력 +2·방어 +1, 이동 −10%.",
+		label = "헤비", desc = "해머 2단, 강공 어깨 박치기·양손 내려찍기(슈퍼아머). 기술 지진(반경 띄움). 체력 +2·방어 +1, 이동 −10%.",
 		light = { "hammer1", "hammer2" }, heavy = { "heavy1", "heavy2" }, special = "quake", specialCooldown = 7,
 		stats = { hp = 2, def = 1, spd = -2 }, speedMult = 0.9, grabRange = 3.3, throwDamage = 18, airDashes = 0, accessory = "greatsword", scale = 1.18,
 		color = { 118, 110, 102 },

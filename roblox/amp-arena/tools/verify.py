@@ -27,8 +27,17 @@ spec = subprocess.run([str(runner), str(ROOT / 'tests/rules.spec.luau')], captur
 sys.stdout.write(spec.stdout)
 if spec.returncode: raise SystemExit(spec.stderr or 'rules spec failed')
 
+# 1b. 서버 Combat·Bots 를 Roblox 대역 위에서 실제로 실행(스모크): 타격·사슬·대시·가드·잡기·띄움·봇 접근·링아웃·KO 크레딧
+smoke_env = dict(os.environ, LUAU_BIN=str(runner))
+smoke = subprocess.run([sys.executable, str(ROOT / 'tools/smoke.py')], capture_output=True, text=True, env=smoke_env)
+sys.stdout.write(smoke.stdout)
+m_smoke = re.search(r'SMOKE (\d+) checks, (\d+) failed', smoke.stdout)
+gate(smoke.returncode == 0 and m_smoke is not None and int(m_smoke.group(2)) == 0 and int(m_smoke.group(1)) >= 25,
+     f'server Combat.luau + Bots.luau executed on the Roblox shim (tests/roblox-shim.luau): {m_smoke.group(1) if m_smoke else "?"} runtime checks — hits land, chains, dash, guard, grab/throw, launch→down→getup, bot approach inside engage distance, ringout, KO credit (shim physics, not Studio)')
+
 # 2. 컴파일 · 미지 전역 · 의존 방향
-files = sorted((ROOT / 'src').rglob('*.luau')) + sorted((ROOT / 'tests').glob('*.luau'))
+# combat.smoke.luau 는 조각(tools/smoke.py 가 이어 붙인다) — 생성된 전체 청크를 대신 검사한다
+files = sorted((ROOT / 'src').rglob('*.luau')) + sorted(p for p in (ROOT / 'tests').glob('*.luau') if p.name != 'combat.smoke.luau') + [ROOT / 'dist/smoke/combined.luau']
 for path in files:
     r = subprocess.run([str(compiler), str(path)], capture_output=True)
     if r.returncode: raise SystemExit(f'{path}: {r.stderr.decode("utf-8", errors="replace")}')
@@ -163,11 +172,16 @@ hits = [(name, m.group(0)) for name, t in client_text.items() for lit in re.find
 gate(not hits, f'no web-style key hints or jump buttons in client UI strings ({hits})')
 inp = client_text['Input.client.luau']
 titles = re.findall(r'title = "([^"]+)"', inp)
-gate('ContextActionService:BindAction' in inp and 'SetTitle' in inp and 'KeyCode.E' not in inp and len(titles) >= 4 and 'MouseButton1' in inp and 'ButtonX' in inp,
-     f'actions bound through ContextActionService with touch buttons titled {titles} + guard (keyboard, gamepad, touch); pickup is not a bound key')
+keys = set(re.findall(r'Enum\.(?:KeyCode|UserInputType)\.(\w+)', inp))
+mouse_lock = sp.find("./Properties/bool[@name='EnableMouseLockOption']")
+gate('ContextActionService:BindAction' in inp and 'SetTitle' in inp and len(titles) >= 4
+     and {'Z', 'X', 'C', 'V', 'LeftShift', 'ButtonX', 'ButtonY', 'ButtonR1', 'ButtonB', 'ButtonL2'} <= keys
+     and not ({'MouseButton1', 'MouseButton2', 'E', 'F', 'R', 'Q', 'One'} & keys)
+     and mouse_lock is not None and mouse_lock.text == 'false',
+     f'solo keyboard layout Z/X/C/V/Shift (+ gamepad, touch buttons titled {titles}); no mouse buttons or E/F/R/Q/1 bound; StarterPlayer.EnableMouseLockOption false so Shift is free for dash')
 items_src = server_text['Items.luau']
-gate('ProximityPrompt' in items_src and '.Triggered:Connect' in items_src and 'Touched:Connect' in items_src,
-     'pickup is the native ProximityPrompt (bomb) and hearts use Touched — no custom pickup key')
+gate('ProximityPrompt' in items_src and '.Triggered:Connect' in items_src and 'Touched:Connect' in items_src and 'KeyboardKeyCode = Enum.KeyCode.F' in items_src,
+     'pickup is the native ProximityPrompt (bomb, keyboard F / gamepad DPadDown) and hearts use Touched — no custom pickup key')
 combat = server_text['Combat.luau']
 gate('Instance.new("LinearVelocity")' in combat and 'BodyVelocity' not in combat and 'ApplyImpulse' not in combat and combat.count('Instance.new("LinearVelocity")') == 1 and 'lv.Enabled = false' in combat,
      'knockback/launch/dash use one LinearVelocity per fighter toggled on and off (constraints replicate to the owning client; no BodyVelocity/ApplyImpulse)')
@@ -221,7 +235,8 @@ for line in [
     'touch button placement around the default jump button, gamepad bindings, ProximityPrompt on bombs',
     '8 players, team outline colors, name tag HP bars, result ranking screen, lobby ready shortcut',
     'balance: every number in Config.luau/Moves.luau is a first guess translated from the web reference',
-    'fighter state transition table and per-state intent acceptance (idle/attack/guard/hitstun/launched/down/getup/held/grabbing/stun) live in Combat.luau and are exercised only in Studio — decisions with logic are in Rules, the transitions themselves are not CLI-tested',
+    'fighter state transitions are exercised on the shim (tests/combat.smoke.luau) with one-look-vector rotation and no collisions — Studio physics (character collision, network ownership) still unverified',
+    'per-style stance on the upper body over the default walk animation, limb Trail look, step-in lunge feel — rendered offline from the same joint math, not seen in Studio',
     'sound IDs (rbxasset) audible, Bangers font availability, Atmosphere density by eye',
 ]:
     print('UNVERIFIED: ' + line)

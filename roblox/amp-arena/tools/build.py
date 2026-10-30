@@ -465,13 +465,13 @@ def build():
     build_accessories(b, assets)
     build_items(b, assets)
     build_block_rig(b, assets)
-    # ── Players / StarterPlayer: 서버가 캐릭터를 세운다 · R6 · 기본 카메라 줌 8~20 ──
+    # ── Players / StarterPlayer: 서버가 캐릭터를 세운다 · R6 · 기본 카메라 줌 8~20 · 쉬프트락 끔(Shift 가 대시) ──
     players = b.item(b.root, 'Players', 'Players')
     b.prop(players, 'bool', 'CharacterAutoLoads', 'false'); b.prop(players, 'float', 'RespawnTime', 3)
     sp = b.item(b.root, 'StarterPlayer', 'StarterPlayer')
     b.prop(sp, 'float', 'CameraMaxZoomDistance', 20); b.prop(sp, 'float', 'CameraMinZoomDistance', 8)
     b.prop(sp, 'float', 'CharacterWalkSpeed', 14); b.prop(sp, 'float', 'CharacterJumpPower', 50); b.prop(sp, 'bool', 'CharacterUseJumpPower', 'true')
-    b.prop(sp, 'bool', 'EnableMouseLockOption', 'true'); b.prop(sp, 'float', 'HealthDisplayDistance', 0); b.prop(sp, 'float', 'NameDisplayDistance', 0)
+    b.prop(sp, 'bool', 'EnableMouseLockOption', 'false'); b.prop(sp, 'float', 'HealthDisplayDistance', 0); b.prop(sp, 'float', 'NameDisplayDistance', 0)
     b.prop(sp, 'token', 'GameSettingsAvatar', 0)
     sps = b.item(sp, 'StarterPlayerScripts', 'StarterPlayerScripts')
     for path in sorted((ROOT / 'src/client').glob('*.luau')):

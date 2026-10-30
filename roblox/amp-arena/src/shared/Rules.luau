@@ -133,12 +133,12 @@ function Rules.guardAfterBlock(guard, cost, crushImmune)
 	if crushImmune then return 1, false end
 	return 0, true
 end
--- 잡기: 거리 ≤ range, 정면 coneDeg/2, 상대가 잡힐 수 있는 상태.
+-- 잡기: 중심 거리 ≤ range(몸 반지름을 더하지 않는다 — 더하면 약공 사거리 안이 전부 잡기가 되어 사슬이 안 나간다), 정면 coneDeg/2, 상대가 잡힐 수 있는 상태.
 local GRABBABLE = { idle = true, guard = true, hitstun = true, stun = true }
 function Rules.canGrab(attPos, look, victimPos, victimState, range)
 	if not GRABBABLE[victimState] then return false end
 	local _, _, d = flat(attPos, victimPos)
-	if d > (range or Config.GRAB.range) + Config.PLAYER.bodyRadius then return false end
+	if d > (range or Config.GRAB.range) then return false end
 	return Rules.facingAngle(attPos, look, victimPos) <= Config.GRAB.coneDeg / 2
 end
 function Rules.knockbackMult(consecutiveHits)
@@ -242,6 +242,21 @@ function Rules.botMove(footingAhead, footingSide)
 	if footingAhead then return "forward" end
 	if footingSide then return "side" end
 	return "stop"
+end
+-- 봇의 교전 거리: 약공 사슬에서 가장 짧은 리치. 그 거리에 서면 사슬의 모든 타가 상대 중심을 판정 원 안에 둔다(한 타도 헛치지 않는다).
+function Rules.engageDistance(styleId, accId)
+	local light, heavy = chains(styleId, accId)
+	local best = math.huge
+	for _, id in light do
+		local m = Moves.get(id)
+		if m and m.radius > 0 and m.reach < best then best = m.reach end
+	end
+	for _, id in heavy do
+		local m = Moves.get(id)
+		if m and m.radius > 0 and m.reach < best then best = m.reach end
+	end
+	if best == math.huge then return Config.GRAB.range end
+	return best
 end
 function Rules.allyKo(attackerTeam, victimTeam) return attackerTeam ~= 0 and attackerTeam == victimTeam end
 function Rules.canHit(attackerTeam, victimTeam) return true end -- 팀전에서도 아군이 맞는다(의도된 규칙)

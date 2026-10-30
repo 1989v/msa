@@ -52,7 +52,46 @@ T.grab = { windup = P(R(5, 0), N(), J(50, 20), J(50, -20)), strike = P(R(10, 0, 
 T.throw = { windup = P(R(-10, -30), N(), J(100, 30), J(100, -30)), strike = P(R(25, 40, 0, 0, 0.5), N(10), J(60, 40), J(60, -40), J(20), J(-10)) }
 T.throwItem = { windup = P(R(-10, -20), N(-5), J(170, 20), J(30, 10)), strike = P(R(25, 20, 0, 0, 0.4), N(10), J(70, 0), J(30, 10)) }
 T.rocket = { windup = P(R(0, -30), N(), J(40, 10), J(40, 10)), strike = P(R(10, 20, 0, 0, 0.4), N(), J(95, 0), J(30, 10)), hold = 0.7 }
+-- 스타일 고유 템플릿 — 다섯 스타일의 사슬(맨손 + 전용 액세서리)은 서로 템플릿을 공유하지 않는다(테스트가 잰다). 몸통 회전·낮은 자세·전진량으로 실루엣을 가른다.
+-- 파이터(복싱): 돌려차기·헤이메이커는 몸통이 크게 돈다
+T.roundhouse = { windup = P(R(-5, -45), N(0, 20), J(40, 30), J(60, 20), J(-20, 10), J(0)), strike = P(R(5, 60, 0, 0, 0.2), N(0, -20), J(60, 40), J(40, 20), J(100, 60), J(-15)) }
+T.haymaker = { windup = P(R(-10, -55, 0, 0, -0.3), N(0, 20), J(-30, 90), J(50, 20), J(10), J(-10)), strike = P(R(15, 50, 0, 0, 0.5), N(5, -15), J(100, 40), J(30, 10), J(20), J(-20)) }
+-- 그래플러: 팔을 옆으로 크게 휘두른다(훅보다 넓고 느리게 보이게)
+T.swingR = { windup = P(R(5, -60, 0, -0.2), N(0, 15), J(20, 100), J(40, 30), J(10), J(-10)), strike = P(R(10, 45, 0, 0, 0.3), N(0, -10), J(80, 50), J(40, 30), J(20), J(-20)) }
+T.swingL = { windup = P(R(5, 60, 0, -0.2), N(0, -15), J(40, 30), J(20, 100), J(-10), J(10)), strike = P(R(10, -45, 0, 0, 0.3), N(0, 10), J(40, 30), J(80, 50), J(-20), J(20)) }
+-- 스피드스타: 낮은 자세에서 손바닥 연타·무릎, 뒤돌려차기, 공중제비 차기
+T.flurryL = { windup = P(R(15, 15, 0, -0.4), N(-5), J(40, 20), J(20, 40), J(20), J(-10)), strike = P(R(20, -15, 0, -0.4, 0.4), N(0), J(30, 20), J(110, -10), J(30), J(-20)) }
+T.flurryR = { windup = P(R(15, -15, 0, -0.4), N(-5), J(20, 40), J(40, 20), J(-10), J(20)), strike = P(R(20, 15, 0, -0.4, 0.4), N(0), J(110, -10), J(30, 20), J(-20), J(30)) }
+T.flurryKick = { windup = P(R(10, 20, 0, -0.5), N(), J(50, 30), J(50, 30), J(-20), J(10)), strike = P(R(-5, -10, 0, 0.2, 0.2), N(), J(40, 40), J(40, 40), J(110, 20), J(-20)) }
+T.spinBackKick = { windup = P(R(5, -70, 0, -0.3), N(0, 30), J(60, 50), J(60, 50), J(-10), J(10)), strike = P(R(-15, 150, 0, 0.1, 0.1), N(0, -40), J(80, 60), J(80, 60), J(120, 10), J(-20)) }
+T.flipKick = { windup = P(R(25, 0, 0, -0.6), N(10), J(60, 30), J(60, 30), J(30), J(30)), strike = P(R(-70, 0, 0, 0.8, 0.3), N(-20), J(150, 40), J(150, 40), J(140, 10), J(10)) }
+-- 헤비: 어깨 박치기·양손 내려찍기
+T.shoulderCheck = { windup = P(R(-5, 35, -10, -0.2), N(0, -20), J(-30, 20), J(30, 40), J(10), J(-10)), strike = P(R(34, -40, 25, -0.3, 0.8), N(0, 20), J(-20, 30), J(50, 50), J(30), J(-30)) }
+T.groundPound = { windup = P(R(-25, 0, 0, 0.3), N(-15), J(175, 25), J(175, 25), J(-10), J(-10)), strike = P(R(45, 0, 0, -1.0, 0.4), N(20), J(70, 15), J(70, 15), J(70), J(-15)) }
+-- 마셜 장창: 낮게 쓸기·창 돌진
+T.spearSweep = { windup = P(R(5, -80, 0, -0.5), N(0, 30), J(60, 70), J(70, 30), J(20), J(-10)), strike = P(R(20, 60, 0, -0.6, 0.3), N(0, -20), J(50, -40), J(60, 20), J(60), J(-20)) }
+T.spearCharge = { windup = P(R(10, -15, 0, -0.2), N(), J(30, 10), J(50, 10)), strike = P(R(30, 10, 0, -0.2, 0.6), N(-10), J(85, 0), J(70, 15), J(40), J(-40)), holdAll = true }
 Poses.TEMPLATES = T
+
+-- 템플릿이 휘두르는 부위 — 클라이언트가 판정 구간에 그 부위에 궤적(Trail)을 켠다. ra/la = 오른팔/왼팔, rl/ll = 오른다리/왼다리, both = 양팔, head = 머리. 없으면 궤적 없음.
+Poses.LIMB = {
+	punchR = "ra", punchL = "la", gunWhip = "ra", gunWhipL = "la", lowKickR = "rl", kickR = "rl", kickL = "ll", highKickR = "rl", axeKick = "rl", knee = "rl", flyKick = "rl",
+	uppercutR = "ra", hookR = "ra", hookL = "la", slam = "both", lariat = "ra", spin = "both", overhead = "ra", overheadL = "la", slashR = "ra", slashL = "ra", sweep = "ra",
+	thrust = "ra", thrustLow = "ra", charge = "ra", tackle = "both", dive = "rl", shieldBash = "la", shieldSlam = "la", quake = "both", rocket = "ra", headbutt = "head",
+	roundhouse = "rl", haymaker = "ra", swingR = "ra", swingL = "la", flurryL = "la", flurryR = "ra", flurryKick = "rl", spinBackKick = "rl", flipKick = "rl",
+	shoulderCheck = "ra", groundPound = "both", spearSweep = "ra", spearCharge = "ra",
+}
+
+-- 스타일별 대기 자세(상체만 — 다리는 기본 걷기·대기 애니메이션이 계속 돈다). 매치·로비 공통, Fight 가 idle 일 때.
+local function U(root, neck, rs, ls) return { root = root or R(), neck = neck or N(), rs = rs or J(), ls = ls or J() } end
+Poses.STANCES = {
+	fighter = U(R(4, -12), N(0, 8), J(70, -12), J(85, -8)),      -- 복싱 가드: 두 주먹을 앞에
+	grappler = U(R(10, 0), N(-5), J(40, 45), J(40, 45)),          -- 벌린 팔, 앞으로 숙인 상체
+	speedster = U(R(14, 10, 0, -0.25), N(-6, -8), J(30, 25), J(55, 20)), -- 낮게, 한 손 앞
+	heavy = U(R(-4, 0), N(3), J(8, 35), J(8, 35)),                 -- 곧게, 팔을 옆으로 늘어뜨림
+	martial = U(R(2, -15), N(0, 12), J(95, -15), J(25, 25)),       -- 한 손을 길게 앞으로
+}
+function Poses.forStance(styleId) return Poses.STANCES[styleId] end
 
 -- 상태 포즈(무브가 아닐 때). idle 은 nil — 기본 걷기·대기 애니메이션이 돈다.
 Poses.STATES = {

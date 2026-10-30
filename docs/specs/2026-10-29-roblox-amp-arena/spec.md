@@ -16,7 +16,7 @@
 | 맨손 | 액세서리 없음(`none`) — 스타일 기본기 | `"none"` | 무장 해제 |
 | 장비 | 스타일 + 액세서리 선택 | `loadout{style, accessory}` | 로드아웃 |
 | 사슬 | 약공(light)/강공(heavy) 연타 열. 후딜이 끝나야 다음 타 | `Rules.chainNext` | 콤보(확정) |
-| 약공 · 강공 · 기술 | 입력 세 가지(M1 · R · 1, 터치 버튼 제목) | `intent.kind` | 키 이름 |
+| 약공 · 강공 · 기술 | 입력 세 가지(Z · X · V, 터치 버튼 제목) | `intent.kind` | 키 이름 |
 | 경타 · 강타 | 명중 효과. 경타 → 경직(hitstun), 강타 → 띄움(launch). 입력이 아니라 `Moves.effect` 가 가른다 | `effect = "hitstun" | "launch"` | — |
 | 경직 · 띄움 · 다운 · 기상 | 피격 상태. 다운·기상은 무적 | `Fight` = hitstun/launched/down/getup | — |
 | 가드 게이지 · 가드 크러시 | 막을 때마다 피해×4 소모, 0 이면 스턴 1.5초(크러시). 방패는 면역 | `Guard` Attribute, `Fight = "stun"` | — |
@@ -78,7 +78,7 @@
 - 히트 판정(지속 구간, 틱당 한 번, 같은 상대 1회 또는 multiHit 간격): 공격자 루트 + 정면×reach 의 평면 원(radius) 와 상대 루트 거리 ≤ radius + bodyRadius, 정면 각 ≤ arc/2. 가드 중 정면 180° 는 피해 0·게이지 −피해×4; 가드 무시/뒤는 그대로. 팀전에서도 아군이 맞는다(원작 소감).
 - 피해 = 내림(기본 × 근력배율 × 방어배율). 경타 → HITSTUN(경직 시간) + 밀림 LinearVelocity 0.12초. 강타 → LAUNCHED(LinearVelocity 수평·상승 0.2초) → 착지(FloorMaterial ≠ Air) → DOWN 0.8초(무적) → GETUP 0.4초(무적). 같은 공격자 연속 4히트째부터 넉백 ×1.5.
 - 가드 게이지 100, 풀면 초당 20 회복, 0 → STUN 1.5초. 방패는 크러시 면역.
-- 잡기: 상대가 idle/walk/guard/hitstun, 거리 ≤ grabRange, 정면 60°. HELD 최대 2초, 피격자 약공 6회 연타로 탈출. 던지기 = 방향(이동 입력 또는 정면) 수평 24·상승 14 스터드/s, 착지 DOWN, 15 피해. 양손 액세서리(대검)는 잡기 불가.
+- 잡기: 상대가 idle/walk/guard/hitstun, 중심 거리 ≤ grabRange(몸 반지름을 더하지 않는다 — 더하면 약공 사거리 안이 전부 잡기가 된다), 정면 60°. HELD 최대 2초, 피격자 약공 6회 연타로 탈출. 던지기 = 방향(이동 입력 또는 정면) 수평 24·상승 14 스터드/s, 착지 DOWN, 15 피해. 양손 액세서리(대검)는 잡기 불가.
 - 이동 잠금: attack(후딜 포함)·hitstun·held·down·getup·dead → `WalkSpeed 0`·`JumpPower 0`·`AutoRotate false`. 가드 중 WalkSpeed 0. 그 외 스타일 배율 × 액세서리 배율.
 - 대시: `Q` → 0.22초 LinearVelocity 정면 46 스터드/s, 쿨다운 0.9초, 공중 대시는 스피드스타만 1회.
 - 링아웃: 루트 Y < 맵 fallY → KO(크레딧 = 3초 안 마지막 타격자, 없으면 자멸 −1). `FallenPartsDestroyHeight` 는 fallY 보다 100 아래(검증기 게이트).
@@ -129,7 +129,7 @@
 1. `tests/rules.spec.luau` — Config/Styles/Moves/Accessories/Rules/Poses 실제 실행(≥ 40 단언).
 2. 구조 게이트(`tools/verify.py`): 컴파일·미지 전역·공유 모듈+Commands 무 Roblox API·벡터 메서드 없음(`{X,Y,Z}` 성분 셈만)·클라이언트가 서버 모듈 불참조·**서버 require 그래프 비순환(Combat 최하위)**·Heartbeat 하나와 틱 순서·**Health 쓰기는 Combat(+Rigs 초기값)뿐**·OnServerEvent 하나와 Commands.validate 배선·줍기 서버 거리 재확인·결정 함수가 Rules 에 있고 서버가 부름·Rojo 트리 대조·빌더 결정성·스크립트 정확 포함·서비스·Remotes 3·맵 2(스폰 8·팀 양쪽·상자·점프대·FallY)·`FallenPartsDestroyHeight ≤ min fallY − 100`·템플릿 5·아이템 3·BlockRig Motor6D 6 · **네이티브 게이트**: CameraType 0 · StarterPlayer R6(`GameSettingsAvatar` 0)·줌 8~20 · Poser 가 `RunService.Stepped` + `Motor6D.Transform` · 서버가 스폰 소유(CharacterAutoLoads false) · 키 이름 안내 문자열 없음 · ContextActionService 터치 버튼 제목 · 줍기는 ProximityPrompt(클라이언트 E 바인딩 없음) · 넉백 LinearVelocity 하나 재사용 · Health 는 Humanoid · GetServerTimeNow 시계 · 착지 Air 선행 관측 · 라운드 단계 4 · 봇 ≤ 7·파이터 ≤ 8·투사체 ≤ 40 · 봇 절벽 탐침 · Guard 속성 정수 변화 시만 · 아바타 유지(ScaleTo·이름표·Highlight) · 조명 프리셋 2 · 에셋 provenance ≥ 5(공집합 통과 없음).
 3. 회귀 주입 34 건 전부 RED(주입→게이트 대응표) → `verifications/gate-proof.md`.
-4. UNVERIFIED: Studio Play·포즈 생김새·LinearVelocity 넉백 체감·Weld 잡기·터치 버튼 배치·8인·R15 매핑·소리 ID·치트 방어(신뢰 경계 절).
+4. UNVERIFIED: Studio Play·포즈 생김새·LinearVelocity 넉백 체감·Weld 잡기·터치 버튼 배치·8인·R15 매핑·소리 ID·치트 방어(신뢰 경계 절). 서버 상태 머신은 쉼 위 스모크(아래 §개정)로 돈다는 것까지만 확인된다.
 
 ## 수용 시나리오 (사용자 Studio)
 1. 열기 → 로비 발판 → 장비 패널에서 헤비 + 브레이커 → 준비 → 카운트다운 3 → 콜로세움 개인 DM, 봇 3.
@@ -137,3 +137,16 @@
 3. 잽 사슬이 봇에게 맞아 경직·밀림이 보이고, 강공 피니시에 봇이 떠서 다운·기상한다. 가드(F)로 막으면 파란 불꽃, 계속 막으면 크러시.
 4. 밀착 약공으로 잡고 공격으로 던진다. 상자를 2타에 부수고 폭탄을 E 로 주워 공격으로 던져 터뜨린다.
 5. 3분 뒤 결과판 → 10초 → 로비. 다음 라운드 팀 DM(레드/블루 외곽선), 그다음 서바이벌, 4라운드부터 스카이독 — 던지기·태클로 링아웃.
+
+
+## 개정 2026-10-30 — 첫 플레이 피드백(키 불편 · 동작이 캐릭터별로 안 갈림 · 봇끼리 때려도 체력 그대로)
+
+| 항목 | 결정 | 근거·게이트 |
+|---|---|---|
+| 조작(혼자 플레이 기준) | 약공 Z · 강공 X · 가드 C(홀드) · 기술 V · 대시 Shift · 점프 Space · 줍기 F(ProximityPrompt). 마우스는 오른쪽 드래그 카메라만. `StarterPlayer.EnableMouseLockOption=false`(Shift 가 대시). 조준 보조 ±60°(마우스 조준이 없어 넓힘) | 사용자가 웹판 자판 그대로를 골랐다. 게이트: Input 의 키 집합·마우스 버튼 없음·쉬프트락 끔·프롬프트 F |
+| 타격이 안 들어가던 원인 | `Combat.flatLook(root)` 이 `root.CFrame` 을 읽는데 모든 호출이 파이터 테이블 F 를 넘겨 판정·대시·잡기 때마다 nil 인덱스 오류 → `flatLook(F)` 가 `F.root.CFrame` 을 읽게 | 정적 검증(컴파일·미지 전역·모양 게이트)은 못 잡는 종류. **스모크 하네스**(아래)가 잡는다(주입 Z10) |
+| 봇 교전 거리 | 7 스터드 고정 → `Rules.engageDistance(style, acc)` = 약공·강공 사슬의 최소 리치(그 거리면 사슬 전 타가 상대 중심을 판정 원 안에 둔다) | 규칙 검사: 모든 스타일×액세서리의 사슬 무브가 교전 거리에서 `hitTest` 참. 스모크: 봇이 교전 거리+0.6 안에서 첫 공격(대시 끔) |
+| 잡기 거리 | `canGrab` 이 몸 반지름(1.4)을 더해 중심 4.4 까지 잡기였다 → 더하지 않음(3.0~3.9). 안 그러면 교전 거리(≥3.0)의 약공이 전부 잡기 | 규칙 검사: 스타일마다 grabRange < 교전 거리 + 몸 반지름 |
+| 봇이 잡고만 있다가 놓음 | `Bots.think` 가 grabbing 상태에서 조기 반환 → 잡으면 0.3초 간격으로 약공(던지기) | 스모크(대시 끈 그래플러 봇)가 상대 체력 감소로 잡았다 |
+| 캐릭터별 동작 | 다섯 스타일의 사슬(맨손+전용 액세서리)이 포즈 템플릿을 공유하지 않는다(새 템플릿 13: roundhouse·haymaker·swingR/L·flurryL/R/Kick·spinBackKick·flipKick·shoulderCheck·groundPound·spearSweep·spearCharge). 스피드스타 강공 2타는 `flipKick`(별도 무브). 스타일별 **상체 대기 자세**(`Poses.STANCES`, idle 때 root·neck·어깨만 — 다리는 기본 걷기 애니메이션). 판정 구간엔 휘두르는 부위에 스타일 색 **Trail**(`Poses.LIMB`). 약공 사슬에 **내딛기**(`stepIn`, 발동+지속 동안 전진) | 규칙 검사: 템플릿 소유 스타일 유일·LIMB 값·대기 자세 상체만·stepIn 범위. 포즈 생김새는 같은 관절 수식의 오프라인 렌더(세션 스크래치패드 `poses/render.py`)로 확인 — Studio 는 아직 |
+| 스모크 하네스 | `tests/roblox-shim.luau`(Vector3/CFrame(위치+LookVector)/Enum/Instance/신호/시계/바닥 레이캐스트/Random/task + `step(dt)` 물리: MoveTo 걷기·LinearVelocity·중력·착지) 위에서 `tools/smoke.py` 가 쉼 → `Combat.luau` 본문 → `Bots.luau` 본문 → `tests/combat.smoke.luau` 를 한 청크(`dist/smoke/combined.luau`)로 이어 붙여 luau CLI 로 실행. luau CLI 는 모듈마다 환경을 격리해 전역 주입이 안 되므로 이 방식이다. 31건 | 검증기 게이트 하나(0 실패·≥25건). 한계: 회전은 LookVector 하나, 충돌 없음, Items/Rigs 는 스텁 |

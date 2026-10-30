@@ -27,8 +27,8 @@ local NOJUMP = { hitstun = true, launched = true, down = true, getup = true, hel
 local INVULN = { down = true, getup = true }
 local function now() return workspace:GetServerTimeNow() end
 
-local function flatLook(root)
-	local l = root.CFrame.LookVector
+local function flatLook(F)
+	local l = F.root.CFrame.LookVector
 	local v = Vector3.new(l.X, 0, l.Z)
 	if v.Magnitude < 1e-3 then return Vector3.new(0, 0, -1) end
 	return v.Unit
@@ -86,6 +86,7 @@ local function startMove(F, id, chain, index, t)
 	F.model:SetAttribute("Fight", "attack"); F.model:SetAttribute("FightAt", t)
 	F.model:SetAttribute("Move", id); F.model:SetAttribute("MoveAt", t); F.model:SetAttribute("LandedAt", 0)
 	applyLocks(F)
+	if m.stepIn > 0 then impulsePlane(F, flatLook(F) * m.stepIn, m.startup + m.active) end -- 내딛기: 발동+지속 동안 앞으로
 end
 local function setGuardAttr(F)
 	local g = math.floor(F.guard)

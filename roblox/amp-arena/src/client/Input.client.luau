@@ -1,7 +1,9 @@
 --!nonstrict
 -- 입력. 이동·점프·카메라는 Roblox 기본. 게임 동작만 ContextActionService 로 묶는다 — 터치 기기엔 버튼(제목은 동작 이름), 게임패드도 같은 줄.
--- 약공 M1 · 강공 R · 가드 F(홀드) · 대시 Q · 기술 1 · 줍기는 아이템의 ProximityPrompt. 키 이름은 화면에 적지 않는다.
--- 공격 전에 정면 ±35° 가장 가까운 적을 향해 돈다(조준 보조). 서버는 복제된 방향으로 판정한다.
+-- 자판은 혼자 플레이(왼손 WASD + 오른손 공격키) 기준 — 약공 Z · 강공 X · 가드 C(홀드) · 기술 V · 대시 Shift · 줍기 F(아이템의 ProximityPrompt) · 점프 Space.
+-- 마우스는 카메라(오른쪽 드래그)만 — 공격을 마우스에 두면 로비 버튼 클릭이 공격이 되고, 오른쪽 클릭은 카메라 회전과 겹친다.
+-- Shift 를 대시로 쓰므로 빌더가 StarterPlayer.EnableMouseLockOption 을 끈다(쉬프트락 토글과 겹치지 않게). 키 이름은 화면에 적지 않는다.
+-- 공격 전에 정면 ±60° 가장 가까운 적을 향해 돈다(조준 보조 — 마우스 조준이 없으니 넓게). 서버는 복제된 방향으로 판정한다.
 local Players = game:GetService("Players")
 local ContextActionService = game:GetService("ContextActionService")
 local UserInputService = game:GetService("UserInputService")
@@ -19,7 +21,7 @@ local function myRoot()
 end
 local function myTeam() local c = player.Character; return c and c:GetAttribute("Team") or 0 end
 
--- 조준 보조: 정면 ±35°, 14 스터드 안 가장 가까운 적을 향해 돈다
+-- 조준 보조: 정면 ±60°, 14 스터드 안 가장 가까운 적을 향해 돈다
 local function aimAssist()
 	local root, me = myRoot()
 	if not root then return end
@@ -38,7 +40,7 @@ local function aimAssist()
 		local dist = d.Magnitude
 		if dist < 0.5 or dist > bd then continue end
 		local ang = math.deg(math.acos(math.clamp(d.Unit:Dot(look), -1, 1)))
-		if ang <= 35 then best, bd = r, dist end
+		if ang <= 60 then best, bd = r, dist end
 	end
 	if best then
 		local hum = me:FindFirstChildOfClass("Humanoid")
@@ -58,10 +60,10 @@ local function attack(kind)
 	send("intent", { kind = kind, dir = moveDir() })
 end
 local actions = {
-	{ name = "AmpLight", title = "약공", keys = { Enum.UserInputType.MouseButton1, Enum.KeyCode.ButtonX }, run = function() attack("light") end },
-	{ name = "AmpHeavy", title = "강공", keys = { Enum.KeyCode.R, Enum.KeyCode.ButtonY }, run = function() attack("heavy") end },
-	{ name = "AmpSpecial", title = "기술", keys = { Enum.KeyCode.One, Enum.KeyCode.ButtonR1 }, run = function() aimAssist(); send("intent", { kind = "special" }) end },
-	{ name = "AmpDash", title = "대시", keys = { Enum.KeyCode.Q, Enum.KeyCode.ButtonB }, run = function() send("intent", { kind = "dash" }) end },
+	{ name = "AmpLight", title = "약공", keys = { Enum.KeyCode.Z, Enum.KeyCode.ButtonX }, run = function() attack("light") end },
+	{ name = "AmpHeavy", title = "강공", keys = { Enum.KeyCode.X, Enum.KeyCode.ButtonY }, run = function() attack("heavy") end },
+	{ name = "AmpSpecial", title = "기술", keys = { Enum.KeyCode.V, Enum.KeyCode.ButtonR1 }, run = function() aimAssist(); send("intent", { kind = "special" }) end },
+	{ name = "AmpDash", title = "대시", keys = { Enum.KeyCode.LeftShift, Enum.KeyCode.RightShift, Enum.KeyCode.ButtonB }, run = function() send("intent", { kind = "dash" }) end },
 }
 for _, a in actions do
 	ContextActionService:BindAction(a.name, function(_, state)
@@ -75,7 +77,7 @@ ContextActionService:BindAction("AmpGuard", function(_, state)
 	if state == Enum.UserInputState.Begin then send("guard", { on = true })
 	elseif state == Enum.UserInputState.End or state == Enum.UserInputState.Cancel then send("guard", { on = false }) end
 	return Enum.ContextActionResult.Pass
-end, true, Enum.KeyCode.F, Enum.KeyCode.ButtonL2)
+end, true, Enum.KeyCode.C, Enum.KeyCode.ButtonL2)
 ContextActionService:SetTitle("AmpGuard", "가드")
 
 -- 터치 버튼 배치: 오른쪽 엄지 반경, 기본 점프 버튼(우하단) 둘레. 화면 짧은 축 ≤ 500px 이면 작게.

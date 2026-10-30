@@ -131,7 +131,7 @@ function Items.spawnBomb(pos, fuseSeconds)
 	local prompt = m:FindFirstChildWhichIsA("ProximityPrompt", true)
 	if prompt then
 		prompt.MaxActivationDistance = Config.ITEMS.pickupDistance
-		prompt.KeyboardKeyCode = Enum.KeyCode.E
+		prompt.KeyboardKeyCode = Enum.KeyCode.F
 		prompt.GamepadKeyCode = Enum.KeyCode.DPadDown
 		prompt.Triggered:Connect(function(player)
 			local F = Items.hooks.fighterOf(player.Character)

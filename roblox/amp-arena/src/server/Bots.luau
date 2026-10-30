@@ -70,6 +70,11 @@ local function think(F, t)
 		if t >= b.nextAction then Combat.intent(F, "light"); b.nextAction = t + 0.15 end
 		return
 	end
+	-- 잡았으면 던진다(안 던지면 2초 뒤 저절로 놓는다 — 봇이 잡고만 있다가 놓는 모습이 그 버그였다)
+	if s == "grabbing" then
+		if t >= b.nextAction then Combat.intent(F, "light"); b.nextAction = t + 0.3 end
+		return
+	end
 	if s ~= "idle" and s ~= "guard" then return end
 	if s == "guard" then
 		if t >= b.guardUntil then Combat.intent(F, "guard", { on = false }) end
@@ -106,7 +111,9 @@ local function think(F, t)
 	if F.item then
 		if d < 20 and t >= b.nextAction then face(F, tp); Combat.intent(F, "throw"); b.nextAction = t + 0.5; return end
 	end
-	if d > 7 then
+	-- 교전 거리는 사슬의 최소 리치 — 7 스터드처럼 리치 끝에 서면 판정 원 가장자리라 헛친다
+	local engage = Rules.engageDistance(F.loadout.style, F.loadout.accessory)
+	if d > engage then
 		if d < 18 and d > 9 and t >= F.dashReadyAt and random:NextNumber() < 0.15 then face(F, tp); Combat.intent(F, "dash"); b.nextAction = t + 0.25; return end
 		local moving = moveToward(F, tp)
 		Rigs.animate(F.model, F.hum, moving)
