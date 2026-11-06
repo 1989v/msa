@@ -42,7 +42,24 @@ LUAU_BIN=/private/tmp/roblox-infinity-step-tools/luau python3 roblox/amp-arena/t
 LUAU_BIN=/private/tmp/roblox-infinity-step-tools/luau python3 roblox/amp-arena/tools/smoke.py    # 스모크만
 ```
 
+luau CLI 는 `/private/tmp` 에 두어 재부팅·임시 폴더 정리 때 사라진다(2026-11-04 실제로 비워졌다). 검증기가 `Official Luau CLI … required` 로 멈추면 공식 릴리스를 다시 받아 같은 자리에 둔다 — `luau` 와 함께 `luau-analyze`·`luau-compile` 도 필요하다.
+
+```sh
+curl -sSL -o luau-macos.zip https://github.com/luau-lang/luau/releases/latest/download/luau-macos.zip
+unzip -o -q luau-macos.zip -d extracted
+mkdir -p /private/tmp/roblox-infinity-step-tools && cp extracted/luau extracted/luau-analyze extracted/luau-compile /private/tmp/roblox-infinity-step-tools/
+```
+
 검증기는 실제 `Config`·`Styles`·`Moves`·`Accessories`·`Rules`·`Poses`·`Commands` 를 luau CLI 로 실행하고, 전 Luau 컴파일·미지 전역·공유 모듈의 Roblox API/벡터 메서드 금지·서버 require 그래프 비순환·Heartbeat 하나·Health 쓰기 단일·validate 배선·줍기 거리 재확인·빌더 결정성과 스크립트 정확 포함·맵 2·템플릿·BlockRig·에셋 출처, 그리고 **네이티브 조건**(기본 카메라 유지 · R6 · Stepped 절차 포즈 · 서버 스폰 소유 · 키 안내 없음 · 터치 버튼 · ProximityPrompt 줍기 · LinearVelocity 하나 · Humanoid.Health · GetServerTimeNow · 착지 Air 선행 · 라운드 4단계 · 상한 · 봇 절벽 탐침 · 조명 프리셋)을 검사한다. 회귀 주입 증명은 `docs/specs/2026-10-29-roblox-amp-arena/verifications/gate-proof.md`.
+
+## 게시 (무료)
+
+로블록스는 게시와 서버 호스팅에 비용이 없다 — 우리 쪽 인프라가 들지 않는다.
+
+1. Studio 에서 `dist/AmpArena.rbxlx` 를 열고 File → Publish to Roblox. 계정 소유의 경험으로 올라가며 처음엔 비공개다.
+2. Game Settings → Permissions 를 Public 으로, Players 의 Max Players 를 **8** 로. 둘 다 `.rbxlx` 에는 담기지 않는다.
+3. 비용은 선택 사항에만 있다(광고 구매·유료 입장·개발자 상품). 본인 인증이 필요한 기능(음성 채팅 등)은 쓰지 않는다. 모델 9종은 Roblox 공식 소유(creator id 1), 소리는 내장 `rbxasset` 이라 권한·구매가 없다.
+4. 공개 전 「검증하지 않는 것」의 치트 방어 범위를 다시 본다 — 저장·순위를 붙이는 순간 위치·착지의 클라이언트 신뢰가 문제가 된다.
 
 ## 검증하지 않는 것
 
