@@ -508,6 +508,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       # OCIR 은 보관 개수 설정이 없다 — 안 지우면 무료 한도 10GB 를 넘겨 저장 용량으로 과금된다.
+      # 이 한도는 Object Storage 버킷(DB 백업)과 합산이라 이미지가 쓸 수 있는 몫은 10GB 보다 작다.
       # 실패해도 이미지 발행은 이미 끝났으므로 잡을 깨지 않는다.
       - name: Prune old OCIR image tags
         continue-on-error: true
@@ -516,4 +517,4 @@ jobs:
           OCIR_NAMESPACE: ${{ secrets.OCIR_NAMESPACE }}
           OCIR_USERNAME: ${{ secrets.OCIR_USERNAME }}
           OCIR_TOKEN: ${{ secrets.OCIR_TOKEN }}
-        run: python3 scripts/ocir-prune.py --keep 3 | tee -a "$GITHUB_STEP_SUMMARY"
+        run: python3 scripts/ocir-prune.py --keep 2 | tee -a "$GITHUB_STEP_SUMMARY"
