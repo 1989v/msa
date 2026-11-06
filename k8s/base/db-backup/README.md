@@ -46,9 +46,22 @@ PAR 액세스 유형은 **객체 쓰기 허용**뿐이다. 이 URL 은 Secret �
 
 ### 버킷 쪽 보관
 
-PAR 쓰기 권한에는 삭제가 없다. 오래된 객체는 버킷의 **수명 주기 정책 규칙**이 지운다
-(`delete-after-14-days`, 삭제, 14일). 안 걸면 무료 20 GB 를 향해 계속 쌓인다 —
-하루 약 190 MB 이므로 100일 남짓이면 한도다.
+PAR 쓰기 권한에는 삭제가 없다. 오래된 덤프는 버킷의 **수명 주기 정책 규칙**이 지운다
+(`delete-mysql-after-7-days` — 접두어 `mysql-`, 삭제, 7일). 같은 버킷의 `woodland/` 스냅샷은
+접두어가 달라 이 규칙에 걸리지 않는다.
+
+규칙이 걸려 있는지는 조회로 확인한다. 없으면 404 `LifecyclePolicyNotFound` 가 온다.
+
+```bash
+oci os object-lifecycle-policy get --bucket-name msa-db-backup --region ap-chuncheon-1
+```
+
+규칙을 저장하려면 Object Storage 서비스가 이 버킷의 객체를 관리할 권한을 먼저 가져야 한다
+(IAM 정책 `objectstorage-lifecycle-msa-db-backup`). 없으면 저장이 `InsufficientServicePermissions`
+로 거부되고, 정책을 만든 직후에도 전파될 때까지 같은 오류가 난다.
+
+**무료 한도는 10 GB·월이고 이미지 저장소(OCIR)와 합산이다** — 둘이 같은 품목(`B91628`)으로
+청구된다. 규칙이 없으면 덤프가 하루 한 개씩 쌓여 이 한도를 넘기고 저장 용량으로 과금된다.
 
 ### 복구 시
 
