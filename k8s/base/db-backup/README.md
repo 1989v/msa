@@ -47,8 +47,10 @@ PAR 액세스 유형은 **객체 쓰기 허용**뿐이다. 이 URL 은 Secret �
 ### 버킷 쪽 보관
 
 PAR 쓰기 권한에는 삭제가 없다. 오래된 덤프는 버킷의 **수명 주기 정책 규칙**이 지운다
-(`delete-mysql-after-7-days` — 접두어 `mysql-`, 삭제, 7일). 같은 버킷의 `woodland/` 스냅샷은
-접두어가 달라 이 규칙에 걸리지 않는다.
+(`delete-mysql-after-5-days` — 접두어 `mysql-`, 삭제, 5일). 같은 버킷의 `woodland/` 스냅샷은
+접두어가 달라 이 규칙에 걸리지 않는다. 로컬 PVC 보관(7일)보다 짧은 것은 의도다 — 오프노드 사본은
+노드·디스크 손실 때 가장 최근 것을 되살리는 용도이고, 길게 두면 이미지 저장소와 나눠 쓰는 무료
+한도를 먹는다.
 
 규칙이 걸려 있는지는 조회로 확인한다. 없으면 404 `LifecyclePolicyNotFound` 가 온다.
 
@@ -60,8 +62,11 @@ oci os object-lifecycle-policy get --bucket-name msa-db-backup --region ap-chunc
 (IAM 정책 `objectstorage-lifecycle-msa-db-backup`). 없으면 저장이 `InsufficientServicePermissions`
 로 거부되고, 정책을 만든 직후에도 전파될 때까지 같은 오류가 난다.
 
-**무료 한도는 10 GB·월이고 이미지 저장소(OCIR)와 합산이다** — 둘이 같은 품목(`B91628`)으로
+**무료 한도는 10 GiB·월이고 이미지 저장소(OCIR)와 합산이다** — 둘이 같은 품목(`B91628`)으로
 청구된다. 규칙이 없으면 덤프가 하루 한 개씩 쌓여 이 한도를 넘기고 저장 용량으로 과금된다.
+이미지 쪽은 CI 정리 단계가 남은 저장량을 재서 8 GiB 를 넘으면 잡을 실패시킨다
+(`scripts/ocir-prune.py --budget-gib`). 버킷 쪽은 CI 가 볼 수 없으니, 덤프 크기가 커지면
+이 규칙의 일수와 예산을 함께 다시 본다 — 둘의 합이 10 GiB 아래여야 한다.
 
 ### 복구 시
 
