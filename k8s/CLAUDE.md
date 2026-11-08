@@ -41,7 +41,8 @@ k8s/argocd/install.sh                                   # Argo + 워치독 (Argo
   누락 서비스는 지정 재빌드: `gh workflow run images.yml --ref main -f services="gateway portal-fe"`
 
 - **디스크를 먹는 두 가지는 서로 다른 곳이 지운다 — 한쪽만 켜 두면 다른 쪽이 무한히 쌓인다.**
-  ① OCIR 태그는 CI 의 `scripts/ocir-prune.py --keep 2` 가 지운다(원격). ② **노드의 containerd
+  ① OCIR 태그는 CI 의 `scripts/ocir-prune.py --keep 2` 가 지우고, 남은 저장량이 8 GiB 를 넘으면
+  잡을 실패시킨다(원격 — 무료 10 GiB·월은 DB 백업 버킷과 합산이다). ② **노드의 containerd
   이미지는 kubelet 이미지 GC 가 지운다(로컬).** ②의 기본 임계값 85%는 디스크가 82%에 머무는 동안
   **영영 안 돈다** — 그래서 미사용 이미지 176개(`portal-fe` 만 112개)가 쌓여 35GB 를 먹었다.
   `oci-bootstrap.sh` 가 `--kubelet-arg=image-gc-high-threshold=70`(low 55)로 깐다.
