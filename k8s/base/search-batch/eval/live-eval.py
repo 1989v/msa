@@ -124,13 +124,16 @@ EVIDENCE = {
     "attr":     (re.compile(r"attr:[A-Za-z]+=[A-Z_]+(&[A-Za-z0-9]+=[A-Z0-9_]+)*:[1-9][0-9]*"), {"CONDITION"}),
     "seed":     (re.compile(r"seed:intents\.yml"), {"NATURAL"}),
     "variant":  (re.compile(r"variant:(.+):(조사|띄어쓰기|어미)"), {"NATURAL"}),
+    # 동행 적합 기능이 겨냥하는 동행 유형을 문장으로 — 값은 그 질의가 묻는 동행
+    "companion": (re.compile(r"companion:(연인|친구|혼자|부모|가족|아이|반려동물)"), {"NATURAL"}),
     "title":    (re.compile(r"title:[0-9]+"), {"ALIAS"}),
     "synonym":  (re.compile(r"synonym:\S.*"), {"ALIAS"}),
     "romanize": (re.compile(r"romanize:[0-9]+:mr"), {"ALIAS"}),
     "edit":     (re.compile(r"edit:(.+):(받침|된소리|ㅐㅔ|띄어쓰기|철자누락|철자전치)"), {"TYPO"}),
     "zero":     (re.compile(r"zero:\S.*"), {"NO_ANSWER"}),
 }
-GRADED_BY = re.compile(rf"v2|human-{DATE}|(sonnet|claude)-[a-z0-9.-]+-{DATE}")
+# 모델 채점은 <계열>[-<모델 판>]-<날짜>[묶음 문자]. 블라인드 서브 에이전트 채점은 모델 판을 모르고 묶음 문자로 회차를 가른다.
+GRADED_BY = re.compile(rf"v2|human-{DATE}|(sonnet|claude)(-[a-z0-9.-]+)?-{DATE}[a-z]?")
 # 판정 파일은 ConfigMap 에 그대로 실린다 — 검색어에 연락처·주문번호·주소 꼴이 있으면 넣지 않는다
 PRIVATE = re.compile(r"[0-9]{6,}|@|http|www\.|://", re.I)
 
