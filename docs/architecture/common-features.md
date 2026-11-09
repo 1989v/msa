@@ -12,6 +12,7 @@
 | 선택적 | Security (JWT, AES) | `kgd.common.security.enabled: true` |
 | 선택적 | Redis 클러스터 | `kgd.common.redis.enabled: true` |
 | 선택적 | WebClient | `kgd.common.web-client.enabled: true` |
+| 프로파일 | 배치 종료 (`com.kgd.common.batch`) — 러너가 끝나면 프로세스를 내린다. 호스트 앱을 그대로 띄우는 배치 CronJob 이 끝나지 않는 것을 막는다 | 프로파일 `retention` 또는 `linkcheck` 일 때만. 상주 서비스에는 실리지 않는다 |
 
 ## 사용법
 
