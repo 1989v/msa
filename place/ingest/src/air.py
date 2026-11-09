@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 
 from src import datagokr, place_client, weather_grid
 
@@ -95,12 +96,12 @@ def nearest_station(point: tuple[float, float], stations: list[dict]) -> tuple[d
     return best, weather_grid.distance_km(point, (best["latitude"], best["longitude"]))
 
 
-def station_candidates(regions: list[dict], attractions: list[dict], stations: list[dict]) -> list[dict]:
+def station_candidates(regions: list[dict], attractions: Iterable[dict], stations: list[dict]) -> list[dict]:
     """시군구마다 측정소 후보 → place `air_station_sigungu` 행.
 
     후보 = 그 시군구 관광지(언어 무관, 같은 좌표는 한 번) 각각의 최근접 측정소 ∪ 시군구 대표점의 최근접 측정소.
     `attractions` 는 그 측정소가 최근접인 관광지 좌표 수(대표점만의 후보면 0), `distanceM` 은 대표점 → 측정소(대표점이 없으면 None).
-    좌표가 한반도 밖인 관광지(원천 오기)는 건너뛴다.
+    좌표가 한반도 밖인 관광지(원천 오기)는 건너뛴다. `attractions` 는 한 번만 훑으므로 흘려 받는 것을 넘겨도 된다.
     """
     counts: dict[tuple[str, str], int] = {}
     seen: set[tuple[str, float, float]] = set()
@@ -198,7 +199,7 @@ def run_stations(key: str, client: datagokr.Client | None = None) -> dict:
         summary["failed"] = True
         log(f"API {STATION_API} · 호출 {client.calls} · 받은 행 {len(rows)} · 쓸 수 있는 측정소 0 — 보내지 않는다")
         return summary
-    mappings = station_candidates(place_client.fetch_sigungu_regions(), place_client.fetch_attractions(), stations)
+    mappings = station_candidates(place_client.fetch_sigungu_regions(), place_client.iter_attractions(), stations)
     got = place_client.put_air_stations(stations, mappings)
     per_sigungu: dict[str, int] = {}
     for m in mappings:

@@ -103,3 +103,35 @@ def test_좌표_투영은_ACTIVE_이고_좌표가_있는_행의_id_위도_경도
     assert len(got) == len(rows) - 2
     assert got[0] == (1, 37.001, 127.0) and all(len(p) == 3 for p in got)
     assert 4 not in {p[0] for p in got} and 6 not in {p[0] for p in got}
+
+
+def test_흘려_받기는_전량_스캔과_같은_행을_같은_순서로_준다(monkeypatch):
+    ids = [i for i in range(1, 900) if i % 5] + [3000]
+    _fake_place(monkeypatch, list(reversed(_rows(ids))))
+
+    assert [r["id"] for r in place_client.iter_attractions()] == sorted(ids)
+
+
+def test_흘려_받기는_다음_쪽을_필요할_때만_부른다(monkeypatch):
+    calls = _fake_place(monkeypatch, _rows(range(1, SERVER_CAP * 3 + 1)))
+
+    it = place_client.iter_attractions()
+    first = [next(it) for _ in range(SERVER_CAP)]
+
+    assert [r["id"] for r in first] == list(range(1, SERVER_CAP + 1))
+    assert len(calls) == 1, "첫 쪽을 다 내주기 전에 다음 쪽을 받아 쌓지 않는다"
+    assert sum(1 for _ in it) == SERVER_CAP * 2 and len(calls) == 3
+
+
+def test_흘려_받기도_커서가_앞으로_가지_않으면_멈춘다(monkeypatch):
+    calls = []
+
+    def request(method, path, body=None, timeout=120):
+        calls.append(path)
+        if len(calls) > 100:
+            raise AssertionError("가드 없이 무한히 되읽는다")
+        return {"data": {"attractions": _rows([1, 2]), "nextAfterId": 2}}
+
+    monkeypatch.setattr(place_client, "_request", request)
+    with pytest.raises(RuntimeError, match="앞으로 가지 않는다"):
+        list(place_client.iter_attractions())

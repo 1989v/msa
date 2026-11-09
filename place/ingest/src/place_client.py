@@ -10,6 +10,7 @@ import os
 import time
 import urllib.parse
 import urllib.request
+from collections.abc import Iterator
 
 from src.sync_tour import MARKET_CAT3, MARKET_CLASSES
 
@@ -93,6 +94,27 @@ def fetch_attractions() -> list[dict]:
             break
         after_id = int(next_after)
     return rows
+
+
+def iter_attractions() -> Iterator[dict]:
+    """전량 스캔을 한 행씩 흘려 준다 — 받는 쪽이 필요한 필드만 남기면 전 필드 dict 가 쌓이지 않는다.
+
+    순서(id 오름차순)·끝 판정·키셋 검사는 `fetch_attractions()` 와 같다. 한 번에 메모리에 있는 것은 한 쪽뿐이다.
+    """
+    after_id = last_id = 0
+    while True:
+        qs = urllib.parse.urlencode({"afterId": after_id, "size": PAGE_SIZE})
+        data = _request("GET", f"/api/places/attractions?{qs}")["data"]
+        got = data.get("attractions") or []
+        if got and int(got[0]["id"]) <= last_id:
+            raise RuntimeError(f"[place] 키셋이 앞으로 가지 않는다: afterId={after_id}, 첫 id={got[0]['id']}")
+        yield from got
+        if got:
+            last_id = int(got[-1]["id"])
+        next_after = data.get("nextAfterId")
+        if not got or next_after is None:
+            return
+        after_id = int(next_after)
 
 
 def fetch_attraction_points() -> list[tuple[int, float, float]]:

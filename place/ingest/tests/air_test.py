@@ -171,7 +171,8 @@ def test_attraction_coordinates_outside_korea_are_skipped():
 def test_station_job_pushes_stations_and_mapping(monkeypatch):
     sent = {}
     monkeypatch.setattr(place_client, "fetch_sigungu_regions", lambda: [r for r in REGIONS if r["level"] == "SIGUNGU"])
-    monkeypatch.setattr(place_client, "fetch_attractions", _attractions)
+    monkeypatch.setattr(place_client, "iter_attractions", lambda: iter(_attractions()))
+    monkeypatch.setattr(place_client, "fetch_attractions", lambda: pytest.fail("전 필드 전량을 쌓지 않는다"))
     monkeypatch.setattr(place_client, "put_air_stations",
                         lambda stations, mappings: sent.update(stations=stations, mappings=mappings)
                         or {"stations": len(stations), "mappings": len(mappings), "sigungu": len(mappings)})
