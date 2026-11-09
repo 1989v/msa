@@ -1,0 +1,101 @@
+# 예약 잡 실패 감시.
+#
+# CronJob 은 실패해도 아무에게도 알리지 않는다. Job 이 Failed 로 남을 뿐이고, 그 상태는
+# 누가 `kubectl get cronjob` 을 쳐 봐야 보인다. 백업·보존 정리·수집처럼 조용히 멈추면
+# 한참 뒤에야 드러나는 일이 전부 CronJob 이라, 실패 중인 것을 찾아 텔레그램으로 알린다.
+#
+# 판정과 알림 조건은 스크립트(`cronjob-failure-watch.py`)에 있다. 스크립트는 ConfigMap
+# `cronjob-failure-watch` 로 실리고, 그 ConfigMap 은 `install.sh` 가 파일에서 만든다.
+#
+# **Argo 가 배포하지 않는다.** 감시 대상(commerce 네임스페이스)과 같은 경로로 배포하면
+# 그 경로가 막혔을 때 감시도 같이 멈춘다. `k8s/argocd/install.sh` 가 직접 apply 한다.
+# argocd 네임스페이스에 두는 이유도 같다 — commerce 의 NetworkPolicy 에 묶이지 않는다.
+#
+# 알림에는 Secret `job-alert-telegram`(키 `token` · `chat-id`)이 필요하다. 없으면 잡이
+# 실패한다 — 알릴 길이 없는 감시가 초록으로 남으면 켜져 있다고 믿게만 만든다.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cronjob-failure-watch
+  namespace: argocd
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cronjob-failure-watch
+rules:
+  # 읽기만 한다. 전 네임스페이스의 CronJob 과 그것이 만든 Job.
+  - apiGroups: ["batch"]
+    resources: ["cronjobs", "jobs"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cronjob-failure-watch
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cronjob-failure-watch
+subjects:
+  - kind: ServiceAccount
+    name: cronjob-failure-watch
+    namespace: argocd
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cronjob-failure-watch
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: cronjob-failure-watch
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/component: watchdog
+spec:
+  # 스크립트의 INTERVAL(1시간) · RUN_MINUTE(7) 과 같아야 한다. 스크립트는 「직전 예약 시각 이후
+  # 새로 실패한 것」을 예약 시각으로 끊으므로, 주기가 어긋나면 새 실패를 놓치거나 두 번 알린다.
+  schedule: "7 * * * *"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 300
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      # 재시도하지 않는다 — 한 시간 뒤 다음 실행이 오고, 놓친 것은 하루 요약이 다시 집는다.
+      backoffLimit: 0
+      activeDeadlineSeconds: 120
+      ttlSecondsAfterFinished: 3600
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: cronjob-failure-watch
+        spec:
+          serviceAccountName: cronjob-failure-watch
+          restartPolicy: Never
+          containers:
+            - name: watch
+              image: docker.io/library/python:3.12-alpine
+              imagePullPolicy: IfNotPresent
+              command: ["python", "/app/watch.py"]
+              env:
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                # optional 로 둔다 — 없을 때 컨테이너가 아예 못 뜨는 것보다, 떠서 무엇이 없는지
+                # 한 줄로 말하고 실패하는 쪽이 원인을 찾기 쉽다.
+                - name: TELEGRAM_BOT_TOKEN
+                  valueFrom:
+                    secretKeyRef: { name: job-alert-telegram, key: token, optional: true }
+                - name: TELEGRAM_CHAT_ID
+                  valueFrom:
+                    secretKeyRef: { name: job-alert-telegram, key: chat-id, optional: true }
+              volumeMounts:
+                - name: script
+                  mountPath: /app
+                  readOnly: true
+              resources:
+                requests: { cpu: 20m, memory: 32Mi }
+                limits:   { memory: 96Mi }
+          volumes:
+            - name: script
+              configMap:
+                name: cronjob-failure-watch

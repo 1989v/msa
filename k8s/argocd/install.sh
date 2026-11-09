@@ -114,6 +114,15 @@ log "멈춘 동기화 워치독 적용"
 kubectl apply -f "$SCRIPT_DIR/stuck-sync-watchdog.yaml"
 ok "워치독 등록 (5분 주기 · 20분 초과 작업 종료)"
 
+# 예약 잡 실패 감시 — 같은 이유로 여기서 적용한다. 스크립트는 파일에서 ConfigMap 으로 만든다.
+# 알림에는 Secret job-alert-telegram(token · chat-id)이 따로 필요하다 (README 「예약 잡 실패 감시」).
+log "예약 잡 실패 감시 적용"
+kubectl -n argocd create configmap cronjob-failure-watch \
+  --from-file=watch.py="$SCRIPT_DIR/cronjob-failure-watch.py" \
+  --dry-run=client -o yaml | kubectl apply -f -
+kubectl apply -f "$SCRIPT_DIR/cronjob-failure-watch.yaml"
+ok "예약 잡 실패 감시 등록 (1시간 주기 · 텔레그램)"
+
 #───────────────────────────────────────────────────────────────────────────────
 # 4. 초기 admin 비번 출력
 #───────────────────────────────────────────────────────────────────────────────

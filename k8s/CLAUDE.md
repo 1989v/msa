@@ -89,6 +89,9 @@ k8s/argocd/install.sh                                   # Argo + 워치독 (Argo
   - 자동 해제: 워치독 CronJob 이 20분 초과 시 끊는다 (ADR-0073)
   - **워치독은 Argo 가 배포하지 않는다** — 막힌 것을 푸는 물건을 막힌 것이 배포하면 같이 막힌다.
     `k8s/argocd/install.sh` 가 직접 apply 하므로 **워치독을 고치면 install.sh 를 다시 돌려야 반영된다**
+  - **예약 잡 실패는 `cronjob-failure-watch` 가 텔레그램으로 알린다**(argocd 네임스페이스, 1시간 주기, 같은 이유로 install.sh 배포).
+    호스트 앱을 그대로 띄우는 배치(`deal-linkcheck` · `retention*`)는 **호스트가 기동에 요구하는 비밀을 같이 받아야 한다** —
+    Deployment 에 필수 비밀을 추가하면 그 이미지를 쓰는 CronJob 매니페스트도 같이 고친다 → `k8s/argocd/README.md`
 
 - **CI 커밋백은 최신 main 위에 태그를 다시 적는다 — 병합하지 않는다.** 각 런은 자기 commit sha 를
   체크아웃하므로, 빌드가 도는 몇 분 사이 앞선 런의 커밋백이 얹히면 push 가 밀린다. 이때 rebase 로

@@ -245,3 +245,35 @@ Argo 가 배포하면 같이 막히기 때문이다. 워치독을 고쳤으면 `
 
 Application 이 늘면 CronJob 의 `APPS` 환경변수에 공백으로 구분해 더한다 — 목록을 API 응답에서
 긁지 않는 이유는 status 안의 수백 개 `"name"` 과 뒤섞여 조용히 틀리기 때문이다.
+
+## 예약 잡 실패 감시
+
+CronJob 은 실패해도 알리지 않는다. `cronjob-failure-watch` 가 한 시간마다 전 네임스페이스의
+CronJob 을 훑어, 마지막 성공보다 뒤에 실패로 끝난 Job 이 있는 것을 텔레그램으로 알린다.
+정지(`suspend`)된 CronJob 은 보지 않는다.
+
+| 언제 | 무엇을 보내나 |
+|---|---|
+| 직전 실행 이후 새로 실패했을 때 | 그 잡과 실패 시각 · 마지막 성공 시각 |
+| 매일 09:07 KST, 실패 중인 것이 남아 있을 때 | 실패 중인 잡 전부 |
+| 월요일 09:07 KST, 실패가 없을 때 | 감시가 살아 있다는 한 줄 |
+
+월요일 신호가 안 오면 감시 자체가 멈춘 것이다.
+
+```bash
+# 알림 받을 곳 — 값이 셸 히스토리에 남지 않게 파일로 넣는다
+kubectl -n argocd create secret generic job-alert-telegram \
+  --from-file=token=<봇 토큰이 담긴 파일> --from-file=chat-id=<채팅 ID 가 담긴 파일>
+
+# 상태 · 최근 판정
+kubectl -n argocd get cronjob cronjob-failure-watch
+kubectl -n argocd logs -l app.kubernetes.io/name=cronjob-failure-watch --tail=20
+
+# 수동 1회 실행
+kubectl -n argocd create job --from=cronjob/cronjob-failure-watch watch-manual
+```
+
+Secret 이 없으면 잡이 실패하고 로그에 무엇이 없는지 적힌다. 스크립트(`cronjob-failure-watch.py`)나
+매니페스트를 고치면 `install.sh` 를 다시 돌려야 반영된다 — Argo 가 배포하지 않는다.
+주기(`schedule`)를 바꾸면 스크립트의 `INTERVAL` · `RUN_MINUTE` 도 같이 바꾼다.
+
