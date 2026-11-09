@@ -21,14 +21,15 @@ RUN pip install --no-cache-dir \
       --index-url https://download.pytorch.org/whl/cpu "torch==2.14.0" \
  && pip install --no-cache-dir "sentence-transformers==6.0.1" \
  && rm -rf /root/.cache
-COPY --from=weights /weights /opt/model
-COPY server.py /opt/encoder/server.py
+# 소유자는 COPY 에서 정한다 — 뒤에서 chown -R 을 하면 가중치가 같은 크기의 레이어로 한 번 더 저장된다
+RUN useradd -u 10001 -m encoder && chown encoder /opt
+COPY --chown=encoder --from=weights /weights /opt/model
+COPY --chown=encoder server.py /opt/encoder/server.py
 ENV ENCODER_MODEL=/opt/model ENCODER_THREADS=1 ENCODER_PORT=8099
 # glibc 아레나를 2개로 묶는다 — 호스트 코어 수(cgroup 상한이 아니라)만큼 아레나를 만들고 해제분을 쥐고 있어 RSS 가 부푼다
 ENV MALLOC_ARENA_MAX=2
 # 스탬프는 허브 id + 리비전이다 — 도구가 만든 문서 벡터와 같은 공간이어야 한다
 ENV ENCODER_MODEL_ID=${MODEL} ENCODER_REVISION=${REVISION}
-RUN useradd -u 10001 -m encoder && chown -R encoder /opt
 USER 10001
 EXPOSE 8099
 HEALTHCHECK --interval=30s --timeout=5s --start-period=120s \
