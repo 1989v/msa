@@ -1,0 +1,9 @@
+questions:
+  - id: SAVE-GET-RACE
+    category: impl-discovery
+    status: resolved
+    summary: "부모 독립 검토의 stale GET/PUT 경합. 정확한 query 취소와 지연 GET 회귀 검사로 해결."
+  - id: SAVE-ESCAPE-FOCUS
+    category: test-discovery
+    status: resolved
+    summary: "모달 바깥 포커스의 Escape 미처리. open-only 최상단 document listener와 정리 회귀 검사로 해결."

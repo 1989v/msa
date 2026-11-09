@@ -1,4 +1,5 @@
 import PlatformReleasesPanel from './games/PlatformReleasesPanel';
+import { usePlatformReleaseDraft } from './games/usePlatformReleaseDraft';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createColumnHelper, useReactTable, getCoreRowModel } from '@tanstack/react-table';
@@ -98,19 +99,15 @@ interface GameDraft {
   tags: string[];
 }
 
-function GameEditDialog({ slug, onClose }: { slug: string; onClose: () => void }) {
+export function GameEditDialog({ slug, onClose }: { slug: string; onClose: () => void }) {
   const { data: detail } = useQuery({
     queryKey: ['admin-game', slug],
     queryFn: () => fetchAdminGame(slug),
   });
 
-  return (
+  return detail ? <GameEditForm detail={detail} onClose={onClose} /> : (
     <Dialog open onClose={onClose} title={`게임 수정 — ${slug}`} className="max-w-2xl">
-      {detail ? (
-        <GameEditForm detail={detail} onClose={onClose} />
-      ) : (
-        <p className="py-8 text-center text-sm text-zinc-500">불러오는 중...</p>
-      )}
+      <p className="py-8 text-center text-sm text-zinc-500">불러오는 중...</p>
     </Dialog>
   );
 }
@@ -133,6 +130,12 @@ function GameEditForm({ detail, onClose }: { detail: AdminGameDetail; onClose: (
     },
     tags: detail.tags,
   }));
+  const [baseline, setBaseline] = useState(draft);
+  const platform = usePlatformReleaseDraft(slug);
+  const metadataDirty = JSON.stringify(draft.form) !== JSON.stringify(baseline.form);
+  const tagsDirty = draft.tags.length !== baseline.tags.length || draft.tags.some((tag) => !baseline.tags.includes(tag));
+  const dirty = metadataDirty || tagsDirty || platform.dirty;
+  const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const { data: tagOptions = [] } = useQuery({
@@ -147,17 +150,28 @@ function GameEditForm({ detail, onClose }: { detail: AdminGameDetail; onClose: (
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await updateGameMetadata(slug, draft.form);
-      const changed =
-        draft.tags.length !== detail.tags.length || draft.tags.some((t) => !detail.tags.includes(t));
-      if (changed) await updateGameTags(slug, draft.tags);
-    },
-    onSuccess: () => {
-      // 낙관적 갱신 대신 재조회 — 서버가 정규화한 값(공백 → null 등)을 그대로 반영한다
+      const failures: string[] = [];
+      // APIs are independent. Advance only successful section baselines for a safe retry.
+      if (metadataDirty) {
+        try {
+          await updateGameMetadata(slug, draft.form);
+          setBaseline((prev) => ({ ...prev, form: draft.form }));
+        } catch { failures.push('기본 정보'); }
+      }
+      if (tagsDirty) {
+        try {
+          await updateGameTags(slug, draft.tags);
+          setBaseline((prev) => ({ ...prev, tags: draft.tags }));
+        } catch { failures.push('태그'); }
+      }
+      if (platform.dirty) {
+        try { await platform.save(); } catch { failures.push('Roblox 플랫폼 버전'); }
+      }
       refresh();
-      onClose();
+      if (failures.length) throw new Error(`${failures.join(', ')} 저장에 실패했습니다. 성공한 항목은 저장되었습니다. 입력을 유지했으니 다시 저장하세요.`);
     },
-    onError: () => setError('저장에 실패했습니다'),
+    onSuccess: () => { setSaved(true); setError(null); },
+    onError: (failure) => setError(failure.message),
   });
 
   const statusMutation = useMutation({
@@ -165,6 +179,7 @@ function GameEditForm({ detail, onClose }: { detail: AdminGameDetail; onClose: (
     onSuccess: () => {
       setError(null);
       refresh();
+      void queryClient.invalidateQueries({ queryKey: ['admin-game-platform-releases', slug] });
     },
     onError: () => setError('상태 변경에 실패했습니다'),
   });
@@ -187,11 +202,21 @@ function GameEditForm({ detail, onClose }: { detail: AdminGameDetail; onClose: (
     ...tags.filter((t) => !tagOptions.some((o) => o.slug === t)).map((t) => ({ slug: t, name: t })),
   ];
 
+  const pending = saveMutation.isPending || statusMutation.isPending;
+  const requestClose = () => {
+    if (pending) return;
+    if (!dirty || window.confirm('저장하지 않은 변경사항을 버리고 닫을까요?')) onClose();
+  };
+
   return (
-    <form
+    <Dialog open onClose={requestClose} title={`게임 수정 — ${slug}`} className="max-w-2xl max-h-[90dvh] overflow-y-auto">
+    <fieldset disabled={pending} className="min-w-0 space-y-3">
+    <form id="game-edit-form"
       className="space-y-3"
       onSubmit={(e) => {
         e.preventDefault();
+        if (pending || !dirty || !platform.ready || !platform.valid) return;
+        setSaved(false);
         setError(null);
         saveMutation.mutate();
       }}
@@ -301,19 +326,22 @@ function GameEditForm({ detail, onClose }: { detail: AdminGameDetail; onClose: (
         <Input id="game-entry" value={detail.entryUrl} readOnly disabled />
       </div>
 
-      <PlatformReleasesPanel slug={slug} playable={detail.status === 'BETA' || detail.status === 'PUBLISHED'} />
+      <PlatformReleasesPanel state={platform} playable={detail.status === 'BETA' || detail.status === 'PUBLISHED'} />
 
       <SeoNotice />
 
+    </form>
       <CollectionsPanel />
-
-      <div className="flex justify-end gap-2 pt-1">
-        <Button type="button" variant="outline" onClick={onClose}>취소</Button>
-        <Button type="submit" disabled={saveMutation.isPending}>
+    </fieldset>
+      <div className="sticky bottom-0 flex flex-wrap items-center justify-end gap-2 border-t border-[var(--ko-border-subtle)] bg-white py-3 dark:bg-[var(--ko-surface-1)]">
+        <p role="status" className="mr-auto text-sm">{pending ? '저장 중...' : dirty ? '저장하지 않은 변경사항이 있습니다.' : !platform.ready ? '플랫폼 조회 확인이 필요합니다.' : saved ? '변경사항을 저장했습니다.' : '저장된 상태입니다.'}</p>
+        {!platform.ready && <p className="w-full text-xs">플랫폼 버전을 불러온 뒤 전체 저장할 수 있습니다.</p>}
+        <Button type="button" variant="outline" disabled={pending} onClick={requestClose}>닫기</Button>
+        <Button type="submit" form="game-edit-form" disabled={pending || !dirty || !platform.ready || !platform.valid}>
           {saveMutation.isPending ? '저장 중...' : '저장'}
         </Button>
       </div>
-    </form>
+    </Dialog>
   );
 }
 
