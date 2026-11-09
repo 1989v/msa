@@ -407,7 +407,7 @@ images:
     newTag: 77da8f0
   - name: commerce/admin-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/admin-fe
-    newTag: e800b48
+    newTag: 4041b93
   - name: commerce/analytics
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/analytics
     newTag: 77da8f0
