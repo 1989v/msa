@@ -53,6 +53,12 @@ spec:
                 # DB 자격증명은 application.yml 기본값을 쓴다(oci-arm 은 그 값으로 프로비저닝됨).
                 - name: DEAL_DB_HOST
                   value: "mysql-code-dictionary-master:3306"
+                # 호스트 앱을 그대로 띄우므로 호스트가 기동에 요구하는 비밀은 이 배치도 받아야 한다.
+                # commerce Deployment 가 받는 필수 비밀이 늘면 여기도 같이 늘린다 — 빠지면 컨텍스트가
+                # 뜨기 전에 죽어 링크 점검이 한 번도 돌지 않는다.
+                - name: SELLER_ACCOUNT_ENC_KEY
+                  valueFrom:
+                    secretKeyRef: { name: seller-account-enc, key: key }
               resources:
                 requests: { cpu: 100m, memory: 384Mi }
                 limits:   { memory: 640Mi }
