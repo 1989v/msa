@@ -2,6 +2,7 @@
 .peer-page a { color: var(--ko-accent-primary); text-underline-offset: .2em; }
 .peer-note { color: var(--ko-text-secondary); line-height: 1.65; font-size: .9rem; }
 .peer-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
+.peer-actions a { display: inline-flex; align-items: center; min-height: 44px; }
 .peer-actions h3 { margin-right: auto; }
 .peer-panel { border: 1px solid var(--ko-border-default); background: var(--ko-surface-1); padding: clamp(1rem, 3vw, 2rem); }
 .peer-panel h2 { margin-top: 0; overflow-wrap: anywhere; }
