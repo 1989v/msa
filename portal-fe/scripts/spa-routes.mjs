@@ -16,7 +16,7 @@ export function extractRoutes(source) {
         for (let parent = node.parent; parent; parent = parent.parent) {
           if (ts.isBinaryExpression(parent) && parent.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken) guards.push(parent.left.getText(ast));
         }
-        if (guards.some((guard) => !['isResumeHost', 'blogRoutesEnabled', 'rankRoutesEnabled', 'adsRoutesEnabled'].includes(guard))) throw new Error(`Unknown route host guard: ${guards}`);
+        if (guards.some((guard) => !['isResumeHost', 'blogRoutesEnabled', 'rankRoutesEnabled', 'adsRoutesEnabled', 'peerRoutesEnabled'].includes(guard))) throw new Error(`Unknown route host guard: ${guards}`);
         const sensitivity = node.attributes.properties.find((attribute) => ts.isJsxAttribute(attribute) && attribute.name.getText(ast) === 'caseSensitive');
         let caseSensitive = false;
         if (sensitivity) {
@@ -40,6 +40,7 @@ export function pathPattern(path) {
   return parts.join('/') + (wildcard ? '(?:/.*)?' : '/?');
 }
 function hostPattern(guards) {
+  if (guards.includes('peerRoutesEnabled')) return '(?:rank\\.1989v\\.com|localhost|127\\.0\\.0\\.1|\\[::1\\])';
   if (guards.includes('isResumeHost')) return 'resume\\.[^:]+';
   // App allows these on the owning host and every non-apex host.
   if (guards.includes('blogRoutesEnabled') || guards.includes('rankRoutesEnabled') || guards.includes('adsRoutesEnabled')) return '(?!1989v\\.com:)[^:]+';

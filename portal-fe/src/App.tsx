@@ -197,6 +197,8 @@ const adsRoutesEnabled = isAdsHost || !isApexProd;
  * 같은 리더보드가 두 주소로 돌아다녀 canonical 이 갈린다 — 블로그와 같은 이유다.
  */
 const rankRoutesEnabled = isRankHost || !isApexProd;
+// Prompt sharing belongs only to the rank production host; local development has no service subdomain.
+const peerRoutesEnabled = ['rank.1989v.com', 'localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname);
 
 /**
  * 블로그의 짧은 주소(`/posts/:slug`, `/c/*`, `/authors/:handle`, `/studio`)는 blog 호스트의
@@ -301,9 +303,9 @@ function App() {
           <Route path="/deal" element={dealRoute(<DealPage />)} />
           {/* 랭킹 리더보드 — apex 는 서브도메인으로 넘긴다 (ADR-0081) */}
           <Route path="/rank" element={rankRoute(<RankPage />)} />
-          {rankRoutesEnabled && <Route path="/prompts" element={<PeerPromptsPage />} />}
-          {rankRoutesEnabled && <Route path="/prompts/new" element={<PeerPromptsPage create />} />}
-          {rankRoutesEnabled && <Route path="/prompts/:id" element={<PeerPromptsPage />} />}
+          {peerRoutesEnabled && <Route caseSensitive path="/prompts" element={<PeerPromptsPage />} />}
+          {peerRoutesEnabled && <Route caseSensitive path="/prompts/new" element={<PeerPromptsPage create />} />}
+          {peerRoutesEnabled && <Route caseSensitive path="/prompts/:id" element={<PeerPromptsPage />} />}
           {rankRoutesEnabled && <Route path="/cafe" element={<CafePage />} />}
           {rankRoutesEnabled && <Route path="/cafe/search" element={<CafePage />} />}
           {rankRoutesEnabled && <Route path="/cafe/filter" element={<CafePage />} />}
