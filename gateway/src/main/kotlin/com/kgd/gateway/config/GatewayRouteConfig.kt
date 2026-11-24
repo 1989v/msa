@@ -781,6 +781,19 @@ class GatewayRouteConfig(
             }
             // 작성자 스튜디오 — 로그인까지만 엣지가 본다. "저자인가"·"내 글인가"는
             // 서비스가 판정한다 (소유권은 게이트웨이가 알 수 없는 정보다).
+            .route("blog-peer-write") { r ->
+                r.path("/api/v1/blog/me/peer-prompts", "/api/v1/blog/me/peer-prompts/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(userConfig()))
+                            .requestRateLimiter { config ->
+                                config.setRateLimiter(redisRateLimiter)
+                                config.setKeyResolver(userKeyResolver)
+                                config.setDenyEmptyKey(false)
+                            }
+                            .stripPrefix(0)
+                    }
+                    .uri(CONTENT_URI)
+            }
             .route("blog-studio") { r ->
                 r.path("/api/v1/blog/me/**")
                     .filters { f ->
@@ -821,6 +834,11 @@ class GatewayRouteConfig(
             // 목록·상세·카테고리·작성자 공간 조회 — 공개.
             // 인증 필터를 걸지 않아도 게이트웨이가 채운 신원 헤더는 그대로 전달되므로,
             // 로그인 사용자의 "내가 누른 좋아요" 표시는 동작한다.
+            .route("blog-peer-public") { r ->
+                r.path("/api/v1/blog/peer-prompts", "/api/v1/blog/peer-prompts/**")
+                    .filters { f -> f.filter(authFilter.apply(optionalUserConfig())).stripPrefix(0) }
+                    .uri(CONTENT_URI)
+            }
             .route("blog-public") { r ->
                 r.path("/api/v1/blog/**")
                     .filters { f -> f.stripPrefix(0) }

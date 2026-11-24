@@ -64,6 +64,7 @@ fun isBlogDockerAvailable(): Boolean = dockerAvailable
     disabledReason = "Docker 미연결 — Testcontainers MySQL 사용 불가",
 )
 class BlogSchemaIntegrationSpec(
+    @Autowired @Qualifier("blogDataSource") private val peerDataSource: DataSource,
     @Autowired private val profiles: BlogProfileJpaRepository,
     @Autowired private val categories: BlogCategoryJpaRepository,
     @Autowired private val posts: BlogPostJpaRepository,
@@ -74,6 +75,51 @@ class BlogSchemaIntegrationSpec(
     @Autowired private val concepts: BlogPostConceptJpaRepository,
     @Autowired @Qualifier("blogTransactionManager") private val txManager: PlatformTransactionManager,
 ) : BehaviorSpec({
+
+    Given("persistent member peer prompts") {
+        Then("migration, single-review upsert, honest ranking and older own review all work on MySQL")
+            .config(enabledIf = { dockerAvailable }) {
+                val jdbc = org.springframework.jdbc.core.JdbcTemplate(peerDataSource)
+                val peer = com.kgd.blog.infrastructure.persistence.adapter.PeerPromptRepositoryAdapter(peerDataSource)
+                val content = com.kgd.blog.domain.model.PeerPromptContent("SOFTWARE", "Peer prompt", "Purpose", "Model", "Prompt")
+                fun review(score: Int) = com.kgd.blog.domain.model.PeerReviewContent("Software", "Engineer", score, "Works", "Limits", "Context")
+                val tx = TransactionTemplate(txManager)
+                tx.executeWithoutResult {
+                    for (id in 1001L..1105L) jdbc.update("INSERT INTO blog_profile(id,member_id,display_name) VALUES(?,?,?)", id, id, "Reader-$id")
+                    val promptId = peer.create(1001, content)
+                    peer.detail(promptId, null)!!.summary.reviewCount shouldBe 0
+                    peer.detail(promptId, null)!!.summary.ratingAverage shouldBe null
+                    peer.review(promptId, 1002, review(1))
+                    peer.review(promptId, 1002, review(5))
+                    peer.detail(promptId, 1002)!!.let {
+                        it.summary.reviewCount shouldBe 1
+                        it.summary.ratingAverage shouldBe 5.0
+                        it.summary.ranked shouldBe false
+                        it.myReview!!.content.score shouldBe 5
+                    }
+                    for (id in 1003L..1105L) peer.review(promptId, id, review(4))
+                    val detail = peer.detail(promptId, 1002)!!
+                    detail.reviews.size shouldBe 100
+                    detail.reviews.none { it.mine } shouldBe true
+                    detail.myReview!!.content.score shouldBe 5
+                    detail.summary.reviewCount shouldBe 104
+                    detail.summary.ranked shouldBe true
+                    val noReview = peer.create(1001, content.copy(title = "No reviews"))
+                    val preliminary = peer.create(1001, content.copy(title = "Preliminary"))
+                    peer.review(preliminary, 1002, review(5))
+                    peer.list("SOFTWARE", 0, 20, null).map { it.id } shouldBe listOf(promptId, preliminary, noReview)
+                    peer.list("DATA", 0, 20, null).size shouldBe 0
+                    peer.removeReview(promptId, detail.myReview!!.id)
+                    peer.detail(promptId, 1002)!!.summary.reviewCount shouldBe 103
+                    peer.remove(promptId)
+                    peer.detail(promptId, null) shouldBe null
+                    peer.list("SOFTWARE", 0, 20, null).map { it.id } shouldBe listOf(preliminary, noReview)
+                    jdbc.update("DELETE FROM peer_prompt_review")
+                    jdbc.update("DELETE FROM peer_prompt")
+                    jdbc.update("DELETE FROM blog_profile WHERE id >= 1001")
+                }
+            }
+    }
 
     Given("blog 전용 Flyway 가 적용된 blog_db") {
         Then("일곱 테이블의 엔티티 매핑이 마이그레이션 스키마와 일치하고 쿼리가 실행된다")
