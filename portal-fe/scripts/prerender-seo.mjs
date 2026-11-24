@@ -89,6 +89,7 @@ import {
   RANK_COVERAGE_NOTE,
   RANK_GAS_SOURCE,
   rankHubMeta,
+  peerPromptsMeta,
   cafeMeta,
   CAFE_INDEX_MIN_BRANDS,
   rankUrl,
@@ -2206,6 +2207,7 @@ function rankSitemapEntries(boards, cafeDrinks = []) {
   return [
     { loc: rankUrl('/'), priority: '0.9' },
     { loc: rankUrl('/cafe'), priority: '0.7' },
+    { loc: rankUrl('/prompts'), priority: '0.7' },
     ...cafeDrinks.map((d) => ({ loc: rankUrl(cafeDrinkPath(d.drinkName)), priority: '0.6' })),
     ...boards.map((b) => ({ loc: rankUrl(`/boards/${b.slug}`), priority: '0.6' })),
   ];
@@ -2237,12 +2239,22 @@ async function renderRankHub(shell, boards = [], cafeDrinks = []) {
     jsonLd: [websiteJsonLd({ name: RANK_SITE_NAME, url: RANK_ORIGIN })],
     body: shellBody(
       `<h1>${escapeHtml(RANK_BRAND)}</h1><p>${escapeHtml(meta.description)}</p>` +
+        '<h2><a href="/prompts">분야별 프롬프트 동료 리뷰</a></h2><p>업무 프롬프트와 사용 맥락을 공개하고, 동료의 서술형 리뷰와 함께 읽어보세요.</p>' +
         `<h2><a href="/cafe">카페 음료 성분 비교</a></h2><p>커피와 카페 음료의 카페인·당류·칼로리를 브랜드 공식 영양정보로 비교합니다.</p>` +
         cafeDrinkLinks(cafeDrinks) +
         (boardLinks ? `<h2>주유소 최저가</h2><p>${escapeHtml(RANK_COVERAGE_NOTE)} ${escapeHtml(RANK_GAS_SOURCE)}</p><ul>${boardLinks}</ul>` : ''),
     ),
   });
   await emit(`prerender/_hosts/${RANK_HOST}.html`, html);
+  const peerMeta = peerPromptsMeta();
+  await emit(`prerender/_hosts/${RANK_HOST}/prompts.html`, compose(shell, {
+    lang: 'ko', title: peerMeta.title, description: peerMeta.description, canonical: peerMeta.canonical,
+    siteName: RANK_SITE_NAME, image: peerMeta.image, imageAlt: RANK_BRAND,
+    body: shellBody('<h1>분야별 프롬프트 동료 리뷰</h1><p>' + escapeHtml(peerMeta.description) + '</p>' +
+      '<h2>사용 맥락과 한계를 함께 공유하세요</h2><p>소프트웨어·데이터·디자인·마케팅·비즈니스·교육 분야의 업무 목적, 모델과 프롬프트 원문을 공유합니다. 동료가 유용했던 점, 한계와 테스트 맥락을 남깁니다.</p>' +
+      '<p>리뷰 세 개부터 같은 분야 안에서 평점 평균과 리뷰 수로 비교합니다. 리뷰가 적거나 없는 글은 순위 미정으로 표시합니다. 분야·역할은 본인 소개이며 검증된 전문가 자격이 아닙니다.</p>' +
+      '<p><a href="/prompts/new">프롬프트 공유하기</a> · <a href="/">랭킹 홈</a></p>'),
+  }));
   await emit(`prerender/_hosts/${RANK_HOST}/cafe.html`, renderCafeHtml(shell, cafeDrinks));
   for (const drink of cafeDrinks) {
     // nginx 는 디코딩한 경로로 파일을 찾는다 — 파일 이름은 음료명 그대로다.

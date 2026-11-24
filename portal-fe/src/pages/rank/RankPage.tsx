@@ -53,7 +53,7 @@ export default function RankPage() {
           <span className="kh-display-accent">랭킹</span> 리더보드
         </h1>
         <p className="rank-header__subtitle">
-          카페 음료 성분과 지역별 최저가 주유소를 줄 세워 비교합니다.
+          분야별 프롬프트 동료 리뷰, 카페 성분과 지역별 주유소를 비교합니다.
         </p>
       </header>
 
@@ -88,6 +88,11 @@ export default function RankPage() {
         )}
 
         <div className="rank-grid">
+          <Link className="rank-card kh-slab kh-slab-offset" to="/prompts">
+            <span className="rank-card__scope kh-caps">PEER PROMPTS</span>
+            <h2 className="rank-card__title">분야별 프롬프트 동료 리뷰</h2>
+            <p className="rank-card__desc">업무 프롬프트와 사용 맥락을 공유하고 동료의 서술형 리뷰로 비교합니다.</p>
+          </Link>
           <Link className="rank-card rank-card--cafe kh-slab kh-slab-offset" to="/cafe">
             <img className="rank-card__art" src={cafeDrinkImages['cafe-latte']} alt="" width={96} height={96} decoding="async" />
             <span className="rank-card__scope kh-caps">{cafeBrands.data?.length ? `카페 ${cafeBrands.data.length}곳` : '카페'}</span>

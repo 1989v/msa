@@ -1,0 +1,25 @@
+.peer-page { max-width: 70rem; margin: 0 auto; min-height: 100vh; }
+.peer-page a { color: var(--ko-accent-primary); text-underline-offset: .2em; }
+.peer-note { color: var(--ko-text-secondary); line-height: 1.65; font-size: .9rem; }
+.peer-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
+.peer-actions h3 { margin-right: auto; }
+.peer-panel { border: 1px solid var(--ko-border-default); background: var(--ko-surface-1); padding: clamp(1rem, 3vw, 2rem); }
+.peer-panel h2 { margin-top: 0; overflow-wrap: anywhere; }
+.peer-panel p { line-height: 1.7; overflow-wrap: anywhere; }
+.peer-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem; }
+.peer-toolbar p { flex: 1; min-width: 14rem; }
+.peer-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 1rem; }
+.peer-card-meta { display: flex; justify-content: space-between; margin-bottom: 1rem; color: var(--ko-text-secondary); }
+.peer-form { display: grid; gap: 1.2rem; }
+.peer-field { display: flex; flex-direction: column; gap: .5rem; font-weight: 600; }
+.peer-field input, .peer-field textarea, .peer-field select { width: 100%; box-sizing: border-box; border: 1px solid var(--ko-border-default); background: var(--ko-surface-0); color: var(--ko-text-primary); padding: .8rem; font: inherit; min-height: 44px; border-radius: 0; }
+.peer-field textarea { min-height: 7rem; resize: vertical; font-weight: 400; }
+.peer-field .peer-prompt-input { min-height: 16rem; font-family: var(--ko-font-mono); }
+.peer-page button { min-height: 44px; padding: .6rem 1rem; border: 1px solid var(--ko-border-default); background: var(--ko-surface-2); color: var(--ko-text-primary); font: inherit; cursor: pointer; }
+.peer-page button:disabled { opacity: .55; cursor: default; }
+.peer-page :focus-visible { outline: 2px solid var(--ko-accent-primary); outline-offset: 3px; }
+.peer-prompt-text { white-space: pre-wrap; overflow-wrap: anywhere; padding: 1rem; background: var(--ko-surface-0); font-size: .95rem; line-height: 1.65; max-height: 40rem; overflow-y: auto; }
+.peer-prewrap, .peer-review dd { white-space: pre-wrap; }
+.peer-review { padding: 1.5rem 0; border-top: 1px solid var(--ko-border-default); }
+.peer-review dt { font-weight: 700; margin-top: 1rem; }
+.peer-review dd { margin: .4rem 0; line-height: 1.7; overflow-wrap: anywhere; }

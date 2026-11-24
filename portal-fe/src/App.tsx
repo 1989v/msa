@@ -45,6 +45,7 @@ const BlogStudioPage = lazy(() => import('./pages/blog/BlogStudioPage'));
 const BlogEditorPage = lazy(() => import('./pages/blog/BlogEditorPage'));
 // ADR-0081 — 랭킹 리더보드 (rank.<domain>). 경로 화면이 구글맵 로더를 포함해 lazy 로 분리한다.
 const RankPage = lazy(() => import('./pages/rank/RankPage'));
+const PeerPromptsPage = lazy(() => import('./pages/rank/PeerPromptsPage'));
 const CafePage = lazy(() => import('./pages/rank/CafePage'));
 const RankBoardPage = lazy(() => import('./pages/rank/RankBoardPage'));
 const MarketMapPage = lazy(() => import('./pages/place/MarketMapPage'));
@@ -300,6 +301,9 @@ function App() {
           <Route path="/deal" element={dealRoute(<DealPage />)} />
           {/* 랭킹 리더보드 — apex 는 서브도메인으로 넘긴다 (ADR-0081) */}
           <Route path="/rank" element={rankRoute(<RankPage />)} />
+          {rankRoutesEnabled && <Route path="/prompts" element={<PeerPromptsPage />} />}
+          {rankRoutesEnabled && <Route path="/prompts/new" element={<PeerPromptsPage create />} />}
+          {rankRoutesEnabled && <Route path="/prompts/:id" element={<PeerPromptsPage />} />}
           {rankRoutesEnabled && <Route path="/cafe" element={<CafePage />} />}
           {rankRoutesEnabled && <Route path="/cafe/search" element={<CafePage />} />}
           {rankRoutesEnabled && <Route path="/cafe/filter" element={<CafePage />} />}

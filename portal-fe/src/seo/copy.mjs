@@ -1570,10 +1570,19 @@ export function rankUrl(sub = '') {
 export function rankHubMeta() {
   return {
     // 브랜드를 앞에 둔다 — 홈 화면 앱 이름이 제목 앞 구간(「1989v 랭킹」)에서 나온다.
-    title: `${RANK_SITE_NAME} — 카페 음료 성분 비교 · 주유소 최저가`,
+    title: `${RANK_SITE_NAME} — 프롬프트 동료 리뷰 · 카페 성분 · 주유소 최저가`,
     description:
-      '카페 음료의 카페인·당류·칼로리를 브랜드 공식 영양정보로 비교하고, 지역별 최저가 주유소 순위를 확인하는 랭킹 모음입니다.',
+      '분야별 업무 프롬프트와 동료의 서술형 리뷰를 찾아보고, 카페 음료 성분과 지역별 최저가 주유소를 비교하는 랭킹 모음입니다.',
     canonical: rankUrl('/'),
+    image: ogCardUrl(RANK_ORIGIN, 'rank'),
+  };
+}
+
+export function peerPromptsMeta() {
+  return {
+    title: `분야별 프롬프트 동료 리뷰 | ${RANK_SITE_NAME}`,
+    description: '실무 프롬프트와 업무 목적·모델·사용 맥락을 공개하고, 분야와 역할을 밝힌 동료의 서술형 리뷰로 비교합니다. 분야·역할은 본인 소개이며 자격 인증이 아닙니다.',
+    canonical: rankUrl('/prompts'),
     image: ogCardUrl(RANK_ORIGIN, 'rank'),
   };
 }
