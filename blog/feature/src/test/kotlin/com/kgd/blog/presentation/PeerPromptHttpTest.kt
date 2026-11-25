@@ -40,6 +40,15 @@ class PeerPromptHttpTest : BehaviorSpec({
     val review = PeerReviewContent("Software", "Engineer", 4, "Clear", "Needs verification", "Model A")
     every { profiles.findByMemberId(10) } returns BlogProfile.newReader(10, "Alice").copy(id = 2)
     Given("the real HTTP transport and application service") {
+        Then("legacy clients may omit tags when publishing") {
+            every { repo.create(2, content) } returns 7
+            every { repo.detail(7, 10) } returns detail
+            val body = """{"content":{"domain":"SOFTWARE","title":"Code review","purpose":"Find defects","modelContext":"Model A","promptText":"Review this code"},"displayName":"Alice"}"""
+            val response = mvc.perform(post("/api/v1/blog/me/peer-prompts").header("X-User-Id", "10")
+                .contentType(MediaType.APPLICATION_JSON).content(body)).andReturn().response
+            response.status shouldBe 200
+            mapper.readTree(response.contentAsString)["data"]["content"]["tags"].size() shouldBe 0
+        }
         Then("domain and purpose tag queries are combined while invalid tags are rejected") {
             every { repo.list("SOFTWARE", 0, 20, null, "REVIEW") } returns listOf(detail.summary)
             mvc.perform(get("/api/v1/blog/peer-prompts?domain=SOFTWARE&tag=REVIEW"))
