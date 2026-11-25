@@ -4,6 +4,7 @@ import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
 
 enum class PeerPromptDomain { SOFTWARE, DATA, DESIGN, MARKETING, BUSINESS, EDUCATION, OTHER }
+enum class PeerPromptTag { ANALYSIS, WRITING, REVIEW, PLANNING, SUMMARY }
 
 private fun text(value: String, max: Int, label: String) {
     if (value.isBlank() || value.length > max) {
@@ -17,6 +18,7 @@ data class PeerPromptContent(
     val purpose: String,
     val modelContext: String,
     val promptText: String,
+    val tags: List<String> = emptyList(),
 ) {
     init {
         if (PeerPromptDomain.entries.none { it.name == domain }) {
@@ -26,6 +28,9 @@ data class PeerPromptContent(
         text(purpose, 1000, "목적")
         text(modelContext, 2000, "모델·사용 맥락")
         text(promptText, 30000, "프롬프트")
+        if (tags.size > 3 || tags.distinct().size != tags.size || tags.any { tag -> PeerPromptTag.entries.none { it.name == tag } }) {
+            throw BusinessException(ErrorCode.INVALID_INPUT, "업무 태그는 서로 다른 항목을 최대 3개 선택하세요")
+        }
     }
 }
 

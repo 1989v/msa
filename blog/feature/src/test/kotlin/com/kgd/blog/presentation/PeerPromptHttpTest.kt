@@ -40,6 +40,14 @@ class PeerPromptHttpTest : BehaviorSpec({
     val review = PeerReviewContent("Software", "Engineer", 4, "Clear", "Needs verification", "Model A")
     every { profiles.findByMemberId(10) } returns BlogProfile.newReader(10, "Alice").copy(id = 2)
     Given("the real HTTP transport and application service") {
+        Then("domain and purpose tag queries are combined while invalid tags are rejected") {
+            every { repo.list("SOFTWARE", 0, 20, null, "REVIEW") } returns listOf(detail.summary)
+            mvc.perform(get("/api/v1/blog/peer-prompts?domain=SOFTWARE&tag=REVIEW"))
+                .andReturn().response.status shouldBe 200
+            verify { repo.list("SOFTWARE", 0, 20, null, "REVIEW") }
+            mvc.perform(get("/api/v1/blog/peer-prompts?tag=arbitrary"))
+                .andReturn().response.status shouldBe 400
+        }
         Then("public detail has a stable id, literal prompt and null unrated average") {
             every { repo.detail(7, null) } returns detail
             val response = mvc.perform(get("/api/v1/blog/peer-prompts/7")).andReturn().response

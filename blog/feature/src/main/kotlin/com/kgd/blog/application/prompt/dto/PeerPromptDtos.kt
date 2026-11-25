@@ -18,6 +18,7 @@ data class PeerPromptSummary(
     val reviewCount: Long,
     val ratingAverage: Double?,
     val mine: Boolean,
+    val tags: List<String> = emptyList(),
 ) {
     val ranked: Boolean get() = PeerPromptPolicy.ranked(reviewCount)
 }

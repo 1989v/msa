@@ -121,6 +121,31 @@ class BlogSchemaIntegrationSpec(
             }
     }
 
+    Given("controlled prompt work-purpose tags") {
+        Then("tags persist and domain AND tag filters run before pagination without duplicating prompts")
+            .config(enabledIf = { dockerAvailable }) {
+                val jdbc = org.springframework.jdbc.core.JdbcTemplate(peerDataSource)
+                val peer = com.kgd.blog.infrastructure.persistence.adapter.PeerPromptRepositoryAdapter(peerDataSource)
+                val content = com.kgd.blog.domain.model.PeerPromptContent("SOFTWARE", "Tagged prompt", "Purpose", "Model", "Prompt", listOf("ANALYSIS", "REVIEW"))
+                TransactionTemplate(txManager).executeWithoutResult {
+                    jdbc.update("INSERT INTO blog_profile(id,member_id,display_name) VALUES(2001,2001,'Tag author')")
+                    val matching = (1..3).map { peer.create(2001, content) }.reversed()
+                    repeat(25) { peer.create(2001, content.copy(tags = emptyList())) }
+                    peer.create(2001, content.copy(domain = "DATA"))
+                    peer.detail(matching[0], null)!!.content.tags shouldBe listOf("ANALYSIS", "REVIEW")
+                    val filtered = peer.list("SOFTWARE", 0, 20, null, "ANALYSIS")
+                    filtered.map { it.id } shouldBe matching
+                    filtered.first().tags shouldBe listOf("ANALYSIS", "REVIEW")
+                    peer.list("SOFTWARE", 1, 2, null, "ANALYSIS").map { it.id } shouldBe listOf(matching[2])
+                    peer.list("SOFTWARE", 0, 20, null, "SUMMARY").size shouldBe 0
+                    peer.list("DATA", 0, 20, null, "ANALYSIS").size shouldBe 1
+                    jdbc.update("DELETE FROM peer_prompt_tag")
+                    jdbc.update("DELETE FROM peer_prompt WHERE author_profile_id=2001")
+                    jdbc.update("DELETE FROM blog_profile WHERE id=2001")
+                }
+            }
+    }
+
     Given("blog 전용 Flyway 가 적용된 blog_db") {
         Then("일곱 테이블의 엔티티 매핑이 마이그레이션 스키마와 일치하고 쿼리가 실행된다")
             .config(enabledIf = { dockerAvailable }) {

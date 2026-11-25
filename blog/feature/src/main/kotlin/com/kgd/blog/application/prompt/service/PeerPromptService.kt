@@ -7,6 +7,7 @@ import com.kgd.blog.application.prompt.port.PeerPromptRepositoryPort
 import com.kgd.blog.application.prompt.usecase.PeerPromptUseCase
 import com.kgd.blog.domain.model.PeerPromptDomain
 import com.kgd.blog.domain.model.PeerPromptPolicy
+import com.kgd.blog.domain.model.PeerPromptTag
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
 import org.springframework.stereotype.Service
@@ -17,11 +18,12 @@ class PeerPromptService(
     private val repository: PeerPromptRepositoryPort,
     private val profiles: BlogProfileService,
 ) : PeerPromptUseCase {
-    override fun list(domain: String?, page: Int, identity: BlogIdentity): PeerPromptPage {
-        if (page !in 0..10000 || (domain != null && PeerPromptDomain.entries.none { it.name == domain })) {
+    override fun list(domain: String?, page: Int, identity: BlogIdentity, tag: String?): PeerPromptPage {
+        if (page !in 0..10000 || (domain != null && PeerPromptDomain.entries.none { it.name == domain }) ||
+            (tag != null && PeerPromptTag.entries.none { it.name == tag })) {
             throw BusinessException(ErrorCode.INVALID_INPUT, "분야 또는 페이지가 올바르지 않습니다")
         }
-        val rows = repository.list(domain, page, 20, identity.memberId)
+        val rows = repository.list(domain, page, 20, identity.memberId, tag)
         return PeerPromptPage(rows.take(20), page, 20, rows.size > 20)
     }
 

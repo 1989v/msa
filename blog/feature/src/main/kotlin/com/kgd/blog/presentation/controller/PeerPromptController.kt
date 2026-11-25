@@ -18,9 +18,10 @@ class PeerPromptController(private val prompts: PeerPromptUseCase) {
         @RequestHeader(value = "X-User-Id", required = false) userId: String?,
         @RequestHeader(value = "X-User-Roles", required = false) roles: String?,
         response: HttpServletResponse,
+        @RequestParam(required = false) tag: String?,
     ): ApiResponse<PeerPromptPage> {
         response.setHeader(HttpHeaders.CACHE_CONTROL, "private, no-store")
-        return ApiResponse.success(prompts.list(domain, page, BlogIdentity.of(userId, roles, null)))
+        return ApiResponse.success(prompts.list(domain, page, BlogIdentity.of(userId, roles, null), tag))
     }
 
     @GetMapping("/peer-prompts/{id}")

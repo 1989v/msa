@@ -7,6 +7,14 @@ import io.kotest.matchers.shouldBe
 
 class PeerPromptTest : BehaviorSpec({
     Given("public peer prompt content") {
+        Then("legacy prompts have no tags and controlled tags are distinct with a maximum of three") {
+            val content = PeerPromptContent("SOFTWARE", "Title", "Purpose", "Model", "Prompt")
+            content.tags shouldBe emptyList()
+            content.copy(tags = listOf("ANALYSIS", "REVIEW", "SUMMARY")).tags.size shouldBe 3
+            shouldThrow<BusinessException> { content.copy(tags = listOf("ANALYSIS", "WRITING", "REVIEW", "SUMMARY")) }
+            shouldThrow<BusinessException> { content.copy(tags = listOf("ANALYSIS", "ANALYSIS")) }
+            shouldThrow<BusinessException> { content.copy(tags = listOf("invented")) }
+        }
         Then("blank purpose and oversized prompt cannot be published") {
             shouldThrow<BusinessException> { PeerPromptContent("SOFTWARE", "Title", " ", "Model", "Prompt") }
             shouldThrow<BusinessException> { PeerPromptContent("SOFTWARE", "Title", "Purpose", "Model", "x".repeat(30001)) }

@@ -17,16 +17,17 @@ import javax.sql.DataSource
 class PeerPromptRepositoryAdapter(@Qualifier("blogDataSource") dataSource: DataSource) : PeerPromptRepositoryPort {
     private val jdbc = NamedParameterJdbcTemplate(dataSource)
 
-    override fun list(domain: String?, page: Int, size: Int, memberId: Long?): List<PeerPromptSummary> = jdbc.query(
+    override fun list(domain: String?, page: Int, size: Int, memberId: Long?, tag: String?): List<PeerPromptSummary> = jdbc.query(
         "$summarySql WHERE p.removed = FALSE AND (:domain IS NULL OR p.domain = :domain) " +
+            "AND (:tag IS NULL OR EXISTS(SELECT 1 FROM peer_prompt_tag t WHERE t.prompt_id=p.id AND t.tag=:tag)) " +
             "ORDER BY (COALESCE(r.review_count,0) >= 3) DESC, " +
             "CASE WHEN r.review_count >= 3 THEN r.average_score ELSE NULL END DESC, " +
             "CASE WHEN r.review_count >= 3 THEN r.review_count ELSE NULL END DESC, p.id DESC LIMIT :limit OFFSET :offset",
-        mapOf("domain" to domain, "member" to memberId, "limit" to size + 1, "offset" to page * size),
+        mapOf("domain" to domain, "tag" to tag, "member" to memberId, "limit" to size + 1, "offset" to page * size),
     ) { rs, _ -> summary(rs, memberId) }
 
     override fun find(id: Long, lock: Boolean): PeerPromptRecord? = jdbc.query(
-        "SELECT * FROM peer_prompt WHERE id=:id" + if (lock) " FOR UPDATE" else "",
+        "SELECT p.*, $tagSql AS tags FROM peer_prompt p WHERE id=:id" + if (lock) " FOR UPDATE" else "",
         mapOf("id" to id),
     ) { rs, _ -> PeerPromptRecord(rs.getLong("id"), rs.getLong("author_profile_id"), content(rs), rs.getBoolean("removed")) }
         .firstOrNull()
@@ -59,7 +60,11 @@ class PeerPromptRepositoryAdapter(@Qualifier("blogDataSource") dataSource: DataS
             MapSqlParameterSource(mapOf("author" to authorProfileId, "domain" to content.domain, "title" to content.title,
                 "purpose" to content.purpose, "model" to content.modelContext, "prompt" to content.promptText)), key,
         )
-        return requireNotNull(key.key).toLong()
+        val id = requireNotNull(key.key).toLong()
+        content.tags.forEach { tag ->
+            jdbc.update("INSERT INTO peer_prompt_tag(prompt_id,tag) VALUES(:id,:tag)", mapOf("id" to id, "tag" to tag))
+        }
+        return id
     }
 
     // All review mutations hold the prompt row lock. The unique key also protects against other writers.
@@ -90,7 +95,9 @@ class PeerPromptRepositoryAdapter(@Qualifier("blogDataSource") dataSource: DataS
     }
 
     private fun content(rs: ResultSet) = PeerPromptContent(rs.getString("domain"), rs.getString("title"),
-        rs.getString("purpose"), rs.getString("model_context"), rs.getString("prompt_text"))
+        rs.getString("purpose"), rs.getString("model_context"), rs.getString("prompt_text"), tags(rs))
+
+    private fun tags(rs: ResultSet): List<String> = rs.getString("tags").orEmpty().split(',').filter { it.isNotEmpty() }
 
     private fun reviewResponse(rs: ResultSet, memberId: Long?) = PeerReviewResponse(
         rs.getLong("id"), rs.getString("display_name"),
@@ -104,10 +111,12 @@ class PeerPromptRepositoryAdapter(@Qualifier("blogDataSource") dataSource: DataS
         rs.getString("display_name"), rs.getTimestamp("created_at").toLocalDateTime(), rs.getLong("review_count"),
         rs.getObject("average_score")?.let { (it as Number).toDouble() },
         memberId != null && rs.getLong("member_id") == memberId,
+        tags(rs),
     )
 
+    private val tagSql = "(SELECT GROUP_CONCAT(t.tag ORDER BY t.tag SEPARATOR ',') FROM peer_prompt_tag t WHERE t.prompt_id=p.id)"
     private val summarySql = """SELECT p.*, a.display_name, a.member_id,
-        COALESCE(r.review_count,0) AS review_count, r.average_score FROM peer_prompt p
+        $tagSql AS tags, COALESCE(r.review_count,0) AS review_count, r.average_score FROM peer_prompt p
         JOIN blog_profile a ON a.id=p.author_profile_id
         LEFT JOIN (SELECT prompt_id, COUNT(*) AS review_count, AVG(score) AS average_score
             FROM peer_prompt_review GROUP BY prompt_id) r ON r.prompt_id=p.id"""
