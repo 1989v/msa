@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { promptDomains, removePeerPrompt, removePeerReview, reviewLabel, type PeerReview, type PromptDetail } from '../../api/peerPromptsApi';
+import { promptDomains, removePeerPrompt, removePeerReview, reviewLabel, promptTags, type PromptTag, type PeerReview, type PromptDetail } from '../../api/peerPromptsApi';
 import { blogErrorMessage } from '../../api/blogApi';
 import { useAuth } from '../../auth/useAuth';
 import { PEER_ORIGIN, peerLoginHref } from './peerPromptLinks';
@@ -30,12 +30,12 @@ export default function PeerPromptView({ detail }: { detail: PromptDetail }) {
   return <>
     <article className="peer-panel">
       <p className="peer-note">{promptDomains[summary.domain]} · {summary.authorName} · {new Date(summary.createdAt).toLocaleDateString('ko-KR')}</p>
-      <h2>{summary.title}</h2><p>{reviewLabel(summary)}</p><h3>업무 목적</h3><p className="peer-prewrap">{content.purpose}</p>
+      <div className="peer-detail-title"><h2>{summary.title}</h2><div className="peer-badges">{(summary.tags ?? []).filter(tag => tag in promptTags).map(tag => <span key={tag}>{promptTags[tag as PromptTag]}</span>)}</div></div><p>{reviewLabel(summary)}</p><h3>업무 목적</h3><p className="peer-prewrap">{content.purpose}</p>
       <h3>모델 · 사용 맥락</h3><p className="peer-prewrap">{content.modelContext}</p>
-      <div className="peer-actions"><h3>프롬프트 원문</h3><button onClick={() => void copy(content.promptText)}>원문 복사</button><button onClick={() => void copy(url)}>링크 복사</button></div>
+      <div className="peer-actions"><h3>프롬프트 원문</h3><button className="kh-button kh-button-ghost" onClick={() => void copy(content.promptText)}>원문 복사</button><button className="kh-button kh-button-ghost" onClick={() => void copy(url)}>링크 복사</button></div>
       <pre className="peer-prompt-text" tabIndex={0}>{content.promptText}</pre><p className="peer-note">고정 주소: <a href={url}>{url}</a></p>
-      <div className="peer-actions"><a href={`mailto:1989v@naver.com?subject=${encodeURIComponent('프롬프트 게시물 신고')}&body=${encodeURIComponent(`게시물: ${url}\n신고 사유: `)}`}>게시물·리뷰 신고</a>{summary.mine && <button disabled={busy} onClick={() => setConfirmRemove(true)}>내 프롬프트 삭제</button>}</div>
-      {confirmRemove && <div role="alert"><p>원문과 리뷰를 공개 목록에서 내립니다. 삭제할까요?</p><button disabled={busy} onClick={() => void remove()}>삭제 확인</button><button disabled={busy} onClick={() => setConfirmRemove(false)}>취소</button></div>}
+      <div className="peer-actions"><a href={`mailto:1989v@naver.com?subject=${encodeURIComponent('프롬프트 게시물 신고')}&body=${encodeURIComponent(`게시물: ${url}\n신고 사유: `)}`}>게시물·리뷰 신고</a>{summary.mine && <button className="kh-button kh-button-ghost" disabled={busy} onClick={() => setConfirmRemove(true)}>내 프롬프트 삭제</button>}</div>
+      {confirmRemove && <div role="alert"><p>원문과 리뷰를 공개 목록에서 내립니다. 삭제할까요?</p><button className="kh-button kh-button-ghost" disabled={busy} onClick={() => void remove()}>삭제 확인</button><button className="kh-button kh-button-ghost" disabled={busy} onClick={() => setConfirmRemove(false)}>취소</button></div>}
     </article>
     {notice && <p role="status">{notice}</p>}
     <section className="peer-panel"><h2>동료 리뷰 {summary.reviewCount}개</h2><p className="peer-note">분야·역할은 리뷰어 본인의 설명이며 검증된 전문가 자격이 아닙니다. 사용 환경에 따라 결과가 달라집니다.</p>
@@ -51,6 +51,6 @@ export default function PeerPromptView({ detail }: { detail: PromptDetail }) {
 function Review({ review, busy, onRemove }: { review: PeerReview; busy: boolean; onRemove: () => void }) {
   return <article className="peer-review"><h3>{review.reviewerName} · {review.content.score} / 5</h3><p className="peer-note">{review.content.reviewerDomain} / {review.content.reviewerRole} (본인 소개) · {new Date(review.createdAt).toLocaleDateString('ko-KR')}</p>
     <dl><dt>유용했던 점</dt><dd>{review.content.worked}</dd><dt>한계 · 주의점</dt><dd>{review.content.limitations}</dd><dt>테스트 맥락</dt><dd>{review.content.context}</dd></dl>
-    {review.mine && <button disabled={busy} onClick={onRemove}>내 리뷰 삭제</button>}
+    {review.mine && <button className="kh-button kh-button-ghost" disabled={busy} onClick={onRemove}>내 리뷰 삭제</button>}
   </article>;
 }

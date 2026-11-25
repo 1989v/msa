@@ -2239,7 +2239,7 @@ async function renderRankHub(shell, boards = [], cafeDrinks = []) {
     jsonLd: [websiteJsonLd({ name: RANK_SITE_NAME, url: RANK_ORIGIN })],
     body: shellBody(
       `<h1>${escapeHtml(RANK_BRAND)}</h1><p>${escapeHtml(meta.description)}</p>` +
-        '<h2><a href="/prompts">분야별 프롬프트 동료 리뷰</a></h2><p>업무 프롬프트와 사용 맥락을 공개하고, 동료의 서술형 리뷰와 함께 읽어보세요.</p>' +
+        '<h2><a href="/prompts">분야별 프롬프트 동료 리뷰</a></h2><p>분야·업무별 예시로 시작하고, 직접 쓰던 프롬프트와 동료 리뷰를 나눠요.</p>' +
         `<h2><a href="/cafe">카페 음료 성분 비교</a></h2><p>커피와 카페 음료의 카페인·당류·칼로리를 브랜드 공식 영양정보로 비교합니다.</p>` +
         cafeDrinkLinks(cafeDrinks) +
         (boardLinks ? `<h2>주유소 최저가</h2><p>${escapeHtml(RANK_COVERAGE_NOTE)} ${escapeHtml(RANK_GAS_SOURCE)}</p><ul>${boardLinks}</ul>` : ''),
@@ -2252,6 +2252,9 @@ async function renderRankHub(shell, boards = [], cafeDrinks = []) {
     siteName: RANK_SITE_NAME, image: peerMeta.image, imageAlt: RANK_BRAND,
     body: shellBody('<h1>분야별 프롬프트 동료 리뷰</h1><p>' + escapeHtml(peerMeta.description) + '</p>' +
       '<h2>사용 맥락과 한계를 함께 공유하세요</h2><p>소프트웨어·데이터·디자인·마케팅·비즈니스·교육 분야의 업무 목적, 모델과 프롬프트 원문을 공유합니다. 동료가 유용했던 점, 한계와 테스트 맥락을 남깁니다.</p>' +
+      '<h2>분야와 업무로 찾아보세요</h2><p>분야와 분석·작성·검토·기획·요약 업무 태그를 함께 선택해 필요한 프롬프트를 찾습니다. 작성자는 업무 태그를 최대 세 개 선택할 수 있으며 생략해도 됩니다.</p>' +
+      '<section id="examples"><h2>사용 예시</h2><p>편집자가 작성한 원문과 가상 입력·출력 예시를 살펴보고 내 초안으로 가져와 수정할 수 있습니다. 예시 출력은 설명용이며 실제 모델 응답이나 회원 리뷰가 아닙니다. 예시는 평점·순위에 포함되지 않습니다.</p></section>' +
+      '<h2>작성하고 미리 본 뒤 공개하세요</h2><p>로그인 전에도 작성과 미리보기를 할 수 있습니다. 초안은 같은 브라우저 탭에 보관하며 로그인 후 최종 게시 동작을 해야 공개됩니다.</p>' +
       '<p>리뷰 세 개부터 같은 분야 안에서 평점 평균과 리뷰 수로 비교합니다. 리뷰가 적거나 없는 글은 순위 미정으로 표시합니다. 분야·역할은 본인 소개이며 검증된 전문가 자격이 아닙니다.</p>' +
       '<p><a href="/prompts/new">프롬프트 공유하기</a> · <a href="/">랭킹 홈</a></p>'),
   }));

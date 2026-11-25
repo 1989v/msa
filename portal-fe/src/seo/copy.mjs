@@ -1581,7 +1581,7 @@ export function rankHubMeta() {
 export function peerPromptsMeta() {
   return {
     title: `분야별 프롬프트 동료 리뷰 | ${RANK_SITE_NAME}`,
-    description: '실무 프롬프트와 업무 목적·모델·사용 맥락을 공개하고, 분야와 역할을 밝힌 동료의 서술형 리뷰로 비교합니다. 분야·역할은 본인 소개이며 자격 인증이 아닙니다.',
+    description: '분야와 분석·작성·검토·기획·요약 태그로 업무 프롬프트와 동료 리뷰를 찾아보세요. 입력·출력 예시로 시작하고 로그인 전에도 작성과 미리보기를 할 수 있습니다.',
     canonical: rankUrl('/prompts'),
     image: ogCardUrl(RANK_ORIGIN, 'rank'),
   };

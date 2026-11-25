@@ -89,9 +89,9 @@ export default function RankPage() {
 
         <div className="rank-grid">
           <Link className="rank-card kh-slab kh-slab-offset" to="/prompts">
-            <span className="rank-card__scope kh-caps">PEER PROMPTS</span>
+            <span className="rank-card__scope">업무 도구</span>
             <h2 className="rank-card__title">분야별 프롬프트 동료 리뷰</h2>
-            <p className="rank-card__desc">업무 프롬프트와 사용 맥락을 공유하고 동료의 서술형 리뷰로 비교합니다.</p>
+            <p className="rank-card__desc">분야·업무별 예시로 시작하고, 직접 쓰던 프롬프트와 동료 리뷰를 나눠요.</p>
           </Link>
           <Link className="rank-card rank-card--cafe kh-slab kh-slab-offset" to="/cafe">
             <img className="rank-card__art" src={cafeDrinkImages['cafe-latte']} alt="" width={96} height={96} decoding="async" />

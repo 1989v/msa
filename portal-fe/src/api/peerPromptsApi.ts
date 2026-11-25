@@ -10,16 +10,19 @@ export const promptDomains = {
   BUSINESS: '비즈니스', EDUCATION: '교육', OTHER: '기타',
 } as const;
 export type PromptDomain = keyof typeof promptDomains;
-export interface PromptContent { domain: PromptDomain; title: string; purpose: string; modelContext: string; promptText: string }
+export const promptTags = { ANALYSIS: '분석', WRITING: '작성', REVIEW: '검토', PLANNING: '기획', SUMMARY: '요약' } as const;
+export type PromptTag = keyof typeof promptTags;
+export interface PromptContent { domain: PromptDomain; title: string; purpose: string; modelContext: string; promptText: string; tags?: string[] }
 export interface ReviewContent { reviewerDomain: string; reviewerRole: string; score: number; worked: string; limitations: string; context: string }
 export interface PromptSummary {
   id: number; domain: PromptDomain; title: string; purpose: string; authorName: string; createdAt: string;
   reviewCount: number; ratingAverage: number | null; ranked: boolean; mine: boolean;
+  tags?: string[];
 }
 export interface PeerReview { id: number; reviewerName: string; content: ReviewContent; createdAt: string; mine: boolean }
 export interface PromptDetail { summary: PromptSummary; content: PromptContent; reviews: PeerReview[]; myReview: PeerReview | null }
 export interface PromptPage { items: PromptSummary[]; page: number; size: number; hasMore: boolean }
-export const fetchPeerPrompts = (domain: string, page: number) => api.get<Envelope<PromptPage>>('/api/v1/blog/peer-prompts', { params: { domain: domain || undefined, page } }).then(read);
+export const fetchPeerPrompts = (domain: string, page: number, tag = '') => api.get<Envelope<PromptPage>>('/api/v1/blog/peer-prompts', { params: { domain: domain || undefined, tag: tag || undefined, page } }).then(read);
 export const fetchPeerPrompt = (id: string) => api.get<Envelope<PromptDetail>>(`/api/v1/blog/peer-prompts/${id}`).then(read);
 export const createPeerPrompt = (content: PromptContent, displayName: string) => api.post<Envelope<PromptDetail>>('/api/v1/blog/me/peer-prompts', { content, displayName }).then(read);
 export const savePeerReview = (id: number, content: ReviewContent, displayName: string) => api.put<Envelope<PromptDetail>>(`/api/v1/blog/me/peer-prompts/${id}/review`, { content, displayName }).then(read);
